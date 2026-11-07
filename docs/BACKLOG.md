@@ -87,7 +87,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T06 Sign-in, sign-out and account header
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T05, T55, T56
 - Acceptance criteria:
   - [ ] `/signin` signs in with email and password. Wrong credentials show "Email or password is incorrect" without saying which one.
@@ -660,7 +660,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T56 Shared e2e support module
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T05
 - Acceptance criteria:
   - [ ] `tests/e2e/support/` exports:
