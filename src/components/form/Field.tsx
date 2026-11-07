@@ -50,7 +50,7 @@ export function Field({ name, label, error, layout = "stacked", children }: Fiel
   );
 }
 
-/** Material 3 outlined text input. */
-export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
+/** Material 3 outlined text input. Its look comes from the form styles, so it takes no className. */
+export function TextInput(props: Omit<InputHTMLAttributes<HTMLInputElement>, "className">) {
   return <input {...props} className={styles.input} />;
 }
