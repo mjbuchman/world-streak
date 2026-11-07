@@ -91,6 +91,9 @@ export function SignUpForm() {
       <Field name="country" label="Country of residence" error={errors.country}>
         {(describedBy) => (
           <select
+            // A select only reads defaultValue when it mounts, so remount it to refill the
+            // submitted country after React resets the form.
+            key={values?.country ?? "initial"}
             id="country"
             name="country"
             required

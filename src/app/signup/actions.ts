@@ -26,9 +26,15 @@ export async function signUpAction(_previous: SignUpState | null, formData: Form
       return !error;
     },
     async deleteUser(userId) {
-      const { error } = await admin().auth.admin.deleteUser(userId);
       // An account without a profile must not linger silently; log it for manual clean-up.
-      if (error) console.error(`Sign-up clean-up failed: could not delete auth user ${userId}`, error.message);
+      const logFailure = (reason: string) =>
+        console.error(`Sign-up clean-up failed: could not delete auth user ${userId}`, reason);
+      try {
+        const { error } = await admin().auth.admin.deleteUser(userId);
+        if (error) logFailure(error.message);
+      } catch (thrown) {
+        logFailure(thrown instanceof Error ? thrown.message : String(thrown));
+      }
     },
     async signIn(email, password) {
       const supabase = await createSupabaseServerClient();

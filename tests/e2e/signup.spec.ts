@@ -12,14 +12,30 @@ function adminClient() {
 }
 
 async function findUserByEmail(email: string) {
-  const { data, error } = await adminClient().auth.admin.listUsers({ perPage: 1000 });
-  if (error) throw error;
-  return data.users.find((user) => user.email === email);
+  const perPage = 1000;
+  for (let page = 1; ; page++) {
+    const { data, error } = await adminClient().auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    const match = data.users.find((user) => user.email === email);
+    if (match || data.users.length < perPage) return match;
+  }
 }
 
+const createdEmails: string[] = [];
+
 function uniqueEmail(): string {
-  return `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
+  const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
+  createdEmails.push(email);
+  return email;
 }
+
+// Remove the accounts these tests create so the local database does not fill up.
+test.afterAll(async () => {
+  for (const email of createdEmails) {
+    const user = await findUserByEmail(email);
+    if (user) await adminClient().auth.admin.deleteUser(user.id);
+  }
+});
 
 // A birth date whose 18th birthday is tomorrow on the eligibility date.
 function oneDayShortOf18(): string {
@@ -47,6 +63,23 @@ async function hasSessionCookie(page: Page): Promise<boolean> {
 test("the rules checkbox links to the official rules page", async ({ page }) => {
   await page.goto("/signup");
   await expect(page.getByRole("link", { name: "official rules" })).toHaveAttribute("href", "/rules");
+});
+
+test("a field error is shown next to the field and the form keeps what was typed", async ({ page }) => {
+  const email = uniqueEmail();
+  await page.goto("/signup");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password (at least 8 characters)").fill("short");
+  await page.getByLabel("Date of birth").fill("1990-06-15");
+  await page.getByLabel("Country of residence").selectOption("US");
+  await page.getByRole("checkbox", { name: /I agree to the official rules/ }).check();
+  await page.getByRole("button", { name: "Create account" }).click();
+
+  await expect(page.getByText("Use at least 8 characters.")).toBeVisible();
+  await expect(page.getByLabel("Password (at least 8 characters)")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.getByLabel("Email")).toHaveValue(email);
+  await expect(page.getByLabel("Date of birth")).toHaveValue("1990-06-15");
+  await expect(page.getByLabel("Country of residence")).toHaveValue("US");
 });
 
 test("an eligible adult signs up, gets a profile and lands on the home page signed in", async ({ page }) => {

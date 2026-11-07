@@ -11,12 +11,8 @@ const m = vi.hoisted(() => ({
   }),
 }));
 
-vi.mock("@/lib/supabase/admin", () => ({
-  createSupabaseAdminClient: () => ({
-    auth: { admin: { createUser: m.createUser, deleteUser: m.deleteUser } },
-    from: m.from,
-  }),
-}));
+const createAdmin = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: createAdmin }));
 vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: async () => ({ auth: { signInWithPassword: m.signInWithPassword } }),
 }));
@@ -45,6 +41,10 @@ beforeEach(() => {
   // A fixed clock far from any birthday used below, so no test depends on the real date.
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-06-15T18:00:00Z"));
+  createAdmin.mockReturnValue({
+    auth: { admin: { createUser: m.createUser, deleteUser: m.deleteUser } },
+    from: m.from,
+  });
   m.createUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
   m.from.mockReturnValue({ insert: m.insert });
   m.insert.mockResolvedValue({ error: null });
@@ -110,7 +110,28 @@ describe("signUpAction", () => {
   it("does not create the admin client for a submission that fails validation", async () => {
     const result = await signUpAction(null, form({ email: "nope" }));
     expect(result).toMatchObject({ ok: false, fieldErrors: { email: expect.any(String) } });
-    expect(m.createUser).not.toHaveBeenCalled();
+    expect(createAdmin).not.toHaveBeenCalled();
+  });
+
+  it("rejects a short password without touching Supabase", async () => {
+    const result = await signUpAction(null, form({ password: "short" }));
+    expect(result).toMatchObject({ ok: false, fieldErrors: { password: expect.any(String) } });
+    expect(createAdmin).not.toHaveBeenCalled();
+  });
+
+  it("refuses a non-US resident without touching Supabase", async () => {
+    const result = await signUpAction(null, form({ country: "CA" }));
+    expect(result).toMatchObject({ ok: false, message: expect.stringContaining("US residents") });
+    expect(createAdmin).not.toHaveBeenCalled();
+  });
+
+  it("logs, without throwing, when the clean-up delete throws", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    m.insert.mockResolvedValueOnce({ error: { message: "insert failed" } });
+    m.deleteUser.mockRejectedValueOnce(new Error("network down"));
+    expect(await signUpAction(null, form())).toMatchObject({ ok: false });
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("user-1"), "network down");
+    log.mockRestore();
   });
 
   it("logs, without throwing, when the clean-up delete also fails", async () => {
