@@ -79,6 +79,29 @@ jobs:
       # starts local Supabase (for example with the Supabase CLI) before the
       # tests run. Never remove or skip the steps in this workflow.
 
+      # The Supabase CLI is a pinned devDependency, so `npm ci` installs it.
+      - name: Check the Supabase CLI
+        if: steps.app.outputs.exists == 'true'
+        run: npx supabase --version
+
+      - name: Start local Supabase
+        if: steps.app.outputs.exists == 'true'
+        run: npx supabase start --exclude studio,imgproxy,edge-runtime,logflare,vector,supavisor
+
+      - name: Export local Supabase keys to the environment
+        if: steps.app.outputs.exists == 'true'
+        run: |
+          npx supabase status -o env \
+            --override-name api.url=NEXT_PUBLIC_SUPABASE_URL \
+            --override-name auth.anon_key=NEXT_PUBLIC_SUPABASE_ANON_KEY \
+            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            | grep -E '^(NEXT_PUBLIC_SUPABASE_URL|NEXT_PUBLIC_SUPABASE_ANON_KEY|SUPABASE_SERVICE_ROLE_KEY)=' \
+            | sed -E 's/^([A-Z_]+)="(.*)"$/\1=\2/' >> "$GITHUB_ENV"
+
+      - name: Run database tests
+        if: steps.app.outputs.exists == 'true'
+        run: npm run test:db
+
       - name: Run end-to-end tests
         if: steps.app.outputs.exists == 'true'
         run: npm run test:e2e

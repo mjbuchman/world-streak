@@ -18,6 +18,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: you didn't pick a brand color when approving the UI guidelines. The whole color scheme is generated from this one value, so it's a one-line change later.
 - Agent's recommendation: keep the placeholders until the M1 play-test, then judge them on the real screens.
 
+### Create .env.local before play-testing (blocks nothing now; needed for the M1 play-test)
+- What is needed: run `npm run db:start`, then `cp .env.example .env.local`, then fill in the three values from `npx supabase status` (exact steps in README "Running the app").
+- Where to put it: `.env.local` in the repository root (ignored by git).
+- Why: the agent's permissions forbid it from reading or writing `.env*` files, so it runs tests by passing the local keys through the environment instead. `npm run dev` needs the file.
+- Agent's recommendation: do it once at the M1 play-test; these are local-only keys.
+
 ## Resolved
 
 _Nothing yet._

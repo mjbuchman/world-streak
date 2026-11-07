@@ -158,19 +158,34 @@ get started
 
 ## Running the app
 
-Requires Node.js (current LTS) and npm.
+Requires Node.js 22.18 or newer (current LTS recommended), npm, and Docker Desktop (running) for the local database.
+
+**First time:**
 
 ```bash
-npm install                      # install dependencies
+npm install                      # install dependencies (includes the Supabase CLI)
+npm run db:start                 # start local Supabase in Docker (first run downloads images)
+cp .env.example .env.local       # then fill in the values, see below
+```
+
+Fill in `.env.local` from the output of `npx supabase status`: copy **API URL** to `NEXT_PUBLIC_SUPABASE_URL`, the **anon key** to `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and the **service_role key** to `SUPABASE_SERVICE_ROLE_KEY`. These are local-only development keys.
+
+**Every time:**
+
+```bash
+npm run db:start                 # if Docker was restarted
 npm run dev                      # start the app at http://localhost:3000
 ```
+
+http://localhost:3000/api/health should return `{"db":"ok"}`. Local Supabase Studio (a database browser) is at http://127.0.0.1:54323. `npm run db:reset` wipes the local database and re-applies every migration in `supabase/migrations/`.
 
 **Checks** (the same ones CI runs):
 
 ```bash
 npm run verify                   # lint, typecheck, unit tests with coverage, production build
+npm run test:db                  # database tests (pgTAP) against local Supabase
 npx playwright install chromium  # once, to download the test browser
-npm run test:e2e                 # end-to-end tests (starts the app automatically)
+npm run test:e2e                 # end-to-end tests (starts the app automatically; needs local Supabase and .env.local)
 ```
 
 **Theme:** colors, shapes, type and spacing come from `src/app/tokens.css`, which is generated from one brand color. To change the brand color, edit `BRAND_SEED_HEX` in `src/config/theme.ts`, then run `npm run tokens`. The design rules are in [`docs/UI_GUIDELINES.md`](docs/UI_GUIDELINES.md).
