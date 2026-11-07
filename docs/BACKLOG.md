@@ -20,7 +20,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T01 Scaffold the app
 - Type: infra
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] Next.js (App Router) + TypeScript with `"strict": true` in `tsconfig.json`, using the `src/` layout from `CLAUDE.md` (`src/app`, `src/challenges/shared`, `src/lib`, `src/components`, `tests/e2e`).
@@ -592,3 +592,14 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] Every env var in `.env.example` is mentioned in the guide (a unit test or script check compares the two lists).
   - [ ] `docs/NEEDS_HUMAN.md` gains entries for the Supabase cloud project, the Vercel project and the production admin account, each pointing at the relevant guide section.
 - Notes: The agents never run commands against production; deployment is a human step.
+
+## Maintenance
+
+### T51 Dev dependency audit and e2e build timing
+- Type: maintenance
+- Status: todo
+- Depends on: T01
+- Acceptance criteria:
+  - [ ] `npm audit` reports no moderate or higher vulnerabilities, or each remaining one is listed in the PR with why it can't be fixed yet (at T01: 0 in production dependencies, 8 moderate in dev tooling).
+  - [ ] If the CI e2e job spends more than 2 minutes building the app inside Playwright's `webServer`, move the build into its own workflow step before `npm run test:e2e` (an addition only) and make `webServer` just run `npm run start`.
+- Notes: Suggested in T01 review (quality-reviewer). `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing.
