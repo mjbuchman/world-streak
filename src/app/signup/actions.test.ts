@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const m = vi.hoisted(() => ({
   createUser: vi.fn(),
@@ -38,8 +38,13 @@ function form(overrides: Record<string, string> = {}): FormData {
   return data;
 }
 
+afterEach(() => vi.useRealTimers());
+
 beforeEach(() => {
   vi.clearAllMocks();
+  // A fixed clock far from any birthday used below, so no test depends on the real date.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-06-15T18:00:00Z"));
   m.createUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
   m.from.mockReturnValue({ insert: m.insert });
   m.insert.mockResolvedValue({ error: null });
@@ -85,6 +90,36 @@ describe("signUpAction", () => {
     const result = await signUpAction(null, form());
     expect(result).toMatchObject({ ok: false, message: expect.stringContaining("Please sign in") });
     expect(m.deleteUser).not.toHaveBeenCalled();
+  });
+
+  describe("uses the Hawaii date for the age check, not UTC", () => {
+    it("refuses an 18th birthday that has started in UTC but not yet in Hawaii", async () => {
+      vi.setSystemTime(new Date("2026-11-08T06:00:00Z")); // still Nov 7 in Honolulu
+      const result = await signUpAction(null, form({ birthDate: "2008-11-08" }));
+      expect(result).toMatchObject({ ok: false, message: expect.stringContaining("aged 18 or over") });
+      expect(m.createUser).not.toHaveBeenCalled();
+    });
+
+    it("accepts the same birthday once it is Nov 8 in Hawaii", async () => {
+      vi.setSystemTime(new Date("2026-11-08T10:00:00Z")); // midnight in Honolulu
+      await expect(signUpAction(null, form({ birthDate: "2008-11-08" }))).rejects.toThrow("NEXT_REDIRECT /");
+      expect(m.createUser).toHaveBeenCalled();
+    });
+  });
+
+  it("does not create the admin client for a submission that fails validation", async () => {
+    const result = await signUpAction(null, form({ email: "nope" }));
+    expect(result).toMatchObject({ ok: false, fieldErrors: { email: expect.any(String) } });
+    expect(m.createUser).not.toHaveBeenCalled();
+  });
+
+  it("logs, without throwing, when the clean-up delete also fails", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    m.insert.mockResolvedValueOnce({ error: { message: "insert failed" } });
+    m.deleteUser.mockResolvedValueOnce({ error: { message: "delete failed" } });
+    expect(await signUpAction(null, form())).toMatchObject({ ok: false });
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("user-1"), "delete failed");
+    log.mockRestore();
   });
 
   it("refuses an underage applicant without calling Supabase", async () => {

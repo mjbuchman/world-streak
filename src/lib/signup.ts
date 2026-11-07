@@ -8,9 +8,14 @@ const GENERIC_ERROR = "Something went wrong. Please try again.";
 
 const signUpSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address.")),
-  password: z.string().min(8, "Use at least 8 characters."),
+  // Supabase (bcrypt) accepts at most 72 characters.
+  password: z.string().min(8, "Use at least 8 characters.").max(72, "Use at most 72 characters."),
   birthDate: z.string(),
-  country: z.string().trim().toUpperCase(),
+  country: z
+    .string("Select your country of residence.")
+    .trim()
+    .toUpperCase()
+    .min(1, "Select your country of residence."),
   agree: z.literal("on", "You need to agree to the official rules."),
 });
 
@@ -71,6 +76,8 @@ export async function signUp(formData: FormData, deps: SignUpDeps): Promise<Sign
     fieldErrors[field] ??= issue.message;
   }
 
+  // Eligibility reads the raw text, which checkEligibility parses strictly (exact YYYY-MM-DD,
+  // trimmed upper-case country), so it judges the same values that parsed.data later stores.
   const eligibility = checkEligibility({ birthDate: values.birthDate, country: values.country }, deps.today);
   const badDate =
     (!eligibility.eligible && eligibility.reason === "invalid-date") || isImplausiblyOld(values.birthDate, deps.today);

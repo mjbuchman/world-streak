@@ -94,10 +94,15 @@ export function SignUpForm() {
             id="country"
             name="country"
             required
-            defaultValue={values?.country || "US"}
+            defaultValue={values?.country.toUpperCase() ?? ""}
+            aria-invalid={Boolean(errors.country)}
             aria-describedby={describedBy}
             className={styles.input}
           >
+            {/* No preselected country: location is self-declared, so ask rather than assume. */}
+            <option value="" disabled>
+              Select a country
+            </option>
             {COUNTRY_OPTIONS.map(({ code, name }) => (
               <option key={code} value={code}>
                 {name}

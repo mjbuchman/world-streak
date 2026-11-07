@@ -61,6 +61,21 @@ describe("signUp validation", () => {
     expect(await signUp(validForm({ password: "12345678" }), deps)).toEqual({ ok: true });
   });
 
+  it("rejects a password longer than 72 characters, Supabase's limit", async () => {
+    const result = await signUp(validForm({ password: "x".repeat(73) }), deps);
+    expect(result).toMatchObject({ ok: false, fieldErrors: { password: "Use at most 72 characters." } });
+    expect(await signUp(validForm({ password: "x".repeat(72) }), deps)).toEqual({ ok: true });
+  });
+
+  it.each([
+    ["missing", null],
+    ["blank", "  "],
+  ])("asks for a country when it is %s", async (_label, country) => {
+    const result = await signUp(validForm({ country }), deps);
+    expect(result).toMatchObject({ ok: false, fieldErrors: { country: "Select your country of residence." } });
+    expectNoAccountCreated();
+  });
+
   it("requires agreeing to the official rules", async () => {
     const result = await signUp(validForm({ agree: null }), deps);
     expect(result).toMatchObject({ ok: false, fieldErrors: { agree: "You need to agree to the official rules." } });

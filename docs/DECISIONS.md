@@ -57,6 +57,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - How to change it later: edit `ELIGIBILITY_TIME_ZONE`.
 - Confirmed by human: not needed (follows from the human's 18+ rule); recorded for visibility.
 
+### 2026-11-07 — Sign-up says when an email is already registered (T05)
+- Choice: signing up with a registered email shows "An account with this email already exists. Try signing in."
+- Reason: clearer for real players than a vague message. The trade-off is that anyone can check whether an email has an account. That is acceptable for a game account holding no sensitive data, and abuse of the sign-up form is handled by T52.
+- How to change it later: edit the email-taken message in `src/lib/signup.ts`.
+- Confirmed by human: not needed; recorded for visibility.
+
 ### 2026-11-07 — Location check is self-declared (T03)
 - Choice: eligibility uses the date of birth and country of residence the player enters at sign-up. No IP geolocation check in the MVP.
 - Reason: judgment call by the planner (the design doc says "age and location eligibility enforced at sign-up" without a method). IP checks need a paid or third-party service, block VPN users and travellers unfairly, and the prize winner's identity and address are verified before payout anyway.
