@@ -20,7 +20,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T01 Scaffold the app
 - Type: infra
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] Next.js (App Router) + TypeScript with `"strict": true` in `tsconfig.json`, using the `src/` layout from `CLAUDE.md` (`src/app`, `src/challenges/shared`, `src/lib`, `src/components`, `tests/e2e`).
@@ -38,7 +38,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T02 Local Supabase, clients and database tests
 - Type: infra
-- Status: todo
+- Status: in-progress
 - Depends on: T01
 - Acceptance criteria:
   - [ ] `supabase/` is initialised (`supabase init`). `supabase/config.toml` has email sign-up enabled with `enable_confirmations = false` and `site_url = "http://localhost:3000"`.

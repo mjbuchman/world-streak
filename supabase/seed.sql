@@ -1,0 +1,2 @@
+-- Local development seed data, applied by `npm run db:reset` after the migrations.
+-- Intentionally empty for now; the dev seed script arrives with the world streak milestone.
