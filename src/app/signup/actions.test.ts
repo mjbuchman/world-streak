@@ -1,0 +1,95 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const m = vi.hoisted(() => ({
+  createUser: vi.fn(),
+  deleteUser: vi.fn(),
+  insert: vi.fn(),
+  from: vi.fn(),
+  signInWithPassword: vi.fn(),
+  redirect: vi.fn((url: string) => {
+    throw new Error(`NEXT_REDIRECT ${url}`);
+  }),
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  createSupabaseAdminClient: () => ({
+    auth: { admin: { createUser: m.createUser, deleteUser: m.deleteUser } },
+    from: m.from,
+  }),
+}));
+vi.mock("@/lib/supabase/server", () => ({
+  createSupabaseServerClient: async () => ({ auth: { signInWithPassword: m.signInWithPassword } }),
+}));
+vi.mock("next/navigation", () => ({ redirect: m.redirect }));
+
+import { signUpAction } from "./actions";
+
+function form(overrides: Record<string, string> = {}): FormData {
+  const data = new FormData();
+  const fields = {
+    email: "player@example.com",
+    password: "correct horse",
+    birthDate: "1990-05-05",
+    country: "US",
+    agree: "on",
+    ...overrides,
+  };
+  for (const [key, value] of Object.entries(fields)) data.set(key, value);
+  return data;
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  m.createUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+  m.from.mockReturnValue({ insert: m.insert });
+  m.insert.mockResolvedValue({ error: null });
+  m.signInWithPassword.mockResolvedValue({ error: null });
+  m.deleteUser.mockResolvedValue({ error: null });
+});
+
+describe("signUpAction", () => {
+  it("creates a confirmed user and profile, signs in and redirects home", async () => {
+    await expect(signUpAction(null, form())).rejects.toThrow("NEXT_REDIRECT /");
+    expect(m.createUser).toHaveBeenCalledWith({
+      email: "player@example.com",
+      password: "correct horse",
+      email_confirm: true,
+    });
+    expect(m.from).toHaveBeenCalledWith("profiles");
+    expect(m.insert).toHaveBeenCalledWith({ id: "user-1", birth_date: "1990-05-05", country: "US" });
+    expect(m.signInWithPassword).toHaveBeenCalledWith({ email: "player@example.com", password: "correct horse" });
+  });
+
+  it("maps Supabase's email_exists error to the email-taken message", async () => {
+    m.createUser.mockResolvedValueOnce({ data: { user: null }, error: { code: "email_exists" } });
+    const result = await signUpAction(null, form());
+    expect(result).toMatchObject({ ok: false, fieldErrors: { email: expect.stringContaining("already exists") } });
+    expect(m.redirect).not.toHaveBeenCalled();
+  });
+
+  it("treats other user-creation errors as unexpected", async () => {
+    m.createUser.mockResolvedValueOnce({ data: { user: null }, error: { code: "unexpected_failure" } });
+    expect(await signUpAction(null, form())).toMatchObject({ ok: false, message: expect.stringContaining("went wrong") });
+  });
+
+  it("deletes the auth user when the profile insert fails", async () => {
+    m.insert.mockResolvedValueOnce({ error: { message: "insert failed" } });
+    const result = await signUpAction(null, form());
+    expect(result).toMatchObject({ ok: false });
+    expect(m.deleteUser).toHaveBeenCalledWith("user-1");
+    expect(m.signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("reports a failed sign-in without deleting the new account", async () => {
+    m.signInWithPassword.mockResolvedValueOnce({ error: { message: "invalid" } });
+    const result = await signUpAction(null, form());
+    expect(result).toMatchObject({ ok: false, message: expect.stringContaining("Please sign in") });
+    expect(m.deleteUser).not.toHaveBeenCalled();
+  });
+
+  it("refuses an underage applicant without calling Supabase", async () => {
+    const result = await signUpAction(null, form({ birthDate: "2020-01-01" }));
+    expect(result).toMatchObject({ ok: false, message: expect.stringContaining("aged 18 or over") });
+    expect(m.createUser).not.toHaveBeenCalled();
+  });
+});
