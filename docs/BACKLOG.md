@@ -644,7 +644,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T55 Shared form field components
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T54
 - Acceptance criteria:
   - [ ] `src/components/` provides:
@@ -660,7 +660,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T56 Shared e2e support module
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T05
 - Acceptance criteria:
   - [ ] `tests/e2e/support/` exports:
