@@ -1,9 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 // next/font only works inside the Next.js compiler, so stand it in with a fixed class name.
 vi.mock("next/font/google", () => {
   const font = () => ({ variable: "font-variable" });
   return { Roboto_Flex: font, Bricolage_Grotesque: font };
+});
+
+afterEach(() => {
+  vi.doUnmock("@/config/game");
+  vi.resetModules();
 });
 
 describe("root layout metadata", () => {
@@ -19,6 +24,5 @@ describe("root layout metadata", () => {
     vi.doMock("@/config/game", () => ({ GAME_NAME: "Renamed Game" }));
     const { metadata } = await import("./layout");
     expect(metadata.title).toBe("Renamed Game");
-    vi.doUnmock("@/config/game");
   });
 });

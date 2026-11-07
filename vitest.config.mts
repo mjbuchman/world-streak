@@ -25,6 +25,8 @@ export default defineConfig({
         "src/challenges/**": { lines: 90, branches: 90 },
         "src/lib/scoring/**": { lines: 90, branches: 90 },
         "src/lib/streak/**": { lines: 90, branches: 90 },
+        // Decides who may enter the prize draw.
+        "src/lib/eligibility.ts": { lines: 90, branches: 90 },
       },
     },
   },

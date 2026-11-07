@@ -83,7 +83,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
   - [ ] An eligible submission creates the Supabase user (confirmation off) and a `profiles` row with the given birth date and country, signs the user in, and redirects to `/`.
   - [ ] Unit tests cover the server action: invalid email, short password, underage, wrong region, and success (mocked Supabase).
   - [ ] e2e: sign up with a unique email and a 1990 birth date, which lands on `/` signed in; sign up with a birth date one day short of 18 years, which shows the refusal message.
-- Notes: If creating the profile fails after the auth user was created, delete the auth user with the admin client so no account exists without a profile. Test this path.
+- Notes: If creating the profile fails after the auth user was created, delete the auth user with the admin client so no account exists without a profile. Test this path. **Time zone for `today` (from T03 review):** do not pass the UTC date to `checkEligibility`. For several hours each US evening, UTC is already tomorrow, so someone could pass the age check the evening before their 18th birthday. Use the earliest US calendar date (Pacific/Honolulu) and record the choice in DECISIONS.md. Also reject implausible birth dates (age over 120) in the form validation.
 
 ### T06 Sign-in, sign-out and account header
 - Type: feature
