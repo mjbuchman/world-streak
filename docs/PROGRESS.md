@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T04 Profiles table with row-level security
+- Active task: T05 Email and password sign-up with eligibility check
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-07 — T04 Profiles table with row-level security (PR #5)
+- `public.profiles` with RLS: players read only their own row; all writes go through the service role.
+- Review rounds: spec 2, quality 2, tests 2 (round 1 blocked: column types, not-null, defaults and cascade were unchecked; fixed).
+- Notes: Extra constraints: `country ~ '^[A-Z]{2}$'`, `weight >= 0`. Table-level write privileges are deliberately not revoked (the criterion wants updates to affect 0 rows, not error). pgTAP tests act as users via `set_config('request.jwt.claims', ...)` plus `set local role`.
 
 ### 2026-11-07 — T03 Config module and eligibility rules (PR #4)
 - `src/config/eligibility.ts` (18+, US) and pure `checkEligibility` with calendar-date math; page title test for `GAME_NAME`.

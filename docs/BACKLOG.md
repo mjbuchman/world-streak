@@ -65,7 +65,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T04 Profiles table with row-level security
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T02
 - Acceptance criteria:
   - [ ] A migration creates `public.profiles` with columns `id uuid primary key references auth.users on delete cascade`, `birth_date date not null`, `country text not null`, `is_admin boolean not null default false`, `weight numeric not null default 1`, `flagged boolean not null default false` and `created_at timestamptz not null default now()`.
@@ -75,7 +75,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T05 Email and password sign-up with eligibility check
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T03, T04
 - Acceptance criteria:
   - [ ] `/signup` shows email, password (minimum 8 characters), date of birth, a country of residence select, and an "I agree to the official rules" checkbox (link to `/rules`; the page can be a stub until T38).
@@ -603,3 +603,14 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `npm audit` reports no moderate or higher vulnerabilities, or each remaining one is listed in the PR with why it can't be fixed yet (at T01: 0 in production dependencies, 8 moderate in dev tooling).
   - [ ] If the CI e2e job spends more than 2 minutes building the app inside Playwright's `webServer`, move the build into its own workflow step before `npm run test:e2e` (an addition only) and make `webServer` just run `npm run start`.
 - Notes: Suggested in T01 review (quality-reviewer). `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing.
+
+### T52 Sign-up abuse protection
+- Type: maintenance
+- Status: todo
+- Depends on: T05
+- Acceptance criteria:
+  - [ ] The sign-up action is rate-limited per client IP (for example at most 5 sign-ups per IP per hour, a config constant), enforced on the server, with a unit test that the 6th attempt is refused with a plain message.
+  - [ ] A free CAPTCHA (Cloudflare Turnstile, which Supabase Auth supports) protects `/signup` when `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` are set, and is skipped with a logged warning when they are not, so local development and e2e tests still work.
+  - [ ] Both keys are listed in `.env.example` with placeholders and comments.
+- Notes: Raised in the T05 quality review. Sign-up uses the service-role `auth.admin.createUser`, so Supabase's built-in sign-up rate limit does not apply, and a prize game attracts bulk account creation. Should land before the public launch (M4 at the latest).
+- needs-human: a free Cloudflare account and a Turnstile widget for the production domain; put the site key and secret key in `.env.local` and Vercel as `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`.

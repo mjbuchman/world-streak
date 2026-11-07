@@ -30,6 +30,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: the design doc requires location eligibility at sign-up but doesn't say how. Details in `docs/DECISIONS.md` (T03).
 - Agent's recommendation: keep it self-declared; verify the winner's address before payout.
 
+### Cloudflare Turnstile keys for sign-up protection (blocks the final wiring of T52; not needed until launch)
+- What is needed: a free Cloudflare account and a Turnstile widget for the production domain (add `localhost` too for testing). Then the site key and secret key.
+- Where to put it: `.env.local` and the Vercel project settings, as `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`.
+- Why: sign-up uses the admin API, so Supabase's built-in sign-up rate limit does not apply. A free CAPTCHA plus a per-IP limit stops bulk account creation in a prize game.
+- Agent's recommendation: do it before the public launch. T52 works without the keys locally (it skips the CAPTCHA and logs a warning).
+
 ## Resolved
 
 _Nothing yet._
