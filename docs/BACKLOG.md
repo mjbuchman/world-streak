@@ -1,0 +1,594 @@
+# Backlog
+
+Status: Approved (2026-11-07)
+
+Planning notes for the builder:
+
+- Requirements come from `docs/DESIGN.md` (Decided items) plus the human owner's answers given at planning time (Nov 7, 2026):
+  1. Four milestones.
+  2. **Prize is a flat $200 per cycle.** If a cycle ends without a 30-day streak, the prize rolls over ($400 after one rollover, $600 after two, and so on). The "formula, floor and cap" wording and the "revenue share" and "cap" fields in the data model are leftovers. Leave them out of the schema and the rules page.
+  3. **Eligibility:** US residents aged 18 and over, enforced at sign-up. The minimum age and the allowed region are config settings.
+  4. **Open items use the design doc's suggested defaults.** Record each one in `docs/DECISIONS.md` and add a "please confirm" entry to `docs/NEEDS_HUMAN.md` when you implement the task that depends on it. The defaults: deadline at midnight UTC; live meter hidden for the final 3 hours (configurable); survival threshold 60%; pass target set so that 80% of recent players reach it, editable by an admin; new accounts count fully from day one through a configurable weight (default 1.0); the working name "World Streak" lives in one config constant; a pass target that rises with the streak is a configurable setting with a flat placeholder (step 0).
+- Tasks marked "Judgment call" in their notes resolve ambiguities in the design doc. Record those in `docs/DECISIONS.md` too.
+- Database logic that runs inside Postgres (row-level security, the close job, counters) is tested with pgTAP through `npm run test:db`. TypeScript logic is tested with Vitest.
+- **Every task that touches the user interface must follow `docs/UI_GUIDELINES.md`**, which the human approved on Nov 7, 2026. That means Material 3 styling built with plain CSS Modules and CSS-variable design tokens. No Tailwind, shadcn or MUI, no emojis outside the share text, and no em dashes in UI text. Spec reviewers check UI changes against it.
+- Scripts that write data (`seed:dev`, `close-day`, `simulate:days`) must refuse to run unless the Supabase URL points at localhost.
+
+## M1 Foundation and first challenge end to end
+
+Goal: run the app locally against local Supabase, sign up with email and password (adults in the US only), practise the stacking challenge without an account, then play today's scored stacking attempt once. The server replays the attempt and shows pass or fail, and a second attempt the same day is refused.
+
+### T01 Scaffold the app
+- Type: infra
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] Next.js (App Router) + TypeScript with `"strict": true` in `tsconfig.json`, using the `src/` layout from `CLAUDE.md` (`src/app`, `src/challenges/shared`, `src/lib`, `src/components`, `tests/e2e`).
+  - [ ] `package.json` has the scripts `dev`, `build`, `lint`, `typecheck`, `test`, `test:e2e` and `verify`, exactly as described in `CLAUDE.md`. `lint` runs ESLint with `--max-warnings 0`. `verify` runs `lint && typecheck && test && build`.
+  - [ ] Vitest runs with v8 coverage, and `vitest.config.ts` enforces thresholds: at least 70% lines and branches overall, and at least 90% lines and branches for `src/challenges/**`, `src/lib/scoring/**` and `src/lib/streak/**`. A deliberately untested function added to `src/challenges/shared` makes `npm run test` fail (check this by hand, then remove the function).
+  - [ ] At least one passing unit test exists (for example a trivial util in `src/lib`).
+  - [ ] Styling uses plain CSS Modules plus one global token stylesheet (for example `src/app/tokens.css`). It defines as CSS variables the Material 3 color roles for light and dark (following `prefers-color-scheme`), the shape scale, the type scale and spacing, generated from the placeholder brand seed color in `docs/UI_GUIDELINES.md`. No Tailwind, shadcn or MUI. The create-next-app starter styles are deleted.
+  - [ ] A Vitest guard test (for example `tests/guidelines.test.ts`) scans `src/`. It fails if any file contains an emoji, except under `src/lib/share/`, or if a `.ts`, `.tsx` or `.css` file contains an em dash (U+2014). A deliberately added emoji makes the test fail (check this by hand, then remove it).
+  - [ ] Playwright is configured with a `webServer` that starts the app, a Chromium project, and one test in `tests/e2e/smoke.spec.ts` that loads `/` and sees the text "World Streak".
+  - [ ] `npm run verify` and `npm run test:e2e` both pass locally.
+  - [ ] `.gitignore` has the Next.js, coverage and Playwright entries merged into the existing file, and no existing entries are removed.
+  - [ ] `README.md` "Running the app" section explains `npm install`, `npm run dev`, `npm run verify`, `npm run test:e2e` (including `npx playwright install chromium`).
+  - [ ] The PR's `verify` and `e2e` CI checks are green.
+- Notes: Follow the **scaffolding note** in `CLAUDE.md`: `create-next-app` will refuse to run in this non-empty repository. Scaffold into a temporary sibling directory, move the generated files in without overwriting any existing file (`README.md`, `CLAUDE.md`, `docs/`, `.claude/`, `.github/`), and merge `.gitignore` rather than replacing it. Do not modify `.github/workflows/ci.yml`. It already runs `verify` and `e2e` once `package.json` exists. Generated boilerplate (lockfile, default assets) does not count toward the 400-line guideline, but delete unused starter content.
+
+### T02 Local Supabase, clients and database tests
+- Type: infra
+- Status: todo
+- Depends on: T01
+- Acceptance criteria:
+  - [ ] `supabase/` is initialised (`supabase init`). `supabase/config.toml` has email sign-up enabled with `enable_confirmations = false` and `site_url = "http://localhost:3000"`.
+  - [ ] npm scripts `db:start` (`supabase start`), `db:reset` (`supabase db reset`) and `test:db` (`supabase test db`) exist. A first pgTAP test in `supabase/tests/` passes via `npm run test:db`.
+  - [ ] `src/lib/supabase/` provides a browser client, a server client (cookie-based, `@supabase/ssr`) and a service-role admin client that can only be imported from server code (`import "server-only"`).
+  - [ ] `.env.example` lists `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` with local-default placeholder values and a comment on each.
+  - [ ] `GET /api/health` returns `200 {"db":"ok"}` when local Supabase is running, and `503 {"db":"unavailable"}` when the query fails (unit-tested with a mocked client).
+  - [ ] An e2e test calls `/api/health` and expects `db: "ok"`.
+  - [ ] `.github/workflows/ci.yml` gains (additions only) steps in the `e2e` job that install the Supabase CLI, run `supabase start`, export the local keys to the environment, and run `npm run test:db` before `npm run test:e2e`. No existing step is removed or changed.
+  - [ ] README "Running the app" documents Docker, `npm run db:start`, copying `.env.example` to `.env.local` and filling it in from `supabase status`, and `npm run test:db`.
+- Notes: Reviewers must explicitly check the workflow diff (additions only). Never read `.env.local`.
+
+### T03 Config module and eligibility rules
+- Type: feature
+- Status: todo
+- Depends on: T01
+- Acceptance criteria:
+  - [ ] `src/config/game.ts` exports `GAME_NAME = "World Streak"`, and every place that shows the name (layout title, home heading) imports it. Changing the constant changes the page title. Check this with a unit test of the metadata export.
+  - [ ] `src/config/eligibility.ts` exports `MIN_AGE = 18` and `ALLOWED_COUNTRIES = ["US"]`.
+  - [ ] `src/lib/eligibility.ts` exports `checkEligibility({ birthDate, country }, today)`, which returns `{ eligible: true }` or `{ eligible: false, reason: "underage" | "region" | "invalid-date" }`.
+  - [ ] Boundary tests: with `today = 2026-11-07`, a birth date of `2008-11-07` is eligible (18th birthday today), `2008-11-08` is `underage`, and `2030-01-01` is `invalid-date`. A Feb 29, 2008 birth date is eligible on 2026-03-01 and `underage` on 2026-02-28. Country `"CA"` is `region`. Lower-case `"us"` is eligible.
+  - [ ] Changing `MIN_AGE` to 21 in a test (via an injectable parameter) makes `2005-11-08` `underage` on 2026-11-07.
+- Notes: Depends on the **Open** "Final game name" item. Use the working name "World Streak" (human's instruction) and record it in DECISIONS.md. Eligibility is self-declared: date of birth plus country of residence. Judgment call: no IP geolocation check in the MVP. Record it.
+
+### T04 Profiles table with row-level security
+- Type: feature
+- Status: todo
+- Depends on: T02
+- Acceptance criteria:
+  - [ ] A migration creates `public.profiles` with columns `id uuid primary key references auth.users on delete cascade`, `birth_date date not null`, `country text not null`, `is_admin boolean not null default false`, `weight numeric not null default 1`, `flagged boolean not null default false` and `created_at timestamptz not null default now()`.
+  - [ ] Row-level security is enabled. The only policy lets an authenticated user `select` their own row. No insert, update or delete policies exist for `anon` or `authenticated`, so profile writes happen only through server code using the service role.
+  - [ ] pgTAP tests: RLS is enabled on `profiles`; user A cannot select user B's profile; user A's `update profiles set is_admin = true where id = A` affects 0 rows; `anon` selects 0 rows.
+- Notes: The data model's "auth provider" lives in `auth.users` already; do not duplicate it. `weight` defaults to 1. See T46 for weighting.
+
+### T05 Email and password sign-up with eligibility check
+- Type: feature
+- Status: todo
+- Depends on: T03, T04
+- Acceptance criteria:
+  - [ ] `/signup` shows email, password (minimum 8 characters), date of birth, a country of residence select, and an "I agree to the official rules" checkbox (link to `/rules`; the page can be a stub until T38).
+  - [ ] Submission runs a server action that validates the input with zod and calls `checkEligibility` **before** creating any auth user. An underage or non-US submission shows "Sorry, World Streak is open only to US residents aged 18 or over." (name from `GAME_NAME`, age and region from config) and creates no row in `auth.users`.
+  - [ ] An eligible submission creates the Supabase user (confirmation off) and a `profiles` row with the given birth date and country, signs the user in, and redirects to `/`.
+  - [ ] Unit tests cover the server action: invalid email, short password, underage, wrong region, and success (mocked Supabase).
+  - [ ] e2e: sign up with a unique email and a 1990 birth date, which lands on `/` signed in; sign up with a birth date one day short of 18 years, which shows the refusal message.
+- Notes: If creating the profile fails after the auth user was created, delete the auth user with the admin client so no account exists without a profile. Test this path.
+
+### T06 Sign-in, sign-out and account header
+- Type: feature
+- Status: todo
+- Depends on: T05
+- Acceptance criteria:
+  - [ ] `/signin` signs in with email and password. Wrong credentials show "Email or password is incorrect" without saying which one.
+  - [ ] A header on every page shows "Sign in" when signed out, and the user's email plus a "Sign out" button when signed in. Sign-out clears the session and returns to `/`.
+  - [ ] Next.js middleware refreshes the Supabase session cookie on each request (per `@supabase/ssr` guidance).
+  - [ ] e2e: sign up, sign out, sign in again, see the email in the header; wrong password shows the error.
+
+### T07 Google sign-in and profile completion
+- Type: feature
+- Status: todo
+- Depends on: T06
+- Acceptance criteria:
+  - [ ] `/signin` and `/signup` show "Continue with Google", which calls `signInWithOAuth({ provider: "google", options: { redirectTo: <site>/auth/callback } })` (unit test with a mocked client).
+  - [ ] `GET /auth/callback` exchanges the code for a session and redirects to `/complete-profile` when the user has no `profiles` row, otherwise to `/` (unit-tested for both branches and for a missing or invalid code, which redirects to `/signin?error=oauth`).
+  - [ ] `/complete-profile` collects date of birth, country and rules agreement, applies `checkEligibility`, and creates the profile. An ineligible user sees the refusal message and gets no profile (they can still use practice).
+  - [ ] `supabase/config.toml` enables the Google provider using `env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)` and `env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)`. Both names are added to `.env.example` with placeholders, and local Supabase still starts when they hold placeholders.
+  - [ ] e2e: a user created through email sign-up whose profile row is deleted is sent to `/complete-profile` after signing in, and can complete it. (Real Google login is checked by hand in T15.)
+- Notes: The sign-in redirect for users without a profile can live in the middleware or the layout. Either way, a user without a profile must never reach a scored attempt (enforced again server-side in T12).
+
+### T08 Shared seeded PRNG and engine types
+- Type: feature
+- Status: todo
+- Depends on: T01
+- Acceptance criteria:
+  - [ ] `src/challenges/shared/prng.ts` exports `createRng(seed: number)`, which returns `{ next(): number; int(min, max): number; pick<T>(items: T[]): T }` using one documented algorithm (for example mulberry32) on unsigned 32-bit seeds.
+  - [ ] Tests: the same seed gives an identical sequence for 10,000 draws; `next()` is always in `[0, 1)`; `int(3, 7)` only returns 3 to 7 inclusive and returns each value at least once in 1,000 draws; seeds 1 and 2 give different first values; a committed golden fixture of the first 5 values for seeds 0, 42 and 4294967295 matches.
+  - [ ] `src/challenges/shared/types.ts` defines `ChallengeType = "stacking"` (extended later), `ScoreDirection = "higher-better" | "lower-better"` and a `ChallengeModule<Params, Inputs>` interface with `paramsFromSeed(seed)`, `score(params, inputs)`, `inputsSchema` (zod) and `direction`.
+  - [ ] An ESLint rule (`no-restricted-globals`/`no-restricted-properties`) bans `Math.random`, `Date.now`, `performance`, `window`, `document` and `fetch` inside `src/challenges/**`, except in `render.ts` files.
+  - [ ] Coverage of `src/challenges/shared` is at least 90% lines and branches.
+
+### T09 Stacking engine
+- Type: feature
+- Status: todo
+- Depends on: T08
+- Acceptance criteria:
+  - [ ] `src/challenges/stacking/engine.ts` exports `simulate(params, tapsMs: number[])`, which returns `{ score, blocks: { left, width, overhang }[], endedAtMs, endReason: "miss" | "time" | "inputs" }`, and `blockLeftAt(params, state, elapsedMs)`, which gives the moving block's position. Both are pure and driven only by elapsed ms.
+  - [ ] Geometry (logical units): field width 400; base block `left 100, width 200`. Block *i* has the width of the block below it and slides between `0` and `400 - width`, bouncing at the edges. Block 1 starts at the side given by `params.direction`, and each later block starts at the opposite side to the previous one. Block *i* starts moving at the time of tap *i-1* (block 1 at 0 ms). Its speed is `startSpeed + ramp × (i - 1)` px/ms. The overhang is trimmed, so the next width equals the overlap. An overlap of 0 or less is a miss and ends the run. Score = blocks successfully placed.
+  - [ ] With `{ startSpeed: 0.2, ramp: 0, direction: "right" }`:
+    - taps `[500]`: score 1, block 1 left 100, overhang 0;
+    - taps `[750]`: block 1 left 150, width 150, overhang 50;
+    - taps `[1250]` gives the same placement as `[750]` (bounce at 1000 ms);
+    - taps `[750, 1250]`: score 2, block 2 starts at left 250 moving left and lands at left 150 with overhang 0;
+    - taps `[750, 2000]`: block 2 at left 0 is a miss, score 1, `endReason "miss"`, `endedAtMs 2000`.
+  - [ ] With `{ startSpeed: 0.2, ramp: 0.05, direction: "right" }`, taps `[500, 900]` give score 2 with block 2 overhang 0.
+  - [ ] With `direction: "left"`, taps `[250]` put block 1 at left 150 with overhang 50.
+  - [ ] Taps after a miss or after `params.maxDurationMs` are ignored. Non-increasing or negative tap arrays are rejected by `inputsSchema`, which allows at most 200 taps.
+  - [ ] `paramsFromSeed(seed)` is deterministic. Over seeds 0 to 999, `startSpeed`, `ramp` and `direction` all stay inside the documented ranges, and both directions occur.
+  - [ ] Property tests: the same `(seed, taps)` always gives the same result; a score never exceeds the number of taps; widths never increase.
+  - [ ] Golden tests: three fixed seeds with fixed tap arrays have committed exact scores. `direction = "higher-better"`. At least 90% lines and branches covered.
+- Notes: Pick start speed and ramp ranges so a competent player's run ends near one minute (design: "speed rises with height to cap runs near one minute"); `maxDurationMs` = 60,000 is a hard cap. Use an original name and art, not those of existing stacking games. Name the challenge in the UI something like "Tower" or similar original wording (judgment call, record it). The score is an integer block count, as the Decided challenge table says, although the design also asks for a "continuous scale". This is flagged as ambiguous.
+
+### T10 Stacking renderer and practice page
+- Type: feature
+- Status: todo
+- Depends on: T09
+- Acceptance criteria:
+  - [ ] `src/challenges/stacking/render.ts` draws a given engine state for a given elapsed ms onto a canvas 2D context, scaling the 400-unit field to the canvas width and handling `devicePixelRatio`.
+  - [ ] `src/components/StackingGame.tsx` runs a `requestAnimationFrame` loop that reads elapsed time from `performance.now()` relative to the start, records taps (pointerdown and Space) as elapsed ms, calls the engine for state, and calls `onFinish({ taps, result })` when the engine reports the end.
+  - [ ] Frame-rate independence: a unit test drives the component's loop helper with simulated frames at 16.7 ms and at 8.3 ms intervals and the same tap times, and gets identical engine results.
+  - [ ] `/practice/stacking` works signed out, uses a fresh random seed per run (client-side randomness is fine because practice never counts), shows the block count live and on finish, and has a "Play again" button. No network request is made to `/api/attempts/*`.
+  - [ ] e2e: open `/practice/stacking`, press Start, tap 3 times at 400 ms intervals, and the run ends with a visible score of 0 or more and a "Play again" button.
+
+### T11 Game days, attempts schema and game date
+- Type: feature
+- Status: todo
+- Depends on: T04
+- Acceptance criteria:
+  - [ ] `src/config/schedule.ts` exports `DEADLINE_UTC_HOUR = 0`. `src/lib/gameDay.ts` exports `gameDateAt(now: Date)`, which returns the `YYYY-MM-DD` game date (the date that closes at the next deadline), and `deadlineFor(gameDate)`. Tests: `2026-11-07T23:59:59.999Z`, game date `2026-11-07`; `2026-11-08T00:00:00.000Z`, `2026-11-08`; with an hour of 5 injected, `2026-11-08T04:59:59Z`, `2026-11-07`.
+  - [ ] A migration creates `game_days` (`game_date date primary key`, `challenge_type text not null`, `pass_target numeric not null`, `survival_threshold numeric not null check (between 0 and 1)`, `final_pass_rate numeric`, `outcome text check (outcome in ('survived','broken'))`, `closed_at timestamptz`) and `attempts` (`id uuid pk`, `user_id`, `game_date references game_days`, `seed bigint not null`, `inputs jsonb`, `score numeric`, `passed boolean`, `started_at timestamptz not null default now()`, `submitted_at timestamptz`, **`unique (user_id, game_date)`**).
+  - [ ] A SQL function `game_date_at(ts timestamptz)` mirrors `gameDateAt` with the same deadline hour. A shared fixture of boundary timestamps is checked by both a Vitest test and a pgTAP test.
+  - [ ] `ensure_game_day(d date)` inserts a stacking day with the default pass target and a survival threshold of 0.60 if it is missing, and is a no-op otherwise.
+  - [ ] RLS: `game_days` is readable by everyone and has no write policies. A user can `select` only their own `attempts`, and there are no insert, update or delete policies for `anon`/`authenticated`.
+  - [ ] pgTAP: a second attempt row for the same user and date fails with a unique violation; user A cannot read user B's attempts; `ensure_game_day` run twice leaves one row.
+- Notes: Depends on **Open** "Exact global deadline time". Use the suggested midnight UTC, record it and flag it. The deadline hour is duplicated in TS and SQL on purpose (the close job runs in the database). The shared fixture keeps the two in sync. The defaults (threshold 0.60, stacking pass target placeholder, for example 10 blocks) move into `game_settings` in T16. Depends on **Open** "Survival threshold and pass-target percentile for launch": use 60%.
+
+### T12 Attempt start endpoint
+- Type: feature
+- Status: todo
+- Depends on: T07, T09, T11
+- Acceptance criteria:
+  - [ ] `POST /api/attempts/start` returns 401 when signed out, and 403 `{ error: "profile-required" }` when the user has no profile.
+  - [ ] For an eligible user, it calls `ensure_game_day(today)`, inserts an attempt with a server-generated random unsigned 32-bit seed (`crypto`), and returns `200 { attemptId, gameDate, challengeType, seed, params }`, where `params = paramsFromSeed(seed)` from the challenge registry (`src/challenges/registry.ts`).
+  - [ ] If the user already has an attempt for today, it returns 409 `{ error: "already-started", submitted: boolean }` and inserts nothing. A race between two simultaneous requests yields exactly one row (the unique constraint handles it, and the handler maps the violation to 409).
+  - [ ] Unit tests with a mocked Supabase client cover 401, 403, 200 and 409 (pre-existing and race).
+- Notes: Judgment call (record it): "abandoning before finishing records nothing", so an abandoned attempt never counts toward the pass rate, but it cannot be restarted. Restarting would replay the same seed and reveal the instance (for example the Flash Count dot count). Show this rule on the play page before the Start button.
+
+### T13 Attempt submit endpoint with server replay
+- Type: feature
+- Status: todo
+- Depends on: T12
+- Acceptance criteria:
+  - [ ] `POST /api/attempts/submit` with `{ attemptId, inputs }` returns 401 when signed out, 400 when the body or `inputs` fail the challenge's `inputsSchema`, and 404 when the attempt is not the caller's.
+  - [ ] It returns 409 `already-submitted` if `submitted_at` is set, and 409 `day-closed` if the attempt's game date is no longer the current game date or the day has `closed_at`.
+  - [ ] It returns 422 `implausible-timing` if the last input timestamp exceeds `(now - started_at) + 2000 ms` or the attempt is older than `ATTEMPT_MAX_AGE_MS` (config, default 180,000).
+  - [ ] Otherwise the server replays the engine (`score(paramsFromSeed(seed), inputs)`) and computes `passed` from the day's `pass_target` and the module's `direction` (higher-better: `score >= target`; lower-better: `score <= target`). It stores inputs, score, passed and `submitted_at` atomically through a `security definer` SQL function `record_attempt_result` that only `service_role` may execute. It returns `{ score, passed, passTarget }`.
+  - [ ] Any `score` or `passed` field in the request body is ignored (test: a body claiming `passed: true` with inputs that score 0 is stored as failed).
+  - [ ] Unit tests cover every status code. A pgTAP test shows that `authenticated` cannot execute `record_attempt_result`.
+- Notes: Judgment call (record it): submissions after the deadline are refused and record nothing, even if the attempt started before it.
+
+### T14 Daily play page end to end
+- Type: feature
+- Status: todo
+- Depends on: T10, T13
+- Acceptance criteria:
+  - [ ] `/` shows the game name, the one-sentence pitch ("Play today's challenge; if enough of the world passes, humanity's streak survives."), a "Play today's challenge" link to `/play` and a "Practice" link.
+  - [ ] `/play` signed out shows "Sign in to play today's scored attempt" with links to sign in and practice. With no profile, it redirects to `/complete-profile`.
+  - [ ] Signed in and not yet played: it explains the one-attempt rule, and Start calls the start endpoint, plays `StackingGame` with the issued seed, submits on finish, and shows "Passed" or "Not this time" with the score and today's target.
+  - [ ] Already submitted today: `/play` shows today's result instead of the Start button. Started but abandoned: it shows "You left today's attempt before finishing. It was not counted. Come back tomorrow."
+  - [ ] e2e (local Supabase): sign up, open `/play`, start, tap a few times, finish, and see a result; reload and see the same result with no Start button; a direct `POST /api/attempts/start` returns 409.
+- Notes: The e2e test can make the run end quickly with a deliberate miss (taps timed to the engine's known geometry are not possible with a random seed, so just assert that a result appears).
+
+### T15 Confirm Google sign-in with real credentials
+- Type: infra
+- Status: todo
+- Depends on: T07
+- Acceptance criteria:
+  - [ ] With the human's Google OAuth credentials in `.env.local`, `npm run db:start` then `npm run dev`. "Continue with Google" completes a real Google login locally and lands on `/complete-profile` for a new account.
+  - [ ] README "Running the app" documents the Google setup: the authorised redirect URI `http://127.0.0.1:54321/auth/v1/callback` for local Supabase, and where the two env values go.
+- Notes: Code changes should be limited to documentation and any small fixes found during the manual check.
+- needs-human: A Google OAuth client (Google Cloud Console, type "Web application") with the authorised redirect URI `http://127.0.0.1:54321/auth/v1/callback`; put the client ID in `.env.local` as `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and the secret as `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`, then perform the Google login once to confirm.
+
+## M2 The world streak
+
+Goal: with a batch of fake local players, watch the live pass-rate meter move against the 60% threshold (and go dark in the final 3 hours), close a day by hand or wait for the scheduled job, see the world streak grow or break, browse the history list, and use the admin page to change a day's pass target and survival threshold.
+
+### T16 Game settings table
+- Type: feature
+- Status: todo
+- Depends on: T11
+- Acceptance criteria:
+  - [ ] A migration creates a single-row `game_settings` table (a check constraint enforces a single row) with `default_survival_threshold 0.60`, `pass_target_percentile 0.80`, `pass_target_streak_step 0`, `threshold_streak_step 0`, `percentile_lookback_days 14`, `percentile_min_sample 50`, `default_pass_targets jsonb` (`{"stacking": 10}` placeholder), `new_account_weight 1.0` and `full_weight_after_days 0`.
+  - [ ] `ensure_game_day` now reads its defaults from `game_settings` instead of literals.
+  - [ ] RLS: everyone can `select`, and only users whose profile has `is_admin = true` can `update` (policy uses a `security definer` `is_admin()` helper). There are no insert or delete policies.
+  - [ ] `src/lib/settings.ts` returns typed settings parsed with zod (unit-tested with valid and invalid rows).
+  - [ ] pgTAP: a non-admin update affects 0 rows; an admin update succeeds; a second row insert fails.
+- Notes: This task covers several **Open** items, all using the recommended defaults: survival threshold 60%; pass target set so 80% of recent players reach it; a rising pass target/threshold as a configurable step with a flat placeholder of 0; new accounts count fully from day one (weight 1.0 after 0 days). Record each in DECISIONS.md and flag it for confirmation.
+
+### T17 Running counters per game day
+- Type: feature
+- Status: todo
+- Depends on: T13, T16
+- Acceptance criteria:
+  - [ ] A migration creates `game_day_counters` (`game_date pk references game_days`, `attempts int`, `passes int`, `weighted_attempts numeric`, `weighted_passes numeric`, `updated_at`).
+  - [ ] `record_attempt_result` increments the counters in the same transaction, using the submitting user's `profiles.weight` (an upsert, safe under concurrent submits).
+  - [ ] RLS: counters are readable by everyone, with no write policies.
+  - [ ] pgTAP: after recording 3 attempts (2 passed) for one date with weights 1, counters read `attempts 3, passes 2, weighted_attempts 3, weighted_passes 2`; a user with weight 0.5 who passes adds 0.5 to both weighted columns; an abandoned (never submitted) attempt changes nothing.
+- Notes: The design requires running counters rather than counting rows on request. Pass rate = `weighted_passes / weighted_attempts` among counted accounts.
+
+### T18 Cached meter endpoint
+- Type: feature
+- Status: todo
+- Depends on: T17
+- Acceptance criteria:
+  - [ ] `src/config/meter.ts` exports `METER_HIDE_HOURS = 3` and `METER_CACHE_SECONDS = 30`.
+  - [ ] `GET /api/meter` (no auth needed, read-only) returns `{ gameDate, status: "open", passRate, attempts, threshold, closesAt, streak }` (streak filled in after T21; use `null` until then), with `Cache-Control: public, s-maxage=30, stale-while-revalidate=30`.
+  - [ ] From `deadline - METER_HIDE_HOURS` until the deadline, it returns `{ gameDate, status: "hidden", threshold, closesAt }` and **no** `passRate` or `attempts` fields. Tests with an injected clock: `20:59:59Z` is open and `21:00:00Z` is hidden.
+  - [ ] With 0 attempts, `passRate` is `null` (not NaN).
+  - [ ] It reads only `game_days` and `game_day_counters` (a single query) and never counts `attempts` rows (asserted by checking the mocked client's calls).
+- Notes: Depends on **Open** "How to handle last-minute sniping". Use the recommended approach (hide the meter for the final hours) with 3 hours, configurable. Record it and flag it. Also depends on the deadline (midnight UTC).
+
+### T19 Meter UI with visibility-aware polling
+- Type: feature
+- Status: todo
+- Depends on: T18
+- Acceptance criteria:
+  - [ ] `src/components/Meter.tsx` shows a bar for the pass rate with a marker at the threshold, a label like "72% passing · 60% needed · 1,234 attempts", and a countdown to the deadline.
+  - [ ] In the hidden state, it shows "The meter is hidden for the final 3 hours. The result is revealed at the deadline." (the hours come from config), plus the countdown.
+  - [ ] It polls `/api/meter` every 60 s only while `document.visibilityState === "visible"`. When the tab is hidden, it stops polling, and when it becomes visible, it fetches immediately and resumes (tested with fake timers and a mocked `visibilitychange`).
+  - [ ] Shown on `/` and below the result on `/play`.
+  - [ ] e2e: `/` shows the meter label or the hidden message.
+
+### T20 Local fake-player seeding script
+- Type: infra
+- Status: todo
+- Depends on: T17
+- Acceptance criteria:
+  - [ ] `npm run seed:dev -- --players 200 --pass-rate 0.7 [--date YYYY-MM-DD]` creates 200 fake users with profiles and submitted attempts for the date (default today), of which 140 passed, through `record_attempt_result`, so the counters update.
+  - [ ] It refuses to run and exits non-zero if `NEXT_PUBLIC_SUPABASE_URL` does not point at `localhost`/`127.0.0.1` (unit-tested guard).
+  - [ ] Running it twice for the same date adds a new batch without violating constraints (fresh users each run).
+  - [ ] README documents the command for play-testing the meter.
+
+### T21 Daily close: outcome and world streak
+- Type: feature
+- Status: todo
+- Depends on: T17
+- Acceptance criteria:
+  - [ ] A migration creates `streak_runs` (`id`, `start_date`, `end_date null`, `length int`) and SQL function `close_game_day(d date)`. It computes `final_pass_rate = weighted_passes / weighted_attempts`, sets `outcome = 'survived'` if that is `>= survival_threshold` and `'broken'` otherwise, sets `closed_at`, and updates the streak: survived extends the open run (or starts one with length 1), and broken ends the open run (sets `end_date`), so the current streak is 0.
+  - [ ] It is keyed by date and idempotent: calling it twice for the same date leaves identical rows and does not double-count the streak.
+  - [ ] pgTAP: 10 attempts with 6 passes at threshold 0.60 is survived (the boundary counts); 5 of 10 is broken; 3 consecutive survived days give current streak 3, and a broken fourth day gives 0 with best 3; an idempotent re-run changes nothing.
+  - [ ] A day with 0 attempts closes as `broken` with `final_pass_rate null` (judgment call, record it and flag it).
+  - [ ] SQL view or function `world_streak()` returns `{ current, best, current_start_date }`, readable by everyone. `/api/meter` now fills `streak`.
+- Notes: Pass rate is weighted per the definition "among counted accounts" (weights from T17). The cycle-aware streak reset comes later (T34).
+
+### T22 Prepare next day: pass target and threshold
+- Type: feature
+- Status: todo
+- Depends on: T21
+- Acceptance criteria:
+  - [ ] `close_game_day(d)` also creates `game_days(d + 1)` if it is missing, with challenge type `stacking` (rotation comes in T31), `survival_threshold = default_survival_threshold + threshold_streak_step × current_streak` (clamped to at most 0.95), and a pass target computed as follows.
+  - [ ] Pass target: when there are at least `percentile_min_sample` submitted attempts of the same challenge type in the last `percentile_lookback_days`, it is the score that a `pass_target_percentile` share of those players reached (higher-better: largest t with at least 80% of scores >= t; lower-better: smallest t with at least 80% of scores <= t). Otherwise it is `default_pass_targets[type]`. Then `pass_target_streak_step × current_streak` is applied in the harder direction.
+  - [ ] pgTAP (min sample lowered to 10 in the test): stacking scores 1 to 10 give target 3 (exactly 8 of 10 reach it); with 9 scores, the default 10 is used; with step 0.5 and a streak of 4, the target is 3 + 2 = 5.
+  - [ ] An existing next-day row (for example one an admin edited) is never overwritten.
+  - [ ] Each challenge's direction is stored in a SQL lookup (`challenge_types` table: `type`, `direction`) seeded with `stacking/higher-better`, so the SQL does not depend on the TS registry.
+- Notes: Depends on **Open** "Survival threshold and pass-target percentile" (60% and 80%) and "How pass targets and threshold rise" (configurable step, flat placeholder 0). Watch-out from the design: stacking scores compound early mistakes; the default stacking target placeholder must be easy for an admin to lower.
+
+### T23 Scheduled close job and catch-up
+- Type: infra
+- Status: todo
+- Depends on: T22
+- Acceptance criteria:
+  - [ ] SQL function `close_due_game_days()` closes, in date order, every unclosed game day whose date is before `game_date_at(now())`, then calls `ensure_game_day(game_date_at(now()))`. It is a no-op when nothing is due.
+  - [ ] A migration enables `pg_cron` and schedules `close_due_game_days()` at `'0 0 * * *'` (the deadline) and as a safety net every 5 minutes. pgTAP asserts that both `cron.job` rows exist.
+  - [ ] pgTAP: with open days 2026-11-01 to 2026-11-03 and "now" (injected via a parameter) of 2026-11-04 00:00:30Z, a single call closes all three in order, and a second call changes nothing.
+  - [ ] `npm run close-day -- --date YYYY-MM-DD` (local-only guard as in T20) calls `close_game_day` for play-testing and prints the outcome and streak.
+  - [ ] README documents the close-day script.
+- Notes: Depends on the **Open** deadline (midnight UTC). Daily close is Decided as a database scheduled job.
+
+### T24 World streak display and history list
+- Type: feature
+- Status: todo
+- Depends on: T19, T21
+- Acceptance criteria:
+  - [ ] `/` shows "World streak: N days" (singular "1 day"), "Best: M", and yesterday's result ("Yesterday the world survived with 74% passing" / "Yesterday the streak broke at 52%"), all from server components reading public data.
+  - [ ] `/history` lists closed game days newest first with date, challenge name, final pass rate (as %, or "no attempts"), threshold and outcome, paginated at 30 per page.
+  - [ ] e2e (local Supabase): seed 3 closed days (2 survived, then 1 broken) via SQL fixtures. `/history` shows 3 rows in the right order, and `/` shows "World streak: 0 days" and "Best: 2".
+
+### T25 Admin access and game-day target editor
+- Type: feature
+- Status: todo
+- Depends on: T16, T24
+- Acceptance criteria:
+  - [ ] `/admin` returns 404 for signed-out and non-admin users (checked server-side, not by hiding links).
+  - [ ] For admins, `/admin` lists today and the next 7 game days (creating missing rows via `ensure_game_day`). Each row has editable pass target and survival threshold (0 to 1, shown as %). Saving calls a server action that re-checks `is_admin` and validates with zod. Closed days are read-only.
+  - [ ] Changing today's survival threshold is reflected in `/api/meter` on the next cache refresh.
+  - [ ] Local `supabase/seed.sql` creates an admin user `admin@local.test` (documented password in README, local only).
+  - [ ] Unit tests for the server action (non-admin is rejected, invalid threshold 1.5 is rejected, closed day is rejected). e2e: an admin changes tomorrow's threshold to 55% and sees it persisted; a normal user gets 404.
+- Notes: This is the MVP scope's "Admin controls to set pass targets and the survival threshold manually". Making the owner's real account an admin in production is a deployment step (see T50).
+
+## M3 More challenges and sharing
+
+Goal: practise all three challenges (stacking, Inner Clock, Flash Count), see the daily challenge rotate from day to day, and share a spoiler-free result card that turns into a call for help when the world is close to the threshold.
+
+### T26 Inner Clock engine
+- Type: feature
+- Status: todo
+- Depends on: T08
+- Acceptance criteria:
+  - [ ] `src/challenges/inner-clock/engine.ts` implements `ChallengeModule` with `direction "lower-better"`. `paramsFromSeed(seed)` returns `{ targetMs }`, a multiple of 100 within a documented range (default 3,000 to 9,000), with a timeout of `3 × targetMs`.
+  - [ ] Inputs `{ tapMs: number | null }` (ms from start). Score = `|tapMs - targetMs| / 1000` seconds, rounded to the nearest ms. A `null` tap or a tap after the timeout scores `2 × targetMs / 1000`.
+  - [ ] Examples: target 5,000 with tap 5,320 gives 0.32; tap 4,700 gives 0.3; tap 5,000 gives 0; tap null gives 10.
+  - [ ] Schema rejects negative or non-finite `tapMs`. Determinism and range tests over seeds 0 to 999. Golden tests for 3 seeds. At least 90% coverage.
+  - [ ] `challenge_types` gains `inner-clock/lower-better`, and `default_pass_targets` gains an `inner-clock` placeholder (for example 0.5 s) via migration.
+- Notes: Device and screen lag affect timing challenges (design watch-out). Inputs are measured client-side with `performance.now()`.
+
+### T27 Inner Clock renderer and practice page
+- Type: feature
+- Status: todo
+- Depends on: T26
+- Acceptance criteria:
+  - [ ] `/practice/inner-clock` shows "Tap when you think N seconds have passed", a Start control, and no visible timer or progress indicator while running. A tap (pointer or Space) ends the run and reveals the actual time and the error.
+  - [ ] The component reports `{ tapMs }` measured from the moment the start is acknowledged on screen, and reports `null` at the timeout.
+  - [ ] Unit test: with mocked `performance.now` values 1,000 (start) and 6,320 (tap), it reports `tapMs 5320`.
+  - [ ] e2e: start, wait about 1 s, tap, and see an error value displayed.
+
+### T28 Flash Count engine
+- Type: feature
+- Status: todo
+- Depends on: T08
+- Acceptance criteria:
+  - [ ] `src/challenges/flash-count/engine.ts` implements `ChallengeModule` with `direction "lower-better"`. `paramsFromSeed(seed)` returns `{ dotCount, flashMs: 1000, dots: { x, y, r }[] }`, with `dotCount` within a documented range (default 15 to 45) and positions in a unit square, no two dots closer than the documented minimum spacing, and none clipped by the edges.
+  - [ ] Inputs `{ count: integer 0..999 }`. Score = `|count - dotCount| / dotCount × 100`, rounded to 2 decimals. With dotCount 25: count 22 gives 12; 25 gives 0; 30 gives 20; 0 gives 100.
+  - [ ] Tests: `dots.length === dotCount` for seeds 0 to 999; the spacing invariant holds for every pair; the same seed gives identical dots; different seeds give different layouts; golden tests for 3 seeds; at least 90% coverage.
+  - [ ] `challenge_types` gains `flash-count/lower-better`, and `default_pass_targets` gains a `flash-count` placeholder (for example 15).
+- Notes: Dot placement must terminate for every seed (bounded retries, then deterministic fallback). Test with the maximum count.
+
+### T29 Flash Count renderer and practice page
+- Type: feature
+- Status: todo
+- Depends on: T28
+- Acceptance criteria:
+  - [ ] `/practice/flash-count` shows a Start control, then draws the dots on canvas for `flashMs`, clears them, and shows a numeric input (mobile `inputmode="numeric"`) with Submit. The answer reveals the true count and the error %.
+  - [ ] The dots are drawn only after the canvas is visible, and the clear happens based on elapsed time (`performance.now()`), not a frame count (unit test with mocked time).
+  - [ ] e2e: start, wait 1.5 s, enter 20, submit, and see the true count and an error % displayed.
+
+### T30 All challenges in daily play and practice hub
+- Type: feature
+- Status: todo
+- Depends on: T14, T27, T29
+- Acceptance criteria:
+  - [ ] `src/challenges/registry.ts` maps `stacking`, `inner-clock` and `flash-count` to their engine module and React component. `ChallengeType` covers all three. The start and submit endpoints work for every type with no type-specific branches.
+  - [ ] `/play` renders the component for today's `challenge_type`. Unit tests of the submit handler cover a passing and a failing attempt for each type (for example Inner Clock target 0.5: error 0.32 passes and 0.6 fails).
+  - [ ] `/practice` lists the three challenges with a one-line description each and links to each practice page.
+  - [ ] e2e: with today's game day set to `flash-count` via SQL fixture, the scored flow (start, enter count, result) works end to end.
+
+### T31 Daily challenge rotation
+- Type: feature
+- Status: todo
+- Depends on: T22, T30
+- Acceptance criteria:
+  - [ ] `game_settings` gains `rotation text[]`, default `{stacking,inner-clock,flash-count}`. The next day's type is `rotation[(next_date - date '2027-01-01') mod array_length + 1]` (positive modulo, so dates before 2027 work).
+  - [ ] `ensure_game_day` and the prepare step in `close_game_day` both use the rotation.
+  - [ ] pgTAP: 2027-01-01 is stacking, 2027-01-02 inner-clock, 2027-01-03 flash-count, 2027-01-04 stacking, and 2026-12-31 flash-count. An admin-edited future row keeps its type.
+  - [ ] The admin editor (T25) gains a challenge type select for unplayed future days, validated against `challenge_types`.
+- Notes: Depends on **Open** "Which challenges join the rotation after the first three". The MVP rotates only the first three; adding a type later is a data change plus a new module.
+
+### T32 Spoiler-free share card with call for help
+- Type: feature
+- Status: todo
+- Depends on: T24, T30
+- Acceptance criteria:
+  - [ ] `src/config/share.ts` exports `NEAR_THRESHOLD_MARGIN = 0.05`. `src/lib/share.ts` exports pure `buildShareText({ passed, gameDate, streak, meter, siteUrl })`.
+  - [ ] The text includes the game name from config, the game date, the player's outcome ("I passed today's challenge" / "I didn't make it today"), the world streak, and the site URL. It never includes the score, pass target, challenge parameters or the challenge type (test asserts that none of these values appear).
+  - [ ] When the meter is open and `passRate < threshold + margin` (for example threshold 0.60, rate 0.63), the text becomes a call for help: "The world is close to the line at 63%. We need you: play before the deadline!" At 0.70 it is the normal status. In the hidden state, it says "The meter is hidden. Every attempt counts!" and no rate is shown.
+  - [ ] The `/play` result shows the card with a Share button that uses `navigator.share` when available and otherwise copies to the clipboard and shows "Copied" (unit-tested with both APIs mocked).
+  - [ ] `NEXT_PUBLIC_SITE_URL` is added to `.env.example` (placeholder `http://localhost:3000`).
+- Notes: "Near the threshold" has no number in the design. This margin is a configurable placeholder (judgment call, record it and flag it). Principle 3: a pass and a fail produce visually identical cards apart from the outcome line.
+
+## M4 Prize, rules, ads, admin and hardening
+
+Goal: see the live prize ($200 plus any rollover) and cycle progress, read the draft official rules, simulate a 30-day streak locally, draw a winner from the admin page, review cheat flags, see ad placeholders outside the challenges, and run the full end-to-end suite including mobile viewports.
+
+### T33 Cycles table and prize amount
+- Type: feature
+- Status: todo
+- Depends on: T21
+- Acceptance criteria:
+  - [ ] `src/config/prize.ts` exports `PRIZE_PER_CYCLE_CENTS = 20000`, `CYCLE_LENGTH_DAYS = 60`, `STREAK_GOAL_DAYS = 30`, `FIRST_CYCLE_START = "2027-01-01"` and `PAYOUT_WITHIN_DAYS = 45`.
+  - [ ] A migration creates `cycles` (`number int pk`, `start_date`, `end_date`, `base_prize_cents int not null default 20000`, `rollover_in_cents int not null default 0`, `goal_reached_on date`, `winner_user_id uuid`, `drawn_at timestamptz`, `paid_on date`) and inserts cycle 1 from 2027-01-01 to 2027-03-01 (60 days inclusive). There are **no** revenue share, floor or cap columns.
+  - [ ] `src/lib/prize.ts` exports `currentPrizeCents(cycle) = base + rollover_in` and `nextRolloverCents(cycle) = cycle.goal_reached_on ? 0 : base + rollover_in`. Tests: an unwon cycle 1 gives cycle 2 $400; an unwon cycle 2 gives cycle 3 $600; a won cycle gives the next cycle $200.
+  - [ ] `cycle_for(d date)` SQL returns the cycle containing `d`, or null (preseason). pgTAP: 2026-12-31 is null, 2027-01-01 is 1, 2027-03-01 is 1, 2027-03-02 is null until cycle 2 exists.
+  - [ ] RLS: readable by everyone except `winner_user_id` (expose a public view without it). Writes are admin-only via functions.
+- Notes: Human instruction: the prize is a flat $200 per cycle with rollover. Ignore the "formula, floor and cap" wording and the revenue share and cap fields.
+
+### T34 Close job: cycle-aware streak, goal and rollover
+- Type: feature
+- Status: todo
+- Depends on: T33
+- Acceptance criteria:
+  - [ ] The first game day of a cycle starts a fresh streak run (any open run from before the cycle is ended), so the goal counts only streak days inside the cycle.
+  - [ ] When the current run reaches `STREAK_GOAL_DAYS` (30) inside a cycle that has no `goal_reached_on`, `close_game_day` sets `goal_reached_on` to that date.
+  - [ ] Closing the last day of a cycle creates the next cycle (start = end + 1, 60 days) with `rollover_in_cents` = 0 if the goal was reached, otherwise base + rollover_in.
+  - [ ] pgTAP: 30 survived days from 2027-01-01 set `goal_reached_on = 2027-01-30`; a run broken on day 29 and then 30 more survived days reaches the goal on 2027-02-28; 60 days with no 30-run create cycle 2 with rollover 20000 (prize $400); re-closing any day is idempotent.
+- Notes: Judgment calls (record them and flag them): the streak resets at each cycle start (the data model ties WorldStreak to a cycle); once the goal is reached, the cycle keeps running to day 60 and entries keep accruing; preseason days (before 2027-01-01) still count toward the streak display but award no entries.
+
+### T35 Entries for passed days
+- Type: feature
+- Status: todo
+- Depends on: T34
+- Acceptance criteria:
+  - [ ] A migration creates `entries` (`user_id`, `cycle_number`, `game_date`, **`unique (user_id, game_date)`**). `record_attempt_result` inserts one when the attempt passed and `cycle_for(game_date)` is not null.
+  - [ ] RLS: a user can select only their own entries, with no client write policies.
+  - [ ] `my_entry_count(cycle)` returns the caller's count for the cycle.
+  - [ ] pgTAP: a passed attempt in a cycle creates 1 entry; a failed attempt creates none; a preseason pass creates none; a user cannot read another user's entries.
+
+### T36 Prize and cycle display
+- Type: feature
+- Status: todo
+- Depends on: T35, T24
+- Acceptance criteria:
+  - [ ] `/` shows "Prize this cycle: $200" (or the current amount with rollover, for example "$400, including $200 rolled over"), "Day X of 60" and "Goal: a 30-day world streak". Once the goal is reached, it shows "Goal reached on <date>. A winner will be drawn after the cycle ends."
+  - [ ] In preseason, it shows "The first cycle starts January 1, 2027. Prize: $200."
+  - [ ] Signed-in users see "Your entries this cycle: N".
+  - [ ] e2e with SQL fixtures for preseason, mid-cycle with rollover, and goal reached.
+
+### T37 Local multi-day simulation script
+- Type: infra
+- Status: todo
+- Depends on: T34, T20
+- Acceptance criteria:
+  - [ ] `npm run simulate:days -- --from 2027-01-01 --days 30 --players 50 --pass-rate 0.8` creates the game days, fake attempts (via `record_attempt_result`, so counters and entries update) and closes each day in order (local-only guard).
+  - [ ] After that command, `world_streak()` reports current 30, and cycle 1 has `goal_reached_on 2027-01-30` (integration check in the script's test, or a documented manual step).
+  - [ ] README documents how to play-test the cycle and the draw with it, including resetting with `npm run db:reset`.
+
+### T38 Official rules page (draft)
+- Type: feature
+- Status: todo
+- Depends on: T33, T03
+- Acceptance criteria:
+  - [ ] `/rules` states: free to enter, no purchase or payment of any kind; eligibility (US residents aged 18+, enforced at sign-up), with values from config; one account per person; how a day passes and how the world streak and cycles work (60 days, first cycle January 1, 2027, goal a 30-day streak); the prize is $200 per cycle, rolling over in full to the next cycle if the goal is not reached; one entry per passed day; one winner drawn at random from all entries; flagged accounts lose their entries; the winner must verify their email before payout; payment within 45 days of the cycle ending.
+  - [ ] Every number on the page comes from `src/config/*` (test: rendering with a changed `MIN_AGE` or `PRIZE_PER_CYCLE_CENTS` changes the text).
+  - [ ] The page contains no mention of a prize formula, floor, cap or revenue share (test asserts their absence).
+  - [ ] Sponsor name, address and contact email come from `src/config/sponsor.ts` placeholders (`"[Sponsor name]"`), and the page shows a visible "Draft" banner while any placeholder remains.
+  - [ ] Linked from the footer and from the sign-up checkbox.
+- Notes: The design calls this a draft rules page. Add a NEEDS_HUMAN entry recommending a legal review before public launch (this does not block the task).
+
+### T39 Fill in sponsor details on the rules page
+- Type: docs
+- Status: todo
+- Depends on: T38
+- Acceptance criteria:
+  - [ ] `src/config/sponsor.ts` holds the human-provided sponsor legal name, mailing address and contact email. The "Draft" banner disappears when no placeholder remains.
+- needs-human: The sponsor's legal name, mailing address and a contact email for the official rules (reply in chat or put them in `docs/NEEDS_HUMAN.md`), and confirmation that the draft rules text has been reviewed.
+
+### T40 Cheat detection rules
+- Type: feature
+- Status: todo
+- Depends on: T30
+- Acceptance criteria:
+  - [ ] `src/lib/cheat/detect.ts` exports pure `detectFlags({ challengeType, inputs, score, params, serverElapsedMs, history })`, which returns a list of reason codes. Thresholds live in `src/config/cheat.ts`.
+  - [ ] Rules with tests: `stacking-min-interval` (any two taps closer than 120 ms apart); `stacking-robotic-rhythm` (10 or more taps with an interval standard deviation below 5 ms); `stacking-perfect-run` (20 or more consecutive zero-overhang blocks); `inner-clock-implausible` (error below 0.01 s on 3 or more of the user's last 5 Inner Clock attempts); `flash-count-instant` (Flash Count submitted less than 800 ms after the dots cleared, when that is reported); `timing-mismatch` (the client's last input timestamp more than 2 s below the server-observed elapsed time minus a 15 s allowance for loading).
+  - [ ] Honest-looking fixtures (human-like jittered taps) produce no flags. Each rule has a positive and a negative test. At least 90% coverage.
+- Notes: The purpose is protecting prize entries. Flags never change pass or fail or the meter (cheating to pass only helps the streak, and principle 3 says sabotage looks the same as honest failure). The thresholds are placeholders, recorded as a judgment call.
+
+### T41 Cheat flags wiring
+- Type: feature
+- Status: todo
+- Depends on: T40, T35
+- Acceptance criteria:
+  - [ ] A migration creates `cheat_flags` (`id`, `user_id`, `attempt_id`, `reason`, `created_at`, `status` in `open|confirmed|dismissed`) with no client read or write policies (admin-only via functions).
+  - [ ] The submit handler runs `detectFlags` after scoring and records one row per reason. Any flag sets `profiles.flagged = true`. The response to the player is unchanged (test: the flagged and unflagged responses have identical shape and fields).
+  - [ ] Flagged attempts still count in the counters and the pass result (pgTAP or unit test).
+  - [ ] Entries of flagged accounts are excluded by a SQL view `drawable_entries` (pgTAP: user with 3 entries, flagged, contributes 0).
+
+### T42 Admin settings editor and flags review
+- Type: feature
+- Status: todo
+- Depends on: T41, T25, T31
+- Acceptance criteria:
+  - [ ] `/admin/settings` edits every `game_settings` field with zod validation (for example a threshold between 0 and 1, a percentile between 0.5 and 0.99, and rotation entries that must exist in `challenge_types`). A non-admin gets 404.
+  - [ ] `/admin/flags` lists open flags with user email, reason, date and attempt score. "Dismiss" sets the status to `dismissed` and, when the user has no remaining open or confirmed flags, clears `profiles.flagged`. "Confirm" keeps the account flagged.
+  - [ ] Unit tests for both server actions (admin check, validation). e2e: an admin dismisses a flag and the user's entries reappear in `drawable_entries` (an SQL assertion in the test).
+
+### T43 Prize draw tool
+- Type: feature
+- Status: todo
+- Depends on: T42
+- Acceptance criteria:
+  - [ ] `src/lib/draw.ts` exports pure `pickWinner(entries: { userId, tickets }[], randomInt: (max) => number)`, which maps ticket index to user. With A:3, B:1, index 0 to 2 picks A and index 3 picks B. An empty list throws. At least 90% coverage.
+  - [ ] `/admin/draw` lists cycles. The Draw button is enabled only when the cycle has `goal_reached_on` and today is after `end_date`. It uses `drawable_entries` and `crypto.randomInt`, and stores `winner_user_id` and `drawn_at` in one transaction. A cycle cannot be drawn twice (second attempt rejected, with a pgTAP or unit test).
+  - [ ] It shows the winner's email, whether the email is verified (`auth.users.email_confirmed_at`), the payout deadline (end date + 45 days), and a "Mark paid" action that sets `paid_on`.
+  - [ ] e2e with `simulate:days` fixtures: an admin draws a winner for a finished, won cycle and sees the email and the deadline.
+- Notes: Judgment call (record it): entries from the whole cycle count, including those earned after the goal day, and the draw happens after the cycle ends. Email verification before payout is a manual step for the owner (confirmations are off in the MVP).
+
+### T44 Ad slots outside the challenge
+- Type: feature
+- Status: todo
+- Depends on: T36
+- Acceptance criteria:
+  - [ ] `src/components/AdSlot.tsx` renders nothing unless `NEXT_PUBLIC_ADS_ENABLED === "true"` and `NEXT_PUBLIC_ADSENSE_CLIENT` is set. In development, with `NEXT_PUBLIC_ADS_PLACEHOLDER=true`, it renders a labelled grey box of fixed size (no layout shift).
+  - [ ] Slots appear on `/`, `/history` and `/rules`, and below the result on `/play` only after an attempt has finished. Never on practice pages or while a challenge is running (e2e asserts no `[data-ad-slot]` exists on `/practice/*` or during an active `/play` run).
+  - [ ] The AdSense script loads only when ads are enabled (unit test).
+  - [ ] All three env names are added to `.env.example` with comments; ads are off by default.
+- Notes: The design both says "Google AdSense from launch" and recommends no ads during the soft launch on Vercel Hobby (non-commercial only). Ads therefore stay off by default behind a flag. Flagged as ambiguous.
+
+### T45 Wire Google AdSense
+- Type: infra
+- Status: todo
+- Depends on: T44
+- Acceptance criteria:
+  - [ ] With the human's publisher ID set in the deployment environment, the AdSense script and slot markup use it, and `public/ads.txt` contains the correct `google.com, pub-XXXXXXXX, DIRECT, f08c47fec0942fa0` line.
+  - [ ] README documents enabling ads (env values, ads.txt) and the reminder that ads require Vercel Pro (commercial use).
+- needs-human: An approved Google AdSense account for the site's domain, its publisher ID (`ca-pub-...`) for `NEXT_PUBLIC_ADSENSE_CLIENT`, ad unit slot IDs if using manual units, and the decision to switch to Vercel Pro before ads go live.
+
+### T46 Account weighting
+- Type: feature
+- Status: todo
+- Depends on: T17, T16
+- Acceptance criteria:
+  - [ ] `record_attempt_result` computes the weight at submit time: `1` if the account is at least `full_weight_after_days` old, otherwise `new_account_weight`, multiplied by `profiles.weight` (default 1, a manual override). The weight used is stored on the attempt (`attempts.weight`).
+  - [ ] pgTAP: with settings `new_account_weight 0.5, full_weight_after_days 7`, a 2-day-old account adds 0.5 to the weighted counters and an 8-day-old account adds 1; with the defaults (1.0, 0), every account adds 1.
+  - [ ] The admin settings page (T42) shows both fields with help text.
+- Notes: Depends on **Open** "How much new accounts count, and after how many days they count fully". Per the human's instruction, the default is full weight from day one (1.0 after 0 days), configurable. Record it and flag it.
+
+### T47 Mobile checks
+- Type: feature
+- Status: todo
+- Depends on: T32, T44
+- Acceptance criteria:
+  - [ ] Playwright gains Chromium-based mobile projects (`Pixel 7` and an iPhone-sized viewport, 390×844 with `hasTouch` and `isMobile`) without adding new browsers to CI.
+  - [ ] On both: `/`, `/play` (signed in), `/practice/*` and `/rules` have no horizontal scroll (`scrollWidth <= clientWidth`); each challenge canvas fits within the viewport; every button and link has a hit area of at least 44×44 CSS px; each practice challenge can be completed with touch taps (`page.touchscreen.tap`).
+  - [ ] Pinch-zoom and double-tap zoom do not trigger during challenge taps (`touch-action: manipulation` on the canvas, asserted via computed style).
+  - [ ] Any layout fixes needed to pass are included (split into a follow-up task if they exceed the size limit).
+
+### T48 Meter performance under load
+- Type: feature
+- Status: todo
+- Depends on: T18
+- Acceptance criteria:
+  - [ ] The meter handler adds a module-level cache with a single in-flight request (`METER_CACHE_SECONDS`): 500 concurrent calls within one window trigger exactly 1 database read, and a call after the window triggers 1 more (unit test with a fake clock and a counting mock).
+  - [ ] A database failure serves the last good value for up to 5 minutes with `stale: true`, then 503 (unit-tested).
+  - [ ] `npm run load:meter` (free, open-source tool such as autocannon as a devDependency) runs 30 s at 200 connections against a local production build and prints p95 latency. README records a baseline result and the target p95 < 200 ms locally.
+- Notes: The design wants traffic spikes to stay cheap on Vercel Hobby: keep the client poll at 60 s and the edge cache at 30 s.
+
+### T49 End-to-end coverage of the main flows
+- Type: feature
+- Status: todo
+- Depends on: T43, T46, T47
+- Acceptance criteria:
+  - [ ] e2e "day survives": seed today with 10 fake attempts at 70% passing, then a new user signs up, plays and finishes. `/api/meter` (bypassing the cache via a test header that is only honoured outside production, or by waiting) shows 11 attempts. `close-day` makes `/` show the streak increased by 1 and `/history` list the day as survived.
+  - [ ] e2e "day breaks": seed with 50% passing, close, and `/` shows "World streak: 0 days".
+  - [ ] e2e "one attempt": a second start returns 409 and `/play` shows the existing result.
+  - [ ] e2e "practice signed out": every practice page is playable without an account, and no `/api/attempts` calls are made.
+  - [ ] e2e "ineligible sign-up": an under-18 user is refused.
+  - [ ] All e2e tests run green in CI against local Supabase.
+
+### T50 Deployment guide and launch checklist
+- Type: docs
+- Status: todo
+- Depends on: T49
+- Acceptance criteria:
+  - [ ] `docs/DEPLOYMENT.md` lists, step by step for the human: create the Supabase cloud project (free plan); apply migrations (`supabase link` + `supabase db push`); confirm pg_cron is enabled and the jobs exist; set the auth settings (email confirmations off, site URL, redirect URLs, Google provider); create the Vercel project with every env var from `.env.example`; make the owner's account an admin (exact SQL: `update profiles set is_admin = true where id = (select id from auth.users where email = '<owner email>')`); and the pre-launch items (domain, custom email provider, Vercel Pro before ads, AdSense, legal review of the rules).
+  - [ ] Every env var in `.env.example` is mentioned in the guide (a unit test or script check compares the two lists).
+  - [ ] `docs/NEEDS_HUMAN.md` gains entries for the Supabase cloud project, the Vercel project and the production admin account, each pointing at the relevant guide section.
+- Notes: The agents never run commands against production; deployment is a human step.
