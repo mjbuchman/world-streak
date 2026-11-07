@@ -26,10 +26,27 @@ export async function findUserByEmail(email: string): Promise<User | undefined> 
   }
 }
 
-/** Deletes the auth users with these emails (their profiles cascade). Missing users are skipped. */
+/**
+ * Deletes the auth users with these emails (their profiles cascade), finding them in a single
+ * pass over all users. Every delete is attempted; failures are reported together afterwards so
+ * leaked test accounts are never silent.
+ */
 export async function deleteUsersByEmail(emails: readonly string[]): Promise<void> {
-  for (const email of emails) {
-    const user = await findUserByEmail(email);
-    if (user) await adminClient().auth.admin.deleteUser(user.id);
+  if (emails.length === 0) return;
+  const wanted = new Set(emails);
+  const ids: string[] = [];
+  const perPage = 1000;
+  for (let page = 1; ; page++) {
+    const { data, error } = await adminClient().auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    for (const user of data.users) if (user.email && wanted.has(user.email)) ids.push(user.id);
+    if (data.users.length < perPage) break;
   }
+
+  const failures: string[] = [];
+  for (const id of ids) {
+    const { error } = await adminClient().auth.admin.deleteUser(id);
+    if (error) failures.push(`${id}: ${error.message}`);
+  }
+  if (failures.length > 0) throw new Error(`Could not delete e2e test users: ${failures.join("; ")}`);
 }

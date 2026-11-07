@@ -29,10 +29,11 @@ test("an eligible adult signs up, gets a profile and lands on the home page sign
 
   const user = await findUserByEmail(email);
   expect(user).toBeDefined();
+  if (!user) return;
   const { data: profile } = await adminClient()
     .from("profiles")
     .select("birth_date, country")
-    .eq("id", user!.id)
+    .eq("id", user.id)
     .single();
   expect(profile).toEqual({ birth_date: "1990-06-15", country: "US" });
 });
