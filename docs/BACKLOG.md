@@ -75,7 +75,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T05 Email and password sign-up with eligibility check
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T03, T04
 - Acceptance criteria:
   - [ ] `/signup` shows email, password (minimum 8 characters), date of birth, a country of residence select, and an "I agree to the official rules" checkbox (link to `/rules`; the page can be a stub until T38).
@@ -88,7 +88,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 ### T06 Sign-in, sign-out and account header
 - Type: feature
 - Status: todo
-- Depends on: T05
+- Depends on: T05, T55, T56
 - Acceptance criteria:
   - [ ] `/signin` signs in with email and password. Wrong credentials show "Email or password is incorrect" without saying which one.
   - [ ] A header on every page shows "Sign in" when signed out, and the user's email plus a "Sign out" button when signed in. Sign-out clears the session and returns to `/`.
@@ -98,7 +98,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 ### T07 Google sign-in and profile completion
 - Type: feature
 - Status: todo
-- Depends on: T06
+- Depends on: T06, T53
 - Acceptance criteria:
   - [ ] `/signin` and `/signup` show "Continue with Google", which calls `signInWithOAuth({ provider: "google", options: { redirectTo: <site>/auth/callback } })` (unit test with a mocked client).
   - [ ] `GET /auth/callback` exchanges the code for a session and redirects to `/complete-profile` when the user has no `profiles` row, otherwise to `/` (unit-tested for both branches and for a missing or invalid code, which redirects to `/signin?error=oauth`).
@@ -602,7 +602,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Acceptance criteria:
   - [ ] `npm audit` reports no moderate or higher vulnerabilities, or each remaining one is listed in the PR with why it can't be fixed yet (at T01: 0 in production dependencies, 8 moderate in dev tooling).
   - [ ] If the CI e2e job spends more than 2 minutes building the app inside Playwright's `webServer`, move the build into its own workflow step before `npm run test:e2e` (an addition only) and make `webServer` just run `npm run start`.
-- Notes: Suggested in T01 review (quality-reviewer). `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing.
+- Notes: Suggested in T01 review (quality-reviewer). Also take the patch updates for `react` and `react-dom` (19.3.0 to 19.3.1, from the T05 maintainer check). Do not take the major bumps (TypeScript 7, ESLint 10): `eslint-config-next` 16.4.5 targets ESLint 9 and TypeScript 5. `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing.
 
 ### T52 Sign-up abuse protection
 - Type: maintenance
@@ -614,3 +614,73 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] Both keys are listed in `.env.example` with placeholders and comments.
 - Notes: Raised in the T05 quality review. Sign-up uses the service-role `auth.admin.createUser`, so Supabase's built-in sign-up rate limit does not apply, and a prize game attracts bulk account creation. Should land before the public launch (M4 at the latest).
 - needs-human: a free Cloudflare account and a Turnstile widget for the production domain; put the site key and secret key in `.env.local` and Vercel as `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`.
+
+### T53 Share eligibility-field validation; plausible-age check moves into checkEligibility
+- Type: maintenance
+- Status: in-progress
+- Depends on: T05
+- Acceptance criteria:
+  - [ ] `checkEligibility` takes a maximum plausible age in `EligibilityRules`, defaulting to `MAX_PLAUSIBLE_AGE = 120` in `src/config/eligibility.ts`. A birth date older than that returns `reason: "invalid-date"`. It uses the existing calendar-date parsing, not string slicing.
+  - [ ] `isImplausiblyOld` and the local `MAX_PLAUSIBLE_AGE` are removed from `src/lib/signup.ts`.
+  - [ ] The birth date, country and rules-agreement validation is one exported function that `signUp` uses and T07's `/complete-profile` can reuse. It covers the schema pieces, the field-error mapping and the refusal or invalid-date decision.
+  - [ ] `eligibility.test.ts` boundary tests: exactly 120 years old on `today` is eligible; one day older is `invalid-date`. The existing `signup.test.ts` and `actions.test.ts` cases pass unchanged.
+  - [ ] The 90% thresholds for `src/lib/eligibility.ts` and `src/lib/signup.ts` still pass; `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T05. Prevents T07 from copying the validation.
+
+### T54 Component tests for the sign-up form
+- Type: maintenance
+- Status: todo
+- Depends on: T05
+- Acceptance criteria:
+  - [ ] Free dev dependencies for component tests (`@testing-library/react` plus `jsdom` or `happy-dom`). The environment is chosen per file (`// @vitest-environment jsdom`), so existing node tests are unaffected.
+  - [ ] `src/app/signup/SignUpForm.test.tsx`, with the server action mocked, covers:
+    - field errors render with `aria-invalid="true"` and a matching `aria-describedby` id;
+    - the form-level message renders in `role="alert"`;
+    - the submitted email, birth date and country are refilled after a failed submit;
+    - the submit button is disabled and reads "Creating account" while pending.
+  - [ ] `SignUpForm.tsx` reaches at least 80% line and branch coverage, with no coverage exclusion added for client components.
+  - [ ] `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T05. Client components count at 0% unit coverage, and the overall branch coverage (about 76%) would drift toward the 70% floor as UI grows.
+
+### T55 Shared form field components
+- Type: maintenance
+- Status: todo
+- Depends on: T54
+- Acceptance criteria:
+  - [ ] `src/components/` provides:
+    - `Field`: label, error text and `aria-describedby` wiring, also used by the checkbox row;
+    - `FormAlert`;
+    - `BirthDateInput`;
+    - `CountrySelect`, including the remount-on-value fix;
+    - `RulesAgreement`.
+  - [ ] The components' CSS lives in a component CSS module; `src/app/signup/signup.module.css` keeps only page layout.
+  - [ ] `SignUpForm.tsx` uses the components, and T54's component tests pass unchanged.
+  - [ ] The new components meet the coverage thresholds; `npm run verify` and the sign-up e2e tests pass; no product behavior changes.
+- Notes: From the maintainer check after T05. T06 needs `Field` and `FormAlert`; T07 needs the birth date, country and rules fields.
+
+### T56 Shared e2e support module
+- Type: maintenance
+- Status: todo
+- Depends on: T05
+- Acceptance criteria:
+  - [ ] `tests/e2e/support/` exports:
+    - the service-role admin client;
+    - `uniqueEmail()` with automatic clean-up registration;
+    - `findUserByEmail`;
+    - `hasSessionCookie`;
+    - `signUpViaForm(page, { email, birthDate, country })`.
+  - [ ] `tests/e2e/signup.spec.ts` uses them with the same assertions.
+  - [ ] Clean-up deletes accounts by the user id looked up once, and runs even when a test fails (an `afterEach` or fixture).
+  - [ ] `npm run test:e2e` passes locally and in CI; `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T05. T06 and T07 e2e tests need the same helpers.
+
+### T57 Single source for eligibility wording; country-list consistency test
+- Type: maintenance
+- Status: todo
+- Depends on: T05
+- Acceptance criteria:
+  - [ ] One helper (for example `eligibilitySummary()`, built from `MIN_AGE` and `ALLOWED_COUNTRIES`) produces the "US residents aged 18 or over" wording. Both `refusalMessage()` and the `/signup` intro use it. A unit test shows that changing `ALLOWED_COUNTRIES` changes both texts.
+  - [ ] A unit test checks that every `ALLOWED_COUNTRIES` code appears in `COUNTRY_OPTIONS`, and that option codes are unique and match `^[A-Z]{2}$`.
+  - [ ] The `ELIGIBILITY_TIME_ZONE` comment is accurate: Honolulu is the westernmost US state time zone, so its calendar date is the earliest.
+  - [ ] `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T05. The `/signup` intro currently hard-codes "US residents".

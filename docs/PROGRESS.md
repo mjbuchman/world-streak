@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T05 Email and password sign-up with eligibility check
+- Active task: T53 Shared eligibility-field validation (maintenance before T06/T07)
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,14 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-07 — Maintainer check after 5 merged tasks
+- Health good. Added T53–T57 (shared eligibility validation, component tests, shared form components, shared e2e helpers, single eligibility wording). T06 now depends on T55 and T56, and T07 on T53, so sign-in and profile completion reuse the code instead of copying it. React patch update folded into T51.
+
+### 2026-11-07 — T05 Email and password sign-up with eligibility check (PR #6)
+- `/signup` with zod validation, eligibility before account creation (age check on the Hawaii date), profile via service role with rollback, sign-in and redirect.
+- Review rounds: spec 2, quality 2, tests 2 (round 1 blocked: nothing tested that the action used the Hawaii date; fixed with a fixed-clock test).
+- Notes: about 1,000 lines, over the guideline; split UI-heavy tasks in the backlog first from now on. A select only reads `defaultValue` on mount; remount it with a `key` to refill after a failed submit. Next.js renders an empty `role="alert"` route announcer, so filter alert locators by text. New T52 (sign-up abuse protection) needs Turnstile keys from the human before launch.
 
 ### 2026-11-07 — T04 Profiles table with row-level security (PR #5)
 - `public.profiles` with RLS: players read only their own row; all writes go through the service role.

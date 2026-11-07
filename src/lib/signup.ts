@@ -1,25 +1,17 @@
 import { z } from "zod";
 import { ALLOWED_COUNTRIES, MIN_AGE } from "@/config/eligibility";
 import { GAME_NAME } from "@/config/game";
-import { checkEligibility } from "@/lib/eligibility";
+import { type EligibilityField, validateEligibilityFields } from "@/lib/eligibilityFields";
 
-const MAX_PLAUSIBLE_AGE = 120;
 const GENERIC_ERROR = "Something went wrong. Please try again.";
 
-const signUpSchema = z.object({
+const accountSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address.")),
   // Supabase (bcrypt) accepts at most 72 characters.
   password: z.string().min(8, "Use at least 8 characters.").max(72, "Use at most 72 characters."),
-  birthDate: z.string(),
-  country: z
-    .string("Select your country of residence.")
-    .trim()
-    .toUpperCase()
-    .min(1, "Select your country of residence."),
-  agree: z.literal("on", "You need to agree to the official rules."),
 });
 
-type Field = keyof z.infer<typeof signUpSchema>;
+type Field = keyof z.infer<typeof accountSchema> | EligibilityField;
 
 export type SignUpValues = { email: string; birthDate: string; country: string };
 
@@ -56,12 +48,6 @@ function echoValues(raw: Record<Field, unknown>): SignUpValues {
   return { email: text(raw.email), birthDate: text(raw.birthDate), country: text(raw.country) };
 }
 
-// Dates of birth more than MAX_PLAUSIBLE_AGE years ago are typos, not players.
-function isImplausiblyOld(birthDate: string, today: string): boolean {
-  const oldest = `${Number(today.slice(0, 4)) - MAX_PLAUSIBLE_AGE}${today.slice(4)}`;
-  return birthDate < oldest;
-}
-
 /**
  * Validates a sign-up form and creates the account. Eligibility is checked before any auth
  * user exists, and a user whose profile cannot be written is deleted again.
@@ -69,24 +55,18 @@ function isImplausiblyOld(birthDate: string, today: string): boolean {
 export async function signUp(formData: FormData, deps: SignUpDeps): Promise<SignUpState> {
   const raw = readForm(formData);
   const values = echoValues(raw);
-  const parsed = signUpSchema.safeParse(raw);
-  const fieldErrors: Partial<Record<Field, string>> = {};
-  for (const issue of parsed.error?.issues ?? []) {
-    const field = issue.path[0] as Field;
-    fieldErrors[field] ??= issue.message;
+  const account = accountSchema.safeParse(raw);
+  const eligibility = validateEligibilityFields(raw, deps.today);
+  const fieldErrors: Partial<Record<Field, string>> = { ...eligibility.fieldErrors };
+  for (const issue of account.error?.issues ?? []) {
+    fieldErrors[issue.path[0] as Field] ??= issue.message;
   }
 
-  // Eligibility reads the raw text, which checkEligibility parses strictly (exact YYYY-MM-DD,
-  // trimmed upper-case country), so it judges the same values that parsed.data later stores.
-  const eligibility = checkEligibility({ birthDate: values.birthDate, country: values.country }, deps.today);
-  const badDate =
-    (!eligibility.eligible && eligibility.reason === "invalid-date") || isImplausiblyOld(values.birthDate, deps.today);
-  if (badDate) fieldErrors.birthDate = "Enter a valid date of birth.";
+  if (!account.success || Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors, values };
+  if (eligibility.refused || !eligibility.data) return { ok: false, message: refusalMessage(), values };
 
-  if (!parsed.success || badDate) return { ok: false, fieldErrors, values };
-  if (!eligibility.eligible) return { ok: false, message: refusalMessage(), values };
-
-  const { email, password, birthDate, country } = parsed.data;
+  const { email, password } = account.data;
+  const { birthDate, country } = eligibility.data;
   const created = await deps.createUser(email, password);
   if ("error" in created) {
     return created.error === "email-taken"

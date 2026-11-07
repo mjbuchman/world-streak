@@ -27,6 +27,7 @@ export default defineConfig({
         "src/lib/streak/**": { lines: 90, branches: 90 },
         // Decides who may enter the prize draw.
         "src/lib/eligibility.ts": { lines: 90, branches: 90 },
+        "src/lib/eligibilityFields.ts": { lines: 90, branches: 90 },
         // Gates account creation.
         "src/lib/signup.ts": { lines: 90, branches: 90 },
       },

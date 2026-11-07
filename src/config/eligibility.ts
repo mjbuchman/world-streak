@@ -8,3 +8,6 @@ export const ALLOWED_COUNTRIES: readonly string[] = ["US"];
 // "Today" for the age check is the date in the earliest US time zone, so the UTC date
 // rolling over during a US evening never lets someone through the day before their birthday.
 export const ELIGIBILITY_TIME_ZONE = "Pacific/Honolulu";
+
+// Birth dates more than this many years ago are treated as typos, not players.
+export const MAX_PLAUSIBLE_AGE = 120;
