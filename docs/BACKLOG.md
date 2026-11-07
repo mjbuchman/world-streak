@@ -617,7 +617,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T53 Share eligibility-field validation; plausible-age check moves into checkEligibility
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T05
 - Acceptance criteria:
   - [ ] `checkEligibility` takes a maximum plausible age in `EligibilityRules`, defaulting to `MAX_PLAUSIBLE_AGE = 120` in `src/config/eligibility.ts`. A birth date older than that returns `reason: "invalid-date"`. It uses the existing calendar-date parsing, not string slicing.
@@ -676,7 +676,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T57 Single source for eligibility wording; country-list consistency test
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T05
 - Acceptance criteria:
   - [ ] One helper (for example `eligibilitySummary()`, built from `MIN_AGE` and `ALLOWED_COUNTRIES`) produces the "US residents aged 18 or over" wording. Both `refusalMessage()` and the `/signup` intro use it. A unit test shows that changing `ALLOWED_COUNTRIES` changes both texts.

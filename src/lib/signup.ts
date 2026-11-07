@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ALLOWED_COUNTRIES, MIN_AGE } from "@/config/eligibility";
 import { GAME_NAME } from "@/config/game";
+import { eligibilitySummary } from "@/lib/eligibility";
 import { type EligibilityField, validateEligibilityFields } from "@/lib/eligibilityFields";
 import { collectFieldErrors, textValue } from "@/lib/forms";
 
@@ -30,7 +30,7 @@ export type SignUpDeps = {
 };
 
 export function refusalMessage(): string {
-  return `Sorry, ${GAME_NAME} is open only to ${ALLOWED_COUNTRIES.join(" or ")} residents aged ${MIN_AGE} or over.`;
+  return `Sorry, ${GAME_NAME} is open only to ${eligibilitySummary()}.`;
 }
 
 function readForm(formData: FormData): Record<Field, unknown> {

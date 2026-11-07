@@ -74,3 +74,8 @@ export function checkEligibility(
 
   return { eligible: true };
 }
+
+/** Who may play, in words, for example "US residents aged 18 or over". */
+export function eligibilitySummary(rules: EligibilityRules = DEFAULT_RULES): string {
+  return `${rules.allowedCountries.join(" or ")} residents aged ${rules.minAge} or over`;
+}

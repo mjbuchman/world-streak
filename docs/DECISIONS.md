@@ -52,7 +52,7 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Confirmed by human: yes (for now)
 
 ### 2026-11-07 — Which "today" the age check uses (T05)
-- Choice: the calendar date in Pacific/Honolulu, the earliest US time zone (`ELIGIBILITY_TIME_ZONE` in `src/config/eligibility.ts`).
+- Choice: the calendar date in Pacific/Honolulu (`ELIGIBILITY_TIME_ZONE` in `src/config/eligibility.ts`). Hawaii is the westernmost US state time zone, so its calendar date is the earliest in the US.
 - Reason: using the UTC date would accept someone during the US evening before their 18th birthday. The earliest US date can never be ahead of any US resident's local date, so it never admits anyone early; at worst it makes someone in the eastern US wait a few extra hours on their birthday.
 - How to change it later: edit `ELIGIBILITY_TIME_ZONE`.
 - Confirmed by human: not needed (follows from the human's 18+ rule); recorded for visibility.
