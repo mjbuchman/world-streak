@@ -36,17 +36,31 @@ describe("signInAction", () => {
     expect(m.signInWithPassword).toHaveBeenCalledWith({ email: "player@example.com", password: "secret-pass" });
   });
 
-  it("returns the generic message when Supabase rejects the credentials", async () => {
+  it("returns the generic credentials message when Supabase rejects the credentials", async () => {
     m.signInWithPassword.mockResolvedValueOnce({ error: { code: "invalid_credentials" } });
     const result = await signInAction(null, form("player@example.com", "wrong-pass"));
     expect(result).toMatchObject({ ok: false, message: "Email or password is incorrect" });
     expect(m.redirect).not.toHaveBeenCalled();
   });
+
+  it.each(["over_request_rate_limit", "unexpected_failure", undefined])(
+    "does not blame the credentials for the Supabase error %s",
+    async (code) => {
+      m.signInWithPassword.mockResolvedValueOnce({ error: { code } });
+      const result = await signInAction(null, form("player@example.com", "secret-pass"));
+      expect(result).toMatchObject({ ok: false, message: "Something went wrong. Please try again." });
+    },
+  );
 });
 
 describe("signOutAction", () => {
-  it("clears the session and returns home", async () => {
+  it("clears this browser's session and returns home", async () => {
     await expect(signOutAction()).rejects.toThrow("NEXT_REDIRECT /");
-    expect(m.signOut).toHaveBeenCalledTimes(1);
+    expect(m.signOut).toHaveBeenCalledWith({ scope: "local" });
+  });
+
+  it("still returns home if Supabase reports an error while signing out", async () => {
+    m.signOut.mockResolvedValueOnce({ error: { message: "session not found" } });
+    await expect(signOutAction()).rejects.toThrow("NEXT_REDIRECT /");
   });
 });

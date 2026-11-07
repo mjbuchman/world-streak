@@ -3,7 +3,7 @@ import Link from "next/link";
 import { GAME_NAME } from "@/config/game";
 import { eligibilitySummary } from "@/lib/eligibility";
 import { SignUpForm } from "./SignUpForm";
-import styles from "./signup.module.css";
+import styles from "@/app/auth/authPage.module.css";
 
 export const metadata: Metadata = { title: `Create account | ${GAME_NAME}` };
 

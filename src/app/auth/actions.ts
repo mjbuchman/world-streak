@@ -10,16 +10,20 @@ export async function signInAction(_previous: SignInState | null, formData: Form
     async authenticate(email, password) {
       const supabase = await createSupabaseServerClient();
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      return !error;
+      if (!error) return "ok";
+      // Supabase uses one code for an unknown email and a wrong password, so this still
+      // never reveals whether an account exists.
+      return error.code === "invalid_credentials" ? "invalid-credentials" : "error";
     },
   });
   if (result.ok) redirect("/");
   return result;
 }
 
-// Signing out without a session is harmless, so no auth check is needed.
+// Signing out without a session is harmless, so no auth check is needed. "local" signs out
+// this browser only; a player's other devices stay signed in.
 export async function signOutAction(): Promise<void> {
   const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" });
   redirect("/");
 }

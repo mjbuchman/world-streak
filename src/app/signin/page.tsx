@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GAME_NAME } from "@/config/game";
-import styles from "../signup/signup.module.css";
+import styles from "@/app/auth/authPage.module.css";
 import { SignInForm } from "./SignInForm";
 
 export const metadata: Metadata = { title: `Sign in | ${GAME_NAME}` };

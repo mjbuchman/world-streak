@@ -7,8 +7,10 @@ import styles from "./AccountHeader.module.css";
 /** Small top app bar: the game name, and the account state on the right. */
 export async function AccountHeader() {
   const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.auth.getUser();
-  const email = data.user?.email;
+  // getClaims verifies the token signature locally (no extra Auth round trip); the proxy has
+  // already refreshed the session for this request.
+  const { data } = await supabase.auth.getClaims();
+  const email = data?.claims.email;
 
   return (
     <header className={styles.bar}>

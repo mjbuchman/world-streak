@@ -8,7 +8,10 @@ import { updateSession } from "./session";
 
 type CookieMethods = {
   getAll: () => { name: string; value: string }[];
-  setAll: (cookies: { name: string; value: string; options: Record<string, unknown> }[]) => void;
+  setAll: (
+    cookies: { name: string; value: string; options: Record<string, unknown> }[],
+    headers: Record<string, string>,
+  ) => void;
 };
 
 beforeEach(() => {
@@ -40,7 +43,11 @@ describe("updateSession", () => {
   it("writes refreshed cookies to both the forwarded request and the response", async () => {
     m.getUser.mockImplementation(async () => {
       const cookies = m.createServerClient.mock.calls[0][2].cookies as CookieMethods;
-      cookies.setAll([{ name: "sb-local-auth-token", value: "new", options: { path: "/", httpOnly: true } }]);
+      cookies.setAll([{ name: "sb-local-auth-token", value: "new", options: { path: "/", httpOnly: true } }], {
+        "Cache-Control": "private, no-cache, no-store, must-revalidate, max-age=0",
+        Expires: "0",
+        Pragma: "no-cache",
+      });
       return { data: { user: { id: "u1" } }, error: null };
     });
     const request = requestWithCookie();
@@ -49,6 +56,22 @@ describe("updateSession", () => {
     const set = response.cookies.get("sb-local-auth-token");
     expect(set?.value).toBe("new");
     expect(set?.httpOnly).toBe(true);
+  });
+
+  it("marks a response that refreshes the session as uncacheable, so no CDN can share it", async () => {
+    m.getUser.mockImplementation(async () => {
+      const cookies = m.createServerClient.mock.calls[0][2].cookies as CookieMethods;
+      cookies.setAll([{ name: "sb-local-auth-token", value: "new", options: {} }], {
+        "Cache-Control": "private, no-cache, no-store, must-revalidate, max-age=0",
+        Expires: "0",
+        Pragma: "no-cache",
+      });
+      return { data: { user: { id: "u1" } }, error: null };
+    });
+    const response = await updateSession(requestWithCookie());
+    expect(response.headers.get("cache-control")).toBe("private, no-cache, no-store, must-revalidate, max-age=0");
+    expect(response.headers.get("expires")).toBe("0");
+    expect(response.headers.get("pragma")).toBe("no-cache");
   });
 
   it("passes the request through untouched when Supabase is not configured", async () => {

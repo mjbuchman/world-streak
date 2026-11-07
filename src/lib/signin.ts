@@ -15,9 +15,12 @@ export type SignInState =
   | { ok: true }
   | { ok: false; message?: string; fieldErrors?: Partial<Record<Field, string>>; values: { email: string } };
 
+/** For outages and rate limits, so players are not told their password is wrong. */
+export const SIGN_IN_FAILED = "Something went wrong. Please try again.";
+
 export type SignInDeps = {
-  /** Signs in and stores the session; true on success. */
-  authenticate(email: string, password: string): Promise<boolean>;
+  /** Signs in and stores the session. */
+  authenticate(email: string, password: string): Promise<"ok" | "invalid-credentials" | "error">;
 };
 
 export async function signIn(formData: FormData, deps: SignInDeps): Promise<SignInState> {
@@ -27,6 +30,8 @@ export async function signIn(formData: FormData, deps: SignInDeps): Promise<Sign
   if (!parsed.success) return { ok: false, fieldErrors: collectFieldErrors<Field>(parsed.error.issues), values };
 
   const { email, password } = parsed.data;
-  if (!(await deps.authenticate(email, password))) return { ok: false, message: WRONG_CREDENTIALS, values };
+  const outcome = await deps.authenticate(email, password);
+  if (outcome === "invalid-credentials") return { ok: false, message: WRONG_CREDENTIALS, values };
+  if (outcome === "error") return { ok: false, message: SIGN_IN_FAILED, values };
   return { ok: true };
 }

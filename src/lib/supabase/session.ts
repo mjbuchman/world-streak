@@ -10,15 +10,20 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   let response = NextResponse.next({ request });
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // Without configuration there is no session to refresh. Pages still fail loudly when they
+  // need Supabase, but /api/health must keep answering so it can report "unavailable".
   if (!url || !anonKey) return response;
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet, headers) {
         for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
         response = NextResponse.next({ request });
         for (const { name, value, options } of cookiesToSet) response.cookies.set(name, value, options);
+        // No-cache headers from @supabase/ssr: a CDN must never cache a response carrying one
+        // player's refreshed session cookie and serve it to someone else.
+        for (const [key, value] of Object.entries(headers)) response.headers.set(key, value);
       },
     },
   });
