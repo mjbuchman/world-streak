@@ -629,7 +629,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T54 Component tests for the sign-up form
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T05
 - Acceptance criteria:
   - [ ] Free dev dependencies for component tests (`@testing-library/react` plus `jsdom` or `happy-dom`). The environment is chosen per file (`// @vitest-environment jsdom`), so existing node tests are unaffected.
@@ -644,7 +644,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T55 Shared form field components
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T54
 - Acceptance criteria:
   - [ ] `src/components/` provides:
