@@ -17,8 +17,8 @@ export async function createSupabaseServerClient() {
         try {
           for (const { name, value, options } of cookiesToSet) cookieStore.set(name, value, options);
         } catch {
-          // Server Components cannot set cookies. Session refresh happens where cookies are writable
-          // (Route Handlers, Server Actions, the request proxy), so skipping the write here is safe.
+          // Server Components cannot set cookies. The session is refreshed where cookies are
+          // writable (Route Handlers and Server Actions), so skipping the write here is safe.
         }
       },
     },

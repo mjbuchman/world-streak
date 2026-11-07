@@ -38,3 +38,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: the human wants a clean Material look without the usual signs of an AI-built app; the human approved the list and the styling approach.
 - How to change it later: edit `docs/UI_GUIDELINES.md` (human approval needed).
 - Confirmed by human: yes. The brand color and typefaces are placeholders, pending confirmation in NEEDS_HUMAN.
+
+### 2026-11-07 — Public health endpoint (T02)
+- Choice: `GET /api/health` needs no sign-in, an exception to CLAUDE.md's "every route handler checks authentication".
+- Reason: it is a liveness probe for monitoring and the T02 e2e test; it takes no input and reveals only whether the database answers (via `public.health_check()`, which reads no data).
+- How to change it later: add an auth check in `src/app/api/health/route.ts`, or delete the route.
+- Confirmed by human: not needed (no Open design item); recorded for visibility.

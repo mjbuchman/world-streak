@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   createBrowserClient: vi.fn((...args: unknown[]) => ({ kind: "browser", args })),
@@ -30,6 +30,8 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-key");
 });
+
+afterEach(() => vi.unstubAllEnvs());
 
 describe("createSupabaseBrowserClient", () => {
   it("uses the public URL and anon key", () => {
