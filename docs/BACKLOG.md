@@ -87,7 +87,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T06 Sign-in, sign-out and account header
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T05, T55, T56
 - Acceptance criteria:
   - [ ] `/signin` signs in with email and password. Wrong credentials show "Email or password is incorrect" without saying which one.
@@ -660,7 +660,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T56 Shared e2e support module
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T05
 - Acceptance criteria:
   - [ ] `tests/e2e/support/` exports:
@@ -684,3 +684,15 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] The `ELIGIBILITY_TIME_ZONE` comment is accurate: Honolulu is the westernmost US state time zone, so its calendar date is the earliest.
   - [ ] `npm run verify` passes; no product behavior changes.
 - Notes: From the maintainer check after T05. The `/signup` intro currently hard-codes "US residents".
+
+### T58 Fewer Auth round trips per page; keep pages static where possible
+- Type: maintenance
+- Status: todo
+- Depends on: T06
+- Acceptance criteria:
+  - [ ] Each page render makes at most one Auth server round trip. Options: `getClaims()` in the proxy, or asymmetric JWT signing keys so `getClaims()` verifies locally. Whichever is chosen is recorded in DECISIONS.md with the trade-off.
+  - [ ] Pages whose content does not depend on the user (for example `/rules`) can render statically again, for example by making the account header a small client island that loads the session after first paint, without the header flashing the wrong state.
+  - [ ] A signed-in user who opens `/signin` or `/signup` is redirected to `/`.
+  - [ ] Sign-in shows a specific message for `email_not_confirmed`, in case email confirmation is ever turned on.
+  - [ ] `npm run verify` and `npm run test:e2e` pass.
+- Notes: From the T06 quality review. Not urgent during development; do before the live meter and play pages add traffic (M2).

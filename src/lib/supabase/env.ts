@@ -14,3 +14,10 @@ export function publicSupabaseEnv(): { url: string; anonKey: string } {
     anonKey: requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
   };
 }
+
+/** The public settings, or null when either is missing (for code that must work unconfigured). */
+export function optionalPublicSupabaseEnv(): { url: string; anonKey: string } | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  return url && anonKey ? { url, anonKey } : null;
+}

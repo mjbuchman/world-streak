@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+// The header reads the Supabase session and is tested on its own.
+vi.mock("@/components/AccountHeader", () => ({ AccountHeader: () => null }));
+
 // next/font only works inside the Next.js compiler, so stand it in with a fixed class name.
 vi.mock("next/font/google", () => {
   const font = () => ({ variable: "font-variable" });

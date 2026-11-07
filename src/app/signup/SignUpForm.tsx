@@ -6,7 +6,7 @@ import { Field, TextInput } from "@/components/form/Field";
 import { FormAlert, SubmitButton } from "@/components/form/FormParts";
 import type { SignUpState } from "@/lib/signup";
 import { signUpAction } from "./actions";
-import styles from "./signup.module.css";
+import styles from "@/app/auth/authPage.module.css";
 
 export function SignUpForm() {
   const [state, formAction, pending] = useActionState<SignUpState | null, FormData>(signUpAction, null);

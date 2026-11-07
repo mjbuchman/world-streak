@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T53 Shared eligibility-field validation (maintenance before T06/T07)
+- Active task: T06 Sign-in, sign-out and account header
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,14 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-07 — Maintenance T53, T57, T54, T55, T56 (PRs #7–#11)
+- T53: `checkEligibility` owns the 120-year limit; `validateEligibilityFields` (tagged `invalid | refused | ok`) is the shared birth date, country and rules validation; `src/lib/forms.ts` has `textValue` and `collectFieldErrors`.
+- T57: `eligibilitySummary()` is the single source of "US residents aged 18 or over".
+- T54: component tests with Testing Library; put `// @vitest-environment jsdom` at the top of each component test file.
+- T55: shared Material 3 form components in `src/components/form/` (Field, TextInput, BirthDateInput, CountrySelect, RulesAgreement, FormAlert, SubmitButton).
+- T56: e2e helpers in `tests/e2e/support/`; import `test`/`expect` from `./support/fixtures` and use `accounts.uniqueEmail()` so accounts are cleaned up even on failure.
+- All approved in one review round each. Notes: don't run e2e and `verify` at the same time in one working copy (the Next build and the port collide); ask only one reviewer to run e2e.
 
 ### 2026-11-07 — Maintainer check after 5 merged tasks
 - Health good. Added T53–T57 (shared eligibility validation, component tests, shared form components, shared e2e helpers, single eligibility wording). T06 now depends on T55 and T56, and T07 on T53, so sign-in and profile completion reuse the code instead of copying it. React patch update folded into T51.

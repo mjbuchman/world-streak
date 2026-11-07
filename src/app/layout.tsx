@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Roboto_Flex } from "next/font/google";
+import { AccountHeader } from "@/components/AccountHeader";
 import { GAME_NAME } from "@/config/game";
 import "./tokens.css";
 import "./globals.css";
@@ -15,7 +16,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${plainFont.variable} ${brandFont.variable}`}>
-      <body>{children}</body>
+      <body>
+        <AccountHeader />
+        {children}
+      </body>
     </html>
   );
 }

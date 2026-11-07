@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { GAME_NAME } from "@/config/game";
 import { eligibilitySummary } from "@/lib/eligibility";
 import { SignUpForm } from "./SignUpForm";
-import styles from "./signup.module.css";
+import styles from "@/app/auth/authPage.module.css";
 
 export const metadata: Metadata = { title: `Create account | ${GAME_NAME}` };
 
@@ -14,6 +15,9 @@ export default function SignUpPage() {
         An account lets your daily attempt count toward the world streak. Open to {eligibilitySummary()}.
       </p>
       <SignUpForm />
+      <p className={styles.switch}>
+        Already have an account? <Link href="/signin">Sign in</Link>
+      </p>
     </main>
   );
 }
