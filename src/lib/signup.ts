@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ALLOWED_COUNTRIES, MIN_AGE } from "@/config/eligibility";
 import { GAME_NAME } from "@/config/game";
 import { type EligibilityField, validateEligibilityFields } from "@/lib/eligibilityFields";
+import { collectFieldErrors, textValue } from "@/lib/forms";
 
 const GENERIC_ERROR = "Something went wrong. Please try again.";
 
@@ -44,8 +45,7 @@ function readForm(formData: FormData): Record<Field, unknown> {
 }
 
 function echoValues(raw: Record<Field, unknown>): SignUpValues {
-  const text = (value: unknown) => (typeof value === "string" ? value : "");
-  return { email: text(raw.email), birthDate: text(raw.birthDate), country: text(raw.country) };
+  return { email: textValue(raw.email), birthDate: textValue(raw.birthDate), country: textValue(raw.country) };
 }
 
 /**
@@ -57,13 +57,13 @@ export async function signUp(formData: FormData, deps: SignUpDeps): Promise<Sign
   const values = echoValues(raw);
   const account = accountSchema.safeParse(raw);
   const eligibility = validateEligibilityFields(raw, deps.today);
-  const fieldErrors: Partial<Record<Field, string>> = { ...eligibility.fieldErrors };
-  for (const issue of account.error?.issues ?? []) {
-    fieldErrors[issue.path[0] as Field] ??= issue.message;
-  }
+  const fieldErrors: Partial<Record<Field, string>> = {
+    ...collectFieldErrors<Field>(account.error?.issues ?? []),
+    ...(eligibility.status === "invalid" ? eligibility.fieldErrors : {}),
+  };
 
-  if (!account.success || Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors, values };
-  if (eligibility.refused || !eligibility.data) return { ok: false, message: refusalMessage(), values };
+  if (!account.success || eligibility.status === "invalid") return { ok: false, fieldErrors, values };
+  if (eligibility.status === "refused") return { ok: false, message: refusalMessage(), values };
 
   const { email, password } = account.data;
   const { birthDate, country } = eligibility.data;

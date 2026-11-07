@@ -18,7 +18,11 @@ export type EligibilityRules = {
   maxAge?: number;
 };
 
-const DEFAULT_RULES: EligibilityRules = { minAge: MIN_AGE, allowedCountries: ALLOWED_COUNTRIES };
+const DEFAULT_RULES: EligibilityRules = {
+  minAge: MIN_AGE,
+  allowedCountries: ALLOWED_COUNTRIES,
+  maxAge: MAX_PLAUSIBLE_AGE,
+};
 
 type CalendarDate = { year: number; month: number; day: number };
 
