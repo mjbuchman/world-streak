@@ -53,7 +53,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T03 Config module and eligibility rules
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T01
 - Acceptance criteria:
   - [ ] `src/config/game.ts` exports `GAME_NAME = "World Streak"`, and every place that shows the name (layout title, home heading) imports it. Changing the constant changes the page title. Check this with a unit test of the metadata export.
@@ -65,7 +65,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T04 Profiles table with row-level security
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T02
 - Acceptance criteria:
   - [ ] A migration creates `public.profiles` with columns `id uuid primary key references auth.users on delete cascade`, `birth_date date not null`, `country text not null`, `is_admin boolean not null default false`, `weight numeric not null default 1`, `flagged boolean not null default false` and `created_at timestamptz not null default now()`.
@@ -83,7 +83,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
   - [ ] An eligible submission creates the Supabase user (confirmation off) and a `profiles` row with the given birth date and country, signs the user in, and redirects to `/`.
   - [ ] Unit tests cover the server action: invalid email, short password, underage, wrong region, and success (mocked Supabase).
   - [ ] e2e: sign up with a unique email and a 1990 birth date, which lands on `/` signed in; sign up with a birth date one day short of 18 years, which shows the refusal message.
-- Notes: If creating the profile fails after the auth user was created, delete the auth user with the admin client so no account exists without a profile. Test this path. **Time zone for `today` (from T03 review):** do not pass the UTC date to `checkEligibility`. For several hours each US evening, UTC is already tomorrow, so someone could pass the age check the evening before their 18th birthday. Use the earliest US calendar date (Pacific/Honolulu) and record the choice in DECISIONS.md. Also reject implausible birth dates (age over 120) in the form validation.
+- Notes: If creating the profile fails after the auth user was created, delete the auth user with the admin client so no account exists without a profile. Test this path. **Time zone for `today` (from T03 review):** do not pass the UTC date to `checkEligibility`. For several hours each US evening, UTC is already tomorrow, so someone could pass the age check the evening before their 18th birthday. Use the earliest US calendar date (Pacific/Honolulu) and record the choice in DECISIONS.md. Also reject implausible birth dates (age over 120) in the form validation. Store `country` upper-cased (the profiles table enforces `^[A-Z]{2}$`, added in T04).
 
 ### T06 Sign-in, sign-out and account header
 - Type: feature
