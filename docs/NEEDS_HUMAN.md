@@ -12,7 +12,11 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
-_Nothing yet._
+### Please confirm: brand color and typefaces (blocks nothing)
+- What is needed: confirm or replace the placeholder brand seed color `#B5532A` (warm terracotta) and the typefaces (Roboto Flex for body text, Bricolage Grotesque for the display text). Any free Google Font works.
+- Where to put it: reply in chat. The agent updates `docs/UI_GUIDELINES.md` and the token stylesheet.
+- Why: you didn't pick a brand color when approving the UI guidelines. The whole color scheme is generated from this one value, so it's a one-line change later.
+- Agent's recommendation: keep the placeholders until the M1 play-test, then judge them on the real screens.
 
 ## Resolved
 
