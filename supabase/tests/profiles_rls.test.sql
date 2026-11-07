@@ -1,5 +1,5 @@
 begin;
-select plan(32);
+select plan(35);
 
 -- Table, key and foreign key.
 select has_table('public', 'profiles', 'profiles table exists');
@@ -41,6 +41,10 @@ select ok(
 );
 select policies_are('public', 'profiles', array['profiles_select_own'], 'only the select-own policy exists');
 select policy_cmd_is('public', 'profiles', 'profiles_select_own', 'select', 'the policy covers select only');
+select policy_roles_are(
+  'public', 'profiles', 'profiles_select_own', array['authenticated'],
+  'the policy applies to authenticated users only'
+);
 
 -- Fixtures, created as the test superuser: A and B get profiles; C is used for the
 -- constraint checks and the blocked insert.
@@ -91,6 +95,10 @@ select lives_ok(
   $$update public.profiles set is_admin = true where id = '00000000-0000-0000-0000-00000000000a'$$,
   'setup: user A tries to make themselves admin (no error, filtered by RLS)'
 );
+select lives_ok(
+  $$update public.profiles set is_admin = true where id = '00000000-0000-0000-0000-00000000000b'$$,
+  'setup: user A tries to make user B admin (no error, filtered by RLS)'
+);
 
 -- Act as an anonymous visitor.
 reset role;
@@ -104,6 +112,11 @@ select is(
   (select is_admin from public.profiles where id = '00000000-0000-0000-0000-00000000000a'),
   false,
   'user A''s self-promotion update affected 0 rows: is_admin is still false'
+);
+select is(
+  (select is_admin from public.profiles where id = '00000000-0000-0000-0000-00000000000b'),
+  false,
+  'user A''s update of user B affected 0 rows: B is still not admin'
 );
 
 delete from auth.users where id = '00000000-0000-0000-0000-00000000000a';
