@@ -44,3 +44,15 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: it is a liveness probe for monitoring and the T02 e2e test; it takes no input and reveals only whether the database answers (via `public.health_check()`, which reads no data).
 - How to change it later: add an auth check in `src/app/api/health/route.ts`, or delete the route.
 - Confirmed by human: not needed (no Open design item); recorded for visibility.
+
+### 2026-11-07 — Final game name (T03)
+- Choice: working name "World Streak", defined once as `GAME_NAME`.
+- Reason: the design doc lists the final name as Open; the human said to keep the working name for now.
+- How to change it later: edit `GAME_NAME` in `src/config/game.ts`; the page title and home heading follow it.
+- Confirmed by human: yes (for now)
+
+### 2026-11-07 — Location check is self-declared (T03)
+- Choice: eligibility uses the date of birth and country of residence the player enters at sign-up. No IP geolocation check in the MVP.
+- Reason: judgment call by the planner (the design doc says "age and location eligibility enforced at sign-up" without a method). IP checks need a paid or third-party service, block VPN users and travellers unfairly, and the prize winner's identity and address are verified before payout anyway.
+- How to change it later: add a check alongside `checkEligibility` in `src/lib/eligibility.ts`; the rules live in `src/config/eligibility.ts`.
+- Confirmed by human: pending (see NEEDS_HUMAN)

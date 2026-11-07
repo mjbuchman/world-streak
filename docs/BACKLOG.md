@@ -38,7 +38,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T02 Local Supabase, clients and database tests
 - Type: infra
-- Status: in-progress
+- Status: done
 - Depends on: T01
 - Acceptance criteria:
   - [ ] `supabase/` is initialised (`supabase init`). `supabase/config.toml` has email sign-up enabled with `enable_confirmations = false` and `site_url = "http://localhost:3000"`.
@@ -53,7 +53,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T03 Config module and eligibility rules
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T01
 - Acceptance criteria:
   - [ ] `src/config/game.ts` exports `GAME_NAME = "World Streak"`, and every place that shows the name (layout title, home heading) imports it. Changing the constant changes the page title. Check this with a unit test of the metadata export.

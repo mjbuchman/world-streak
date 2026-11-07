@@ -24,6 +24,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: the agent's permissions forbid it from reading or writing `.env*` files, so it runs tests by passing the local keys through the environment instead. `npm run dev` needs the file.
 - Agent's recommendation: do it once at the M1 play-test; these are local-only keys.
 
+### Please confirm: location is self-declared, no IP check (blocks nothing)
+- What is needed: confirm that players simply state their country of residence at sign-up (US only), with no IP-based location check in the MVP.
+- Where to put it: reply in chat.
+- Why: the design doc requires location eligibility at sign-up but doesn't say how. Details in `docs/DECISIONS.md` (T03).
+- Agent's recommendation: keep it self-declared; verify the winner's address before payout.
+
 ## Resolved
 
 _Nothing yet._
