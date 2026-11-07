@@ -1,7 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-// The page renders the client form, which pulls in server actions; it is not under test here.
+// The eligibility constants are read when modules load, so each case mocks the config and
+// reloads the modules that read it. The client form pulls in server actions and is not under
+// test here.
 vi.mock("@/app/signup/SignUpForm", () => ({ SignUpForm: () => null }));
 
 afterEach(() => {
