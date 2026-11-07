@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T03 Config module and eligibility rules
+- Active task: T04 Profiles table with row-level security
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-07 — T03 Config module and eligibility rules (PR #4)
+- `src/config/eligibility.ts` (18+, US) and pure `checkEligibility` with calendar-date math; page title test for `GAME_NAME`.
+- Review rounds: spec 1, quality 1, tests 1 (all approved).
+- Notes: T05 must compute "today" in a US time zone, not UTC (added to T05 notes). Coverage threshold for `src/lib/eligibility.ts` raised to 90%. Self-declared location awaits human confirmation.
 
 ### 2026-11-07 — T02 Local Supabase, clients and database tests (PR #3)
 - Local Supabase with pgTAP tests (`npm run test:db`), browser/server/admin clients, public `GET /api/health`, CI starts Supabase and exports its keys.

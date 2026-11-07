@@ -53,7 +53,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T03 Config module and eligibility rules
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T01
 - Acceptance criteria:
   - [ ] `src/config/game.ts` exports `GAME_NAME = "World Streak"`, and every place that shows the name (layout title, home heading) imports it. Changing the constant changes the page title. Check this with a unit test of the metadata export.
@@ -65,7 +65,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T04 Profiles table with row-level security
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T02
 - Acceptance criteria:
   - [ ] A migration creates `public.profiles` with columns `id uuid primary key references auth.users on delete cascade`, `birth_date date not null`, `country text not null`, `is_admin boolean not null default false`, `weight numeric not null default 1`, `flagged boolean not null default false` and `created_at timestamptz not null default now()`.
