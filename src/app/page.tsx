@@ -1,4 +1,4 @@
-import { GAME_NAME } from "@/lib/config";
+import { GAME_NAME } from "@/config/game";
 import styles from "./page.module.css";
 
 export default function Home() {

@@ -4,18 +4,23 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-const EMOJI = /\p{Extended_Pictographic}/u;
+// Pictographs, flag halves (regional indicators) and the keycap mark. The plain legal
+// symbols (c), (r) and TM are pictographic in Unicode but are ordinary text, so allow them.
+const EMOJI = /(?![©®™])[\p{Extended_Pictographic}\p{Regional_Indicator}⃣]/u;
 const EM_DASH = "—";
-const SHARE_DIR = "src/lib/share/";
+// The share text may live in src/lib/share.ts or under src/lib/share/.
+const SHARE_TEXT = /^src\/lib\/share(\/|\.)/;
 const EM_DASH_EXTENSIONS = new Set([".ts", ".tsx", ".css"]);
-const TEXT_EXTENSIONS = new Set([".ts", ".tsx", ".css", ".js", ".mjs", ".json", ".md", ".svg", ".txt"]);
+const TEXT_EXTENSIONS = new Set([
+  ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".css", ".html", ".json", ".md", ".svg", ".txt",
+]);
 
-export function findViolations(relPath: string, content: string): string[] {
+function findViolations(relPath: string, content: string): string[] {
   const posixPath = relPath.split(path.sep).join("/");
   const violations: string[] = [];
   content.split("\n").forEach((line, index) => {
     const where = `${posixPath}:${index + 1}`;
-    if (!posixPath.startsWith(SHARE_DIR) && EMOJI.test(line)) violations.push(`${where} contains an emoji`);
+    if (!SHARE_TEXT.test(posixPath) && EMOJI.test(line)) violations.push(`${where} contains an emoji`);
     if (EM_DASH_EXTENSIONS.has(path.extname(posixPath)) && line.includes(EM_DASH)) {
       violations.push(`${where} contains an em dash`);
     }
@@ -41,8 +46,33 @@ describe("findViolations", () => {
     ]);
   });
 
-  it("allows emojis in the share text module", () => {
-    expect(findViolations("src/lib/share/shareText.ts", `const win = "${partyPopper}";`)).toEqual([]);
+  it("allows emojis in the share text module, as a file or a folder", () => {
+    expect(findViolations("src/lib/share.ts", `const win = "${partyPopper}";`)).toEqual([]);
+    expect(findViolations("src/lib/share/text.ts", `const win = "${partyPopper}";`)).toEqual([]);
+  });
+
+  it("does not exempt look-alike paths from the emoji rule", () => {
+    expect(findViolations("src/lib/shareholder.ts", partyPopper)).toEqual(["src/lib/shareholder.ts:1 contains an emoji"]);
+  });
+
+  it("still flags em dashes in the share text module", () => {
+    expect(findViolations("src/lib/share.ts", `a ${EM_DASH} b`)).toEqual(["src/lib/share.ts:1 contains an em dash"]);
+  });
+
+  it("flags flag emojis and keycap emojis", () => {
+    const usFlag = String.fromCodePoint(0x1f1fa, 0x1f1f8);
+    const keycapOne = "1️⃣";
+    for (const emoji of [usFlag, keycapOne]) {
+      expect(findViolations("src/a.tsx", emoji)).toEqual(["src/a.tsx:1 contains an emoji"]);
+    }
+  });
+
+  it("allows the plain copyright, registered and trademark symbols", () => {
+    expect(findViolations("src/a.tsx", "© 2027 Sponsor® Game™")).toEqual([]);
+  });
+
+  it("flags emojis in other text file types", () => {
+    expect(findViolations("src/page.html", sparkles)).toEqual(["src/page.html:1 contains an emoji"]);
   });
 
   it("flags an em dash in ts, tsx and css files, with the line number", () => {

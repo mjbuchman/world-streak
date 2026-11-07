@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Roboto_Flex } from "next/font/google";
-import { GAME_NAME } from "@/lib/config";
+import { GAME_NAME } from "@/config/game";
 import "./tokens.css";
 import "./globals.css";
 
@@ -9,7 +9,7 @@ const brandFont = Bricolage_Grotesque({ variable: "--md-ref-typeface-brand", sub
 
 export const metadata: Metadata = {
   title: GAME_NAME,
-  description: "One daily challenge. If enough of the world passes, the streak survives.",
+  description: "Play today's challenge; if enough of the world passes, humanity's streak survives.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

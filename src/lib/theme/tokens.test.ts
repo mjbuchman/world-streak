@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { Hct, argbFromHex } from "@material/material-color-utilities";
-import { BRAND_SEED_HEX } from "@/lib/config";
+import { BRAND_SEED_HEX } from "@/config/theme";
 import { COLOR_ROLE_NAMES, buildTokenCss, colorRoles } from "./tokens";
 
 function contrastRatio(hexA: string, hexB: string): number {
@@ -69,8 +69,9 @@ describe("buildTokenCss", () => {
 
   it("redefines every color role for dark mode under prefers-color-scheme", () => {
     const dark = colorRoles(BRAND_SEED_HEX, true);
-    const darkBlock = css.slice(css.indexOf("@media (prefers-color-scheme: dark)"));
-    expect(darkBlock.length).toBeGreaterThan(0);
+    const darkStart = css.indexOf("@media (prefers-color-scheme: dark)");
+    expect(darkStart).toBeGreaterThanOrEqual(0);
+    const darkBlock = css.slice(darkStart);
     for (const name of COLOR_ROLE_NAMES) {
       expect(darkBlock).toContain(`--md-sys-color-${name}: ${dark[name]};`);
     }
