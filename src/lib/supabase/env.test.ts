@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { publicSupabaseEnv, requireEnv } from "./env";
+import { optionalPublicSupabaseEnv, publicSupabaseEnv, requireEnv } from "./env";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -32,5 +32,22 @@ describe("publicSupabaseEnv", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "");
     expect(() => publicSupabaseEnv()).toThrow(/NEXT_PUBLIC_SUPABASE_ANON_KEY/);
+  });
+});
+
+describe("optionalPublicSupabaseEnv", () => {
+  it("returns both settings when set", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+    expect(optionalPublicSupabaseEnv()).toEqual({ url: "http://127.0.0.1:54321", anonKey: "anon-key" });
+  });
+
+  it.each([
+    ["the URL", "", "anon-key"],
+    ["the anon key", "http://127.0.0.1:54321", ""],
+  ])("returns null when %s is missing", (_label, url, key) => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", url);
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", key);
+    expect(optionalPublicSupabaseEnv()).toBeNull();
   });
 });

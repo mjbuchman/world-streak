@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { optionalPublicSupabaseEnv } from "./env";
 
 /**
  * Refreshes the Supabase session cookie on every request (the @supabase/ssr proxy pattern).
@@ -8,13 +9,12 @@ import { type NextRequest, NextResponse } from "next/server";
  */
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   let response = NextResponse.next({ request });
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   // Without configuration there is no session to refresh. Pages still fail loudly when they
   // need Supabase, but /api/health must keep answering so it can report "unavailable".
-  if (!url || !anonKey) return response;
+  const env = optionalPublicSupabaseEnv();
+  if (!env) return response;
 
-  const supabase = createServerClient(url, anonKey, {
+  const supabase = createServerClient(env.url, env.anonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll(cookiesToSet, headers) {

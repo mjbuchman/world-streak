@@ -33,6 +33,7 @@ export default defineConfig({
         "src/lib/signin.ts": { lines: 90, branches: 90 },
         // Client components get component tests (Testing Library, jsdom per file).
         "src/app/signup/SignUpForm.tsx": { lines: 80, branches: 80 },
+        "src/app/signin/SignInForm.tsx": { lines: 80, branches: 80 },
         "src/components/**": { lines: 80, branches: 80 },
       },
     },

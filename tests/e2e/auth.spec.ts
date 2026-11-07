@@ -1,9 +1,9 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/fixtures";
 import { E2E_PASSWORD, hasSessionCookie, signUpViaForm } from "./support/pages";
+import { readSession, writeSession } from "./support/session";
 
 const header = (page: Page) => page.getByRole("banner");
-const AUTH_COOKIE = /^sb-.*-auth-token(\.\d+)?$/;
 
 async function signOut(page: Page) {
   await header(page).getByRole("button", { name: "Sign out" }).click();
@@ -24,6 +24,9 @@ test("sign up, sign out, then sign in again and see the email in the header", as
   await expect(page).toHaveURL("/");
   await expect(header(page)).toContainText(email);
 
+  // Sign out from another page, so the redirect home is really exercised.
+  await page.goto("/rules");
+  await expect(header(page)).toContainText(email);
   await signOut(page);
   await expect(page).toHaveURL("/");
   await expect(header(page)).not.toContainText(email);
@@ -69,37 +72,16 @@ test("an expired access token is refreshed on the next page load, without signin
   await signUpViaForm(page, { email });
   await expect(header(page)).toContainText(email);
 
-  // The session cookie holds base64url JSON, possibly split into numbered chunks. Mark the
-  // access token as expired so the next request must refresh it with the refresh token.
+  // Mark the access token as expired so the next request must use the refresh token.
   const context = page.context();
-  const chunks = (await context.cookies())
-    .filter((cookie) => AUTH_COOKIE.test(cookie.name))
-    .sort((a, b) => a.name.localeCompare(b.name, "en", { numeric: true }));
-  const stored = chunks.map((cookie) => cookie.value).join("");
-  const session = JSON.parse(Buffer.from(stored.replace(/^base64-/, ""), "base64url").toString("utf8"));
-  const oldAccessToken: string = session.access_token;
-  session.expires_at = Math.floor(Date.now() / 1000) - 60;
-
-  const baseName = chunks[0].name.replace(/\.\d+$/, "");
-  await context.clearCookies({ name: AUTH_COOKIE });
-  await context.addCookies([
-    {
-      ...chunks[0],
-      name: baseName,
-      value: `base64-${Buffer.from(JSON.stringify(session), "utf8").toString("base64url")}`,
-    },
-  ]);
+  const before = await readSession(context);
+  await writeSession(context, { ...before, expires_at: Math.floor(Date.now() / 1000) - 60 });
 
   const response = await page.goto("/");
   expect(response?.headers()["cache-control"]).toContain("no-store");
   await expect(header(page)).toContainText(email);
 
-  const refreshed = (await context.cookies())
-    .filter((cookie) => AUTH_COOKIE.test(cookie.name))
-    .sort((a, b) => a.name.localeCompare(b.name, "en", { numeric: true }))
-    .map((cookie) => cookie.value)
-    .join("");
-  const newSession = JSON.parse(Buffer.from(refreshed.replace(/^base64-/, ""), "base64url").toString("utf8"));
-  expect(newSession.access_token).not.toBe(oldAccessToken);
-  expect(newSession.expires_at).toBeGreaterThan(Math.floor(Date.now() / 1000));
+  const after = await readSession(context);
+  expect(after.access_token).not.toBe(before.access_token);
+  expect(after.expires_at).toBeGreaterThan(Math.floor(Date.now() / 1000));
 });
