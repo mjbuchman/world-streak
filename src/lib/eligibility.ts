@@ -1,4 +1,4 @@
-import { ALLOWED_COUNTRIES, MIN_AGE } from "@/config/eligibility";
+import { ALLOWED_COUNTRIES, MAX_PLAUSIBLE_AGE, MIN_AGE } from "@/config/eligibility";
 
 export type EligibilityInput = {
   /** Date of birth as `YYYY-MM-DD`. */
@@ -11,9 +11,18 @@ export type EligibilityResult =
   | { eligible: true }
   | { eligible: false; reason: "underage" | "region" | "invalid-date" };
 
-export type EligibilityRules = { minAge: number; allowedCountries: readonly string[] };
+export type EligibilityRules = {
+  minAge: number;
+  allowedCountries: readonly string[];
+  /** Birth dates more than this many years before today are invalid. Defaults to MAX_PLAUSIBLE_AGE. */
+  maxAge?: number;
+};
 
-const DEFAULT_RULES: EligibilityRules = { minAge: MIN_AGE, allowedCountries: ALLOWED_COUNTRIES };
+const DEFAULT_RULES: EligibilityRules = {
+  minAge: MIN_AGE,
+  allowedCountries: ALLOWED_COUNTRIES,
+  maxAge: MAX_PLAUSIBLE_AGE,
+};
 
 type CalendarDate = { year: number; month: number; day: number };
 
@@ -52,7 +61,12 @@ export function checkEligibility(
   if (!todayDate) throw new Error(`Invalid today value "${today}": expected YYYY-MM-DD`);
 
   const birth = parseCalendarDate(input.birthDate);
-  if (!birth || compareDates(birth, todayDate) > 0) return { eligible: false, reason: "invalid-date" };
+  // The oldest allowed birth date may not exist (Feb 29 in a non-leap year); comparing
+  // field by field still orders it correctly between Feb 28 and Mar 1.
+  const oldestAllowed = { ...todayDate, year: todayDate.year - (rules.maxAge ?? MAX_PLAUSIBLE_AGE) };
+  if (!birth || compareDates(birth, todayDate) > 0 || compareDates(birth, oldestAllowed) < 0) {
+    return { eligible: false, reason: "invalid-date" };
+  }
   if (ageOn(birth, todayDate) < rules.minAge) return { eligible: false, reason: "underage" };
 
   const country = input.country.trim().toUpperCase();

@@ -81,6 +81,35 @@ describe("checkEligibility", () => {
     });
   });
 
+  it("accepts someone exactly 120 years old today", () => {
+    expect(checkEligibility({ birthDate: "1906-11-07", country: "US" }, TODAY)).toEqual({ eligible: true });
+  });
+
+  it("treats a birth date one day more than 120 years ago as invalid", () => {
+    expect(checkEligibility({ birthDate: "1906-11-06", country: "US" }, TODAY)).toEqual({
+      eligible: false,
+      reason: "invalid-date",
+    });
+  });
+
+  it("applies the 120-year limit correctly when today is Feb 29", () => {
+    // 120 years before Feb 29, 2028 is the non-existent Feb 29, 1908; Mar 1, 1908 is within the limit.
+    expect(checkEligibility({ birthDate: "1908-03-01", country: "US" }, "2028-02-29")).toEqual({ eligible: true });
+    expect(checkEligibility({ birthDate: "1908-02-28", country: "US" }, "2028-02-29")).toEqual({
+      eligible: false,
+      reason: "invalid-date",
+    });
+  });
+
+  it("uses an injected maximum age", () => {
+    const rules = { minAge: 18, allowedCountries: ["US"], maxAge: 100 };
+    expect(checkEligibility({ birthDate: "1926-11-07", country: "US" }, TODAY, rules)).toEqual({ eligible: true });
+    expect(checkEligibility({ birthDate: "1926-11-06", country: "US" }, TODAY, rules)).toEqual({
+      eligible: false,
+      reason: "invalid-date",
+    });
+  });
+
   it("rejects an invalid today value instead of guessing", () => {
     expect(() => checkEligibility({ birthDate: "1990-01-01", country: "US" }, "2026-13-40")).toThrow(/today/);
   });
