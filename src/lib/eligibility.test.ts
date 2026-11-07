@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ALLOWED_COUNTRIES, MIN_AGE } from "@/config/eligibility";
-import { checkEligibility } from "./eligibility";
+import { checkEligibility, eligibilitySummary } from "./eligibility";
 
 const TODAY = "2026-11-07";
 
@@ -8,6 +8,18 @@ describe("eligibility config", () => {
   it("allows US residents aged 18 and over", () => {
     expect(MIN_AGE).toBe(18);
     expect(ALLOWED_COUNTRIES).toEqual(["US"]);
+  });
+});
+
+describe("eligibilitySummary", () => {
+  it("describes the configured rules", () => {
+    expect(eligibilitySummary()).toBe("US residents aged 18 or over");
+  });
+
+  it("describes injected rules", () => {
+    expect(eligibilitySummary({ minAge: 21, allowedCountries: ["US", "CA"] })).toBe(
+      "US or CA residents aged 21 or over",
+    );
   });
 });
 
