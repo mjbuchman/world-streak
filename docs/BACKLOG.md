@@ -53,7 +53,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T03 Config module and eligibility rules
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T01
 - Acceptance criteria:
   - [ ] `src/config/game.ts` exports `GAME_NAME = "World Streak"`, and every place that shows the name (layout title, home heading) imports it. Changing the constant changes the page title. Check this with a unit test of the metadata export.
@@ -65,7 +65,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T04 Profiles table with row-level security
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T02
 - Acceptance criteria:
   - [ ] A migration creates `public.profiles` with columns `id uuid primary key references auth.users on delete cascade`, `birth_date date not null`, `country text not null`, `is_admin boolean not null default false`, `weight numeric not null default 1`, `flagged boolean not null default false` and `created_at timestamptz not null default now()`.
@@ -75,7 +75,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T05 Email and password sign-up with eligibility check
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T03, T04
 - Acceptance criteria:
   - [ ] `/signup` shows email, password (minimum 8 characters), date of birth, a country of residence select, and an "I agree to the official rules" checkbox (link to `/rules`; the page can be a stub until T38).
@@ -87,7 +87,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T06 Sign-in, sign-out and account header
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T05
 - Acceptance criteria:
   - [ ] `/signin` signs in with email and password. Wrong credentials show "Email or password is incorrect" without saying which one.
@@ -97,7 +97,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T07 Google sign-in and profile completion
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T06
 - Acceptance criteria:
   - [ ] `/signin` and `/signup` show "Continue with Google", which calls `signInWithOAuth({ provider: "google", options: { redirectTo: <site>/auth/callback } })` (unit test with a mocked client).
@@ -109,7 +109,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T08 Shared seeded PRNG and engine types
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T01
 - Acceptance criteria:
   - [ ] `src/challenges/shared/prng.ts` exports `createRng(seed: number)`, which returns `{ next(): number; int(min, max): number; pick<T>(items: T[]): T }` using one documented algorithm (for example mulberry32) on unsigned 32-bit seeds.
@@ -120,7 +120,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T09 Stacking engine
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/stacking/engine.ts` exports `simulate(params, tapsMs: number[])`, which returns `{ score, blocks: { left, width, overhang }[], endedAtMs, endReason: "miss" | "time" | "inputs" }`, and `blockLeftAt(params, state, elapsedMs)`, which gives the moving block's position. Both are pure and driven only by elapsed ms.
@@ -141,7 +141,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T10 Stacking renderer and practice page
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T09
 - Acceptance criteria:
   - [ ] `src/challenges/stacking/render.ts` draws a given engine state for a given elapsed ms onto a canvas 2D context, scaling the 400-unit field to the canvas width and handling `devicePixelRatio`.
@@ -152,7 +152,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T11 Game days, attempts schema and game date
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T04
 - Acceptance criteria:
   - [ ] `src/config/schedule.ts` exports `DEADLINE_UTC_HOUR = 0`. `src/lib/gameDay.ts` exports `gameDateAt(now: Date)`, which returns the `YYYY-MM-DD` game date (the date that closes at the next deadline), and `deadlineFor(gameDate)`. Tests: `2026-11-07T23:59:59.999Z`, game date `2026-11-07`; `2026-11-08T00:00:00.000Z`, `2026-11-08`; with an hour of 5 injected, `2026-11-08T04:59:59Z`, `2026-11-07`.
@@ -165,7 +165,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T12 Attempt start endpoint
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T07, T09, T11
 - Acceptance criteria:
   - [ ] `POST /api/attempts/start` returns 401 when signed out, and 403 `{ error: "profile-required" }` when the user has no profile.
@@ -176,7 +176,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T13 Attempt submit endpoint with server replay
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T12
 - Acceptance criteria:
   - [ ] `POST /api/attempts/submit` with `{ attemptId, inputs }` returns 401 when signed out, 400 when the body or `inputs` fail the challenge's `inputsSchema`, and 404 when the attempt is not the caller's.
@@ -189,7 +189,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T14 Daily play page end to end
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T10, T13
 - Acceptance criteria:
   - [ ] `/` shows the game name, the one-sentence pitch ("Play today's challenge; if enough of the world passes, humanity's streak survives."), a "Play today's challenge" link to `/play` and a "Practice" link.
@@ -201,7 +201,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T15 Confirm Google sign-in with real credentials
 - Type: infra
-- Status: in-progress
+- Status: todo
 - Depends on: T07
 - Acceptance criteria:
   - [ ] With the human's Google OAuth credentials in `.env.local`, `npm run db:start` then `npm run dev`. "Continue with Google" completes a real Google login locally and lands on `/complete-profile` for a new account.
@@ -215,7 +215,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T16 Game settings table
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T11
 - Acceptance criteria:
   - [ ] A migration creates a single-row `game_settings` table (a check constraint enforces a single row) with `default_survival_threshold 0.60`, `pass_target_percentile 0.80`, `pass_target_streak_step 0`, `threshold_streak_step 0`, `percentile_lookback_days 14`, `percentile_min_sample 50`, `default_pass_targets jsonb` (`{"stacking": 10}` placeholder), `new_account_weight 1.0` and `full_weight_after_days 0`.
@@ -227,7 +227,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T17 Running counters per game day
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T13, T16
 - Acceptance criteria:
   - [ ] A migration creates `game_day_counters` (`game_date pk references game_days`, `attempts int`, `passes int`, `weighted_attempts numeric`, `weighted_passes numeric`, `updated_at`).
@@ -238,7 +238,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T18 Cached meter endpoint
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T17
 - Acceptance criteria:
   - [ ] `src/config/meter.ts` exports `METER_HIDE_HOURS = 3` and `METER_CACHE_SECONDS = 30`.
@@ -250,7 +250,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T19 Meter UI with visibility-aware polling
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T18
 - Acceptance criteria:
   - [ ] `src/components/Meter.tsx` shows a bar for the pass rate with a marker at the threshold, a label like "72% passing · 60% needed · 1,234 attempts", and a countdown to the deadline.
@@ -261,7 +261,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T20 Local fake-player seeding script
 - Type: infra
-- Status: in-progress
+- Status: todo
 - Depends on: T17
 - Acceptance criteria:
   - [ ] `npm run seed:dev -- --players 200 --pass-rate 0.7 [--date YYYY-MM-DD]` creates 200 fake users with profiles and submitted attempts for the date (default today), of which 140 passed, through `record_attempt_result`, so the counters update.
@@ -271,7 +271,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T21 Daily close: outcome and world streak
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T17
 - Acceptance criteria:
   - [ ] A migration creates `streak_runs` (`id`, `start_date`, `end_date null`, `length int`) and SQL function `close_game_day(d date)`. It computes `final_pass_rate = weighted_passes / weighted_attempts`, sets `outcome = 'survived'` if that is `>= survival_threshold` and `'broken'` otherwise, sets `closed_at`, and updates the streak: survived extends the open run (or starts one with length 1), and broken ends the open run (sets `end_date`), so the current streak is 0.
@@ -283,7 +283,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T22 Prepare next day: pass target and threshold
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T21
 - Acceptance criteria:
   - [ ] `close_game_day(d)` also creates `game_days(d + 1)` if it is missing, with challenge type `stacking` (rotation comes in T31), `survival_threshold = default_survival_threshold + threshold_streak_step × current_streak` (clamped to at most 0.95), and a pass target computed as follows.
@@ -295,7 +295,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T23 Scheduled close job and catch-up
 - Type: infra
-- Status: in-progress
+- Status: todo
 - Depends on: T22
 - Acceptance criteria:
   - [ ] SQL function `close_due_game_days()` closes, in date order, every unclosed game day whose date is before `game_date_at(now())`, then calls `ensure_game_day(game_date_at(now()))`. It is a no-op when nothing is due.
@@ -307,7 +307,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T24 World streak display and history list
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T19, T21
 - Acceptance criteria:
   - [ ] `/` shows "World streak: N days" (singular "1 day"), "Best: M", and yesterday's result ("Yesterday the world survived with 74% passing" / "Yesterday the streak broke at 52%"), all from server components reading public data.
@@ -316,7 +316,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T25 Admin access and game-day target editor
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T16, T24
 - Acceptance criteria:
   - [ ] `/admin` returns 404 for signed-out and non-admin users (checked server-side, not by hiding links).
@@ -332,7 +332,7 @@ Goal: practise all three challenges (stacking, Inner Clock, Flash Count), see th
 
 ### T26 Inner Clock engine
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/inner-clock/engine.ts` implements `ChallengeModule` with `direction "lower-better"`. `paramsFromSeed(seed)` returns `{ targetMs }`, a multiple of 100 within a documented range (default 3,000 to 9,000), with a timeout of `3 × targetMs`.
@@ -344,7 +344,7 @@ Goal: practise all three challenges (stacking, Inner Clock, Flash Count), see th
 
 ### T27 Inner Clock renderer and practice page
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T26
 - Acceptance criteria:
   - [ ] `/practice/inner-clock` shows "Tap when you think N seconds have passed", a Start control, and no visible timer or progress indicator while running. A tap (pointer or Space) ends the run and reveals the actual time and the error.
@@ -354,7 +354,7 @@ Goal: practise all three challenges (stacking, Inner Clock, Flash Count), see th
 
 ### T28 Flash Count engine
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/flash-count/engine.ts` implements `ChallengeModule` with `direction "lower-better"`. `paramsFromSeed(seed)` returns `{ dotCount, flashMs: 1000, dots: { x, y, r }[] }`, with `dotCount` within a documented range (default 15 to 45) and positions in a unit square, no two dots closer than the documented minimum spacing, and none clipped by the edges.
@@ -365,7 +365,7 @@ Goal: practise all three challenges (stacking, Inner Clock, Flash Count), see th
 
 ### T29 Flash Count renderer and practice page
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T28
 - Acceptance criteria:
   - [ ] `/practice/flash-count` shows a Start control, then draws the dots on canvas for `flashMs`, clears them, and shows a numeric input (mobile `inputmode="numeric"`) with Submit. The answer reveals the true count and the error %.
@@ -374,7 +374,7 @@ Goal: practise all three challenges (stacking, Inner Clock, Flash Count), see th
 
 ### T30 All challenges in daily play and practice hub
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T14, T27, T29
 - Acceptance criteria:
   - [ ] `src/challenges/registry.ts` maps `stacking`, `inner-clock` and `flash-count` to their engine module and React component. `ChallengeType` covers all three. The start and submit endpoints work for every type with no type-specific branches.
@@ -384,7 +384,7 @@ Goal: practise all three challenges (stacking, Inner Clock, Flash Count), see th
 
 ### T31 Daily challenge rotation
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T22, T30
 - Acceptance criteria:
   - [ ] `game_settings` gains `rotation text[]`, default `{stacking,inner-clock,flash-count}`. The next day's type is `rotation[(next_date - date '2027-01-01') mod array_length + 1]` (positive modulo, so dates before 2027 work).
@@ -395,7 +395,7 @@ Goal: practise all three challenges (stacking, Inner Clock, Flash Count), see th
 
 ### T32 Spoiler-free share card with call for help
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T24, T30
 - Acceptance criteria:
   - [ ] `src/config/share.ts` exports `NEAR_THRESHOLD_MARGIN = 0.05`. `src/lib/share.ts` exports pure `buildShareText({ passed, gameDate, streak, meter, siteUrl })`.
@@ -411,7 +411,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T33 Cycles table and prize amount
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T21
 - Acceptance criteria:
   - [ ] `src/config/prize.ts` exports `PRIZE_PER_CYCLE_CENTS = 20000`, `CYCLE_LENGTH_DAYS = 60`, `STREAK_GOAL_DAYS = 30`, `FIRST_CYCLE_START = "2027-01-01"` and `PAYOUT_WITHIN_DAYS = 45`.
@@ -423,7 +423,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T34 Close job: cycle-aware streak, goal and rollover
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T33
 - Acceptance criteria:
   - [ ] The first game day of a cycle starts a fresh streak run (any open run from before the cycle is ended), so the goal counts only streak days inside the cycle.
@@ -434,7 +434,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T35 Entries for passed days
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T34
 - Acceptance criteria:
   - [ ] A migration creates `entries` (`user_id`, `cycle_number`, `game_date`, **`unique (user_id, game_date)`**). `record_attempt_result` inserts one when the attempt passed and `cycle_for(game_date)` is not null.
@@ -444,7 +444,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T36 Prize and cycle display
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T35, T24
 - Acceptance criteria:
   - [ ] `/` shows "Prize this cycle: $200" (or the current amount with rollover, for example "$400, including $200 rolled over"), "Day X of 60" and "Goal: a 30-day world streak". Once the goal is reached, it shows "Goal reached on <date>. A winner will be drawn after the cycle ends."
@@ -454,7 +454,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T37 Local multi-day simulation script
 - Type: infra
-- Status: in-progress
+- Status: todo
 - Depends on: T34, T20
 - Acceptance criteria:
   - [ ] `npm run simulate:days -- --from 2027-01-01 --days 30 --players 50 --pass-rate 0.8` creates the game days, fake attempts (via `record_attempt_result`, so counters and entries update) and closes each day in order (local-only guard).
@@ -463,7 +463,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T38 Official rules page (draft)
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T33, T03
 - Acceptance criteria:
   - [ ] `/rules` states: free to enter, no purchase or payment of any kind; eligibility (US residents aged 18+, enforced at sign-up), with values from config; one account per person; how a day passes and how the world streak and cycles work (60 days, first cycle January 1, 2027, goal a 30-day streak); the prize is $200 per cycle, rolling over in full to the next cycle if the goal is not reached; one entry per passed day; one winner drawn at random from all entries; flagged accounts lose their entries; the winner must verify their email before payout; payment within 45 days of the cycle ending.
@@ -475,7 +475,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T39 Fill in sponsor details on the rules page
 - Type: docs
-- Status: in-progress
+- Status: todo
 - Depends on: T38
 - Acceptance criteria:
   - [ ] `src/config/sponsor.ts` holds the human-provided sponsor legal name, mailing address and contact email. The "Draft" banner disappears when no placeholder remains.
@@ -483,7 +483,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T40 Cheat detection rules
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T30
 - Acceptance criteria:
   - [ ] `src/lib/cheat/detect.ts` exports pure `detectFlags({ challengeType, inputs, score, params, serverElapsedMs, history })`, which returns a list of reason codes. Thresholds live in `src/config/cheat.ts`.
@@ -493,7 +493,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T41 Cheat flags wiring
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T40, T35
 - Acceptance criteria:
   - [ ] A migration creates `cheat_flags` (`id`, `user_id`, `attempt_id`, `reason`, `created_at`, `status` in `open|confirmed|dismissed`) with no client read or write policies (admin-only via functions).
@@ -503,7 +503,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T42 Admin settings editor and flags review
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T41, T25, T31
 - Acceptance criteria:
   - [ ] `/admin/settings` edits every `game_settings` field with zod validation (for example a threshold between 0 and 1, a percentile between 0.5 and 0.99, and rotation entries that must exist in `challenge_types`). A non-admin gets 404.
@@ -512,7 +512,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T43 Prize draw tool
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T42
 - Acceptance criteria:
   - [ ] `src/lib/draw.ts` exports pure `pickWinner(entries: { userId, tickets }[], randomInt: (max) => number)`, which maps ticket index to user. With A:3, B:1, index 0 to 2 picks A and index 3 picks B. An empty list throws. At least 90% coverage.
@@ -523,7 +523,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T44 Ad slots outside the challenge
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T36
 - Acceptance criteria:
   - [ ] `src/components/AdSlot.tsx` renders nothing unless `NEXT_PUBLIC_ADS_ENABLED === "true"` and `NEXT_PUBLIC_ADSENSE_CLIENT` is set. In development, with `NEXT_PUBLIC_ADS_PLACEHOLDER=true`, it renders a labelled grey box of fixed size (no layout shift).
@@ -534,7 +534,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T45 Wire Google AdSense
 - Type: infra
-- Status: in-progress
+- Status: todo
 - Depends on: T44
 - Acceptance criteria:
   - [ ] With the human's publisher ID set in the deployment environment, the AdSense script and slot markup use it, and `public/ads.txt` contains the correct `google.com, pub-XXXXXXXX, DIRECT, f08c47fec0942fa0` line.
@@ -543,7 +543,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T46 Account weighting
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T17, T16
 - Acceptance criteria:
   - [ ] `record_attempt_result` computes the weight at submit time: `1` if the account is at least `full_weight_after_days` old, otherwise `new_account_weight`, multiplied by `profiles.weight` (default 1, a manual override). The weight used is stored on the attempt (`attempts.weight`).
@@ -553,7 +553,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T47 Mobile checks
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T32, T44
 - Acceptance criteria:
   - [ ] Playwright gains Chromium-based mobile projects (`Pixel 7` and an iPhone-sized viewport, 390×844 with `hasTouch` and `isMobile`) without adding new browsers to CI.
@@ -563,7 +563,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T48 Meter performance under load
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T18
 - Acceptance criteria:
   - [ ] The meter handler adds a module-level cache with a single in-flight request (`METER_CACHE_SECONDS`): 500 concurrent calls within one window trigger exactly 1 database read, and a call after the window triggers 1 more (unit test with a fake clock and a counting mock).
@@ -573,7 +573,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T49 End-to-end coverage of the main flows
 - Type: feature
-- Status: in-progress
+- Status: todo
 - Depends on: T43, T46, T47
 - Acceptance criteria:
   - [ ] e2e "day survives": seed today with 10 fake attempts at 70% passing, then a new user signs up, plays and finishes. `/api/meter` (bypassing the cache via a test header that is only honoured outside production, or by waiting) shows 11 attempts. `close-day` makes `/` show the streak increased by 1 and `/history` list the day as survived.
@@ -585,7 +585,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T50 Deployment guide and launch checklist
 - Type: docs
-- Status: in-progress
+- Status: todo
 - Depends on: T49
 - Acceptance criteria:
   - [ ] `docs/DEPLOYMENT.md` lists, step by step for the human: create the Supabase cloud project (free plan); apply migrations (`supabase link` + `supabase db push`); confirm pg_cron is enabled and the jobs exist; set the auth settings (email confirmations off, site URL, redirect URLs, Google provider); create the Vercel project with every env var from `.env.example`; make the owner's account an admin (exact SQL: `update profiles set is_admin = true where id = (select id from auth.users where email = '<owner email>')`); and the pre-launch items (domain, custom email provider, Vercel Pro before ads, AdSense, legal review of the rules).
@@ -597,7 +597,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T51 Dev dependency audit and e2e build timing
 - Type: maintenance
-- Status: in-progress
+- Status: todo
 - Depends on: T01
 - Acceptance criteria:
   - [ ] `npm audit` reports no moderate or higher vulnerabilities, or each remaining one is listed in the PR with why it can't be fixed yet (at T01: 0 in production dependencies, 8 moderate in dev tooling).

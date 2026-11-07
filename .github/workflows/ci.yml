@@ -97,6 +97,9 @@ jobs:
             --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
             | grep -E '^(NEXT_PUBLIC_SUPABASE_URL|NEXT_PUBLIC_SUPABASE_ANON_KEY|SUPABASE_SERVICE_ROLE_KEY)=' \
             | sed -E 's/^([A-Z_]+)="(.*)"$/\1=\2/' >> "$GITHUB_ENV"
+          for name in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY; do
+            grep -q "^${name}=." "$GITHUB_ENV" || { echo "::error::supabase status did not print ${name}"; exit 1; }
+          done
 
       - name: Run database tests
         if: steps.app.outputs.exists == 'true'

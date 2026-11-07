@@ -1,9 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const rpc = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: async () => ({ rpc }) }));
 
 import { GET } from "./route";
+
+beforeEach(() => rpc.mockReset());
 
 describe("GET /api/health", () => {
   it("returns 200 with db ok when the health_check function answers", async () => {
