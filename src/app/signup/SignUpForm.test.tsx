@@ -38,6 +38,8 @@ describe("SignUpForm", () => {
   it("sends the entered values to the server action", async () => {
     signUpAction.mockResolvedValue({ ok: false, values });
     await fillAndSubmit();
+    // React 19 runs form actions in a transition, so wait for the call rather than assume it.
+    await vi.waitFor(() => expect(signUpAction).toHaveBeenCalledTimes(1));
     const form = signUpAction.mock.calls[0][1];
     expect(Object.fromEntries(form)).toEqual({
       email: values.email,
@@ -91,12 +93,15 @@ describe("SignUpForm", () => {
     expect((await screen.findByRole("alert")).textContent).toBe("Sorry, not eligible.");
   });
 
-  it("refills the email, birth date and country after a failed submit, but never the password", async () => {
-    signUpAction.mockResolvedValue({ ok: false, values, fieldErrors: { email: "taken" } });
+  it("refills the email, birth date and country from the server's reply, but never the password", async () => {
+    // Different from what was typed, so the refill provably comes from the returned state,
+    // and the lower-case country exercises the select's normalising remount.
+    const returned = { email: "server@example.com", birthDate: "1985-01-02", country: "us" };
+    signUpAction.mockResolvedValue({ ok: false, values: returned, fieldErrors: { email: "taken" } });
     await fillAndSubmit();
     await screen.findByText("taken");
-    expect(screen.getByLabelText<HTMLInputElement>("Email").value).toBe(values.email);
-    expect(screen.getByLabelText<HTMLInputElement>("Date of birth").value).toBe(values.birthDate);
+    expect(screen.getByLabelText<HTMLInputElement>("Email").value).toBe(returned.email);
+    expect(screen.getByLabelText<HTMLInputElement>("Date of birth").value).toBe(returned.birthDate);
     expect(screen.getByLabelText<HTMLSelectElement>("Country of residence").value).toBe("US");
     expect(screen.getByLabelText<HTMLInputElement>("Password (at least 8 characters)").value).toBe("");
   });
@@ -110,6 +115,6 @@ describe("SignUpForm", () => {
     expect(button).toHaveProperty("disabled", true);
 
     finish({ ok: false, values });
-    expect((await screen.findByRole("button", { name: "Create account" })).hasAttribute("disabled")).toBe(false);
+    expect(await screen.findByRole("button", { name: "Create account" })).toHaveProperty("disabled", false);
   });
 });
