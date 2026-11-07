@@ -24,3 +24,14 @@ supabase/.branches/
 .DS_Store
 *.log
 .vercel/
+
+# next.js / typescript (merged from create-next-app)
+next-env.d.ts
+*.tsbuildinfo
+*.pem
+.pnp
+.pnp.*
+
+# playwright
+blob-report/
+playwright/.cache/

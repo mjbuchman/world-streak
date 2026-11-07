@@ -158,4 +158,19 @@ get started
 
 ## Running the app
 
-_The agents fill this section in once the app is scaffolded._
+Requires Node.js (current LTS) and npm.
+
+```bash
+npm install                      # install dependencies
+npm run dev                      # start the app at http://localhost:3000
+```
+
+**Checks** (the same ones CI runs):
+
+```bash
+npm run verify                   # lint, typecheck, unit tests with coverage, production build
+npx playwright install chromium  # once, to download the test browser
+npm run test:e2e                 # end-to-end tests (starts the app automatically)
+```
+
+**Theme:** colors, shapes, type and spacing come from `src/app/tokens.css`, which is generated from one brand color. To change the brand color, edit `BRAND_SEED_HEX` in `src/lib/config.ts`, then run `npm run tokens`. The design rules are in [`docs/UI_GUIDELINES.md`](docs/UI_GUIDELINES.md).

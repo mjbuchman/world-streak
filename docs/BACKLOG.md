@@ -20,7 +20,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T01 Scaffold the app
 - Type: infra
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] Next.js (App Router) + TypeScript with `"strict": true` in `tsconfig.json`, using the `src/` layout from `CLAUDE.md` (`src/app`, `src/challenges/shared`, `src/lib`, `src/components`, `tests/e2e`).
