@@ -1,0 +1,26 @@
+# dependencies
+node_modules/
+
+# environment (only .env.example is committed)
+.env
+.env.*
+!.env.example
+
+# build output
+.next/
+out/
+build/
+
+# tests
+coverage/
+playwright-report/
+test-results/
+
+# supabase local state
+supabase/.temp/
+supabase/.branches/
+
+# misc
+.DS_Store
+*.log
+.vercel/
