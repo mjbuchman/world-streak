@@ -30,6 +30,8 @@ export default defineConfig({
         "src/lib/eligibilityFields.ts": { lines: 90, branches: 90 },
         // Gates account creation.
         "src/lib/signup.ts": { lines: 90, branches: 90 },
+        // Client components get component tests (Testing Library, jsdom per file).
+        "src/app/signup/SignUpForm.tsx": { lines: 80, branches: 80 },
       },
     },
   },
