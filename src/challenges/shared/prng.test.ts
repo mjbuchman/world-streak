@@ -62,7 +62,14 @@ describe("int", () => {
 
   it("works for negative ranges", () => {
     const rng = createRng(3);
-    for (let i = 0; i < 200; i++) expect(rng.int(-2, 0)).toBeGreaterThanOrEqual(-2);
+    const seen = new Set<number>();
+    for (let i = 0; i < 200; i++) {
+      const value = rng.int(-2, 0);
+      expect(value).toBeGreaterThanOrEqual(-2);
+      expect(value).toBeLessThanOrEqual(0);
+      seen.add(value);
+    }
+    expect([...seen].sort((a, b) => a - b)).toEqual([-2, -1, 0]);
   });
 
   it.each([

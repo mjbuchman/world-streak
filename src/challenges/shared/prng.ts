@@ -9,7 +9,7 @@
 export type Rng = {
   /** A float in [0, 1). */
   next(): number;
-  /** An integer from `min` to `max`, both inclusive. */
+  /** An integer from `min` to `max`, both inclusive. Keep the span small (game-sized, far below 2^32). */
   int(min: number, max: number): number;
   /** One item of a non-empty list. */
   pick<T>(items: readonly T[]): T;
