@@ -1,0 +1,24 @@
+import type { z } from "zod";
+
+/** Every challenge type, in the order they were added. */
+export const CHALLENGE_TYPES = ["stacking"] as const;
+
+export type ChallengeType = (typeof CHALLENGE_TYPES)[number];
+
+/** Whether a bigger score is better (for example height) or a smaller one (for example time). */
+export type ScoreDirection = "higher-better" | "lower-better";
+
+/**
+ * A challenge engine: pure and deterministic, so the server can replay a player's inputs on
+ * their seed and compute the official score. No randomness except `createRng(seed)`, no
+ * clock, DOM or network (enforced by ESLint in `src/challenges/**`, except `render.ts`).
+ */
+export interface ChallengeModule<Params, Inputs> {
+  /** The player's instance of today's challenge, built only from the seed. */
+  paramsFromSeed(seed: number): Params;
+  /** The official score for these inputs on this instance. */
+  score(params: Params, inputs: Inputs): number;
+  /** Validates inputs submitted by the client before they are scored. */
+  inputsSchema: z.ZodType<Inputs>;
+  direction: ScoreDirection;
+}

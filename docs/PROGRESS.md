@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T07 Google sign-in and profile completion
+- Active task: T08 Shared seeded PRNG and engine types
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-08 — T07 Google sign-in and profile completion (PR #13)
+- "Continue with Google" (browser `signInWithOAuth`), `GET /auth/callback`, `/complete-profile`; `landingPath()` in `src/lib/profiles.ts` sends players without a profile to `/complete-profile` after any sign-in. `GENERIC_ERROR` now lives in `src/lib/forms.ts`.
+- Review rounds: spec 1, quality 1, tests 1.
+- Notes for T15: the Supabase CLI reads `SUPABASE_AUTH_EXTERNAL_GOOGLE_*` from the shell when it starts, not from `.env.local` (unset values stay as the literal `env(...)` text, so it still starts). `skip_nonce_check = true` is local-only; check the production provider settings by hand. Players without a profile are only redirected at sign-in; T12/T14 must enforce it for scored play.
 
 ### 2026-11-08 — T06 Sign-in, sign-out and account header (PR #12)
 - Email/password sign-in with one message for wrong email or password; `AccountHeader` on every page; `src/proxy.ts` refreshes the session via `updateSession`.
