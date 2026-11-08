@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+// A non-default URL, so the test fails if the callback address is ever hard-coded.
+// @vitest-environment-options {"url":"https://worldstreak.test/signin"}
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -29,7 +31,7 @@ describe("GoogleSignInButton", () => {
     await clickContinue();
     expect(signInWithOAuth).toHaveBeenCalledWith({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: "https://worldstreak.test/auth/callback" },
     });
   });
 
@@ -42,6 +44,13 @@ describe("GoogleSignInButton", () => {
     signInWithOAuth.mockReturnValue(new Promise(() => {}));
     await clickContinue();
     expect(screen.getByRole("button", { name: "Continue with Google" }).hasAttribute("disabled")).toBe(true);
+  });
+
+  it("recovers the same way when starting Google sign-in throws", async () => {
+    signInWithOAuth.mockRejectedValue(new Error("network down"));
+    await clickContinue();
+    expect((await screen.findByRole("alert")).textContent).toBe("Google sign-in didn't start. Please try again.");
+    expect(screen.getByRole("button", { name: "Continue with Google" }).hasAttribute("disabled")).toBe(false);
   });
 
   it("shows an error and lets the player try again when Google sign-in cannot start", async () => {

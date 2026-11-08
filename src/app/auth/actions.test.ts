@@ -47,6 +47,12 @@ describe("signInAction", () => {
     );
   });
 
+  it("sends the player home if Supabase signs in without returning the user", async () => {
+    m.signInWithPassword.mockResolvedValueOnce({ data: { user: null }, error: null });
+    await expect(signInAction(null, form("player@example.com", "secret-pass"))).rejects.toThrow(/^NEXT_REDIRECT \/$/);
+    expect(m.landingPath).not.toHaveBeenCalled();
+  });
+
   it("returns the generic credentials message when Supabase rejects the credentials", async () => {
     m.signInWithPassword.mockResolvedValueOnce({ error: { code: "invalid_credentials" } });
     const result = await signInAction(null, form("player@example.com", "wrong-pass"));

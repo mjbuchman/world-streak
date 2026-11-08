@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/fixtures";
-import { E2E_PASSWORD, signUpViaForm } from "./support/pages";
+import { E2E_PASSWORD, oneDayShortOf18, signUpViaForm } from "./support/pages";
 import { adminClient, findUserByEmail } from "./support/supabase";
 
 async function profileOf(email: string) {
@@ -53,6 +53,8 @@ test("Continue with Google goes to Google through local Supabase, returning to o
   const url = new URL((await toGoogle).url());
   const redirectTo = url.searchParams.get("redirect_to") ?? "";
   expect(new URL(redirectTo).pathname).toBe("/auth/callback");
+  // The client ID comes from env() in supabase/config.toml; an empty one would mean it was not read.
+  expect(url.searchParams.get("client_id")).toBeTruthy();
 });
 
 test("a player without a profile is sent to complete it after signing in, and can", async ({ page, accounts }) => {
@@ -77,7 +79,7 @@ test("an underage player completing their profile is refused and gets no profile
   await signIn(page, email);
   await expect(page).toHaveURL("/complete-profile");
 
-  await submitProfile(page, "2015-01-01");
+  await submitProfile(page, oneDayShortOf18());
 
   await expect(page.getByRole("alert").filter({ hasText: "open only to" })).toBeVisible();
   await expect(page).toHaveURL("/complete-profile");

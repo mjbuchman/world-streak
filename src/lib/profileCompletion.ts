@@ -12,7 +12,7 @@ export type CompleteProfileDeps = {
   /** Today's date (`YYYY-MM-DD`) for the age check. */
   today: string;
   /** Saves the signed-in player's profile; false when it could not be saved. */
-  createProfile(profile: { birthDate: string; country: string }): Promise<boolean>;
+  createProfile(profile: CompleteProfileValues): Promise<boolean>;
 };
 
 /**

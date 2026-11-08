@@ -18,10 +18,16 @@ export function GoogleSignInButton() {
   async function start() {
     setPending(true);
     setError(undefined);
-    const { error: failed } = await createSupabaseBrowserClient().auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
+    let failed = true;
+    try {
+      const { error } = await createSupabaseBrowserClient().auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
+      failed = Boolean(error);
+    } catch {
+      // A network or storage failure throws instead of returning an error; treat it the same.
+    }
     // On success the browser is already leaving for Google, so stay disabled.
     if (failed) {
       setError(START_FAILED);
