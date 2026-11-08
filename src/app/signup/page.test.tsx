@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // reloads the modules that read it. The client form pulls in server actions and is not under
 // test here.
 vi.mock("@/app/signup/SignUpForm", () => ({ SignUpForm: () => null }));
+vi.mock("@/components/GoogleSignInButton", () => ({ GoogleSignInButton: () => null }));
 
 afterEach(() => {
   vi.doUnmock("@/config/eligibility");

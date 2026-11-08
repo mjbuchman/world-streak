@@ -87,7 +87,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T06 Sign-in, sign-out and account header
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T05, T55, T56
 - Acceptance criteria:
   - [ ] `/signin` signs in with email and password. Wrong credentials show "Email or password is incorrect" without saying which one.
@@ -97,7 +97,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T07 Google sign-in and profile completion
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T06, T53
 - Acceptance criteria:
   - [ ] `/signin` and `/signup` show "Continue with Google", which calls `signInWithOAuth({ provider: "google", options: { redirectTo: <site>/auth/callback } })` (unit test with a mocked client).

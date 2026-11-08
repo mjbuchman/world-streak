@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { GAME_NAME } from "@/config/game";
 import { eligibilitySummary } from "@/lib/eligibility";
 import { SignUpForm } from "./SignUpForm";
@@ -14,6 +15,8 @@ export default function SignUpPage() {
       <p className={styles.intro}>
         An account lets your daily attempt count toward the world streak. Open to {eligibilitySummary()}.
       </p>
+      <GoogleSignInButton />
+      <p className={styles.divider}>or create an account with your email</p>
       <SignUpForm />
       <p className={styles.switch}>
         Already have an account? <Link href="/signin">Sign in</Link>

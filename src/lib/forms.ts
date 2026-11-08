@@ -1,5 +1,8 @@
 // Small helpers shared by server-side form handling.
 
+/** For failures the player cannot fix (outages, rate limits): never blames their input. */
+export const GENERIC_ERROR = "Something went wrong. Please try again.";
+
 /** A form value as text: strings pass through, anything else (missing, File) becomes "". */
 export function textValue(value: unknown): string {
   return typeof value === "string" ? value : "";

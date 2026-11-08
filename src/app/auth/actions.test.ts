@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const m = vi.hoisted(() => ({
   signInWithPassword: vi.fn(),
   signOut: vi.fn(),
+  landingPath: vi.fn(),
   redirect: vi.fn((url: string) => {
     throw new Error(`NEXT_REDIRECT ${url}`);
   }),
@@ -14,6 +15,7 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 vi.mock("next/navigation", () => ({ redirect: m.redirect }));
+vi.mock("@/lib/profiles", () => ({ landingPath: m.landingPath }));
 
 import { signInAction, signOutAction } from "./actions";
 
@@ -26,14 +28,29 @@ function form(email: string, password: string): FormData {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  m.signInWithPassword.mockResolvedValue({ error: null });
+  m.signInWithPassword.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
+  m.landingPath.mockResolvedValue("/");
   m.signOut.mockResolvedValue({ error: null });
 });
 
 describe("signInAction", () => {
-  it("signs in with Supabase and redirects home", async () => {
-    await expect(signInAction(null, form("player@example.com", "secret-pass"))).rejects.toThrow("NEXT_REDIRECT /");
+  it("signs in with Supabase and sends a player with a profile home", async () => {
+    await expect(signInAction(null, form("player@example.com", "secret-pass"))).rejects.toThrow(/^NEXT_REDIRECT \/$/);
     expect(m.signInWithPassword).toHaveBeenCalledWith({ email: "player@example.com", password: "secret-pass" });
+    expect(m.landingPath).toHaveBeenCalledWith(expect.objectContaining({ auth: expect.anything() }), "u1");
+  });
+
+  it("sends a signed-in player without a profile to complete it", async () => {
+    m.landingPath.mockResolvedValueOnce("/complete-profile");
+    await expect(signInAction(null, form("player@example.com", "secret-pass"))).rejects.toThrow(
+      /^NEXT_REDIRECT \/complete-profile$/,
+    );
+  });
+
+  it("sends the player home if Supabase signs in without returning the user", async () => {
+    m.signInWithPassword.mockResolvedValueOnce({ data: { user: null }, error: null });
+    await expect(signInAction(null, form("player@example.com", "secret-pass"))).rejects.toThrow(/^NEXT_REDIRECT \/$/);
+    expect(m.landingPath).not.toHaveBeenCalled();
   });
 
   it("returns the generic credentials message when Supabase rejects the credentials", async () => {

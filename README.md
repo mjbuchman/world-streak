@@ -170,6 +170,8 @@ cp .env.example .env.local       # then fill in the values, see below
 
 Fill in `.env.local` from the output of `npx supabase status`: copy **API URL** to `NEXT_PUBLIC_SUPABASE_URL`, the **anon key** to `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and the **service_role key** to `SUPABASE_SERVICE_ROLE_KEY`. These are local-only development keys.
 
+**Google sign-in:** local Supabase reads `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` from your shell when it starts (not from `.env.local`). Without them it still starts and everything else works; "Continue with Google" only completes once a real Google OAuth client is set (backlog task T15).
+
 **Every time:**
 
 ```bash

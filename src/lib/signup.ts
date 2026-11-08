@@ -2,9 +2,7 @@ import { z } from "zod";
 import { GAME_NAME } from "@/config/game";
 import { eligibilitySummary } from "@/lib/eligibility";
 import { type EligibilityField, validateEligibilityFields } from "@/lib/eligibilityFields";
-import { collectFieldErrors, textValue } from "@/lib/forms";
-
-const GENERIC_ERROR = "Something went wrong. Please try again.";
+import { collectFieldErrors, GENERIC_ERROR, textValue } from "@/lib/forms";
 
 const accountSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address.")),
