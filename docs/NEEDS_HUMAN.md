@@ -36,6 +36,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: sign-up uses the admin API, so Supabase's built-in sign-up rate limit does not apply. A free CAPTCHA plus a per-IP limit stops bulk account creation in a prize game.
 - Agent's recommendation: do it before the public launch. T52 works without the keys locally (it skips the CAPTCHA and logs a warning).
 
+### Please confirm: stacking tuning and whole-number score (blocks nothing)
+- What is needed: at the M1 play-test, say whether the stacking game feels right (a good run should last close to a minute), and confirm the score is a whole block count.
+- Where to put it: reply in chat.
+- Why: the speed ranges come from a simulated player, not real people, and the design doc is ambiguous between "blocks stacked" and a "continuous scale". Details in `docs/DECISIONS.md` (T09).
+- Agent's recommendation: keep both for M1 and adjust after the play-test; a fractional tie-breaker can be added later if many players tie.
+
 ## Resolved
 
 _Nothing yet._
