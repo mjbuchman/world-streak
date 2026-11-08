@@ -5,6 +5,8 @@ import { BASE_BLOCK, MAX_TAPS, blockLeftAt, simulate, type StackingParams } from
  * A simulated player for tuning and golden tests: after a short reaction delay it waits for
  * the block to line up with the one below, then taps with a random timing error of up to
  * `errorMs` either way. Deterministic for a given `seed`.
+ *
+ * Test support only (tuning and golden fixtures): app code must never import this.
  */
 export function simulatedTaps(params: StackingParams, errorMs: number, seed: number): number[] {
   const rng = createRng(seed);

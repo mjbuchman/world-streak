@@ -209,8 +209,19 @@ describe("stacking module", () => {
     ["a repeated tap", [10, 10]],
     ["a decreasing tap", [10, 5]],
     ["a non-finite tap", [10, Number.POSITIVE_INFINITY]],
+    ["a NaN tap", [10, Number.NaN]],
   ])("rejects %s", (_name, tapsMs) => {
     expect(stacking.inputsSchema.safeParse({ tapsMs }).success).toBe(false);
+  });
+
+  it.each([
+    ["no taps field", {}],
+    ["taps that are not numbers", { tapsMs: ["10", "20"] }],
+    ["taps that are not a list", { tapsMs: 10 }],
+    ["something that is not an object", [10, 20]],
+    ["nothing", null],
+  ])("rejects a malformed submission: %s", (_name, input) => {
+    expect(stacking.inputsSchema.safeParse(input).success).toBe(false);
   });
 
   it(`allows at most ${MAX_TAPS} taps`, () => {

@@ -53,7 +53,8 @@ export type StackingResult = {
   endedAtMs: number;
   /**
    * "miss": a block missed the tower. "time": a tap came after maxDurationMs. "inputs": the
-   * taps ran out first, so the run may still be going (the client's live view).
+   * taps ran out first: in the client's live view the run is still going; when the server
+   * replays a finished submission it only means the player stopped tapping (same score).
    */
   endReason: "miss" | "time" | "inputs";
   /** The block still sliding when the taps ran out; null once the run has ended. */
@@ -81,12 +82,12 @@ export function simulate(params: StackingParams, tapsMs: readonly number[]): Sta
   const blocks: PlacedBlock[] = [];
   let below: { left: number; width: number } = BASE_BLOCK;
   let moving: MovingBlock = { index: 1, width: BASE_BLOCK.width, startMs: 0 };
-  const result = (endedAtMs: number, endReason: StackingResult["endReason"], still: MovingBlock | null) => ({
+  const result = (endedAtMs: number, endReason: StackingResult["endReason"], movingBlock: MovingBlock | null) => ({
     score: blocks.length,
     blocks,
     endedAtMs,
     endReason,
-    moving: still,
+    moving: movingBlock,
   });
 
   for (const tapMs of tapsMs) {
