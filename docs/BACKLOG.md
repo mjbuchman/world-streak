@@ -109,7 +109,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T08 Shared seeded PRNG and engine types
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T01
 - Acceptance criteria:
   - [ ] `src/challenges/shared/prng.ts` exports `createRng(seed: number)`, which returns `{ next(): number; int(min, max): number; pick<T>(items: T[]): T }` using one documented algorithm (for example mulberry32) on unsigned 32-bit seeds.
@@ -120,7 +120,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T09 Stacking engine
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/stacking/engine.ts` exports `simulate(params, tapsMs: number[])`, which returns `{ score, blocks: { left, width, overhang }[], endedAtMs, endReason: "miss" | "time" | "inputs" }`, and `blockLeftAt(params, state, elapsedMs)`, which gives the moving block's position. Both are pure and driven only by elapsed ms.

@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T08 Shared seeded PRNG and engine types
+- Active task: T09 Stacking engine
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-08 — T08 Shared seeded PRNG and engine types (PR #14)
+- `createRng(seed)` (mulberry32, golden fixture in `prng.golden.json`), `ChallengeModule` interface, ESLint purity rules for `src/challenges/**` (except `render.ts`) with tests that lint sample code through the real config.
+- Review rounds: spec 1, quality 1, tests 1.
+- Notes: the purity rules also apply to test files under `src/challenges`.
 
 ### 2026-11-08 — T07 Google sign-in and profile completion (PR #13)
 - "Continue with Google" (browser `signInWithOAuth`), `GET /auth/callback`, `/complete-profile`; `landingPath()` in `src/lib/profiles.ts` sends players without a profile to `/complete-profile` after any sign-in. `GENERIC_ERROR` now lives in `src/lib/forms.ts`.
