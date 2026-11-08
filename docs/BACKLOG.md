@@ -97,7 +97,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T07 Google sign-in and profile completion
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T06, T53
 - Acceptance criteria:
   - [ ] `/signin` and `/signup` show "Continue with Google", which calls `signInWithOAuth({ provider: "google", options: { redirectTo: <site>/auth/callback } })` (unit test with a mocked client).
@@ -109,7 +109,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T08 Shared seeded PRNG and engine types
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T01
 - Acceptance criteria:
   - [ ] `src/challenges/shared/prng.ts` exports `createRng(seed: number)`, which returns `{ next(): number; int(min, max): number; pick<T>(items: T[]): T }` using one documented algorithm (for example mulberry32) on unsigned 32-bit seeds.
