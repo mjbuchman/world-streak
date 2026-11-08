@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import golden from "./engine.golden.json";
 import {
   BASE_BLOCK,
   FIELD_WIDTH,
@@ -106,6 +107,10 @@ describe("blockLeftAt", () => {
     expect(blockLeftAt(steady, block3, 1250)).toBe(0);
   });
 
+  it("keeps a block at its starting side before it is released", () => {
+    expect(blockLeftAt(steady, { index: 2, width: 150, startMs: 750 }, 500)).toBe(250);
+  });
+
   it("speeds up by the ramp for each block", () => {
     const params = { ...steady, ramp: 0.1 };
     // Block 3 moves at 0.2 + 0.1 * 2 = 0.4 px/ms.
@@ -137,8 +142,9 @@ describe("simulate: properties", () => {
 
   it("gives the same result for the same params and taps", () => {
     for (const seed of seeds) {
-      const params = paramsFromSeed(seed);
-      expect(simulate(params, tapsFor(seed))).toEqual(simulate(params, tapsFor(seed)));
+      const taps = tapsFor(seed);
+      // paramsFromSeed is called twice too, so hidden state in it would show up here.
+      expect(simulate(paramsFromSeed(seed), taps)).toEqual(simulate(paramsFromSeed(seed), taps));
     }
   });
 
@@ -161,8 +167,9 @@ describe("simulate: properties", () => {
 });
 
 describe("paramsFromSeed", () => {
-  it("is deterministic", () => {
-    expect(paramsFromSeed(12345)).toEqual(paramsFromSeed(12345));
+  it("is deterministic for every seed", () => {
+    for (let seed = 0; seed < 1000; seed++) expect(paramsFromSeed(seed)).toEqual(paramsFromSeed(seed));
+    expect(paramsFromSeed(4294967295)).toEqual(paramsFromSeed(4294967295));
   });
 
   it("stays inside the documented ranges over seeds 0 to 999, with both directions", () => {
@@ -210,5 +217,21 @@ describe("stacking module", () => {
     const taps = (count: number) => Array.from({ length: count }, (_, i) => i * 10);
     expect(stacking.inputsSchema.safeParse({ tapsMs: taps(MAX_TAPS) }).success).toBe(true);
     expect(stacking.inputsSchema.safeParse({ tapsMs: taps(MAX_TAPS + 1) }).success).toBe(false);
+  });
+});
+
+describe("golden runs", () => {
+  // Three committed seeds and tap sequences (from the simulated player in player.ts) with
+  // their exact results: one ends in a miss, one at the time limit, one when the taps run out.
+  // If this fails, replayed official scores have changed: never regenerate the fixture to
+  // make it pass without a recorded decision.
+  it.each(golden)("seed $seed scores exactly as committed", ({ seed, params, tapsMs, result }) => {
+    expect(paramsFromSeed(seed)).toEqual(params);
+    expect(simulate(paramsFromSeed(seed), tapsMs)).toMatchObject(result);
+    expect(stacking.score(paramsFromSeed(seed), { tapsMs })).toBe(result.score);
+  });
+
+  it("covers every way a run ends", () => {
+    expect(golden.map((run) => run.result.endReason).sort()).toEqual(["inputs", "miss", "time"]);
   });
 });

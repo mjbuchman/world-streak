@@ -16,12 +16,13 @@ export const MAX_TAPS = 200;
 
 /**
  * Per-player randomization (DESIGN.md: randomize start speed, direction and ramp). Speeds are
- * in units per ms: at 0.2 a block crosses the 200-unit gap above the base in one second.
- * The run is capped at one minute.
+ * in units per ms: at 0.1 a block crosses the 200-unit gap above the base in two seconds.
+ * Tuned (see tuning.test.ts and docs/DECISIONS.md) so a competent player, tapping within
+ * about 30 ms of perfect, lasts roughly 40-60 s; the run is capped at one minute.
  */
 export const PARAM_RANGES = {
-  startSpeed: { min: 0.18, max: 0.24 },
-  ramp: { min: 0.004, max: 0.008 },
+  startSpeed: { min: 0.1, max: 0.12 },
+  ramp: { min: 0.002, max: 0.003 },
   maxDurationMs: 60_000,
 } as const;
 
@@ -60,7 +61,8 @@ export type StackingResult = {
 };
 
 // Positions are rounded to 1/1000 of a unit so floating-point noise can never turn an exact
-// edge-to-edge landing into a hair of overlap (or the reverse).
+// edge-to-edge landing into a hair of overlap (or the reverse). An overlap under 0.0005 units
+// therefore counts as a miss; the renderer must not draw such a sliver as placed.
 const snap = (value: number) => Math.round(value * 1000) / 1000;
 
 /** Left edge of the moving block at `elapsedMs` since the run started. */
@@ -88,6 +90,7 @@ export function simulate(params: StackingParams, tapsMs: readonly number[]): Sta
   });
 
   for (const tapMs of tapsMs) {
+    // The run ended at the time limit, before this late tap.
     if (tapMs > params.maxDurationMs) return result(params.maxDurationMs, "time", null);
 
     const landed = blockLeftAt(params, moving, tapMs);
@@ -117,6 +120,7 @@ export function paramsFromSeed(seed: number): StackingParams {
 
 const inputsSchema: z.ZodType<StackingInputs> = z.object({
   tapsMs: z
+    // zod 4 numbers already reject NaN and Infinity (tested).
     .array(z.number().nonnegative())
     .max(MAX_TAPS)
     .refine((taps) => taps.every((tap, i) => i === 0 || tap > taps[i - 1]), "Taps must be strictly increasing."),
