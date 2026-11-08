@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { collectFieldErrors, textValue } from "@/lib/forms";
+import { collectFieldErrors, GENERIC_ERROR, textValue } from "@/lib/forms";
 
 /** Deliberately the same message for an unknown email and a wrong password. */
 export const WRONG_CREDENTIALS = "Email or password is incorrect";
@@ -16,7 +16,7 @@ export type SignInState =
   | { ok: false; message?: string; fieldErrors?: Partial<Record<Field, string>>; values: { email: string } };
 
 /** For outages and rate limits, so players are not told their password is wrong. */
-export const SIGN_IN_FAILED = "Something went wrong. Please try again.";
+export const SIGN_IN_FAILED = GENERIC_ERROR;
 
 export type SignInDeps = {
   /** Signs in and stores the session. */

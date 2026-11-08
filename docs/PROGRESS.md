@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T06 Sign-in, sign-out and account header
+- Active task: T07 Google sign-in and profile completion
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-08 — T06 Sign-in, sign-out and account header (PR #12)
+- Email/password sign-in with one message for wrong email or password; `AccountHeader` on every page; `src/proxy.ts` refreshes the session via `updateSession`.
+- Review rounds: spec 2, quality 2, tests 2 (round 1: proxy dropped @supabase/ssr no-cache headers; proxy lacked tests).
+- Notes: e2e session helpers in `tests/e2e/support/session.ts` (`readSession`, `writeSession`). Next.js renders an empty `role="alert"` route announcer, so filter alert locators by text.
 
 ### 2026-11-07 — Maintenance T53, T57, T54, T55, T56 (PRs #7–#11)
 - T53: `checkEligibility` owns the 120-year limit; `validateEligibilityFields` (tagged `invalid | refused | ok`) is the shared birth date, country and rules validation; `src/lib/forms.ts` has `textValue` and `collectFieldErrors`.

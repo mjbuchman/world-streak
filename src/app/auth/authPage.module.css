@@ -35,3 +35,15 @@
 .switch a {
   color: var(--md-sys-color-primary);
 }
+
+/* Separates "Continue with Google" from the email form. */
+.divider {
+  margin-top: var(--space-6);
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+.alert {
+  margin-top: var(--space-6);
+}
