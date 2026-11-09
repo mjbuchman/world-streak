@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T09 Stacking engine
+- Active task: T10 Stacking renderer and practice page
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-08 — T09 Stacking engine (PR #15)
+- `simulate`/`blockLeftAt`/`paramsFromSeed` and the `stacking` module in `src/challenges/stacking/engine.ts`; golden fixture `engine.golden.json`; `player.ts` is a test-only simulated player used by `tuning.test.ts`.
+- Review rounds: spec 2, quality 2, tests 2 (round 1: missing golden tests; also retuned speeds so good runs last about a minute).
+- Notes: `simulate` reports "time" only when a tap comes after the limit, so the game loop must end the run at 60 s itself. An overlap under 0.0005 units is a miss. Speed ranges and the whole-number score await confirmation at the M1 play-test (NEEDS_HUMAN).
 
 ### 2026-11-08 — T08 Shared seeded PRNG and engine types (PR #14)
 - `createRng(seed)` (mulberry32, golden fixture in `prng.golden.json`), `ChallengeModule` interface, ESLint purity rules for `src/challenges/**` (except `render.ts`) with tests that lint sample code through the real config.

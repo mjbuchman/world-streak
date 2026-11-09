@@ -120,7 +120,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T09 Stacking engine
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/stacking/engine.ts` exports `simulate(params, tapsMs: number[])`, which returns `{ score, blocks: { left, width, overhang }[], endedAtMs, endReason: "miss" | "time" | "inputs" }`, and `blockLeftAt(params, state, elapsedMs)`, which gives the moving block's position. Both are pure and driven only by elapsed ms.
@@ -141,7 +141,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T10 Stacking renderer and practice page
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T09
 - Acceptance criteria:
   - [ ] `src/challenges/stacking/render.ts` draws a given engine state for a given elapsed ms onto a canvas 2D context, scaling the 400-unit field to the canvas width and handling `devicePixelRatio`.
