@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 3000;
+// `npm run test:e2e:local` uses another port (E2E_PORT), so a running `npm run dev` on 3000 is left alone.
+const PORT = Number(process.env.E2E_PORT) || 3000;
 const isCI = Boolean(process.env.CI);
 
 export default defineConfig({

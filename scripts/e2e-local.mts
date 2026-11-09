@@ -50,6 +50,15 @@ export type E2eDeps = {
   logError: (message: string) => void;
 };
 
+/**
+ * The environment Playwright (and the app it starts) runs with: the local keys, plus its own
+ * server on its own port and build folder, so it never reuses a dev server started with other
+ * keys and never clashes with one running on port 3000.
+ */
+export function playwrightEnv<Base extends Record<string, string | undefined>>(base: Base, appEnv: AppEnv) {
+  return { ...base, ...appEnv, E2E_FRESH_SERVER: "1", E2E_PORT: "3100", E2E_DIST_DIR: ".next-e2e" };
+}
+
 /** Returns the process exit code. Problems are reported as one line, never a stack trace. */
 export function runE2e(args: string[], deps: E2eDeps): number {
   let statusOutput: string;
@@ -75,8 +84,7 @@ const realDeps: E2eDeps = {
   runPlaywright: (args, env) => {
     // Run Playwright's CLI with this Node directly: no shell, so arguments arrive exactly as given.
     const cli = createRequire(import.meta.url).resolve("@playwright/test/cli");
-    const childEnv = { ...process.env, ...env, E2E_FRESH_SERVER: "1" };
-    const run = spawnSync(process.execPath, [cli, "test", ...args], { stdio: "inherit", env: childEnv });
+    const run = spawnSync(process.execPath, [cli, "test", ...args], { stdio: "inherit", env: playwrightEnv(process.env, env) });
     return run.status ?? 1;
   },
   logError: (message) => console.error(message),

@@ -29,6 +29,9 @@ export function drawStacking(ctx: CanvasRenderingContext2D, frame: StackingFrame
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
   const fieldHeight = (height / width) * FIELD_WIDTH;
+  // Clear first: the background may be translucent (the page shows through), and painting it
+  // over the last frame would build up into an opaque smear.
+  ctx.clearRect(0, 0, FIELD_WIDTH, fieldHeight);
   ctx.fillStyle = colors.background;
   ctx.fillRect(0, 0, FIELD_WIDTH, fieldHeight);
 

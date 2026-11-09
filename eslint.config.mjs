@@ -44,7 +44,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Generated test and coverage output.
+    // Generated test and coverage output, and the e2e server's own build folder.
+    ".next-e2e/**",
     "coverage/**",
     "playwright-report/**",
     "test-results/**",

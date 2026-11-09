@@ -25,4 +25,5 @@
 /* Focus is moved here in code when a run starts; it cannot be reached with Tab, so no ring. */
 .canvas:focus {
   outline: none;
+  box-shadow: none;
 }
