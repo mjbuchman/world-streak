@@ -19,7 +19,8 @@ language sql
 immutable
 set search_path = ''
 as $$
-  -- The explicit UTC conversion keeps the result independent of the session time zone.
+  -- The explicit UTC conversion keeps the result independent of the session time zone. It is
+  -- immutable only because the zone is a literal: never use current_setting('TimeZone') here.
   select ((ts at time zone 'UTC') - make_interval(hours => public.deadline_utc_hour()))::date;
 $$;
 
@@ -36,7 +37,7 @@ create table public.game_days (
   challenge_type text not null,
   pass_target numeric not null check (pass_target >= 0),
   survival_threshold numeric not null check (survival_threshold between 0 and 1),
-  final_pass_rate numeric,
+  final_pass_rate numeric check (final_pass_rate between 0 and 1),
   outcome text check (outcome in ('survived', 'broken')),
   closed_at timestamptz
 );

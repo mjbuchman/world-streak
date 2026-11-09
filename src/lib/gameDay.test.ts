@@ -61,7 +61,7 @@ describe("the SQL game_date_at test", () => {
     // sides test this one fixture so they cannot drift apart.
     const sql = readFileSync(path.resolve(import.meta.dirname, "../../supabase/tests/game_days.test.sql"), "utf8");
     const embedded = /\$fixture\$([\s\S]*?)\$fixture\$/.exec(sql);
-    expect(embedded, "the pgTAP test embeds the fixture between $fixture$ quotes").not.toBeNull();
-    expect(JSON.parse(embedded![1])).toEqual(fixture);
+    if (!embedded) throw new Error("the pgTAP test must embed the fixture between $fixture$ quotes");
+    expect(JSON.parse(embedded[1])).toEqual(fixture);
   });
 });

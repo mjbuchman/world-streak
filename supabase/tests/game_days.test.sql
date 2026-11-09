@@ -1,5 +1,5 @@
 begin;
-select plan(59);
+select plan(61);
 
 -- game_days: structure.
 select has_table('public', 'game_days', 'game_days table exists');
@@ -54,6 +54,7 @@ select function_privs_are(
   'public', 'ensure_game_day', array['date'], 'anon', array[]::text[],
   'anonymous visitors have no EXECUTE on ensure_game_day'
 );
+select is(public.deadline_utc_hour(), 0, 'the SQL deadline hour is midnight UTC, like DEADLINE_UTC_HOUR');
 select is(
   (select provolatile from pg_proc where oid = 'public.game_date_at(timestamptz)'::regprocedure),
   'i'::"char",
@@ -102,6 +103,11 @@ select throws_ok(
   $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold)
     values ('2026-11-09', 'stacking', -1, 0.6)$$,
   '23514', null, 'pass_target cannot be negative'
+);
+select throws_ok(
+  $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold, final_pass_rate)
+    values ('2026-11-09', 'stacking', 10, 0.6, 1.2)$$,
+  '23514', null, 'final_pass_rate is a fraction between 0 and 1'
 );
 
 select throws_ok(

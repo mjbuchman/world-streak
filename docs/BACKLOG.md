@@ -279,7 +279,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
   - [ ] pgTAP: 10 attempts with 6 passes at threshold 0.60 is survived (the boundary counts); 5 of 10 is broken; 3 consecutive survived days give current streak 3, and a broken fourth day gives 0 with best 3; an idempotent re-run changes nothing.
   - [ ] A day with 0 attempts closes as `broken` with `final_pass_rate null` (judgment call, record it and flag it).
   - [ ] SQL view or function `world_streak()` returns `{ current, best, current_start_date }`, readable by everyone. `/api/meter` now fills `streak`.
-- Notes: Pass rate is weighted per the definition "among counted accounts" (weights from T17). The cycle-aware streak reset comes later (T34).
+- Notes: Pass rate is weighted per the definition "among counted accounts" (weights from T17). The cycle-aware streak reset comes later (T34). From the T11 quality review: add a `game_days` check that `outcome` and `closed_at` are both set or both null, so a half-closed day cannot be stored (`final_pass_rate` is already checked to be between 0 and 1).
 
 ### T22 Prepare next day: pass target and threshold
 - Type: feature
@@ -751,3 +751,13 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] The React warning "Each child in a list should have a unique key prop. Check the render method of `Field`", printed by the dev server during e2e runs, is fixed, with a component test that fails on the warning (for example a `console.error` spy).
   - [ ] `npm run verify` and `npm run test:e2e` pass; no product behavior changes.
 - Notes: From the maintainer check after T10, plus the warning seen during the T59 e2e runs.
+
+### T64 Revoke TRUNCATE from client roles
+- Type: maintenance
+- Status: todo
+- Depends on: T11
+- Acceptance criteria:
+  - [ ] A migration revokes TRUNCATE on every table in `public` from `anon` and `authenticated` (RLS does not cover TRUNCATE, and Supabase's default grants include it), and changes the default privileges so tables created later are covered too.
+  - [ ] pgTAP: `table_privs_are` (or `has_table_privilege`) shows neither role has TRUNCATE on `profiles`, `game_days` or `attempts`, and a table created after the migration also lacks it.
+  - [ ] `npm run test:db` and `npm run verify` pass; no product behavior changes.
+- Notes: From the T11 quality review. Not exploitable through the API (PostgREST cannot issue TRUNCATE), so this is defence in depth; do it before launch.
