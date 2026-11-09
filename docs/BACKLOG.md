@@ -152,7 +152,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T11 Game days, attempts schema and game date
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T04
 - Acceptance criteria:
   - [ ] `src/config/schedule.ts` exports `DEADLINE_UTC_HOUR = 0`. `src/lib/gameDay.ts` exports `gameDateAt(now: Date)`, which returns the `YYYY-MM-DD` game date (the date that closes at the next deadline), and `deadlineFor(gameDate)`. Tests: `2026-11-07T23:59:59.999Z`, game date `2026-11-07`; `2026-11-08T00:00:00.000Z`, `2026-11-08`; with an hour of 5 injected, `2026-11-08T04:59:59Z`, `2026-11-07`.
@@ -165,7 +165,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T12 Attempt start endpoint
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T07, T09, T11
 - Acceptance criteria:
   - [ ] `POST /api/attempts/start` returns 401 when signed out, and 403 `{ error: "profile-required" }` when the user has no profile.

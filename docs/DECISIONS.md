@@ -110,3 +110,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: a scored attempt needs an eligible account (T12 refuses players without a profile), and the database then enforces it too. Deleting an account removes its profile and attempts.
 - How to change it later: a migration changing the foreign key.
 - Confirmed by human: not needed (no Open item); recorded for reviewers.
+
+### 2026-11-09 — An abandoned attempt cannot be restarted (T12)
+- Choice: starting an attempt creates its row at once; leaving before finishing never counts toward the pass rate (only submitted attempts are counted), but the player cannot start again that day. `POST /api/attempts/start` answers 409 `already-started` with `submitted: false`.
+- Reason: the design says abandoning "records nothing", yet a restart would replay the same seed, so the player would already know the instance (for example Flash Count's dot count). Refusing the restart keeps the one-attempt rule meaningful. T14 states the rule on the play page before Start.
+- How to change it later: let `startAttempt` return the existing unsubmitted attempt, but only with a fresh seed, which needs a migration allowing the seed to change.
+- Confirmed by human: pending (see NEEDS_HUMAN).

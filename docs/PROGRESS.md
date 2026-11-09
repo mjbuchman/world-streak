@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T11 Game days, attempts schema and game date
+- Active task: T12 Attempt start endpoint
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-09 — T11 Game days, attempts schema and game date (PR #18)
+- `gameDateAt`/`deadlineFor` (`src/lib/gameDay.ts`, deadline in `src/config/schedule.ts`); migration with `game_days`, `attempts` (unique per user and date, references `profiles`), `game_date_at`, `deadline_utc_hour` and `ensure_game_day` (service role only); pgTAP in `supabase/tests/game_days.test.sql`.
+- Review rounds: spec 2, quality 2, tests 2 (round 1: Supabase grants EXECUTE to anon and authenticated directly, so `revoke ... from public` was not enough; the SQL fixture only ran under UTC).
+- Notes: revoke function EXECUTE from `public, anon, authenticated` by name and test with `function_privs_are`. The shared fixture `src/lib/gameDay.fixture.json` is embedded in the pgTAP file and a Vitest test keeps them equal. Placeholder pass target 10 awaits confirmation. Auto-merge stalled on PRs #17 and #18 after CI passed; toggling `--disable-auto` then `--auto` merged them.
 
 ### 2026-11-09 — T59 One-command local e2e runs (PR #17)
 - `npm run test:e2e:local` (`scripts/e2e-local.mts`) reads local Supabase keys from `supabase status` and runs Playwright with them; refuses non-localhost URLs and never reuses an existing server (`E2E_FRESH_SERVER`). Also fixed the `SignUpForm.test.tsx` race.
