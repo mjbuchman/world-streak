@@ -167,6 +167,11 @@ describe("StackingGame", () => {
     expect(second.mock.calls[0][0].taps).toEqual([930]);
   });
 
+  it("takes keyboard focus when it starts, so focus is not lost when the Start button goes", () => {
+    render(<StackingGame params={params} onFinish={vi.fn()} />);
+    expect(document.activeElement).toBe(screen.getByRole("img", { name: /tower/i }));
+  });
+
   it("stops listening and drawing once unmounted", () => {
     const onFinish = vi.fn();
     const { unmount } = render(<StackingGame params={params} onFinish={onFinish} />);

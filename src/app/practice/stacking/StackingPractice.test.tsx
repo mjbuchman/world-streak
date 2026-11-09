@@ -9,7 +9,8 @@ const games = vi.hoisted(() => [] as GameProps[]);
 vi.mock("@/components/stacking/StackingGame", () => ({
   StackingGame: (props: GameProps) => {
     games.push(props);
-    return <div data-testid="game" />;
+    // Like the real game, it takes focus when it mounts (tested in StackingGame.test.tsx).
+    return <div data-testid="game" tabIndex={-1} ref={(element) => element?.focus()} />;
   },
 }));
 
@@ -64,6 +65,38 @@ describe("StackingPractice", () => {
     expect(screen.queryByTestId("game")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Play again" }));
     expect(games.at(-1)!.params).toEqual(paramsFromSeed(22));
+  });
+
+  it("moves focus to the result when a run ends, so it is announced and Space cannot restart", async () => {
+    render(<StackingPractice />);
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    finish(4);
+
+    const heading = screen.getByRole("heading", { name: "You stacked 4 blocks" });
+    expect(document.activeElement).toBe(heading);
+
+    // A Space still held from the last drop, or pressed again, lands on the heading: no new run.
+    const runs = games.length;
+    await userEvent.keyboard(" ");
+    expect(games.length).toBe(runs);
+    expect(screen.queryByTestId("game")).toBeNull();
+
+    // Tab reaches Play again.
+    await userEvent.tab();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Play again" }));
+  });
+
+  it("hands focus to the game on Play again, and back to the new result when that run ends", async () => {
+    render(<StackingPractice />);
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    finish(4);
+    await userEvent.click(screen.getByRole("button", { name: "Play again" }));
+
+    // The button is gone; focus is on the new game, not left on <body>.
+    expect(document.activeElement).toBe(screen.getByTestId("game"));
+
+    finish(6);
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "You stacked 6 blocks" }));
   });
 
   it("says block, not blocks, for a score of 1", async () => {

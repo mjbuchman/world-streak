@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { paramsFromSeed, type StackingParams } from "@/challenges/stacking/engine";
 import { type FinishedRun, StackingGame } from "@/components/stacking/StackingGame";
 import styles from "./practice.module.css";
@@ -14,15 +14,22 @@ function randomSeed(): number {
 
 export function StackingPractice() {
   const [phase, setPhase] = useState<Phase>({ name: "ready" });
+  const resultRef = useRef<HTMLHeadingElement>(null);
   const play = () => setPhase({ name: "playing", params: paramsFromSeed(randomSeed()) });
   const finish = ({ result }: FinishedRun) => setPhase({ name: "done", score: result.score });
+
+  // The game (which had focus) is gone, so move focus to the result: screen readers announce it,
+  // and a Space still held from the last drop lands on the heading rather than on "Play again".
+  useEffect(() => {
+    if (phase.name === "done") resultRef.current?.focus();
+  }, [phase.name]);
 
   if (phase.name === "playing") return <StackingGame params={phase.params} onFinish={finish} />;
 
   return (
     <section className={styles.panel}>
       {phase.name === "done" ? (
-        <h2 className={styles.result}>
+        <h2 ref={resultRef} tabIndex={-1} className={styles.result}>
           You stacked {phase.score} {phase.score === 1 ? "block" : "blocks"}
         </h2>
       ) : (
