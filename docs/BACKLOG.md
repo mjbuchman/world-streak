@@ -152,7 +152,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T11 Game days, attempts schema and game date
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T04
 - Acceptance criteria:
   - [ ] `src/config/schedule.ts` exports `DEADLINE_UTC_HOUR = 0`. `src/lib/gameDay.ts` exports `gameDateAt(now: Date)`, which returns the `YYYY-MM-DD` game date (the date that closes at the next deadline), and `deadlineFor(gameDate)`. Tests: `2026-11-07T23:59:59.999Z`, game date `2026-11-07`; `2026-11-08T00:00:00.000Z`, `2026-11-08`; with an hour of 5 injected, `2026-11-08T04:59:59Z`, `2026-11-07`.
@@ -602,7 +602,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Acceptance criteria:
   - [ ] `npm audit` reports no moderate or higher vulnerabilities, or each remaining one is listed in the PR with why it can't be fixed yet (at T01: 0 in production dependencies, 8 moderate in dev tooling).
   - [ ] If the CI e2e job spends more than 2 minutes building the app inside Playwright's `webServer`, move the build into its own workflow step before `npm run test:e2e` (an addition only) and make `webServer` just run `npm run start`.
-- Notes: Suggested in T01 review (quality-reviewer). Also take the patch updates for `react` and `react-dom` (19.3.0 to 19.3.1, from the T05 maintainer check). Do not take the major bumps (TypeScript 7, ESLint 10): `eslint-config-next` 16.4.5 targets ESLint 9 and TypeScript 5. `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing.
+- Notes: Suggested in T01 review (quality-reviewer). Also take the patch updates for `react` and `react-dom` (19.3.0 to 19.3.1, from the T05 maintainer check). Do not take the major bumps (TypeScript 7, ESLint 10): `eslint-config-next` 16.4.5 targets ESLint 9 and TypeScript 5. `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing. From the T10 maintainer check: also take the Supabase CLI 3.0.0 to 3.1.0 update; hold `@material/material-color-utilities` 0.4.0 (pre-1.0 minor) unless the token generator needs it.
 
 ### T52 Sign-up abuse protection
 - Type: maintenance
@@ -695,14 +695,59 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] A signed-in user who opens `/signin` or `/signup` is redirected to `/`.
   - [ ] Sign-in shows a specific message for `email_not_confirmed`, in case email confirmation is ever turned on.
   - [ ] `npm run verify` and `npm run test:e2e` pass.
-- Notes: From the T06 quality review. Not urgent during development; do before the live meter and play pages add traffic (M2).
+- Notes: From the T06 quality review. Not urgent during development; do before the live meter and play pages add traffic (M2). The T10 maintainer check found the comment in `src/components/AccountHeader.tsx` (lines 10-11) wrong: `getClaims` does not verify locally while `signing_keys_path` is commented out in `supabase/config.toml`, so a signed-in render makes two Auth calls today (`getUser` in the proxy, `getClaims` in the header). Fix the comment as part of this task.
 
 ### T59 One-command local e2e runs
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T02
 - Acceptance criteria:
   - [ ] `npm run test:e2e:local` reads the local Supabase URL, anon key and service-role key from `npx supabase status` and runs Playwright with them, passing extra arguments through, so no `.env.local` or shell `export` step is needed.
   - [ ] It refuses to run when the Supabase URL is not localhost, and fails with a clear message when local Supabase is not running. Unit tests cover the parsing and both refusals.
   - [ ] README "Checks" documents it; CI keeps using `npm run test:e2e`.
 - Notes: Requested by the human (Nov 9, 2026) so unattended sessions and reviewers can run e2e as one allowlisted command, without shell scripting that triggers permission prompts.
+
+### T60 Practice: move focus to the result when a run ends
+- Type: maintenance
+- Status: todo
+- Depends on: T10
+- Acceptance criteria:
+  - [ ] When a practice run finishes, keyboard focus moves to the result, so a keyboard or screen-reader user is not left on `<body>` (the Start button they pressed was unmounted). The heading "You stacked N blocks" is announced, through a polite live region or because it labels the focused element.
+  - [ ] A Space key held or pressed as the run ends does not start a new run straight away. A test covers it: Space keydown and keyup right after `onFinish` must not start a run. Options: ignore activation for a short configurable delay, or focus the heading (`tabIndex={-1}`) and let Tab reach "Play again". Record the choice in DECISIONS.md.
+  - [ ] `StackingPractice.test.tsx` covers where focus goes after finishing and after "Play again".
+  - [ ] `npm run verify` passes; no behavior change beyond focus handling.
+- Notes: From the maintainer check after T10. T14's `/play` result view will reuse this pattern, so ideally land it before T14.
+
+### T61 Share the auth form helpers: email schema, form reading, profile insert
+- Type: maintenance
+- Status: todo
+- Depends on: T07
+- Acceptance criteria:
+  - [ ] One `emailSchema` (trim, lowercase, `z.email("Enter a valid email address.")`) in `src/lib/forms.ts`, used by `signup.ts` and `signin.ts`.
+  - [ ] One helper, for example `readFields(formData, names)`, replaces the hand-written `formData.get(x) ?? undefined` readers in `signup.ts`, `signin.ts` and `profileCompletion.ts`.
+  - [ ] `refusalMessage()` moves from `signup.ts` to `eligibility.ts` next to `eligibilitySummary()`, so `profileCompletion.ts` no longer imports the sign-up module.
+  - [ ] One `insertProfile(client, { userId, birthDate, country })` in `src/lib/profiles.ts` returns `"ok" | "exists" | "error"` and is used by both sign-up and profile-completion actions, each keeping its current meaning (sign-up treats `"exists"` as a failure and deletes the auth user; profile completion treats it as success). The unique-violation code lives in that one place.
+  - [ ] Existing unit tests pass unchanged apart from import paths; the 90% thresholds still pass; `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T10. T12, T25, T42 and T52 add more form and profile code, so this stops the copying spreading.
+
+### T62 Shared e2e sign-in, sign-out and header helpers
+- Type: maintenance
+- Status: todo
+- Depends on: T56
+- Acceptance criteria:
+  - [ ] `tests/e2e/support/pages.ts` exports `header(page)`, `signInViaForm(page, email, password = E2E_PASSWORD)` (button scoped to `main`, not the header link) and `signOutViaHeader(page)` (waits for the "Sign in" link).
+  - [ ] `auth.spec.ts` and `profile.spec.ts` use them with the same assertions.
+  - [ ] `hasSessionCookie` uses the `AUTH_COOKIE` regex from `support/session.ts` instead of its own copy.
+  - [ ] `npm run test:e2e` passes locally and in CI; `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T10. T14, T25, T30, T36, T43 and T49 all need a signed-in browser.
+
+### T63 Component-test race audit and the Field key warning
+- Type: maintenance
+- Status: todo
+- Depends on: T55
+- Acceptance criteria:
+  - [ ] Every component test in `src/app/**` and `src/components/**` is checked for assertions made right after a submit whose result arrives asynchronously, with no `findBy*` or `waitFor` first (the pattern behind the `SignUpForm.test.tsx` flake fixed in T59). Each one found waits for the result; no assertion is removed or weakened.
+  - [ ] `npx vitest run` passes 5 full runs in a row locally.
+  - [ ] The React warning "Each child in a list should have a unique key prop. Check the render method of `Field`", printed by the dev server during e2e runs, is fixed, with a component test that fails on the warning (for example a `console.error` spy).
+  - [ ] `npm run verify` and `npm run test:e2e` pass; no product behavior changes.
+- Notes: From the maintainer check after T10, plus the warning seen during the T59 e2e runs.
