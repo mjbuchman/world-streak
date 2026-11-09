@@ -22,10 +22,11 @@ describe("root layout metadata", () => {
     expect(metadata.title).toBe(GAME_NAME);
   });
 
-  it("follows the constant when the name changes", async () => {
+  it("follows the constants when the name or pitch changes", async () => {
     vi.resetModules();
-    vi.doMock("@/config/game", () => ({ GAME_NAME: "Renamed Game" }));
+    vi.doMock("@/config/game", () => ({ GAME_NAME: "Renamed Game", GAME_PITCH: "A new pitch." }));
     const { metadata } = await import("./layout");
     expect(metadata.title).toBe("Renamed Game");
+    expect(metadata.description).toBe("A new pitch.");
   });
 });
