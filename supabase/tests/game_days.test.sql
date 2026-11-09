@@ -139,7 +139,8 @@ select results_eq(
   $$values ('00000000-0000-0000-0000-00000000000a'::uuid)$$,
   'user A sees only their own attempt, not user B''s'
 );
-select is((select count(*)::int from public.game_days), 1, 'a signed-in user can read game days');
+-- Counted by date: the local database may also hold real days created by e2e runs.
+select is((select count(*)::int from public.game_days where game_date = '2026-11-08'), 1, 'a signed-in user can read game days');
 select throws_ok(
   $$insert into public.attempts (user_id, game_date, seed)
     values ('00000000-0000-0000-0000-00000000000a', '2026-11-09', 4)$$,
@@ -166,7 +167,7 @@ select lives_ok($$delete from public.attempts$$, 'setup: user A tries to delete 
 reset role;
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
 set local role anon;
-select is((select count(*)::int from public.game_days), 1, 'an anonymous visitor can read game days');
+select is((select count(*)::int from public.game_days where game_date = '2026-11-08'), 1, 'an anonymous visitor can read game days');
 select is_empty('select id from public.attempts', 'an anonymous visitor sees no attempts');
 reset role;
 

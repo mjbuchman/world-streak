@@ -9,14 +9,17 @@ describe("challenge types", () => {
     expectTypeOf<ScoreDirection>().toEqualTypeOf<"higher-better" | "lower-better">();
   });
 
-  it("describes a module as params from a seed, a score, an inputs schema and a direction", () => {
-    const counter: ChallengeModule<{ target: number }, { taps: number }> = {
+  it("describes a module as params from a seed, a score, an inputs schema, a direction and input timing", () => {
+    const counter: ChallengeModule<{ target: number }, { taps: number; lastMs: number }> = {
       paramsFromSeed: (seed) => ({ target: seed % 10 }),
       score: (params, inputs) => Math.abs(params.target - inputs.taps),
-      inputsSchema: z.object({ taps: z.number().int() }),
+      inputsSchema: z.object({ taps: z.number().int(), lastMs: z.number() }),
       direction: "lower-better",
+      lastInputMs: (inputs) => inputs.lastMs,
     };
-    expect(counter.score(counter.paramsFromSeed(17), counter.inputsSchema.parse({ taps: 5 }))).toBe(2);
-    expectTypeOf(counter.inputsSchema.parse).returns.toEqualTypeOf<{ taps: number }>();
+    const inputs = counter.inputsSchema.parse({ taps: 5, lastMs: 900 });
+    expect(counter.score(counter.paramsFromSeed(17), inputs)).toBe(2);
+    expect(counter.lastInputMs(inputs)).toBe(900);
+    expectTypeOf(counter.inputsSchema.parse).returns.toEqualTypeOf<{ taps: number; lastMs: number }>();
   });
 });

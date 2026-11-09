@@ -54,6 +54,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: an abandoned attempt never counts toward the pass rate, but a retry would reuse the same seed, so the player would already know the challenge. Details in `docs/DECISIONS.md` (T12).
 - Agent's recommendation: keep the lock-out; the play page warns about it before Start (T14).
 
+### Please confirm: no grace period after the deadline (blocks nothing)
+- What is needed: say whether an attempt started just before the midnight UTC deadline but finished just after it should count (current behaviour: it does not, and nothing is recorded).
+- Where to put it: reply in chat.
+- Why: counting it would change a day's pass rate after the day has closed for everyone. Details in `docs/DECISIONS.md` (T13).
+- Agent's recommendation: keep it strict; a later task can add a short grace period if players hit it.
+
 ## Resolved
 
 _Nothing yet._

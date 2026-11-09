@@ -116,3 +116,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: the design says abandoning "records nothing", yet a restart would replay the same seed, so the player would already know the instance (for example Flash Count's dot count). Refusing the restart keeps the one-attempt rule meaningful. T14 states the rule on the play page before Start.
 - How to change it later: let `startAttempt` return the existing unsubmitted attempt, but only with a fresh seed, which needs a migration allowing the seed to change.
 - Confirmed by human: pending (see NEEDS_HUMAN).
+
+### 2026-11-09 — Submissions after the deadline record nothing (T13)
+- Choice: `POST /api/attempts/submit` answers 409 `day-closed`, and stores nothing, once the attempt's game date has passed or its day is closed, even if the attempt started before the deadline. `record_attempt_result` repeats both checks (closed, and game date passed by the database clock) under row locks, so the close job and a late submission cannot interleave.
+- Reason: the day's pass rate must be final at the deadline; accepting late results would change a day that has already closed for everyone. A run lasts at most a minute, so this only affects attempts started in the last minute or so.
+- How to change it later: a grace period would need the close job (T21/T23) to wait for it, plus a matching check in `submitAttempt`.
+- Confirmed by human: pending (see NEEDS_HUMAN).

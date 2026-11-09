@@ -165,7 +165,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T12 Attempt start endpoint
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T07, T09, T11
 - Acceptance criteria:
   - [ ] `POST /api/attempts/start` returns 401 when signed out, and 403 `{ error: "profile-required" }` when the user has no profile.
@@ -176,7 +176,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T13 Attempt submit endpoint with server replay
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T12
 - Acceptance criteria:
   - [ ] `POST /api/attempts/submit` with `{ attemptId, inputs }` returns 401 when signed out, 400 when the body or `inputs` fail the challenge's `inputsSchema`, and 404 when the attempt is not the caller's.
@@ -340,7 +340,7 @@ Goal: practise all three challenges (stacking, Inner Clock, Flash Count), see th
   - [ ] Examples: target 5,000 with tap 5,320 gives 0.32; tap 4,700 gives 0.3; tap 5,000 gives 0; tap null gives 10.
   - [ ] Schema rejects negative or non-finite `tapMs`. Determinism and range tests over seeds 0 to 999. Golden tests for 3 seeds. At least 90% coverage.
   - [ ] `challenge_types` gains `inner-clock/lower-better`, and `default_pass_targets` gains an `inner-clock` placeholder (for example 0.5 s) via migration.
-- Notes: Device and screen lag affect timing challenges (design watch-out). Inputs are measured client-side with `performance.now()`.
+- Notes: Device and screen lag affect timing challenges (design watch-out). Inputs are measured client-side with `performance.now()`. `ChallengeModule` now also needs `lastInputMs` (T13; for a `null` tap use 0). As the first lower-better challenge, add a `submitAttempt` test that a lower score passes, so a hard-coded "higher-better" in `src/lib/attempts/submit.ts` would be caught (from the T13 test review).
 
 ### T27 Inner Clock renderer and practice page
 - Type: feature
