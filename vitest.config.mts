@@ -11,7 +11,7 @@ export default defineConfig({
     exclude: ["tests/e2e/**", "node_modules/**"],
     coverage: {
       provider: "v8",
-      include: ["src/**/*.{ts,tsx}"],
+      include: ["src/**/*.{ts,tsx}", "scripts/**/*.mts"],
       exclude: [
         "src/**/*.test.{ts,tsx}",
         // Route pages and layouts are exercised by the Playwright tests, not unit tests.

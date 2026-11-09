@@ -5,6 +5,7 @@
  * to the app it starts), so no `.env.local` and no shell `export` step is needed.
  */
 import { execSync, spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 
 const APP_VARIABLES = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
@@ -17,6 +18,8 @@ const STATUS_COMMAND =
   " --override-name auth.anon_key=NEXT_PUBLIC_SUPABASE_ANON_KEY" +
   " --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY";
 
+const NOT_RUNNING = "Local Supabase is not running. Start it with `npx supabase start`, then try again.";
+
 /** Picks the app's variables out of `supabase status -o env` output (with the overrides above). */
 export function localSupabaseEnv(statusOutput: string): AppEnv {
   const values = new Map<string, string>();
@@ -27,7 +30,7 @@ export function localSupabaseEnv(statusOutput: string): AppEnv {
 
   const missing = APP_VARIABLES.filter((name) => !values.get(name));
   if (missing.length > 0) {
-    throw new Error(`Local Supabase did not report ${missing.join(", ")}. Is it running? Try \`npx supabase start\`.`);
+    throw new Error(`Local Supabase did not report ${missing.join(", ")}. ${NOT_RUNNING}`);
   }
 
   const env = Object.fromEntries(APP_VARIABLES.map((name) => [name, values.get(name)!])) as AppEnv;
@@ -39,15 +42,45 @@ export function localSupabaseEnv(statusOutput: string): AppEnv {
   return env;
 }
 
-function main(): number {
-  const statusOutput = execSync(STATUS_COMMAND, { encoding: "utf8", stdio: ["ignore", "pipe", "inherit"] });
-  const env = localSupabaseEnv(statusOutput);
-  // A shell lets Windows find npx.cmd. The extra arguments are the caller's own Playwright flags.
-  const command = ["npx playwright test", ...process.argv.slice(2)].join(" ");
-  const run = spawnSync(command, { stdio: "inherit", shell: true, env: { ...process.env, ...env } });
-  return run.status ?? 1;
+export type E2eDeps = {
+  /** Output of `supabase status`; throws when the CLI exits with an error (Supabase stopped). */
+  readStatus: () => string;
+  /** Runs Playwright with these arguments and extra environment, returning its exit code. */
+  runPlaywright: (args: string[], env: AppEnv) => number;
+  logError: (message: string) => void;
+};
+
+/** Returns the process exit code. Problems are reported as one line, never a stack trace. */
+export function runE2e(args: string[], deps: E2eDeps): number {
+  let statusOutput: string;
+  try {
+    statusOutput = deps.readStatus();
+  } catch {
+    deps.logError(NOT_RUNNING);
+    return 1;
+  }
+
+  let env: AppEnv;
+  try {
+    env = localSupabaseEnv(statusOutput);
+  } catch (error) {
+    deps.logError((error as Error).message);
+    return 1;
+  }
+  return deps.runPlaywright(args, env);
 }
 
+const realDeps: E2eDeps = {
+  readStatus: () => execSync(STATUS_COMMAND, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }),
+  runPlaywright: (args, env) => {
+    // Run Playwright's CLI with this Node directly: no shell, so arguments arrive exactly as given.
+    const cli = createRequire(import.meta.url).resolve("@playwright/test/cli");
+    const run = spawnSync(process.execPath, [cli, "test", ...args], { stdio: "inherit", env: { ...process.env, ...env } });
+    return run.status ?? 1;
+  },
+  logError: (message) => console.error(message),
+};
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  process.exitCode = main();
+  process.exitCode = runE2e(process.argv.slice(2), realDeps);
 }
