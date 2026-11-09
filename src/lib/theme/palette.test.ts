@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { PALETTE, TEXT_PAIRS, composite, contrastRatio } from "./palette";
+import { HIGHLIGHT_TINT, PALETTE, TEXT_PAIRS, composite, contrastRatio } from "./palette";
 
 const tokensCss = readFileSync(path.resolve(import.meta.dirname, "../../app/tokens.css"), "utf8");
 
@@ -37,6 +37,19 @@ describe("Fresh Sport palette", () => {
       const token = name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
       expect(tokensCss, `--fs-color-${token}`).toContain(`--fs-color-${token}: ${value};`);
     }
+  });
+
+  it("has snappy motion durations that drop to zero for reduced motion", () => {
+    expect(tokensCss).toContain("--fs-duration-fast: 150ms;");
+    expect(tokensCss).toContain("--fs-duration-medium: 250ms;");
+    expect(tokensCss).toContain("--fs-duration-slow: 400ms;");
+    const reduced = /@media \(prefers-reduced-motion: reduce\) \{([\s\S]*?)\n\}/.exec(tokensCss);
+    expect(reduced, "a reduced-motion block").not.toBeNull();
+    for (const name of ["fast", "medium", "slow"]) expect(reduced![1]).toContain(`--fs-duration-${name}: 0ms;`);
+  });
+
+  it("checks the highlight surface at the tint tokens.css actually uses", () => {
+    expect(tokensCss).toContain(`--fs-gradient-highlight: linear-gradient(150deg, ${HIGHLIGHT_TINT},`);
   });
 
   it("keeps the brand colours from the approved mockup", () => {

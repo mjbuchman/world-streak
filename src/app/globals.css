@@ -39,8 +39,10 @@ a:hover {
   color: var(--fs-color-mint-light);
 }
 
+/* A mint ring; the transparent outline still shows in Windows high-contrast (forced colours). */
 :focus-visible {
-  outline: none;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
   box-shadow: var(--fs-focus-ring);
 }
 

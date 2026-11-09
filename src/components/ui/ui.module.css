@@ -57,9 +57,21 @@
   box-shadow: none;
 }
 
-/* While loading the label keeps its space, so the button does not change width. */
+/*
+ * While loading the label keeps its space (so the width does not jump) and stays in the
+ * accessibility tree (so the busy button keeps its name); it is only made transparent.
+ */
 .labelHidden {
-  visibility: hidden;
+  opacity: 0;
+}
+
+/* The focus ring must win over the buttons' own shadows. */
+.button:focus-visible {
+  box-shadow: var(--fs-focus-ring);
+}
+
+.primary:focus-visible {
+  box-shadow: var(--fs-focus-ring), var(--fs-shadow-action);
 }
 
 .buttonSpinner {

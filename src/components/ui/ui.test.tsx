@@ -3,7 +3,8 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BackButton } from "./BackButton";
-import { Button, LinkButton } from "./Button";
+import { Button } from "./Button";
+import { LinkButton } from "./LinkButton";
 import { PageShell } from "./PageShell";
 import { Spinner } from "./Spinner";
 import { Surface } from "./Surface";
@@ -57,6 +58,17 @@ describe("Button", () => {
     expect(button.querySelector("[data-spinner]")).not.toBeNull();
     await userEvent.click(button);
     expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("spins its loading ring, or holds it still when the player prefers reduced motion", () => {
+    stubReducedMotion(false);
+    const { unmount } = render(<Button loading>Save</Button>);
+    expect(screen.getByRole("button").querySelector("[data-spinner]")!.getAttribute("data-motion")).toBe("spin");
+    unmount();
+
+    stubReducedMotion(true);
+    render(<Button loading>Save</Button>);
+    expect(screen.getByRole("button").querySelector("[data-spinner]")!.getAttribute("data-motion")).toBe("still");
   });
 
   it("is not busy and has no spinner when not loading", () => {
@@ -128,17 +140,30 @@ describe("usePrefersReducedMotion", () => {
     expect(screen.getByText("full")).toBeTruthy();
   });
 
-  it("updates when the setting changes", () => {
-    let listener: ((event: { matches: boolean }) => void) | undefined;
+  it("updates when the setting changes, and stops listening on unmount", () => {
+    let matches = false;
+    let listener: (() => void) | undefined;
+    const removeEventListener = vi.fn();
     vi.stubGlobal("matchMedia", () => ({
-      matches: false,
-      addEventListener: (_: string, fn: typeof listener) => (listener = fn),
-      removeEventListener: vi.fn(),
+      get matches() {
+        return matches;
+      },
+      addEventListener: (_: string, fn: () => void) => (listener = fn),
+      removeEventListener,
     }));
-    render(<Probe />);
+    const { unmount } = render(<Probe />);
     expect(screen.getByText("full")).toBeTruthy();
-    act(() => listener!({ matches: true }));
+    matches = true;
+    act(() => listener!());
     expect(screen.getByText("reduced")).toBeTruthy();
+    unmount();
+    expect(removeEventListener).toHaveBeenCalledWith("change", listener);
+  });
+
+  it("renders full motion on the server, so hydration never mismatches", async () => {
+    stubReducedMotion(true);
+    const { renderToString } = await import("react-dom/server");
+    expect(renderToString(<Probe />)).toContain("full");
   });
 });
 

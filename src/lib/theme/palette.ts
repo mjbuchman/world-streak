@@ -22,6 +22,9 @@ export const PALETTE = {
   errorSurface: "rgba(255,120,100,0.14)",
 } as const;
 
+/** The mint tint at the bright end of the highlight surface's gradient (`--fs-gradient-highlight`). */
+export const HIGHLIGHT_TINT = "rgba(52,245,181,0.14)";
+
 type Rgba = { r: number; g: number; b: number; a: number };
 
 function parse(color: string): Rgba {
@@ -63,6 +66,10 @@ export function contrastRatio(a: string, b: string): number {
 const P = PALETTE;
 // Text sits on the ground (lightest at the top of its gradient) or on a translucent surface over it.
 const surfaceOnTop = composite(P.surfaceStrong, P.groundTop);
+// The highlight surface's brightest end (see --fs-gradient-highlight), and a hovered secondary button.
+const highlightOnTop = composite(HIGHLIGHT_TINT, P.groundTop);
+const hoverOnTop = composite(P.surfaceBorder, P.groundTop);
+const errorOnTop = composite(P.errorSurface, P.groundTop);
 
 /** Every text-on-background pair the UI uses, with the WCAG minimum it must meet. */
 export const TEXT_PAIRS = [
@@ -76,4 +83,12 @@ export const TEXT_PAIRS = [
   { name: "button text on tangerine", text: P.onTangerine, background: P.tangerine, min: 4.5 },
   { name: "button text on light tangerine", text: P.onTangerine, background: P.tangerineLight, min: 4.5 },
   { name: "text on mint", text: P.onMint, background: P.mintDark, min: 4.5 },
+  { name: "body text on the highlight surface", text: P.text, background: highlightOnTop, min: 4.5 },
+  { name: "muted text on the highlight surface", text: P.textMuted, background: highlightOnTop, min: 4.5 },
+  { name: "mint text on the highlight surface", text: P.mint, background: highlightOnTop, min: 4.5 },
+  { name: "secondary button text when hovered", text: P.text, background: hoverOnTop, min: 4.5 },
+  { name: "body text on the error surface", text: P.text, background: errorOnTop, min: 4.5 },
+  { name: "error text on the error surface", text: P.error, background: errorOnTop, min: 4.5 },
+  { name: "header link when hovered", text: P.mintLight, background: composite(P.surface, P.groundTop), min: 4.5 },
+  { name: "text on the light end of mint", text: P.onMint, background: P.mintLight, min: 4.5 },
 ] as const;

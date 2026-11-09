@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import type { ButtonHTMLAttributes, ComponentProps } from "react";
+import type { ButtonHTMLAttributes } from "react";
 import { SpinnerRing } from "./Spinner";
 import styles from "./ui.module.css";
 import { usePrefersReducedMotion } from "./useReducedMotion";
@@ -33,11 +32,4 @@ export function Button({ variant = "primary", loading = false, disabled, childre
       )}
     </button>
   );
-}
-
-type LinkButtonProps = Omit<ComponentProps<typeof Link>, "className"> & { variant?: ButtonVariant };
-
-/** A link with the button looks, for navigation (Play, Practice). */
-export function LinkButton({ variant = "primary", ...rest }: LinkButtonProps) {
-  return <Link {...rest} className={`${styles.button} ${styles[variant]}`} />;
 }

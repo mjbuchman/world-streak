@@ -13,11 +13,13 @@ test("home page uses the Fresh Sport tokens and fonts", async ({ page }) => {
       mint: root.getPropertyValue("--fs-color-mint").trim(),
       tangerine: root.getPropertyValue("--fs-color-tangerine").trim(),
       bodyFont: getComputedStyle(document.body).fontFamily,
+      headingFont: getComputedStyle(document.querySelector("h1")!).fontFamily,
       background: getComputedStyle(document.body).backgroundImage,
     };
   });
   expect(look.mint.toLowerCase()).toBe("#34f5b5");
   expect(look.tangerine.toLowerCase()).toBe("#ff7a1a");
   expect(look.bodyFont).toMatch(/Manrope/i);
+  expect(look.headingFont).toMatch(/Unbounded/i);
   expect(look.background).toMatch(/linear-gradient/);
 });

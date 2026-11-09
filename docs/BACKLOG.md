@@ -225,7 +225,8 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
   - [ ] The account header is restyled (wordmark "world" plus mint "streak", the account initial or sign-in link).
   - [ ] Text contrast of every token pair used for text is checked by a unit test (at least 4.5:1, or 3:1 for display sizes).
   - [ ] The smoke e2e test checks a v2 token instead of the Material primary colour; `npm run verify` and `npm run test:e2e` pass.
-- Notes: Pages are restyled in T74 and T75; this task only builds the system and the shell. Supersedes T69's shared-button item.
+  - [ ] (Added during the task, Nov 9, 2026) `npm run test:e2e:local` runs its own server on port 3100 with its own build folder (`.next-e2e`, via `E2E_PORT` and `E2E_DIST_DIR`), so e2e runs work while the human keeps `npm run dev` open on port 3000; CI is unchanged.
+- Notes: Pages are restyled in T74 and T75; this task only builds the system and the shell. Supersedes T69's shared-button item. The e2e tooling item was needed to run this task's e2e tests during the human's play-testing (Next.js refuses a second dev server in one folder), so it ships here rather than as a separate task.
 
 ### T74 Restyle home, play and practice in Fresh Sport
 - Type: feature
@@ -236,6 +237,8 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
   - [ ] Every screen below home has a `BackButton` (except during a running game); every button that waits shows its loading spinner.
   - [ ] The result screens animate in (verdict scales and fades in, mint falling-block confetti on a pass), with instant versions under reduced motion; a component test checks the reduced-motion branch.
   - [ ] The abandoned message says the attempt counted as not passed (human decision: leaving early is a loss).
+  - [ ] The page, play and practice CSS modules use only `--fs-*` tokens (no `--md-*`), so T75 can delete the legacy alias block in `tokens.css`.
+  - [ ] e2e, in a real browser: a primary `Button` reached with Tab shows the mint focus ring (its computed `box-shadow` includes the ring), and a loading `Button` keeps its accessible name (jsdom cannot check either; from the T73 quality review).
   - [ ] Existing unit and e2e tests pass with updated selectors only where wording changed on purpose; `npm run verify` and `npm run test:e2e` pass.
 - Notes: Until M2 there is no real streak or meter data, so the home page shows today's challenge prominently and leaves room for them; no invented numbers.
 
@@ -248,6 +251,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
   - [ ] `/signup` has a "Confirm password" field; a mismatch shows a field error before submitting and is also rejected by the server action, with unit tests for both.
   - [ ] `/signin`, `/signup`, `/complete-profile` and `/rules` use the v2 components (fields, primary button with spinner while submitting, back button), with clear inline errors and smooth focus states.
   - [ ] Existing form tests pass with the new field added; e2e sign-up helpers fill the confirmation; `npm run verify` and `npm run test:e2e` pass.
+  - [ ] No CSS module uses `--md-*` any more, and the legacy alias block in `src/app/tokens.css` is deleted (a test fails if `--md-` appears in `src/`).
 - Notes: From the M1 play-test. The form field components from T55 are restyled, not replaced.
 
 ### T76 Teetering Tower grid engine
@@ -839,6 +843,15 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] A unit test or CI step fails when the committed types are out of date with the migrations (for example regenerate and compare in the CI job that already starts Supabase, as an added step).
   - [ ] `npm run verify` passes; no product behavior changes.
 - Notes: From the T12 quality review. Worth doing before M2 adds more tables.
+
+### T78 e2e helpers wait for the page to be interactive
+- Type: maintenance
+- Status: todo
+- Depends on: T73
+- Acceptance criteria:
+  - [ ] The sign-in helper in `tests/e2e/profile.spec.ts` (and any shared sign-in, sign-up or Google helper) waits until the page has hydrated before typing or clicking (for example wait for a hydration marker or for the submit button to be enabled by client code), so typed values are not wiped and clicks are not lost on a cold dev-server compile. No timeouts are simply raised.
+  - [ ] `npm run test:e2e:local` passes 3 full runs in a row from a cold `.next-e2e` folder.
+- Notes: From the T73 test review: on cold compiles, "Continue with Google goes to Google…" lost its click and "an underage player completing their profile…" had its typed fields cleared; a third run passed 30/30. Fits with T62 (shared e2e helpers).
 
 ### T66 Shared route-handler helpers for API endpoints
 - Type: maintenance

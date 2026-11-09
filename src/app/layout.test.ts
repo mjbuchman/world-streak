@@ -3,15 +3,34 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // The header reads the Supabase session and is tested on its own.
 vi.mock("@/components/AccountHeader", () => ({ AccountHeader: () => null }));
 
-// next/font only works inside the Next.js compiler, so stand it in with a fixed class name.
+// next/font only works inside the Next.js compiler, so stand each font in with its own class
+// name, recording the CSS variable it was asked for.
+const fontCalls = vi.hoisted(() => [] as { family: string; variable: string }[]);
 vi.mock("next/font/google", () => {
-  const font = () => ({ variable: "font-variable" });
-  return { Unbounded: font, Manrope: font };
+  const font = (family: string) => (options: { variable: string }) => {
+    fontCalls.push({ family, variable: options.variable });
+    return { variable: `${family}-class` };
+  };
+  return { Unbounded: font("unbounded"), Manrope: font("manrope") };
 });
 
 afterEach(() => {
   vi.doUnmock("@/config/game");
   vi.resetModules();
+});
+
+describe("root layout fonts", () => {
+  it("loads Unbounded as the display face and Manrope as the body face, both on <html>", async () => {
+    vi.resetModules();
+    fontCalls.length = 0;
+    const { default: RootLayout } = await import("./layout");
+    expect(fontCalls).toEqual([
+      { family: "unbounded", variable: "--fs-typeface-display" },
+      { family: "manrope", variable: "--fs-typeface-body" },
+    ]);
+    const html = RootLayout({ children: null } as never) as { props: { className: string } };
+    expect(html.props.className.split(" ").sort()).toEqual(["manrope-class", "unbounded-class"]);
+  });
 });
 
 describe("root layout metadata", () => {

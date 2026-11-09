@@ -29,7 +29,7 @@
   --fs-gradient-ground: linear-gradient(170deg, var(--fs-color-ground-top) 0%, var(--fs-color-ground-bottom) 55%, var(--fs-color-ground-deep) 100%);
   --fs-gradient-action: linear-gradient(160deg, var(--fs-color-tangerine-light), var(--fs-color-tangerine));
   --fs-gradient-mint: linear-gradient(160deg, var(--fs-color-mint-light), var(--fs-color-mint-dark));
-  --fs-gradient-highlight: linear-gradient(150deg, rgba(52,245,181,0.18), rgba(52,245,181,0.04));
+  --fs-gradient-highlight: linear-gradient(150deg, rgba(52,245,181,0.14), rgba(52,245,181,0.04));
   --fs-shadow-action: 0 10px 24px rgba(255,122,26,0.35);
   --fs-shadow-mint: 0 8px 20px rgba(52,245,181,0.25);
   --fs-focus-ring: 0 0 0 3px var(--fs-color-ground-deep), 0 0 0 5px var(--fs-color-mint);
