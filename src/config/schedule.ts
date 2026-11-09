@@ -4,6 +4,6 @@
  *
  * The close job runs in Postgres, so `public.deadline_utc_hour()` in the game-days migration
  * repeats this value. A shared fixture (`src/lib/gameDay.fixture.json`) is tested on both sides,
- * so change both together.
+ * so change both together (the SQL side through a new migration).
  */
 export const DEADLINE_UTC_HOUR = 0;

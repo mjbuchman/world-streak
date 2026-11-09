@@ -18,6 +18,14 @@ describe("gameDateAt", () => {
   it("follows an injected deadline hour", () => {
     expect(gameDateAt(new Date("2026-11-08T04:59:59Z"), 5)).toBe("2026-11-07");
     expect(gameDateAt(new Date("2026-11-08T05:00:00Z"), 5)).toBe("2026-11-08");
+    expect(gameDateAt(new Date("2027-01-01T04:59:59Z"), 5)).toBe("2026-12-31");
+  });
+
+  it("rejects a deadline hour that is not a whole hour of the day", () => {
+    for (const hour of [-1, 24, 1.5, Number.NaN]) {
+      expect(() => gameDateAt(new Date("2026-11-08T00:00:00Z"), hour)).toThrow(/deadline hour/);
+      expect(() => deadlineFor("2026-11-08", hour)).toThrow(/deadline hour/);
+    }
   });
 
   it.each(fixture)("matches the shared boundary fixture: $at is $gameDate", ({ at, gameDate }) => {

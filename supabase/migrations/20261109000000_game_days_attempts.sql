@@ -16,9 +16,10 @@ $$;
 create or replace function public.game_date_at(ts timestamptz)
 returns date
 language sql
-stable
+immutable
 set search_path = ''
 as $$
+  -- The explicit UTC conversion keeps the result independent of the session time zone.
   select ((ts at time zone 'UTC') - make_interval(hours => public.deadline_utc_hour()))::date;
 $$;
 
@@ -33,7 +34,7 @@ create table public.game_days (
   game_date date primary key,
   -- No check against a list: new challenges (T26, T28) would each need a migration.
   challenge_type text not null,
-  pass_target numeric not null,
+  pass_target numeric not null check (pass_target >= 0),
   survival_threshold numeric not null check (survival_threshold between 0 and 1),
   final_pass_rate numeric,
   outcome text check (outcome in ('survived', 'broken')),
@@ -88,6 +89,8 @@ as $$
   on conflict (game_date) do nothing;
 $$;
 
--- Server only: the attempt-start endpoint calls this with the service role.
-revoke all on function public.ensure_game_day(date) from public;
+-- Server only: the attempt-start endpoint calls this with the service role. Supabase grants
+-- EXECUTE on new functions to anon and authenticated directly, so revoking from PUBLIC alone
+-- is not enough; revoke from those roles by name.
+revoke all on function public.ensure_game_day(date) from public, anon, authenticated;
 grant execute on function public.ensure_game_day(date) to service_role;

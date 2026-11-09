@@ -185,7 +185,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
   - [ ] Otherwise the server replays the engine (`score(paramsFromSeed(seed), inputs)`) and computes `passed` from the day's `pass_target` and the module's `direction` (higher-better: `score >= target`; lower-better: `score <= target`). It stores inputs, score, passed and `submitted_at` atomically through a `security definer` SQL function `record_attempt_result` that only `service_role` may execute. It returns `{ score, passed, passTarget }`.
   - [ ] Any `score` or `passed` field in the request body is ignored (test: a body claiming `passed: true` with inputs that score 0 is stored as failed).
   - [ ] Unit tests cover every status code. A pgTAP test shows that `authenticated` cannot execute `record_attempt_result`.
-- Notes: Judgment call (record it): submissions after the deadline are refused and record nothing, even if the attempt started before it.
+- Notes: Judgment call (record it): submissions after the deadline are refused and record nothing, even if the attempt started before it. Supabase grants EXECUTE on new functions to `anon` and `authenticated` directly, so `revoke ... from public` alone leaves them callable: revoke from `public, anon, authenticated` by name, as T11 does for `ensure_game_day`, and test it with `function_privs_are` for both roles.
 
 ### T14 Daily play page end to end
 - Type: feature

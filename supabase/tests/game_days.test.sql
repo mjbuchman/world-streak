@@ -1,5 +1,5 @@
 begin;
-select plan(47);
+select plan(59);
 
 -- game_days: structure.
 select has_table('public', 'game_days', 'game_days table exists');
@@ -36,10 +36,28 @@ select policy_cmd_is('public', 'game_days', 'game_days_select_all', 'select', 't
 select policy_roles_are('public', 'game_days', 'game_days_select_all', array['anon', 'authenticated'], 'everyone may read game days');
 select policies_are('public', 'attempts', array['attempts_select_own'], 'attempts has only the select-own policy');
 select policy_cmd_is('public', 'attempts', 'attempts_select_own', 'select', 'the attempts policy covers select only');
+select policy_roles_are(
+  'public', 'attempts', 'attempts_select_own', array['authenticated'],
+  'only signed-in users have an attempts policy'
+);
+select fk_ok('public', 'attempts', 'user_id', 'public', 'profiles', 'id', 'user_id references profiles');
 
 select function_privs_are(
   'public', 'ensure_game_day', array['date'], 'service_role', array['EXECUTE'],
   'the server (service role) can call ensure_game_day'
+);
+select function_privs_are(
+  'public', 'ensure_game_day', array['date'], 'authenticated', array[]::text[],
+  'signed-in users have no EXECUTE on ensure_game_day'
+);
+select function_privs_are(
+  'public', 'ensure_game_day', array['date'], 'anon', array[]::text[],
+  'anonymous visitors have no EXECUTE on ensure_game_day'
+);
+select is(
+  (select provolatile from pg_proc where oid = 'public.game_date_at(timestamptz)'::regprocedure),
+  'i'::"char",
+  'game_date_at is immutable: it never depends on the session'
 );
 
 -- Fixtures, created as the test superuser.
@@ -80,11 +98,21 @@ select throws_ok(
     values ('2026-11-09', 'stacking', 10, 0.6, 'tied')$$,
   '23514', null, 'outcome is survived or broken'
 );
+select throws_ok(
+  $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold)
+    values ('2026-11-09', 'stacking', -1, 0.6)$$,
+  '23514', null, 'pass_target cannot be negative'
+);
 
 select throws_ok(
   $$insert into public.attempts (user_id, game_date, seed)
     values ('00000000-0000-0000-0000-00000000000a', '2026-11-08', 4294967296)$$,
   '23514', null, 'a seed must fit in an unsigned 32-bit integer'
+);
+select throws_ok(
+  $$insert into public.attempts (user_id, game_date, seed)
+    values ('00000000-0000-0000-0000-00000000000a', '2026-11-08', -1)$$,
+  '23514', null, 'a seed cannot be negative'
 );
 
 -- One attempt per user per day, enforced by the database.
@@ -120,6 +148,13 @@ select throws_ok(
   $$select public.ensure_game_day('2026-11-10')$$,
   '42501', null, 'a signed-in user cannot call ensure_game_day'
 );
+-- No update or delete policy, so RLS filters every row out: no error, and nothing changes
+-- (checked as the superuser below).
+select lives_ok(
+  $$update public.attempts set passed = true, score = 999$$,
+  'setup: user A tries to mark their own attempt as passed'
+);
+select lives_ok($$delete from public.attempts$$, 'setup: user A tries to delete their own attempt');
 
 -- Act as an anonymous visitor.
 reset role;
@@ -129,12 +164,17 @@ select is((select count(*)::int from public.game_days), 1, 'an anonymous visitor
 select is_empty('select id from public.attempts', 'an anonymous visitor sees no attempts');
 reset role;
 
+select results_eq(
+  $$select score, passed from public.attempts where user_id = '00000000-0000-0000-0000-00000000000a'$$,
+  $$values (null::numeric, null::boolean)$$,
+  'user A''s update and delete affected 0 rows: the attempt is still there, unscored'
+);
+
 -- game_date_at mirrors gameDateAt in src/lib/gameDay.ts. The dollar-quoted fixture below must
 -- equal src/lib/gameDay.fixture.json (a Vitest test in src/lib/gameDay.test.ts checks this).
--- Lists any boundary that comes out wrong, so a failure names it.
-select is(
-  (select string_agg(boundary ->> 'at', ', ')
-   from jsonb_array_elements($fixture$[
+create temporary table boundaries as
+select (boundary ->> 'at')::timestamptz as at, (boundary ->> 'gameDate')::date as game_date
+from jsonb_array_elements($fixture$[
   { "at": "2026-11-07T23:59:59.999Z", "gameDate": "2026-11-07" },
   { "at": "2026-11-08T00:00:00.000Z", "gameDate": "2026-11-08" },
   { "at": "2026-11-08T12:00:00.000Z", "gameDate": "2026-11-08" },
@@ -142,10 +182,27 @@ select is(
   { "at": "2026-12-31T23:59:59.999Z", "gameDate": "2026-12-31" },
   { "at": "2027-01-01T00:00:00.000Z", "gameDate": "2027-01-01" },
   { "at": "2028-02-29T23:59:59.999Z", "gameDate": "2028-02-29" }
-]$fixture$::jsonb) as boundary
-   where public.game_date_at((boundary ->> 'at')::timestamptz) is distinct from (boundary ->> 'gameDate')::date),
+]$fixture$::jsonb) as boundary;
+
+-- Each check lists any boundary that comes out wrong, so a failure names it. The session time
+-- zone must not matter (a client can change it), so the checks run under UTC, UTC-8 and UTC+14.
+set local timezone to 'UTC';
+select is(
+  (select string_agg(at::text, ', ') from boundaries where public.game_date_at(at) is distinct from game_date),
   null,
-  'game_date_at gives the expected game date for every boundary in the shared fixture'
+  'game_date_at matches every boundary in the shared fixture (session time zone UTC)'
+);
+set local timezone to 'America/Los_Angeles';
+select is(
+  (select string_agg(at::text, ', ') from boundaries where public.game_date_at(at) is distinct from game_date),
+  null,
+  'game_date_at matches every boundary in the shared fixture (session time zone UTC-8)'
+);
+set local timezone to 'Pacific/Kiritimati';
+select is(
+  (select string_agg(at::text, ', ') from boundaries where public.game_date_at(at) is distinct from game_date),
+  null,
+  'game_date_at matches every boundary in the shared fixture (session time zone UTC+14)'
 );
 
 select * from finish();
