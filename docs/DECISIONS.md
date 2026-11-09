@@ -122,3 +122,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: the day's pass rate must be final at the deadline; accepting late results would change a day that has already closed for everyone. A run lasts at most a minute, so this only affects attempts started in the last minute or so.
 - How to change it later: a grace period would need the close job (T21/T23) to wait for it, plus a matching check in `submitAttempt`.
 - Confirmed by human: pending (see NEEDS_HUMAN).
+
+### 2026-11-09 — Focus after a run ends (T60)
+- Choice: when a run ends, focus moves to the result heading (`tabIndex={-1}`), not to "Play again"; Tab reaches the button next. When a run starts, the game canvas takes focus.
+- Reason: players drop blocks with Space, and a run usually ends mid-tap. Focusing "Play again" would let that same Space restart the run at once. Focusing the heading also makes screen readers announce the score, and needs no timing delay. T14's `/play` result view should do the same.
+- How to change it later: `StackingPractice.tsx` (the focus effect) and `StackingGame.tsx` (the canvas focus on start).
+- Confirmed by human: not needed (accessibility detail, no Open item); recorded for T14.

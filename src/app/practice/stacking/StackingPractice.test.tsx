@@ -66,6 +66,25 @@ describe("StackingPractice", () => {
     expect(games.at(-1)!.params).toEqual(paramsFromSeed(22));
   });
 
+  it("moves focus to the result when a run ends, so it is announced and Space cannot restart", async () => {
+    render(<StackingPractice />);
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    finish(4);
+
+    const heading = screen.getByRole("heading", { name: "You stacked 4 blocks" });
+    expect(document.activeElement).toBe(heading);
+
+    // A Space still held from the last drop, or pressed again, lands on the heading: no new run.
+    const runs = games.length;
+    await userEvent.keyboard(" ");
+    expect(games.length).toBe(runs);
+    expect(screen.queryByTestId("game")).toBeNull();
+
+    // Tab reaches Play again.
+    await userEvent.tab();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Play again" }));
+  });
+
   it("says block, not blocks, for a score of 1", async () => {
     render(<StackingPractice />);
     await userEvent.click(screen.getByRole("button", { name: "Start" }));

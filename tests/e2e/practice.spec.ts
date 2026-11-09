@@ -19,8 +19,15 @@ test("practice tower works signed out, ends with a score and offers another go",
   }
   await page.clock.runFor(61_000);
 
-  await expect(page.getByRole("heading", { name: /^You stacked \d+ blocks?$/ })).toBeVisible();
+  const result = page.getByRole("heading", { name: /^You stacked \d+ blocks?$/ });
+  await expect(result).toBeVisible();
+  await expect(result).toBeFocused();
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
+
+  // Space right after the end does not start another run.
+  await page.keyboard.press("Space");
+  await expect(result).toBeVisible();
+  await expect(page.getByRole("status")).toHaveCount(0);
 
   await page.getByRole("button", { name: "Play again" }).click();
   await expect(page.getByRole("status")).toHaveText("Blocks: 0");

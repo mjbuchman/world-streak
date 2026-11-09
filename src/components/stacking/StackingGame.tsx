@@ -42,6 +42,8 @@ export function StackingGame({ params, onFinish }: Props) {
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
 
+    // The button that started the run has just gone, so take focus instead of leaving it on <body>.
+    canvas.focus({ preventScroll: true });
     const start = performance.now();
     const taps: number[] = [];
     const colors = themeColors(canvas);
@@ -107,6 +109,7 @@ export function StackingGame({ params, onFinish }: Props) {
       </p>
       <canvas
         ref={canvasRef}
+        tabIndex={-1}
         className={styles.canvas}
         role="img"
         aria-label={`${CHALLENGE_NAMES.stacking} game area. Tap, click or press Space to drop the block.`}

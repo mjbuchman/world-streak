@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T13 Attempt submit endpoint with server replay
+- Active task: T60 Practice: move focus to the result when a run ends
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-09 — T13 Attempt submit endpoint with server replay (PR #20)
+- `POST /api/attempts/submit` (`src/app/api/attempts/submit/route.ts`) over `submitAttempt` and `supabaseSubmitStore`; `record_attempt_result` (service role only, security definer, locks the attempt and day, checks the deadline by the database clock); `ChallengeModule.lastInputMs`; limits in `src/config/attempts.ts`.
+- Review rounds: spec 1, quality 1, tests 1 (applied: the deadline check in SQL, a 64 KB body cap).
+- Notes: pgTAP fixtures must avoid real dates (e2e leaves today's game day behind); use far-past dates or `on conflict`. Parallel reviewer test runs collide on `coverage/`; give reviewers separate coverage folders.
 
 ### 2026-11-09 — T12 Attempt start endpoint (PR #19)
 - `POST /api/attempts/start` (`src/app/api/attempts/start/route.ts`) over `startAttempt` and `supabaseAttemptStore` in `src/lib/attempts/`; challenge registry in `src/challenges/registry.ts`; real-database e2e in `tests/e2e/attempts.spec.ts` (including a simultaneous-start race).

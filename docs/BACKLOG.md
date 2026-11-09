@@ -176,7 +176,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T13 Attempt submit endpoint with server replay
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T12
 - Acceptance criteria:
   - [ ] `POST /api/attempts/submit` with `{ attemptId, inputs }` returns 401 when signed out, 400 when the body or `inputs` fail the challenge's `inputsSchema`, and 404 when the attempt is not the caller's.
@@ -709,7 +709,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T60 Practice: move focus to the result when a run ends
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T10
 - Acceptance criteria:
   - [ ] When a practice run finishes, keyboard focus moves to the result, so a keyboard or screen-reader user is not left on `<body>` (the Start button they pressed was unmounted). The heading "You stacked N blocks" is announced, through a polite live region or because it labels the focused element.
