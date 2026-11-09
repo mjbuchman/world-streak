@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T10 Stacking renderer and practice page
+- Active task: T59 One-command local e2e runs
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-09 — T10 Stacking renderer and practice page (PR #16)
+- `drawStacking` in `src/challenges/stacking/render.ts`; `StackingGame` in `src/components/stacking/` (rAF loop, taps as elapsed ms) with the pure `frameAt` helper; signed-out `/practice/stacking`; player-facing name "Tower" in `src/config/challenges.ts`.
+- Review rounds: spec 2, quality 2, tests 2 (round 1: one input could record two equal taps, which the server would reject; canvas DPR sizing was untested).
+- Notes: taps are strictly increasing, capped at `MAX_TAPS`, and ignore second fingers and late taps. Space is captured page-wide during a run. T14 should import `StackingGame` from `src/components/stacking/` and reconcile the home "Practice the tower" link. `SignUpForm.test.tsx` "shows each field error…" is flaky under full parallel runs (needed one CI re-run).
 
 ### 2026-11-08 — T09 Stacking engine (PR #15)
 - `simulate`/`blockLeftAt`/`paramsFromSeed` and the `stacking` module in `src/challenges/stacking/engine.ts`; golden fixture `engine.golden.json`; `player.ts` is a test-only simulated player used by `tuning.test.ts`.

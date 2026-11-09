@@ -10,6 +10,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:local": "node scripts/e2e-local.mts",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run build",
     "tokens": "node scripts/generate-tokens.mjs",
     "db:start": "supabase start",
