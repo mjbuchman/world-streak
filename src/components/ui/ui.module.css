@@ -1,0 +1,170 @@
+/* Shared Fresh Sport components (docs/UI_GUIDELINES.md v2). */
+
+/* Pill button: tangerine gradient for the main action, translucent for everything else. */
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 56px;
+  padding: 0 var(--space-8);
+  border: none;
+  border-radius: var(--fs-radius-pill);
+  font-family: var(--fs-font-body);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform var(--fs-duration-fast) var(--fs-ease-out),
+    box-shadow var(--fs-duration-medium) var(--fs-ease-out),
+    filter var(--fs-duration-fast) var(--fs-ease-out);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.button:disabled {
+  cursor: default;
+}
+
+.primary {
+  background: var(--fs-gradient-action);
+  color: var(--fs-color-on-tangerine);
+  box-shadow: var(--fs-shadow-action);
+}
+
+.primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+  color: var(--fs-color-on-tangerine);
+}
+
+.secondary {
+  background: var(--fs-color-surface-strong);
+  color: var(--fs-color-text);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--fs-color-surface-border);
+  color: var(--fs-color-text);
+}
+
+.button:disabled:not([aria-busy]) {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+/* While loading the label keeps its space, so the button does not change width. */
+.labelHidden {
+  visibility: hidden;
+}
+
+.buttonSpinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Spinner: a ring with one bright arc. */
+.spinnerWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.spinner {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 3px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-top-color: currentColor;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner[data-motion="still"] {
+  animation: none;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Round back button. */
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--fs-color-surface-strong);
+  color: var(--fs-color-text);
+  transition:
+    background-color var(--fs-duration-fast) var(--fs-ease-out),
+    transform var(--fs-duration-fast) var(--fs-ease-out);
+}
+
+.back:hover {
+  background: var(--fs-color-surface-border);
+  color: var(--fs-color-text);
+}
+
+.back:active {
+  transform: scale(0.94);
+}
+
+/* Translucent surface. */
+.surface {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border-radius: var(--fs-radius-surface);
+  background: var(--fs-color-surface);
+}
+
+.highlight {
+  background: var(--fs-gradient-highlight);
+  border: 1px solid color-mix(in srgb, var(--fs-color-mint) 30%, transparent);
+}
+
+/* Page shell. */
+.shell {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  animation: enter var(--fs-duration-slow) var(--fs-ease-out);
+}
+
+.shellHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.shellTitle {
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}

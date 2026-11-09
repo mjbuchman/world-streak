@@ -39,6 +39,7 @@
 /* Focus is moved here in code when a run ends; it cannot be reached with Tab, so no ring. */
 .outcome:focus {
   outline: none;
+  box-shadow: none;
 }
 
 .links {

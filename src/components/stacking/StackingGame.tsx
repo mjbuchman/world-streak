@@ -11,15 +11,15 @@ export type FinishedRun = { taps: number[]; result: StackingResult };
 
 type Props = { params: StackingParams; onFinish: (run: FinishedRun) => void };
 
-/** Reads the Material color roles, so the canvas follows the light or dark theme. */
+/** Reads the Fresh Sport colour tokens, so the canvas matches the rest of the page. */
 function themeColors(element: HTMLElement): StackingColors {
   const style = getComputedStyle(element);
-  const role = (name: string) => style.getPropertyValue(`--md-sys-color-${name}`).trim();
+  const token = (name: string) => style.getPropertyValue(`--fs-color-${name}`).trim();
   return {
-    background: role("surface-container"),
-    base: role("outline"),
-    tower: role("primary"),
-    moving: role("tertiary"),
+    background: token("surface"),
+    base: token("text-muted"),
+    tower: token("mint"),
+    moving: token("tangerine"),
   };
 }
 

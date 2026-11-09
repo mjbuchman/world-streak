@@ -216,7 +216,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
 
 ### T73 Fresh Sport design system and app shell
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T14
 - Acceptance criteria:
   - [ ] `src/app/tokens.css` is rewritten to the v2 palette, gradients, soft shadows, radii, type scale, 8 px spacing and motion durations (fast about 150 ms, medium about 250 ms, slow about 400 ms, with a `prefers-reduced-motion` override). The Material seed-colour generator (`scripts/generate-tokens.mjs`, `npm run tokens`, `src/config/theme.ts`) is removed if nothing else needs it, with its test.

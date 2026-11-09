@@ -22,10 +22,11 @@ describe("AccountHeader", () => {
     expect(html).not.toContain("Sign out");
   });
 
-  it("shows the email and a sign-out button for a verified session", async () => {
+  it("shows the account's initial, the email and a sign-out button for a verified session", async () => {
     getClaims.mockResolvedValue({ data: { claims: { email: "player@example.com" } }, error: null });
     const html = await renderHeader();
     expect(html).toContain("player@example.com");
+    expect(html).toMatch(/<span aria-hidden="true"[^>]*>P<\/span>/);
     expect(html).toMatch(/<button[^>]*type="submit"[^>]*>Sign out<\/button>/);
     expect(html).not.toContain('href="/signin"');
   });
@@ -37,8 +38,12 @@ describe("AccountHeader", () => {
     expect(html).not.toContain("Sign out");
   });
 
-  it("links the game name home", async () => {
+  it("links the game name home, as a wordmark with the last word picked out", async () => {
     getClaims.mockResolvedValue({ data: null, error: null });
-    expect(await renderHeader()).toMatch(/<a[^>]*href="\/"[^>]*>World Streak<\/a>/);
+    const html = await renderHeader();
+    const home = /<a ([^>]*)>/.exec(html)![1];
+    expect(home).toContain('href="/"');
+    expect(home).toContain('aria-label="World Streak"');
+    expect(html).toMatch(/world<span class="[^"]*">streak<\/span>/);
   });
 });

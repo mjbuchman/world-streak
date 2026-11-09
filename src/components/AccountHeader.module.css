@@ -1,21 +1,31 @@
-/* Material 3 small top app bar: flat surface, no shadow. */
+/* Top bar on the teal ground: the wordmark, and the account on the right. */
 .bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  min-height: 64px;
+  max-width: 960px;
+  min-height: 72px;
+  margin: 0 auto;
   padding: 0 var(--space-4);
-  background: var(--md-sys-color-surface);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .name {
-  font-family: var(--md-sys-typescale-title-large-font);
-  font-size: var(--md-sys-typescale-title-large-size);
-  line-height: var(--md-sys-typescale-title-large-line-height);
-  color: var(--md-sys-color-on-surface);
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  color: var(--fs-color-text);
   text-decoration: none;
+  border-radius: var(--space-2);
+}
+
+.name:hover {
+  color: var(--fs-color-text);
+}
+
+.accent {
+  color: var(--fs-color-mint);
 }
 
 .account {
@@ -25,43 +35,56 @@
   min-width: 0;
 }
 
+.initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--fs-color-surface-strong);
+  font-weight: 700;
+  font-size: var(--fs-text-small);
+}
+
 .email {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: var(--md-sys-typescale-body-medium-size);
-  line-height: var(--md-sys-typescale-body-medium-line-height);
+  color: var(--fs-color-text-muted);
+  font-size: var(--fs-text-small);
 }
 
-/* Material 3 text button with a 48dp touch target and a state layer. */
+@media (max-width: 480px) {
+  .email {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+}
+
 .textButton {
   display: inline-flex;
   align-items: center;
   min-height: 48px;
-  padding: 0 var(--space-3);
+  padding: 0 var(--space-4);
   border: none;
-  border-radius: var(--md-sys-shape-corner-full);
+  border-radius: var(--fs-radius-pill);
   background: transparent;
-  color: var(--md-sys-color-primary);
+  color: var(--fs-color-mint);
   font: inherit;
-  font-size: var(--md-sys-typescale-label-large-size);
-  font-weight: var(--md-sys-typescale-label-large-weight);
+  font-size: var(--fs-text-small);
+  font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
+  transition: background-color var(--fs-duration-fast) var(--fs-ease-out);
 }
 
 .textButton:hover {
-  background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
-}
-
-.textButton:active {
-  background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
-}
-
-.textButton:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: 2px;
+  background: var(--fs-color-surface);
+  color: var(--fs-color-mint-light);
 }

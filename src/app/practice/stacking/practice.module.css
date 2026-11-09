@@ -35,6 +35,7 @@
 /* Focus is moved here in code when a run ends; it cannot be reached with Tab, so no ring. */
 .result:focus {
   outline: none;
+  box-shadow: none;
 }
 
 /* Material 3 filled button with a state layer. */

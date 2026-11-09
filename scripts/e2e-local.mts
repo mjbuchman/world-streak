@@ -75,7 +75,8 @@ const realDeps: E2eDeps = {
   runPlaywright: (args, env) => {
     // Run Playwright's CLI with this Node directly: no shell, so arguments arrive exactly as given.
     const cli = createRequire(import.meta.url).resolve("@playwright/test/cli");
-    const childEnv = { ...process.env, ...env, E2E_FRESH_SERVER: "1" };
+    // Its own server on its own port: never a dev server started with other keys, and no clash with one.
+    const childEnv = { ...process.env, ...env, E2E_FRESH_SERVER: "1", E2E_PORT: "3100", E2E_DIST_DIR: ".next-e2e" };
     const run = spawnSync(process.execPath, [cli, "test", ...args], { stdio: "inherit", env: childEnv });
     return run.status ?? 1;
   },
