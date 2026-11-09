@@ -17,6 +17,9 @@ test("practice tower works signed out, ends with a score and offers another go",
     await page.clock.runFor(400);
     await page.keyboard.press("Space");
   }
+  // The last drop's Space is still held down when the run ends.
+  await page.clock.runFor(400);
+  await page.keyboard.down("Space");
   await page.clock.runFor(61_000);
 
   const result = page.getByRole("heading", { name: /^You stacked \d+ blocks?$/ });
@@ -24,13 +27,16 @@ test("practice tower works signed out, ends with a score and offers another go",
   await expect(result).toBeFocused();
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
 
-  // Space right after the end does not start another run.
+  // Releasing it, or pressing Space again, does not start another run.
+  await page.keyboard.up("Space");
+  await expect(page.getByRole("status")).toHaveCount(0);
   await page.keyboard.press("Space");
   await expect(result).toBeVisible();
   await expect(page.getByRole("status")).toHaveCount(0);
 
   await page.getByRole("button", { name: "Play again" }).click();
   await expect(page.getByRole("status")).toHaveText("Blocks: 0");
+  await expect(page.getByRole("img", { name: /game area/ })).toBeFocused();
   expect(attemptRequests).toEqual([]);
 });
 

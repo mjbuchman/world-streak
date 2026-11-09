@@ -9,7 +9,8 @@ const games = vi.hoisted(() => [] as GameProps[]);
 vi.mock("@/components/stacking/StackingGame", () => ({
   StackingGame: (props: GameProps) => {
     games.push(props);
-    return <div data-testid="game" />;
+    // Like the real game, it takes focus when it mounts (tested in StackingGame.test.tsx).
+    return <div data-testid="game" tabIndex={-1} ref={(element) => element?.focus()} />;
   },
 }));
 
@@ -83,6 +84,19 @@ describe("StackingPractice", () => {
     // Tab reaches Play again.
     await userEvent.tab();
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Play again" }));
+  });
+
+  it("hands focus to the game on Play again, and back to the new result when that run ends", async () => {
+    render(<StackingPractice />);
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    finish(4);
+    await userEvent.click(screen.getByRole("button", { name: "Play again" }));
+
+    // The button is gone; focus is on the new game, not left on <body>.
+    expect(document.activeElement).toBe(screen.getByTestId("game"));
+
+    finish(6);
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "You stacked 6 blocks" }));
   });
 
   it("says block, not blocks, for a score of 1", async () => {

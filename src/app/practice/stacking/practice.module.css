@@ -32,6 +32,11 @@
   font-weight: var(--md-sys-typescale-headline-small-weight);
 }
 
+/* Focus is moved here in code when a run ends; it cannot be reached with Tab, so no ring. */
+.result:focus {
+  outline: none;
+}
+
 /* Material 3 filled button with a state layer. */
 .button {
   min-height: 48px;
