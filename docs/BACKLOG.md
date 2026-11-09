@@ -11,7 +11,8 @@ Planning notes for the builder:
   4. **Open items use the design doc's suggested defaults.** Record each one in `docs/DECISIONS.md` and add a "please confirm" entry to `docs/NEEDS_HUMAN.md` when you implement the task that depends on it. The defaults: deadline at midnight UTC; live meter hidden for the final 3 hours (configurable); survival threshold 60%; pass target set so that 80% of recent players reach it, editable by an admin; new accounts count fully from day one through a configurable weight (default 1.0); the working name "World Streak" lives in one config constant; a pass target that rises with the streak is a configurable setting with a flat placeholder (step 0).
 - Tasks marked "Judgment call" in their notes resolve ambiguities in the design doc. Record those in `docs/DECISIONS.md` too.
 - Database logic that runs inside Postgres (row-level security, the close job, counters) is tested with pgTAP through `npm run test:db`. TypeScript logic is tested with Vitest.
-- **Every task that touches the user interface must follow `docs/UI_GUIDELINES.md`**, which the human approved on Nov 7, 2026. That means Material 3 styling built with plain CSS Modules and CSS-variable design tokens. No Tailwind, shadcn or MUI, no emojis outside the share text, and no em dashes in UI text. Spec reviewers check UI changes against it.
+- **Every task that touches the user interface must follow `docs/UI_GUIDELINES.md`** (version 2, approved Nov 9, 2026): the Fresh Sport look (deep teal, mint and tangerine, Unbounded and Manrope, purposeful motion, back buttons, spinners), built with plain CSS Modules and CSS-variable design tokens. No Tailwind, shadcn or MUI, no emojis outside the share text, and no em dashes in UI text. Spec reviewers check UI changes against it. (Version 1 was strict Material 3; tasks written before Nov 9 that say "Material 3" now mean the version 2 look.)
+- **Challenge names** (human, Nov 9, 2026): stacking is **Teetering Tower**, Inner Clock is **Second Sense**, Flash Count is **Swift Sum**. Internal type ids stay `stacking`, `inner-clock` and `flash-count`.
 - Scripts that write data (`seed:dev`, `close-day`, `simulate:days`) must refuse to run unless the Supabase URL points at localhost.
 
 ## M1 Foundation and first challenge end to end
@@ -209,6 +210,71 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 - Notes: Code changes should be limited to documentation and any small fixes found during the manual check.
 - needs-human: A Google OAuth client (Google Cloud Console, type "Web application") with the authorised redirect URI `http://127.0.0.1:54321/auth/v1/callback`; set `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` in the shell before `npm run db:start`, then perform the Google login once to confirm (see NEEDS_HUMAN).
 
+## M1b Look, feel and Tower rework
+
+Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh Sport look from `docs/UI_GUIDELINES.md` v2, with back buttons, spinners and motion; sign-up keeps the password on failure and asks for it twice; and Teetering Tower is a column-grid stacker that a decent player tops out around row 10. Ends with a second human play-test before M2.
+
+### T73 Fresh Sport design system and app shell
+- Type: feature
+- Status: todo
+- Depends on: T14
+- Acceptance criteria:
+  - [ ] `src/app/tokens.css` is rewritten to the v2 palette, gradients, soft shadows, radii, type scale, 8 px spacing and motion durations (fast about 150 ms, medium about 250 ms, slow about 400 ms, with a `prefers-reduced-motion` override). The Material seed-colour generator (`scripts/generate-tokens.mjs`, `npm run tokens`, `src/config/theme.ts`) is removed if nothing else needs it, with its test.
+  - [ ] Unbounded (600, 800) and Manrope load through `next/font`; the body background is the teal ground gradient.
+  - [ ] Shared components in `src/components/ui/`: `Button` (primary tangerine gradient pill, secondary translucent, `loading` state with a spinner that keeps the button's width and sets `aria-busy`), `LinkButton` (same looks for links), `BackButton` (round, 44 px or more, labelled "Back"), `Spinner` (with `role="status"` text for screen readers), `Surface` (the translucent card) and `PageShell` (max width, padding, optional back button and title). Each has component tests, including reduced motion where it animates.
+  - [ ] The account header is restyled (wordmark "world" plus mint "streak", the account initial or sign-in link).
+  - [ ] Text contrast of every token pair used for text is checked by a unit test (at least 4.5:1, or 3:1 for display sizes).
+  - [ ] The smoke e2e test checks a v2 token instead of the Material primary colour; `npm run verify` and `npm run test:e2e` pass.
+- Notes: Pages are restyled in T74 and T75; this task only builds the system and the shell. Supersedes T69's shared-button item.
+
+### T74 Restyle home, play and practice in Fresh Sport
+- Type: feature
+- Status: todo
+- Depends on: T73
+- Acceptance criteria:
+  - [ ] Home, `/play` (every state: ready, starting, playing, checking, result, abandoned, refused) and `/practice/stacking` use the shared components and match the mockup's direction: big Unbounded headings and numbers, translucent surfaces, tangerine primary action, mint for good news.
+  - [ ] Every screen below home has a `BackButton` (except during a running game); every button that waits shows its loading spinner.
+  - [ ] The result screens animate in (verdict scales and fades in, mint falling-block confetti on a pass), with instant versions under reduced motion; a component test checks the reduced-motion branch.
+  - [ ] The abandoned message says the attempt counted as not passed (human decision: leaving early is a loss).
+  - [ ] Existing unit and e2e tests pass with updated selectors only where wording changed on purpose; `npm run verify` and `npm run test:e2e` pass.
+- Notes: Until M2 there is no real streak or meter data, so the home page shows today's challenge prominently and leaves room for them; no invented numbers.
+
+### T75 Sign-in, sign-up and profile screens: Fresh Sport and fixes
+- Type: feature
+- Status: todo
+- Depends on: T73
+- Acceptance criteria:
+  - [ ] `/signup` keeps the typed password (and confirmation) after a failed submit; it is held in client state and never sent back by the server.
+  - [ ] `/signup` has a "Confirm password" field; a mismatch shows a field error before submitting and is also rejected by the server action, with unit tests for both.
+  - [ ] `/signin`, `/signup`, `/complete-profile` and `/rules` use the v2 components (fields, primary button with spinner while submitting, back button), with clear inline errors and smooth focus states.
+  - [ ] Existing form tests pass with the new field added; e2e sign-up helpers fill the confirmation; `npm run verify` and `npm run test:e2e` pass.
+- Notes: From the M1 play-test. The form field components from T55 are restyled, not replaced.
+
+### T76 Teetering Tower grid engine
+- Type: feature
+- Status: todo
+- Depends on: T08
+- Acceptance criteria:
+  - [ ] `src/challenges/stacking/engine.ts` is replaced by a column-grid stacker: a board 7 columns wide and 15 rows tall; each row's block is a run of cells that moves one column at a time, bouncing between the walls; a tap locks it; cells not resting on a cell of the row below fall off, so the next row starts at the surviving width; when no cells survive the run ends (a miss).
+  - [ ] The run starts 3 cells wide, and the width is also forced down at set heights like the arcade original (a config table, for example at most 2 cells from row 6 and 1 cell from row 11). Reaching the top row (15) is the winning score and ends the run. There is no time limit; the run ends only on a miss or the win.
+  - [ ] Movement is driven by elapsed ms: each row's step interval shortens with height (ranges in `PARAM_RANGES`, picked per seed); `paramsFromSeed` also picks the starting column and direction. The score is the number of rows locked (0 to 15).
+  - [ ] Inputs stay `{ tapsMs }` (strictly increasing, at most 15 taps that count); `lastInputMs` and `inputsSchema` keep their contracts so T12, T13 and T14 work unchanged.
+  - [ ] To bound attempt length without a time limit, a row whose block is not tapped within an idle limit (config, default 8 s) locks where it is (judgment call: record it and flag it).
+  - [ ] Golden fixtures (exact scores for 3 seeds and fixed taps), determinism and purity tests, and a simulated-player tuning test: a "decent" player (timing error spread you choose and document) reaches about row 10 on average over 200 seeds, a careless one about 4, and a perfect one 15. At least 90% coverage.
+- Notes: Human requirements from the M1 play-test (Nov 9, 2026): very similar to the arcade stacker, set columns, overhang cells are lost, forced narrowing, end only on a miss, cap at a winning score (a leaderboard may come later), a decent player gets 10. Original name and art only. The old continuous engine's DECISIONS entries (speed ranges) are superseded; record the new ones. Attempts already stored keep their old inputs; nothing replays them.
+
+### T77 Teetering Tower renderer, practice and play in the new look
+- Type: feature
+- Status: todo
+- Depends on: T74, T76
+- Acceptance criteria:
+  - [ ] The canvas renderer draws the grid as in the mockup: translucent empty cells, mint placed cells, a tangerine moving block, the row-10 target line, cells that fall off animating away, and a short landing bounce (reduced motion: no bounce or fall animation).
+  - [ ] The game loop steps the block by the engine's elapsed-ms schedule, so frame rate does not change results (a 60 vs 120 fps test as in T10).
+  - [ ] The HUD shows the current row and "Row 10 to pass" on `/play` (today's target from the server) and the best row on practice.
+  - [ ] `/play`'s ready state shows how to play (tap, click or Space) and a "Practice first" link, from one shared source with practice (absorbs T71).
+  - [ ] e2e: practice and play runs end on a deliberate miss with a paused clock, and the stored result matches what was shown; `npm run verify` and `npm run test:e2e` pass.
+- Notes: The pass target placeholder (10) stays until real scores exist.
+
 ## M2 The world streak
 
 Goal: with a batch of fake local players, watch the live pass-rate meter move against the 60% threshold (and go dark in the final 3 hours), close a day by hand or wait for the scheduled job, see the world streak grow or break, browse the history list, and use the admin page to change a day's pass target and survival threshold.
@@ -233,8 +299,9 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
   - [ ] A migration creates `game_day_counters` (`game_date pk references game_days`, `attempts int`, `passes int`, `weighted_attempts numeric`, `weighted_passes numeric`, `updated_at`).
   - [ ] `record_attempt_result` increments the counters in the same transaction, using the submitting user's `profiles.weight` (an upsert, safe under concurrent submits).
   - [ ] RLS: counters are readable by everyone, with no write policies.
-  - [ ] pgTAP: after recording 3 attempts (2 passed) for one date with weights 1, counters read `attempts 3, passes 2, weighted_attempts 3, weighted_passes 2`; a user with weight 0.5 who passes adds 0.5 to both weighted columns; an abandoned (never submitted) attempt changes nothing.
-- Notes: The design requires running counters rather than counting rows on request. Pass rate = `weighted_passes / weighted_attempts` among counted accounts.
+  - [ ] pgTAP: after recording 3 attempts (2 passed) for one date with weights 1, counters read `attempts 3, passes 2, weighted_attempts 3, weighted_passes 2`; a user with weight 0.5 who passes adds 0.5 to both weighted columns; an abandoned (started, never submitted) attempt counts as an attempt that did not pass.
+  - [ ] An attempt is counted in `attempts`/`weighted_attempts` when it starts (in the start endpoint's insert, same transaction), and in `passes`/`weighted_passes` when a passing result is recorded, so abandoning cannot hide a fail.
+- Notes: The design requires running counters rather than counting rows on request. Pass rate = `weighted_passes / weighted_attempts` among counted accounts. Human decision (Nov 9, 2026): leaving early is a loss, so started attempts count; this overrides the design doc's "abandoning records nothing" (see DECISIONS). The live meter briefly counts in-flight runs as not passed, which is acceptable.
 
 ### T18 Cached meter endpoint
 - Type: feature
@@ -328,9 +395,9 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ## M3 More challenges and sharing
 
-Goal: practise all three challenges (stacking, Inner Clock, Flash Count), see the daily challenge rotate from day to day, and share a spoiler-free result card that turns into a call for help when the world is close to the threshold.
+Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), see the daily challenge rotate from day to day, and share a spoiler-free result card that turns into a call for help when the world is close to the threshold.
 
-### T26 Inner Clock engine
+### T26 Inner Clock (Second Sense) engine
 - Type: feature
 - Status: todo
 - Depends on: T08
@@ -342,7 +409,7 @@ Goal: practise all three challenges (stacking, Inner Clock, Flash Count), see th
   - [ ] `challenge_types` gains `inner-clock/lower-better`, and `default_pass_targets` gains an `inner-clock` placeholder (for example 0.5 s) via migration.
 - Notes: Device and screen lag affect timing challenges (design watch-out). Inputs are measured client-side with `performance.now()`. `ChallengeModule` now also needs `lastInputMs` (T13; for a `null` tap use 0). As the first lower-better challenge, add a `submitAttempt` test that a lower score passes, so a hard-coded "higher-better" in `src/lib/attempts/submit.ts` would be caught (from the T13 test review).
 
-### T27 Inner Clock renderer and practice page
+### T27 Inner Clock (Second Sense) renderer and practice page
 - Type: feature
 - Status: todo
 - Depends on: T26
@@ -352,7 +419,7 @@ Goal: practise all three challenges (stacking, Inner Clock, Flash Count), see th
   - [ ] Unit test: with mocked `performance.now` values 1,000 (start) and 6,320 (tap), it reports `tapMs 5320`.
   - [ ] e2e: start, wait about 1 s, tap, and see an error value displayed.
 
-### T28 Flash Count engine
+### T28 Flash Count (Swift Sum) engine
 - Type: feature
 - Status: todo
 - Depends on: T08
@@ -363,7 +430,7 @@ Goal: practise all three challenges (stacking, Inner Clock, Flash Count), see th
   - [ ] `challenge_types` gains `flash-count/lower-better`, and `default_pass_targets` gains a `flash-count` placeholder (for example 15).
 - Notes: Dot placement must terminate for every seed (bounded retries, then deterministic fallback). Test with the maximum count.
 
-### T29 Flash Count renderer and practice page
+### T29 Flash Count (Swift Sum) renderer and practice page
 - Type: feature
 - Status: todo
 - Depends on: T28
@@ -812,7 +879,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Status: todo
 - Depends on: T14
 - Acceptance criteria:
-  - [ ] One shared Material 3 filled-button style (a component or a CSS module) replaces the copies in `play.module.css`, `practice.module.css`, `form.module.css` and `page.module.css` (the home link uses the same `::after` state layer as the others, not a `color-mix` hover).
+  - [ ] (Superseded by T73, which builds the shared `Button`; drop this item.)
   - [ ] `src/app/play/error.tsx` shows a calm message with a Reload button when the page's server lookups fail, with a component test.
   - [ ] A server refresh of `/play` during a run (the `key={status.kind}` remount) cannot unmount the running game: `PlayToday` keeps its playing or checking phase, with a test.
   - [ ] After `router.refresh()` (from a 409 on start or submit), a refresh that returns the same status does not leave the page stuck on "Starting" or "Checking your result": it falls back to a reload message, with a test.
@@ -842,7 +909,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] The `/play` ready state shows it above the one-attempt rule, plus a "Try it in practice first" link to `/practice/stacking`.
   - [ ] Component tests: the ready state shows the how-to and the link; the result, abandoned and playing states do not. `StackingPractice.test.tsx` passes unchanged.
   - [ ] `npm run verify` passes; the only behavior change is the added instructions and link.
-- Notes: From the end-of-M1 maintainer check. Today a player who comes straight from the home page uses their only daily attempt without seeing the controls. Coordinate with T69 (also edits PlayToday). Do this first after the play-test.
+- Notes: From the end-of-M1 maintainer check. Today a player who comes straight from the home page uses their only daily attempt without seeing the controls. Absorbed into T77 (Nov 9, 2026): mark this done when T77 merges.
 
 ### T72 Unit test for the /play server page
 - Type: maintenance
