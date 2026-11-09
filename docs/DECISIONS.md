@@ -92,3 +92,21 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: the design asks for an original name and art, not those of existing stacking games; the backlog suggested "Tower". The art is plain flat blocks in the Material color roles.
 - How to change it later: edit `CHALLENGE_NAMES.stacking`; the practice page, home link and canvas label follow it.
 - Confirmed by human: pending; judge it at the M1 play-test.
+
+### 2026-11-09 — Deadline and survival threshold in code (T11)
+- Choice: midnight UTC as `DEADLINE_UTC_HOUR = 0` in `src/config/schedule.ts`, repeated as `public.deadline_utc_hour()` in the game-days migration because the close job runs in Postgres; a 60% survival threshold set by `ensure_game_day`.
+- Reason: the design doc's suggestions for its Open "exact global deadline time" and "survival threshold" items, already accepted at planning. A shared boundary fixture (`src/lib/gameDay.fixture.json`) is tested in Vitest and pgTAP, and a Vitest test checks the pgTAP copy matches, so the two cannot drift.
+- How to change it later: edit both the constant and the SQL function in a new migration; the fixture tests fail if only one changes. The threshold moves into `game_settings` in T16.
+- Confirmed by human: yes (at planning).
+
+### 2026-11-09 — Placeholder stacking pass target: 10 blocks (T11)
+- Choice: new game days get a pass target of 10 blocks until T16 and T22 set it from recent scores.
+- Reason: the design says the target is set so about 80% of recent players reach it, but there are no recent players yet. The simulated player in `tuning.test.ts` stacks far more than 10, so 10 errs towards passing.
+- How to change it later: the default in `public.ensure_game_day` now; `game_settings` from T16; a day's own `pass_target` can be edited directly.
+- Confirmed by human: pending (see NEEDS_HUMAN).
+
+### 2026-11-09 — Attempts belong to a profile (T11)
+- Choice: `attempts.user_id` references `profiles` (cascade on delete), not `auth.users` directly.
+- Reason: a scored attempt needs an eligible account (T12 refuses players without a profile), and the database then enforces it too. Deleting an account removes its profile and attempts.
+- How to change it later: a migration changing the foreign key.
+- Confirmed by human: not needed (no Open item); recorded for reviewers.

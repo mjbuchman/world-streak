@@ -42,6 +42,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: the speed ranges come from a simulated player, not real people, and the design doc is ambiguous between "blocks stacked" and a "continuous scale". Details in `docs/DECISIONS.md` (T09).
 - Agent's recommendation: keep both for M1 and adjust after the play-test; a fractional tie-breaker can be added later if many players tie.
 
+### Please confirm: placeholder pass target of 10 blocks (blocks nothing)
+- What is needed: at the M1 play-test, say whether 10 blocks feels like a fair bar for passing the daily stacking attempt.
+- Where to put it: reply in chat.
+- Why: the design sets the target from recent players' scores (about 80% should pass), but there are no players yet, so new game days use a placeholder. Details in `docs/DECISIONS.md` (T11).
+- Agent's recommendation: keep 10 for M1; T22 replaces it with the percentile rule once real scores exist.
+
 ## Resolved
 
 _Nothing yet._

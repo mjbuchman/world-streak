@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T59 One-command local e2e runs
+- Active task: T11 Game days, attempts schema and game date
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-09 — T59 One-command local e2e runs (PR #17)
+- `npm run test:e2e:local` (`scripts/e2e-local.mts`) reads local Supabase keys from `supabase status` and runs Playwright with them; refuses non-localhost URLs and never reuses an existing server (`E2E_FRESH_SERVER`). Also fixed the `SignUpForm.test.tsx` race.
+- Review rounds: spec 2, quality 2, tests 2 (round 1: a stopped Supabase showed a stack trace instead of the clear message).
+- Notes: use `npm run test:e2e:local` for local e2e (agents and reviewers too); it needs nothing on port 3000. Maintainer check after T10 ran: added T60 to T63 and notes on T51 and T58. The human runs sessions unattended, so commands must match the `.claude/settings.json` allowlist (no `cd`, pipes, loops, `sed -i` or inline `node -e`).
 
 ### 2026-11-09 — T10 Stacking renderer and practice page (PR #16)
 - `drawStacking` in `src/challenges/stacking/render.ts`; `StackingGame` in `src/components/stacking/` (rAF loop, taps as elapsed ms) with the pure `frameAt` helper; signed-out `/practice/stacking`; player-facing name "Tower" in `src/config/challenges.ts`.

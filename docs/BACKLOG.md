@@ -152,7 +152,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T11 Game days, attempts schema and game date
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T04
 - Acceptance criteria:
   - [ ] `src/config/schedule.ts` exports `DEADLINE_UTC_HOUR = 0`. `src/lib/gameDay.ts` exports `gameDateAt(now: Date)`, which returns the `YYYY-MM-DD` game date (the date that closes at the next deadline), and `deadlineFor(gameDate)`. Tests: `2026-11-07T23:59:59.999Z`, game date `2026-11-07`; `2026-11-08T00:00:00.000Z`, `2026-11-08`; with an hour of 5 injected, `2026-11-08T04:59:59Z`, `2026-11-07`.
@@ -185,7 +185,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
   - [ ] Otherwise the server replays the engine (`score(paramsFromSeed(seed), inputs)`) and computes `passed` from the day's `pass_target` and the module's `direction` (higher-better: `score >= target`; lower-better: `score <= target`). It stores inputs, score, passed and `submitted_at` atomically through a `security definer` SQL function `record_attempt_result` that only `service_role` may execute. It returns `{ score, passed, passTarget }`.
   - [ ] Any `score` or `passed` field in the request body is ignored (test: a body claiming `passed: true` with inputs that score 0 is stored as failed).
   - [ ] Unit tests cover every status code. A pgTAP test shows that `authenticated` cannot execute `record_attempt_result`.
-- Notes: Judgment call (record it): submissions after the deadline are refused and record nothing, even if the attempt started before it.
+- Notes: Judgment call (record it): submissions after the deadline are refused and record nothing, even if the attempt started before it. Supabase grants EXECUTE on new functions to `anon` and `authenticated` directly, so `revoke ... from public` alone leaves them callable: revoke from `public, anon, authenticated` by name, as T11 does for `ensure_game_day`, and test it with `function_privs_are` for both roles.
 
 ### T14 Daily play page end to end
 - Type: feature
@@ -279,7 +279,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
   - [ ] pgTAP: 10 attempts with 6 passes at threshold 0.60 is survived (the boundary counts); 5 of 10 is broken; 3 consecutive survived days give current streak 3, and a broken fourth day gives 0 with best 3; an idempotent re-run changes nothing.
   - [ ] A day with 0 attempts closes as `broken` with `final_pass_rate null` (judgment call, record it and flag it).
   - [ ] SQL view or function `world_streak()` returns `{ current, best, current_start_date }`, readable by everyone. `/api/meter` now fills `streak`.
-- Notes: Pass rate is weighted per the definition "among counted accounts" (weights from T17). The cycle-aware streak reset comes later (T34).
+- Notes: Pass rate is weighted per the definition "among counted accounts" (weights from T17). The cycle-aware streak reset comes later (T34). From the T11 quality review: add a `game_days` check that `outcome` and `closed_at` are both set or both null, so a half-closed day cannot be stored (`final_pass_rate` is already checked to be between 0 and 1).
 
 ### T22 Prepare next day: pass target and threshold
 - Type: feature
@@ -602,7 +602,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Acceptance criteria:
   - [ ] `npm audit` reports no moderate or higher vulnerabilities, or each remaining one is listed in the PR with why it can't be fixed yet (at T01: 0 in production dependencies, 8 moderate in dev tooling).
   - [ ] If the CI e2e job spends more than 2 minutes building the app inside Playwright's `webServer`, move the build into its own workflow step before `npm run test:e2e` (an addition only) and make `webServer` just run `npm run start`.
-- Notes: Suggested in T01 review (quality-reviewer). Also take the patch updates for `react` and `react-dom` (19.3.0 to 19.3.1, from the T05 maintainer check). Do not take the major bumps (TypeScript 7, ESLint 10): `eslint-config-next` 16.4.5 targets ESLint 9 and TypeScript 5. `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing.
+- Notes: Suggested in T01 review (quality-reviewer). Also take the patch updates for `react` and `react-dom` (19.3.0 to 19.3.1, from the T05 maintainer check). Do not take the major bumps (TypeScript 7, ESLint 10): `eslint-config-next` 16.4.5 targets ESLint 9 and TypeScript 5. `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing. From the T10 maintainer check: also take the Supabase CLI 3.0.0 to 3.1.0 update; hold `@material/material-color-utilities` 0.4.0 (pre-1.0 minor) unless the token generator needs it.
 
 ### T52 Sign-up abuse protection
 - Type: maintenance
@@ -695,14 +695,69 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] A signed-in user who opens `/signin` or `/signup` is redirected to `/`.
   - [ ] Sign-in shows a specific message for `email_not_confirmed`, in case email confirmation is ever turned on.
   - [ ] `npm run verify` and `npm run test:e2e` pass.
-- Notes: From the T06 quality review. Not urgent during development; do before the live meter and play pages add traffic (M2).
+- Notes: From the T06 quality review. Not urgent during development; do before the live meter and play pages add traffic (M2). The T10 maintainer check found the comment in `src/components/AccountHeader.tsx` (lines 10-11) wrong: `getClaims` does not verify locally while `signing_keys_path` is commented out in `supabase/config.toml`, so a signed-in render makes two Auth calls today (`getUser` in the proxy, `getClaims` in the header). Fix the comment as part of this task.
 
 ### T59 One-command local e2e runs
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T02
 - Acceptance criteria:
   - [ ] `npm run test:e2e:local` reads the local Supabase URL, anon key and service-role key from `npx supabase status` and runs Playwright with them, passing extra arguments through, so no `.env.local` or shell `export` step is needed.
   - [ ] It refuses to run when the Supabase URL is not localhost, and fails with a clear message when local Supabase is not running. Unit tests cover the parsing and both refusals.
   - [ ] README "Checks" documents it; CI keeps using `npm run test:e2e`.
 - Notes: Requested by the human (Nov 9, 2026) so unattended sessions and reviewers can run e2e as one allowlisted command, without shell scripting that triggers permission prompts.
+
+### T60 Practice: move focus to the result when a run ends
+- Type: maintenance
+- Status: todo
+- Depends on: T10
+- Acceptance criteria:
+  - [ ] When a practice run finishes, keyboard focus moves to the result, so a keyboard or screen-reader user is not left on `<body>` (the Start button they pressed was unmounted). The heading "You stacked N blocks" is announced, through a polite live region or because it labels the focused element.
+  - [ ] A Space key held or pressed as the run ends does not start a new run straight away. A test covers it: Space keydown and keyup right after `onFinish` must not start a run. Options: ignore activation for a short configurable delay, or focus the heading (`tabIndex={-1}`) and let Tab reach "Play again". Record the choice in DECISIONS.md.
+  - [ ] `StackingPractice.test.tsx` covers where focus goes after finishing and after "Play again".
+  - [ ] `npm run verify` passes; no behavior change beyond focus handling.
+- Notes: From the maintainer check after T10. T14's `/play` result view will reuse this pattern, so ideally land it before T14.
+
+### T61 Share the auth form helpers: email schema, form reading, profile insert
+- Type: maintenance
+- Status: todo
+- Depends on: T07
+- Acceptance criteria:
+  - [ ] One `emailSchema` (trim, lowercase, `z.email("Enter a valid email address.")`) in `src/lib/forms.ts`, used by `signup.ts` and `signin.ts`.
+  - [ ] One helper, for example `readFields(formData, names)`, replaces the hand-written `formData.get(x) ?? undefined` readers in `signup.ts`, `signin.ts` and `profileCompletion.ts`.
+  - [ ] `refusalMessage()` moves from `signup.ts` to `eligibility.ts` next to `eligibilitySummary()`, so `profileCompletion.ts` no longer imports the sign-up module.
+  - [ ] One `insertProfile(client, { userId, birthDate, country })` in `src/lib/profiles.ts` returns `"ok" | "exists" | "error"` and is used by both sign-up and profile-completion actions, each keeping its current meaning (sign-up treats `"exists"` as a failure and deletes the auth user; profile completion treats it as success). The unique-violation code lives in that one place.
+  - [ ] Existing unit tests pass unchanged apart from import paths; the 90% thresholds still pass; `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T10. T12, T25, T42 and T52 add more form and profile code, so this stops the copying spreading.
+
+### T62 Shared e2e sign-in, sign-out and header helpers
+- Type: maintenance
+- Status: todo
+- Depends on: T56
+- Acceptance criteria:
+  - [ ] `tests/e2e/support/pages.ts` exports `header(page)`, `signInViaForm(page, email, password = E2E_PASSWORD)` (button scoped to `main`, not the header link) and `signOutViaHeader(page)` (waits for the "Sign in" link).
+  - [ ] `auth.spec.ts` and `profile.spec.ts` use them with the same assertions.
+  - [ ] `hasSessionCookie` uses the `AUTH_COOKIE` regex from `support/session.ts` instead of its own copy.
+  - [ ] `npm run test:e2e` passes locally and in CI; `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T10. T14, T25, T30, T36, T43 and T49 all need a signed-in browser.
+
+### T63 Component-test race audit and the Field key warning
+- Type: maintenance
+- Status: todo
+- Depends on: T55
+- Acceptance criteria:
+  - [ ] Every component test in `src/app/**` and `src/components/**` is checked for assertions made right after a submit whose result arrives asynchronously, with no `findBy*` or `waitFor` first (the pattern behind the `SignUpForm.test.tsx` flake fixed in T59). Each one found waits for the result; no assertion is removed or weakened.
+  - [ ] `npx vitest run` passes 5 full runs in a row locally.
+  - [ ] The React warning "Each child in a list should have a unique key prop. Check the render method of `Field`", printed by the dev server during e2e runs, is fixed, with a component test that fails on the warning (for example a `console.error` spy).
+  - [ ] `npm run verify` and `npm run test:e2e` pass; no product behavior changes.
+- Notes: From the maintainer check after T10, plus the warning seen during the T59 e2e runs.
+
+### T64 Revoke TRUNCATE from client roles
+- Type: maintenance
+- Status: todo
+- Depends on: T11
+- Acceptance criteria:
+  - [ ] A migration revokes TRUNCATE on every table in `public` from `anon` and `authenticated` (RLS does not cover TRUNCATE, and Supabase's default grants include it), and changes the default privileges so tables created later are covered too.
+  - [ ] pgTAP: `table_privs_are` (or `has_table_privilege`) shows neither role has TRUNCATE on `profiles`, `game_days` or `attempts`, and a table created after the migration also lacks it.
+  - [ ] `npm run test:db` and `npm run verify` pass; no product behavior changes.
+- Notes: From the T11 quality review. Not exploitable through the API (PostgREST cannot issue TRUNCATE), so this is defence in depth; do it before launch.
