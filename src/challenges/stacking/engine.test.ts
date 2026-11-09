@@ -145,6 +145,8 @@ describe("simulate", () => {
     expect(result).toMatchObject({ score: ROWS, endReason: "top", moving: null, endedAtMs: taps.at(-1) });
     expect(result.rows).toHaveLength(ROWS);
     expect(result.rows.every((row) => row.left === 0 && row.lostColumns.length === 0)).toBe(true);
+    // Nothing counts after the win.
+    expect(simulate(steady, [...taps, taps.at(-1)! + 50])).toEqual(result);
   });
 
   it("is still running before the row's tap or idle lock", () => {
@@ -165,6 +167,16 @@ describe("simulate", () => {
     });
     expect(result).toMatchObject({ endReason: "miss", score: 0, endedAtMs: IDLE_LOCK_MS, moving: null });
     expect(simulate(steady, [], IDLE_LOCK_MS - 1).rows).toEqual([]);
+  });
+
+  it("counts a tap only strictly before the idle limit, and only up to now", () => {
+    // A tap at exactly the limit is too late: the row has already dropped.
+    expect(simulate(steady, [IDLE_LOCK_MS])).toMatchObject({ score: 0, endReason: "miss" });
+    expect(simulate(steady, [IDLE_LOCK_MS]).rows[0].byTap).toBe(false);
+    expect(simulate(steady, [IDLE_LOCK_MS - 1]).rows[0].byTap).toBe(true);
+    // The live view includes a tap that landed exactly now, but not one from the future.
+    expect(simulate(steady, [250], 250).rows).toHaveLength(1);
+    expect(simulate(steady, [250], 249).rows).toHaveLength(0);
   });
 
   it("ends a run that stops part-way at the next idle drop, keeping the rows already locked", () => {

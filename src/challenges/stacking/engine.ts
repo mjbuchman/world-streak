@@ -163,7 +163,8 @@ export function simulate(params: StackingParams, tapsMs: readonly number[], nowM
   }
 
   const score = rows.filter((row) => row.width > 0).length;
-  return { score, rows, endedAtMs: moving ? Math.min(nowMs, endedAtMs) : endedAtMs, endReason, moving };
+  // While running, endedAtMs is the last lock (never after nowMs); once over, when it ended.
+  return { score, rows, endedAtMs, endReason, moving };
 }
 
 export function paramsFromSeed(seed: number): StackingParams {

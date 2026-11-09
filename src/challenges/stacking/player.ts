@@ -31,7 +31,7 @@ export function simulatedTaps(params: StackingParams, errorMs: number, seed: num
         break;
       }
     }
-    if (aim < 0) break; // cannot line up in time: let the row lock by itself
+    if (aim < 0) break; // cannot line up in time: stop, and the row drops off (ending the run)
     const error = (rng.next() * 2 - 1) * errorMs;
     taps.push(Math.max(moving.startMs + 1, Math.round(aim + error)));
   }
