@@ -141,7 +141,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T10 Stacking renderer and practice page
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T09
 - Acceptance criteria:
   - [ ] `src/challenges/stacking/render.ts` draws a given engine state for a given elapsed ms onto a canvas 2D context, scaling the 400-unit field to the canvas width and handling `devicePixelRatio`.
@@ -696,3 +696,13 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] Sign-in shows a specific message for `email_not_confirmed`, in case email confirmation is ever turned on.
   - [ ] `npm run verify` and `npm run test:e2e` pass.
 - Notes: From the T06 quality review. Not urgent during development; do before the live meter and play pages add traffic (M2).
+
+### T59 One-command local e2e runs
+- Type: maintenance
+- Status: in-progress
+- Depends on: T02
+- Acceptance criteria:
+  - [ ] `npm run test:e2e:local` reads the local Supabase URL, anon key and service-role key from `npx supabase status` and runs Playwright with them, passing extra arguments through, so no `.env.local` or shell `export` step is needed.
+  - [ ] It refuses to run when the Supabase URL is not localhost, and fails with a clear message when local Supabase is not running. Unit tests cover the parsing and both refusals.
+  - [ ] README "Checks" documents it; CI keeps using `npm run test:e2e`.
+- Notes: Requested by the human (Nov 9, 2026) so unattended sessions and reviewers can run e2e as one allowlisted command, without shell scripting that triggers permission prompts.

@@ -187,7 +187,9 @@ http://localhost:3000/api/health should return `{"db":"ok"}`. Local Supabase Stu
 npm run verify                   # lint, typecheck, unit tests with coverage, production build
 npm run test:db                  # database tests (pgTAP) against local Supabase
 npx playwright install chromium  # once, to download the test browser
-npm run test:e2e                 # end-to-end tests (starts the app automatically; needs local Supabase and .env.local)
+npm run test:e2e:local           # end-to-end tests against local Supabase (starts the app automatically)
 ```
+
+`npm run test:e2e:local` reads the local Supabase URL and keys from `npx supabase status` itself, so it needs no `.env.local`. It refuses to run if the URL is not localhost. Extra arguments go to Playwright, for example `npm run test:e2e:local -- tests/e2e/practice.spec.ts`. CI uses plain `npm run test:e2e` with the keys already in its environment.
 
 **Theme:** colors, shapes, type and spacing come from `src/app/tokens.css`, which is generated from one brand color. To change the brand color, edit `BRAND_SEED_HEX` in `src/config/theme.ts`, then run `npm run tokens`. The design rules are in [`docs/UI_GUIDELINES.md`](docs/UI_GUIDELINES.md).

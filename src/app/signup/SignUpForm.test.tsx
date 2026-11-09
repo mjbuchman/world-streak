@@ -63,6 +63,8 @@ describe("SignUpForm", () => {
       },
     });
     await fillAndSubmit();
+    // The action result renders in a transition, so wait for it (this raced under load).
+    await screen.findByText("Enter a valid email address.");
 
     const cases: [HTMLElement, string][] = [
       [screen.getByLabelText("Email"), "Enter a valid email address."],
