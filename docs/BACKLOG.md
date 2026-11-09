@@ -152,7 +152,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T11 Game days, attempts schema and game date
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T04
 - Acceptance criteria:
   - [ ] `src/config/schedule.ts` exports `DEADLINE_UTC_HOUR = 0`. `src/lib/gameDay.ts` exports `gameDateAt(now: Date)`, which returns the `YYYY-MM-DD` game date (the date that closes at the next deadline), and `deadlineFor(gameDate)`. Tests: `2026-11-07T23:59:59.999Z`, game date `2026-11-07`; `2026-11-08T00:00:00.000Z`, `2026-11-08`; with an hour of 5 injected, `2026-11-08T04:59:59Z`, `2026-11-07`.
@@ -165,7 +165,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T12 Attempt start endpoint
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T07, T09, T11
 - Acceptance criteria:
   - [ ] `POST /api/attempts/start` returns 401 when signed out, and 403 `{ error: "profile-required" }` when the user has no profile.
@@ -761,3 +761,14 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] pgTAP: `table_privs_are` (or `has_table_privilege`) shows neither role has TRUNCATE on `profiles`, `game_days` or `attempts`, and a table created after the migration also lacks it.
   - [ ] `npm run test:db` and `npm run verify` pass; no product behavior changes.
 - Notes: From the T11 quality review. Not exploitable through the API (PostgREST cannot issue TRUNCATE), so this is defence in depth; do it before launch.
+
+### T65 Generated Supabase database types
+- Type: maintenance
+- Status: todo
+- Depends on: T12
+- Acceptance criteria:
+  - [ ] `npm run db:types` writes `src/lib/supabase/database.types.ts` from the local schema (`supabase gen types typescript --local`), and the server, admin and browser clients are typed with it.
+  - [ ] The `data as { ... }` casts in `src/lib/attempts/store.ts` (and any others) are removed.
+  - [ ] A unit test or CI step fails when the committed types are out of date with the migrations (for example regenerate and compare in the CI job that already starts Supabase, as an added step).
+  - [ ] `npm run verify` passes; no product behavior changes.
+- Notes: From the T12 quality review. Worth doing before M2 adds more tables.

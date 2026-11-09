@@ -48,6 +48,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: the design sets the target from recent players' scores (about 80% should pass), but there are no players yet, so new game days use a placeholder. Details in `docs/DECISIONS.md` (T11).
 - Agent's recommendation: keep 10 for M1; T22 replaces it with the percentile rule once real scores exist.
 
+### Please confirm: leaving today's attempt early uses it up (blocks nothing)
+- What is needed: say whether a player who leaves a scored attempt before finishing should be locked out for the day (current behaviour) or allowed to try again.
+- Where to put it: reply in chat.
+- Why: an abandoned attempt never counts toward the pass rate, but a retry would reuse the same seed, so the player would already know the challenge. Details in `docs/DECISIONS.md` (T12).
+- Agent's recommendation: keep the lock-out; the play page warns about it before Start (T14).
+
 ## Resolved
 
 _Nothing yet._
