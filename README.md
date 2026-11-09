@@ -190,6 +190,6 @@ npx playwright install chromium  # once, to download the test browser
 npm run test:e2e:local           # end-to-end tests against local Supabase (starts the app automatically)
 ```
 
-`npm run test:e2e:local` reads the local Supabase URL and keys from `npx supabase status` itself, so it needs no `.env.local`. It refuses to run if the URL is not localhost or local Supabase is stopped. Stop any `npm run dev` first: Playwright reuses a server already on port 3000, which would bypass the localhost check. Extra arguments go to Playwright, for example `npm run test:e2e:local -- tests/e2e/practice.spec.ts`. CI uses plain `npm run test:e2e` with the keys already in its environment.
+`npm run test:e2e:local` reads the local Supabase URL and keys from `npx supabase status` itself, so it needs no `.env.local`. It refuses to run if the URL is not localhost or local Supabase is stopped. It always starts its own app server, so stop any `npm run dev` on port 3000 first. Extra arguments go to Playwright, for example `npm run test:e2e:local -- tests/e2e/practice.spec.ts`. CI uses plain `npm run test:e2e` with the keys already in its environment.
 
 **Theme:** colors, shapes, type and spacing come from `src/app/tokens.css`, which is generated from one brand color. To change the brand color, edit `BRAND_SEED_HEX` in `src/config/theme.ts`, then run `npm run tokens`. The design rules are in [`docs/UI_GUIDELINES.md`](docs/UI_GUIDELINES.md).

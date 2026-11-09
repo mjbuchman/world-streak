@@ -75,7 +75,8 @@ const realDeps: E2eDeps = {
   runPlaywright: (args, env) => {
     // Run Playwright's CLI with this Node directly: no shell, so arguments arrive exactly as given.
     const cli = createRequire(import.meta.url).resolve("@playwright/test/cli");
-    const run = spawnSync(process.execPath, [cli, "test", ...args], { stdio: "inherit", env: { ...process.env, ...env } });
+    const childEnv = { ...process.env, ...env, E2E_FRESH_SERVER: "1" };
+    const run = spawnSync(process.execPath, [cli, "test", ...args], { stdio: "inherit", env: childEnv });
     return run.status ?? 1;
   },
   logError: (message) => console.error(message),
