@@ -20,6 +20,7 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   drawStacking.mockReset();
 });
 
@@ -126,6 +127,18 @@ describe("StackingGame", () => {
     expect(onFinish.mock.calls[0][0].taps).toHaveLength(MAX_TAPS);
   });
 
+  it("ignores a tap after the time limit that arrives before the next frame", () => {
+    // Frames fall every 16 ms, so the one at 60_016 ms is the first past this limit.
+    const onFinish = vi.fn();
+    render(<StackingGame params={{ ...params, maxDurationMs: 60_008 }} onFinish={onFinish} />);
+    advance(930);
+    pressSpace();
+    advance(60_010 - 930);
+    pressSpace();
+    advance(100);
+    expect(onFinish.mock.calls[0][0].taps).toEqual([930]);
+  });
+
   it("sizes the canvas backing store for the device pixel ratio", () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 200, height: 300 } as DOMRect);
     vi.stubGlobal("devicePixelRatio", 2);
@@ -134,7 +147,6 @@ describe("StackingGame", () => {
     const canvas = screen.getByRole("img", { name: /tower/i }) as HTMLCanvasElement;
     expect([canvas.width, canvas.height]).toEqual([400, 600]);
     expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ width: 200, height: 300, devicePixelRatio: 2 });
-    vi.unstubAllGlobals();
   });
 
   it("stops Space from scrolling the page", () => {

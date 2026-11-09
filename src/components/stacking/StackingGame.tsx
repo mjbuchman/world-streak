@@ -54,7 +54,8 @@ export function StackingGame({ params, onFinish }: Props) {
     const tap = () => {
       const at = performance.now() - start;
       const last = taps.at(-1);
-      if (finished || taps.length >= MAX_TAPS || (last !== undefined && at <= last)) return;
+      if (finished || at > params.maxDurationMs || taps.length >= MAX_TAPS) return;
+      if (last !== undefined && at <= last) return;
       taps.push(at);
     };
     const onKeyDown = (event: KeyboardEvent) => {
