@@ -806,3 +806,14 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] The two `findAttempt` methods get distinct names (`findAttemptForDay(userId, gameDate)`, `findAttemptById(attemptId)`), and the store's internal `fail()` is renamed (for example `throwDbError`).
   - [ ] Unit tests for both flows and stores still cover every status code; `tests/e2e/attempts.spec.ts` is unchanged; `npm run verify` passes; no product behavior changes.
 - Notes: From the maintainer check after T60. T17 and T21 will extend these stores.
+
+### T69 Play page polish: shared button styles, error page, stable run
+- Type: maintenance
+- Status: todo
+- Depends on: T14
+- Acceptance criteria:
+  - [ ] One shared Material 3 filled-button style (a component or a CSS module) replaces the copies in `play.module.css`, `practice.module.css`, `form.module.css` and `page.module.css` (the home link uses the same `::after` state layer as the others, not a `color-mix` hover).
+  - [ ] `src/app/play/error.tsx` shows a calm message with a Reload button when the page's server lookups fail, with a component test.
+  - [ ] A server refresh of `/play` during a run (the `key={status.kind}` remount) cannot unmount the running game: `PlayToday` keeps its playing or checking phase, with a test.
+  - [ ] `npm run verify` and the play and practice e2e tests pass; no other behavior changes.
+- Notes: From the T14 quality review. Also add the `data as unknown as Row` cast in `src/lib/attempts/today.ts` to T65's list.

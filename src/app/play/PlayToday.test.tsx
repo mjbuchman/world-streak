@@ -150,6 +150,20 @@ describe("PlayToday", () => {
     }
   });
 
+  it("says what to do when the session has ended or the account is not set up", async () => {
+    const cases: [number, string][] = [
+      [401, "Your session has ended. Sign in again to play."],
+      [403, "Finish setting up your account to play."],
+    ];
+    for (const [status, message] of cases) {
+      respond(json(status, { error: "x" }));
+      render(<PlayToday initial={{ kind: "ready" }} />);
+      await userEvent.click(screen.getByRole("button", { name: "Start" }));
+      expect((await screen.findByRole("alert")).textContent).toBe(message);
+      cleanup();
+    }
+  });
+
   it("disables Start while the request is in flight, so it cannot be sent twice", async () => {
     fetchSpy.mockReturnValueOnce(new Promise(() => undefined));
     render(<PlayToday initial={{ kind: "ready" }} />);
@@ -157,11 +171,19 @@ describe("PlayToday", () => {
     expect(screen.getByRole("button", { name: "Starting" })).toHaveProperty("disabled", true);
   });
 
+  it("shows the stored result if this attempt was already submitted (for example from another tab)", async () => {
+    respond(json(200, started), json(409, { error: "already-submitted" }));
+    await startRun();
+    await finish([900], 1);
+    await vi.waitFor(() => expect(refresh).toHaveBeenCalled());
+  });
+
   it("explains a submission the server refused or could not receive", async () => {
     const cases: [Response | Error, string][] = [
       [json(409, { error: "day-closed" }), "Today's challenge closed before your result arrived, so it was not counted."],
       [json(422, { error: "implausible-timing" }), "Your result could not be checked, so it was not counted."],
       [json(500, { error: "server-error" }), "Your result could not be sent. Reload the page to see whether it counted."],
+      [json(422, { error: "something-new" }), "Your result could not be sent. Reload the page to see whether it counted."],
       [new Error("offline"), "Your result could not be sent. Reload the page to see whether it counted."],
     ];
     for (const [failure, message] of cases) {
@@ -169,6 +191,7 @@ describe("PlayToday", () => {
       await startRun();
       await finish([900], 1);
       expect((await screen.findByRole("alert")).textContent).toBe(message);
+      expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Not counted" }));
       expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
       cleanup();
       games.length = 0;

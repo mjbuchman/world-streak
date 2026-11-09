@@ -11,7 +11,10 @@ import styles from "./play.module.css";
 
 export const metadata: Metadata = { title: `Today's challenge | ${GAME_NAME}` };
 
-/** Today's scored attempt. Signed-out visitors are pointed to sign-in and practice. */
+/**
+ * Today's scored attempt. Signed-out visitors are pointed to sign-in and practice. Stacking is
+ * the only challenge until T30 adds the others and picks each day's from the game day.
+ */
 export default async function PlayPage() {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getClaims();

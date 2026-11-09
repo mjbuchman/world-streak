@@ -57,11 +57,13 @@ test("a player plays today's attempt once and sees the server's result, also aft
   await expect(verdict).toBeFocused();
   const summary = page.getByText(/^You stacked \d+ blocks?\. Today's target was \d+ blocks?\.$/);
   await expect(summary).toBeVisible();
-  const shown = await summary.textContent();
+  const shownVerdict = await verdict.textContent();
+  const shownSummary = await summary.textContent();
 
-  // The page shows the stored result after a reload, with no way to play again.
+  // The page shows the same stored result (verdict and numbers) after a reload, with no way to play again.
   await page.reload();
-  await expect(page.getByText(shown!)).toBeVisible();
+  await expect(page.getByRole("heading", { name: shownVerdict!, exact: true })).toBeVisible();
+  await expect(page.getByText(shownSummary!)).toBeVisible();
   await expect(page.getByRole("button", { name: "Start" })).toHaveCount(0);
 
   const again = await page.request.post("/api/attempts/start");

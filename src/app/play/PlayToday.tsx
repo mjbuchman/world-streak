@@ -10,6 +10,10 @@ import styles from "./play.module.css";
 
 type Verdict = { score: number; passed: boolean; passTarget: number };
 
+// The parts of the endpoints' JSON this page reads (see src/lib/attempts/start.ts and submit.ts).
+type StartBody = { attemptId: string; params: StackingParams } | { error: string; submitted?: boolean };
+type SubmitBody = Verdict | { error: string };
+
 type Phase =
   | { name: "ready"; error?: string }
   | { name: "starting" }
@@ -20,6 +24,11 @@ type Phase =
   | { name: "failed"; message: string };
 
 const START_FAILED = "Today's attempt could not be started. Please try again.";
+// Trying again cannot fix these two, so say what will.
+const START_REFUSED: Record<number, string> = {
+  401: "Your session has ended. Sign in again to play.",
+  403: "Finish setting up your account to play.",
+};
 const SUBMIT_FAILED = "Your result could not be sent. Reload the page to see whether it counted.";
 const SUBMIT_REFUSED: Record<string, string> = {
   "day-closed": "Today's challenge closed before your result arrived, so it was not counted.",
@@ -51,17 +60,18 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
     setPhase({ name: "starting" });
     try {
       const response = await fetch("/api/attempts/start", { method: "POST" });
-      const body = await response.json();
-      if (response.ok) return setPhase({ name: "playing", attemptId: body.attemptId, params: body.params });
+      const body: StartBody = await response.json();
+      if ("attemptId" in body) return setPhase({ name: "playing", attemptId: body.attemptId, params: body.params });
       if (response.status === 409) {
         // Already submitted (perhaps in another tab): the page shows that result once refreshed.
         if (body.submitted) return router.refresh();
         return setPhase({ name: "abandoned" });
       }
+      return setPhase({ name: "ready", error: START_REFUSED[response.status] ?? START_FAILED });
     } catch {
-      // Offline, or not JSON: offer Start again below.
+      // Offline, or not JSON: offer Start again.
+      setPhase({ name: "ready", error: START_FAILED });
     }
-    setPhase({ name: "ready", error: START_FAILED });
   }
 
   async function submit(attemptId: string, { taps }: FinishedRun) {
@@ -72,8 +82,10 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ attemptId, inputs: { tapsMs: taps } }),
       });
-      const body = await response.json();
-      if (response.ok) return setPhase({ name: "result", verdict: body });
+      const body: SubmitBody = await response.json();
+      if (!("error" in body)) return setPhase({ name: "result", verdict: body });
+      // Already recorded (perhaps from another tab): the refreshed page shows the stored result.
+      if (body.error === "already-submitted") return router.refresh();
       return setPhase({ name: "failed", message: SUBMIT_REFUSED[body.error] ?? SUBMIT_FAILED });
     } catch {
       setPhase({ name: "failed", message: SUBMIT_FAILED });

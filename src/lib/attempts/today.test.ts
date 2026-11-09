@@ -51,6 +51,22 @@ describe("todaysAttempt", () => {
     expect(await todaysAttempt(db, userId, now)).toEqual({ kind: "submitted", score: 7, passed: false, passTarget: 10 });
   });
 
+  it("keeps a stored pass as a pass", async () => {
+    const row = { score: 12, passed: true, submitted_at: "2026-11-08T12:00:00+00:00", game_days: { pass_target: 10 } };
+    const { db } = fakeDb({ data: row, error: null });
+    expect(await todaysAttempt(db, userId, now)).toEqual({ kind: "submitted", score: 12, passed: true, passTarget: 10 });
+  });
+
+  it("looks up the game date at the deadline, not the calendar date", async () => {
+    // One ms before the midnight UTC deadline is still Nov 8; the deadline itself is Nov 9.
+    const before = fakeDb({ data: null, error: null });
+    await todaysAttempt(before.db, userId, new Date("2026-11-08T23:59:59.999Z"));
+    expect(before.calls).toContainEqual(["eq", "game_date", "2026-11-08"]);
+    const at = fakeDb({ data: null, error: null });
+    await todaysAttempt(at.db, userId, new Date("2026-11-09T00:00:00.000Z"));
+    expect(at.calls).toContainEqual(["eq", "game_date", "2026-11-09"]);
+  });
+
   it("is abandoned when the attempt was started but never submitted", async () => {
     const row = { score: null, passed: null, submitted_at: null, game_days: { pass_target: 10 } };
     const { db } = fakeDb({ data: row, error: null });
