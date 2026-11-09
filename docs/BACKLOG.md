@@ -189,7 +189,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T14 Daily play page end to end
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T10, T13
 - Acceptance criteria:
   - [ ] `/` shows the game name, the one-sentence pitch ("Play today's challenge; if enough of the world passes, humanity's streak survives."), a "Play today's challenge" link to `/play` and a "Practice" link.
@@ -201,13 +201,13 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T15 Confirm Google sign-in with real credentials
 - Type: infra
-- Status: todo
+- Status: blocked
 - Depends on: T07
 - Acceptance criteria:
-  - [ ] With the human's Google OAuth credentials in `.env.local`, `npm run db:start` then `npm run dev`. "Continue with Google" completes a real Google login locally and lands on `/complete-profile` for a new account.
+  - [ ] With the human's Google OAuth credentials set in the shell that runs `npm run db:start` (the Supabase CLI reads `env(...)` values from the shell, not from `.env.local`), then `npm run dev`. "Continue with Google" completes a real Google login locally and lands on `/complete-profile` for a new account.
   - [ ] README "Running the app" documents the Google setup: the authorised redirect URI `http://127.0.0.1:54321/auth/v1/callback` for local Supabase, and where the two env values go.
 - Notes: Code changes should be limited to documentation and any small fixes found during the manual check.
-- needs-human: A Google OAuth client (Google Cloud Console, type "Web application") with the authorised redirect URI `http://127.0.0.1:54321/auth/v1/callback`; put the client ID in `.env.local` as `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and the secret as `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`, then perform the Google login once to confirm.
+- needs-human: A Google OAuth client (Google Cloud Console, type "Web application") with the authorised redirect URI `http://127.0.0.1:54321/auth/v1/callback`; set `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` in the shell before `npm run db:start`, then perform the Google login once to confirm (see NEEDS_HUMAN).
 
 ## M2 The world streak
 
@@ -602,7 +602,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Acceptance criteria:
   - [ ] `npm audit` reports no moderate or higher vulnerabilities, or each remaining one is listed in the PR with why it can't be fixed yet (at T01: 0 in production dependencies, 8 moderate in dev tooling).
   - [ ] If the CI e2e job spends more than 2 minutes building the app inside Playwright's `webServer`, move the build into its own workflow step before `npm run test:e2e` (an addition only) and make `webServer` just run `npm run start`.
-- Notes: Suggested in T01 review (quality-reviewer). Also take the patch updates for `react` and `react-dom` (19.3.0 to 19.3.1, from the T05 maintainer check). Do not take the major bumps (TypeScript 7, ESLint 10): `eslint-config-next` 16.4.5 targets ESLint 9 and TypeScript 5. `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing. From the T10 maintainer check: also take the Supabase CLI 3.0.0 to 3.1.0 update; hold `@material/material-color-utilities` 0.4.0 (pre-1.0 minor) unless the token generator needs it.
+- Notes: Suggested in T01 review (quality-reviewer). Also take the patch updates for `react` and `react-dom` (19.3.0 to 19.3.1, from the T05 maintainer check). Do not take the major bumps (TypeScript 7, ESLint 10): `eslint-config-next` 16.4.5 targets ESLint 9 and TypeScript 5. `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing. From the T10 maintainer check: also take the Supabase CLI 3.0.0 to 3.1.0 update; hold `@material/material-color-utilities` 0.4.0 (pre-1.0 minor) unless the token generator needs it. From the end-of-M1 check: also take `next` and `eslint-config-next` 16.4.6 (patch); if its release notes include security fixes, do this task first.
 
 ### T52 Sign-up abuse protection
 - Type: maintenance
@@ -805,7 +805,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] Both flows read the game day through one store method (`gameDay(gameDate)`: challenge type, pass target, closed); `AttemptStore.challengeTypeFor` is removed.
   - [ ] The two `findAttempt` methods get distinct names (`findAttemptForDay(userId, gameDate)`, `findAttemptById(attemptId)`), and the store's internal `fail()` is renamed (for example `throwDbError`).
   - [ ] Unit tests for both flows and stores still cover every status code; `tests/e2e/attempts.spec.ts` is unchanged; `npm run verify` passes; no product behavior changes.
-- Notes: From the maintainer check after T60. T17 and T21 will extend these stores.
+- Notes: From the maintainer check after T60. T17 and T21 will extend these stores. From the end-of-M1 check: `todaysAttempt` in `src/lib/attempts/today.ts` is a third reader of "the player's attempt for a game date"; fold it into the same store method.
 
 ### T69 Play page polish: shared button styles, error page, stable run
 - Type: maintenance
@@ -819,3 +819,36 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] An e2e test covers the refresh after a submission elsewhere: start in the page, submit through `page.request`, finish in the page, and see the stored result (this fails if the `key` is dropped).
   - [ ] `npm run verify` and the play and practice e2e tests pass; no other behavior changes.
 - Notes: From the T14 quality review. Also add the `data as unknown as Row` cast in `src/lib/attempts/today.ts` to T65's list.
+
+### T70 Local setup accuracy: env helper, db:stop and play-test notes
+- Type: maintenance
+- Status: todo
+- Depends on: T59
+- Acceptance criteria:
+  - [ ] `npm run env:local` prints the three `.env.local` lines (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`), reusing `localSupabaseEnv` and the status command from `scripts/e2e-local.mts`. It never writes a file, refuses non-localhost URLs, and prints the one-line message when Supabase is stopped. Unit tests cover the output and both refusals.
+  - [ ] README "Running the app" uses it (or names the exact `npx supabase status -o env` fields `API_URL`, `ANON_KEY`, `SERVICE_ROLE_KEY`, not the Publishable/Secret keys), and the `requireEnv` hint in `src/lib/supabase/env.ts` points at the same step.
+  - [ ] A `db:stop` script (`supabase stop`); README says to run `npm run db:stop` then `npm run db:start` when Studio (54323) does not open or after changing Google env values.
+  - [ ] A README "Play-testing" paragraph: one scored attempt per game day; the day changes at midnight UTC (7 pm US Eastern); for another go, sign up with a new email or delete your `attempts` row in Studio; `npm run db:reset` wipes everything including accounts.
+  - [ ] The leftover `src/challenges/shared/.gitkeep` and `src/components/.gitkeep` are deleted.
+  - [ ] `npm run verify` passes; no product behavior changes.
+- Notes: From the end-of-M1 maintainer check. CLI 3.0.0 `supabase status` shows both PUBLISHABLE_KEY/SECRET_KEY and ANON_KEY/SERVICE_ROLE_KEY, while the README uses the old labels. Agents still never read or write `.env.local`; the script only prints.
+
+### T71 Show how to play on /play before the one scored attempt
+- Type: maintenance
+- Status: todo
+- Depends on: T14
+- Acceptance criteria:
+  - [ ] The stacking how-to text has one source (for example `STACKING_HOW_TO` in `src/config/challenges.ts` or a small component), used by `StackingPractice.tsx` and the ready state of `PlayToday.tsx`; the practice wording stays the same.
+  - [ ] The `/play` ready state shows it above the one-attempt rule, plus a "Try it in practice first" link to `/practice/stacking`.
+  - [ ] Component tests: the ready state shows the how-to and the link; the result, abandoned and playing states do not. `StackingPractice.test.tsx` passes unchanged.
+  - [ ] `npm run verify` passes; the only behavior change is the added instructions and link.
+- Notes: From the end-of-M1 maintainer check. Today a player who comes straight from the home page uses their only daily attempt without seeing the controls. Coordinate with T69 (also edits PlayToday). Do this first after the play-test.
+
+### T72 Unit test for the /play server page
+- Type: maintenance
+- Status: todo
+- Depends on: T14
+- Acceptance criteria:
+  - [ ] `src/app/play/page.test.tsx`, following `src/app/complete-profile/page.test.tsx` (mocked server client, `landingPath`, `todaysAttempt`, `redirect`, a stub `PlayToday`), covers: signed out (sign-in text and both links, no lookups); no profile (redirect, no `todaysAttempt`); with a profile (`todaysAttempt` called with the user id and a Date, its status passed on); a `todaysAttempt` failure is not swallowed.
+  - [ ] `npm run verify` passes; no product behavior changes.
+- Notes: From the end-of-M1 maintainer check. Page files are excluded from coverage, so `/play`'s gates are covered only by e2e today; T69's error page depends on the last case.

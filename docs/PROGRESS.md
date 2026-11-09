@@ -4,10 +4,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M1 Foundation and first challenge end to end
-- Active task: T14 Daily play page end to end
-- Blocked tasks: none
-- Waiting on the human: see docs/NEEDS_HUMAN.md
+- Milestone: M1 Foundation and first challenge end to end: complete apart from T15; waiting for the human's M1 play-test before starting M2
+- Active task: none (stopped at the M1 milestone for the play-test)
+- Blocked tasks: T15 (needs the human's Google OAuth client)
+- Waiting on the human: the M1 play-test, the Google OAuth client, and the "please confirm" items; see docs/NEEDS_HUMAN.md
+- Next: after the play-test feedback, M2 starts with T16; maintenance tasks T67 (90% coverage thresholds on scoring and game-day code) and T66 (shared route helpers, before T18) are worth doing early
 
 ## Log
 
@@ -17,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-09 — T14 Daily play page end to end (PR #22)
+- Home page with the pitch (`GAME_PITCH`), "Play today's challenge" and "Practice"; `/play` (`src/app/play/page.tsx` server, `PlayToday.tsx` client) with sign-in prompt, profile redirect, the one-attempt rule, server-issued instance, server verdict, stored result and abandoned states; `todaysAttempt` in `src/lib/attempts/today.ts`.
+- Review rounds: spec 2, quality 2, tests 2 (round 1: a stored pass was never tested and the reload did not re-check the verdict).
+- Notes: e2e games need a paused clock (`page.clock.install` then `pauseAt`), because an installed clock keeps running in real time and network delays move the taps. M1 is complete apart from T15 (blocked on Google OAuth keys).
 
 ### 2026-11-09 — T60 Practice: move focus to the result when a run ends (PR #21)
 - The result heading takes focus when a run ends (so it is announced and a held Space cannot restart); the canvas takes focus when a run starts. Neither shows a focus ring (not Tab stops).
