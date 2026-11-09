@@ -4,11 +4,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M1 Foundation and first challenge end to end: complete apart from T15; waiting for the human's M1 play-test before starting M2
-- Active task: none (stopped at the M1 milestone for the play-test)
+- Milestone: M1b Look, feel and Tower rework (M1 done apart from T15; play-tested Nov 9, 2026)
+- Active task: T73 Fresh Sport design system and app shell (next)
 - Blocked tasks: T15 (needs the human's Google OAuth client)
-- Waiting on the human: the M1 play-test, the Google OAuth client, and the "please confirm" items; see docs/NEEDS_HUMAN.md
-- Next: after the play-test feedback, M2 starts with T16; maintenance tasks T67 (90% coverage thresholds on scoring and game-day code) and T66 (shared route helpers, before T18) are worth doing early
+- Waiting on the human: the Google OAuth client; the second play-test after M1b; see docs/NEEDS_HUMAN.md
+- Next: M1b in order T73, T76, T74, T75, T77 (T76 has no UI dependency and can go early); then the second play-test, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds) and T66 (shared route helpers, before T18).
 
 ## Log
 
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-09 — M1 play-test and re-plan (docs)
+- The human play-tested M1. Feedback: the Tower was far too easy and should be an arcade-style column grid; the look was drab; sign-up should keep the password and ask for it twice; back buttons and spinners everywhere; fun alliterative names. Leaving early is a loss.
+- The human picked visual direction C "Fresh Sport" from three mockups (https://claude.ai/artifact/3Lpden7TLXog2zTMaeUQZ8). UI guidelines rewritten to v2; new milestone M1b (T73 to T77) before M2; T17 now counts started attempts.
+- Notes: decisions are in DECISIONS ("Human decisions at the M1 play-test").
 
 ### 2026-11-09 — T14 Daily play page end to end (PR #22)
 - Home page with the pitch (`GAME_PITCH`), "Play today's challenge" and "Practice"; `/play` (`src/app/play/page.tsx` server, `PlayToday.tsx` client) with sign-in prompt, profile redirect, the one-attempt rule, server-issued instance, server verdict, stored result and abandoned states; `todaysAttempt` in `src/lib/attempts/today.ts`.

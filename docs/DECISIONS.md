@@ -103,7 +103,7 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Choice: new game days get a pass target of 10 blocks until T16 and T22 set it from recent scores.
 - Reason: the design says the target is set so about 80% of recent players reach it, but there are no recent players yet. The simulated player in `tuning.test.ts` stacks far more than 10, so 10 errs towards passing.
 - How to change it later: the default in `public.ensure_game_day` now; `game_settings` from T16; a day's own `pass_target` can be edited directly.
-- Confirmed by human: pending (see NEEDS_HUMAN).
+- Confirmed by human: yes, keep for now (Nov 9); re-tuned with the grid Tower (T76) so a decent player reaches about row 10.
 
 ### 2026-11-09 — Attempts belong to a profile (T11)
 - Choice: `attempts.user_id` references `profiles` (cascade on delete), not `auth.users` directly.
@@ -115,16 +115,27 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Choice: starting an attempt creates its row at once; leaving before finishing never counts toward the pass rate (only submitted attempts are counted), but the player cannot start again that day. `POST /api/attempts/start` answers 409 `already-started` with `submitted: false`.
 - Reason: the design says abandoning "records nothing", yet a restart would replay the same seed, so the player would already know the instance (for example Flash Count's dot count). Refusing the restart keeps the one-attempt rule meaningful. T14 states the rule on the play page before Start.
 - How to change it later: let `startAttempt` return the existing unsubmitted attempt, but only with a fresh seed, which needs a migration allowing the seed to change.
-- Confirmed by human: pending (see NEEDS_HUMAN).
+- Confirmed by human: changed (Nov 9). No restart, and leaving early is a loss: a started attempt counts as an attempt that did not pass (see the next-but-one entry).
 
 ### 2026-11-09 — Submissions after the deadline record nothing (T13)
 - Choice: `POST /api/attempts/submit` answers 409 `day-closed`, and stores nothing, once the attempt's game date has passed or its day is closed, even if the attempt started before the deadline. `record_attempt_result` repeats both checks (closed, and game date passed by the database clock) under row locks, so the close job and a late submission cannot interleave.
 - Reason: the day's pass rate must be final at the deadline; accepting late results would change a day that has already closed for everyone. A run lasts at most a minute, so this only affects attempts started in the last minute or so.
 - How to change it later: a grace period would need the close job (T21/T23) to wait for it, plus a matching check in `submitAttempt`.
-- Confirmed by human: pending (see NEEDS_HUMAN).
+- Confirmed by human: yes (Nov 9), no grace period.
 
 ### 2026-11-09 — Focus after a run ends (T60)
 - Choice: when a run ends, focus moves to the result heading (`tabIndex={-1}`), not to "Play again"; Tab reaches the button next. When a run starts, the game canvas takes focus.
 - Reason: players drop blocks with Space, and a run usually ends mid-tap. Focusing "Play again" would let that same Space restart the run at once. Focusing the heading also makes screen readers announce the score, and needs no timing delay. T14's `/play` result view should do the same.
 - How to change it later: `StackingPractice.tsx` (the focus effect) and `StackingGame.tsx` (the canvas focus on start).
 - Confirmed by human: not needed (accessibility detail, no Open item); recorded for T14.
+
+### 2026-11-09 — Human decisions at the M1 play-test (overrides)
+- Choice:
+  - **Look:** UI guidelines v2, the Fresh Sport direction (deep teal, mint, tangerine, Unbounded and Manrope, purposeful motion), replacing strict Material 3 and the terracotta placeholder.
+  - **Names:** Teetering Tower (stacking), Second Sense (Inner Clock), Swift Sum (Flash Count).
+  - **Tower:** an arcade-style column grid, 7 columns and 3 cells wide, forced narrowing at set heights, overhanging cells lost, ends only on a miss, capped at a winning top row; a decent player should reach about 10 (T76). Supersedes the T09 speed-range entry.
+  - **Leaving early is a loss:** a started attempt counts in the day's attempts and only a recorded pass counts as a pass (T17). This overrides the design doc's "abandoning before finishing records nothing".
+  - **Score** stays a whole block count; **no grace period** after the deadline; **location** stays self-declared until the human researches contest rules.
+- Reason: the human's play-test feedback (Nov 9, 2026).
+- How to change it later: ask the human; each is recorded in the task that implements it.
+- Confirmed by human: yes (these are the human's decisions).

@@ -19,22 +19,16 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - What was tried: everything else for Google sign-in, including an e2e test that checks the hand-off to Google with the configured client ID.
 - Agent's recommendation: do it when convenient; nothing else in M1 or M2 depends on it. Production needs a second redirect URI for the hosted Supabase project at deployment time.
 
-### Please confirm: brand color and typefaces (blocks nothing)
-- What is needed: confirm or replace the placeholder brand seed color `#B5532A` (warm terracotta) and the typefaces (Roboto Flex for body text, Bricolage Grotesque for the display text). Any free Google Font works.
-- Where to put it: reply in chat. The agent updates `docs/UI_GUIDELINES.md` and the token stylesheet.
-- Why: you didn't pick a brand color when approving the UI guidelines. The whole color scheme is generated from this one value, so it's a one-line change later.
-- Agent's recommendation: keep the placeholders until the M1 play-test, then judge them on the real screens.
-
-### Create .env.local before play-testing (blocks nothing now; needed for the M1 play-test)
-- What is needed: run `npm run db:start`, then `cp .env.example .env.local`, then fill in the three values from `npx supabase status` (exact steps in README "Running the app").
-- Where to put it: `.env.local` in the repository root (ignored by git).
-- Why: the agent's permissions forbid it from reading or writing `.env*` files, so it runs tests by passing the local keys through the environment instead. `npm run dev` needs the file.
-- Agent's recommendation: do it once at the M1 play-test; these are local-only keys.
-
-### Please confirm: location is self-declared, no IP check (blocks nothing)
-- What is needed: confirm that players simply state their country of residence at sign-up (US only), with no IP-based location check in the MVP.
+### Second play-test after M1b (blocks M2)
+- What is needed: when the agent reports M1b done, play-test again (the Fresh Sport look, the new grid Teetering Tower, the sign-up fixes) and say whether M2 can start.
 - Where to put it: reply in chat.
-- Why: the design doc requires location eligibility at sign-up but doesn't say how. Details in `docs/DECISIONS.md` (T03).
+- Why: the M1 play-test asked for a big rework of the look and the Tower; M2 builds the streak and meter on top of it.
+- Agent's recommendation: same steps as the M1 play-test; the agent will list them.
+
+### Revisit: location is self-declared, no IP check (blocks nothing; before launch)
+- What is needed: after you research contest rules, say whether self-declared US residence is enough or a check is needed.
+- Where to put it: reply in chat.
+- Why: you said to leave it for now (Nov 9, 2026). Details in `docs/DECISIONS.md` (T03).
 - Agent's recommendation: keep it self-declared; verify the winner's address before payout.
 
 ### Cloudflare Turnstile keys for sign-up protection (blocks the final wiring of T52; not needed until launch)
@@ -43,30 +37,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: sign-up uses the admin API, so Supabase's built-in sign-up rate limit does not apply. A free CAPTCHA plus a per-IP limit stops bulk account creation in a prize game.
 - Agent's recommendation: do it before the public launch. T52 works without the keys locally (it skips the CAPTCHA and logs a warning).
 
-### Please confirm: stacking tuning, whole-number score and the "Tower" name (blocks nothing)
-- What is needed: at the M1 play-test, say whether the stacking game feels right (a good run should last close to a minute), confirm the score is a whole block count, and confirm the player-facing name "Tower" (one setting in `src/config/challenges.ts`).
-- Where to put it: reply in chat.
-- Why: the speed ranges come from a simulated player, not real people, and the design doc is ambiguous between "blocks stacked" and a "continuous scale". Details in `docs/DECISIONS.md` (T09).
-- Agent's recommendation: keep both for M1 and adjust after the play-test; a fractional tie-breaker can be added later if many players tie.
-
-### Please confirm: placeholder pass target of 10 blocks (blocks nothing)
-- What is needed: at the M1 play-test, say whether 10 blocks feels like a fair bar for passing the daily stacking attempt.
-- Where to put it: reply in chat.
-- Why: the design sets the target from recent players' scores (about 80% should pass), but there are no players yet, so new game days use a placeholder. Details in `docs/DECISIONS.md` (T11).
-- Agent's recommendation: keep 10 for M1; T22 replaces it with the percentile rule once real scores exist.
-
-### Please confirm: leaving today's attempt early uses it up (blocks nothing)
-- What is needed: say whether a player who leaves a scored attempt before finishing should be locked out for the day (current behaviour) or allowed to try again.
-- Where to put it: reply in chat.
-- Why: an abandoned attempt never counts toward the pass rate, but a retry would reuse the same seed, so the player would already know the challenge. Details in `docs/DECISIONS.md` (T12).
-- Agent's recommendation: keep the lock-out; the play page warns about it before Start (T14).
-
-### Please confirm: no grace period after the deadline (blocks nothing)
-- What is needed: say whether an attempt started just before the midnight UTC deadline but finished just after it should count (current behaviour: it does not, and nothing is recorded).
-- Where to put it: reply in chat.
-- Why: counting it would change a day's pass rate after the day has closed for everyone. Details in `docs/DECISIONS.md` (T13).
-- Agent's recommendation: keep it strict; a later task can add a short grace period if players hit it.
-
 ## Resolved
 
-_Nothing yet._
+- **M1 play-test** (Nov 9, 2026): done. Feedback became milestone M1b in the backlog (Fresh Sport redesign, grid Teetering Tower, sign-up fixes).
+- **Brand colour and typefaces** (Nov 9): replaced by the Fresh Sport direction (deep teal, mint, tangerine; Unbounded and Manrope). UI guidelines v2 approved.
+- **`.env.local` for play-testing** (Nov 9): created by the human.
+- **Stacking tuning, score and name** (Nov 9): the game was too easy; it becomes an arcade-style column-grid stacker (T76). The whole block count stays the score. Names: Teetering Tower, Second Sense, Swift Sum.
+- **Placeholder pass target of 10** (Nov 9): keep for now; re-tuned with the new Tower (a decent player should reach row 10).
+- **Leaving an attempt early** (Nov 9): it is a loss. No retry, and it counts as a failed attempt in the pass rate (T17).
+- **Grace period after the deadline** (Nov 9): none; a late finish does not count.
