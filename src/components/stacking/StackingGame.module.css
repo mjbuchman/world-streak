@@ -1,0 +1,23 @@
+.game {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.count {
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-size: var(--md-sys-typescale-title-large-size);
+  line-height: var(--md-sys-typescale-title-large-line-height);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 2:3 portrait field; the engine's 400 units always span the full width. */
+.canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--md-sys-shape-corner-medium);
+  touch-action: none;
+  user-select: none;
+  cursor: pointer;
+}

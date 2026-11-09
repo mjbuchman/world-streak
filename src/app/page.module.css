@@ -18,3 +18,7 @@
 .status {
   color: var(--md-sys-color-on-surface-variant);
 }
+
+.link {
+  color: var(--md-sys-color-primary);
+}

@@ -1,0 +1,105 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import type { StackingParams, StackingResult } from "@/challenges/stacking/engine";
+import { drawStacking, type StackingColors } from "@/challenges/stacking/render";
+import { CHALLENGE_NAMES } from "@/config/challenges";
+import styles from "./StackingGame.module.css";
+import { frameAt } from "./stackingLoop";
+
+export type FinishedRun = { taps: number[]; result: StackingResult };
+
+type Props = { params: StackingParams; onFinish: (run: FinishedRun) => void };
+
+/** Reads the Material color roles, so the canvas follows the light or dark theme. */
+function themeColors(element: HTMLElement): StackingColors {
+  const style = getComputedStyle(element);
+  const role = (name: string) => style.getPropertyValue(`--md-sys-color-${name}`).trim();
+  return {
+    background: role("surface-container"),
+    base: role("outline"),
+    tower: role("primary"),
+    moving: role("tertiary"),
+  };
+}
+
+/**
+ * Runs one stacking game from the moment it mounts. Taps (pointer presses on the canvas, or
+ * Space) are stamped with the elapsed ms of the input event; every animation frame replays
+ * them through the engine and draws the result.
+ */
+export function StackingGame({ params, onFinish }: Props) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [blocks, setBlocks] = useState(0);
+  // The latest callback, so a parent re-render never restarts the run.
+  const onFinishRef = useRef(onFinish);
+  useEffect(() => {
+    onFinishRef.current = onFinish;
+  }, [onFinish]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    const start = performance.now();
+    const taps: number[] = [];
+    const colors = themeColors(canvas);
+    let finished = false;
+    let frameId = 0;
+
+    const tap = () => {
+      if (!finished) taps.push(performance.now() - start);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== "Space" || event.repeat) return;
+      event.preventDefault(); // Space would otherwise scroll the page
+      tap();
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      event.preventDefault();
+      tap();
+    };
+
+    const frame = () => {
+      const elapsedMs = performance.now() - start;
+      const { result, finished: done } = frameAt(params, taps, elapsedMs);
+      const { width, height } = canvas.getBoundingClientRect();
+      const devicePixelRatio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(width * devicePixelRatio);
+      canvas.height = Math.round(height * devicePixelRatio);
+      drawStacking(ctx, { params, result, elapsedMs, width, height, devicePixelRatio, colors });
+      setBlocks(result.score);
+      if (done) {
+        finished = true;
+        onFinishRef.current({ taps: [...taps], result });
+        return;
+      }
+      frameId = requestAnimationFrame(frame);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    canvas.addEventListener("pointerdown", onPointerDown);
+    frameId = requestAnimationFrame(frame);
+    return () => {
+      finished = true;
+      cancelAnimationFrame(frameId);
+      window.removeEventListener("keydown", onKeyDown);
+      canvas.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [params]);
+
+  return (
+    <div className={styles.game}>
+      <p role="status" className={styles.count}>
+        Blocks: {blocks}
+      </p>
+      <canvas
+        ref={canvasRef}
+        className={styles.canvas}
+        role="img"
+        aria-label={`${CHALLENGE_NAMES.stacking} game area. Tap, click or press Space to drop the block.`}
+      />
+    </div>
+  );
+}

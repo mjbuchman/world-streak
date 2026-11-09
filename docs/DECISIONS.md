@@ -86,3 +86,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: the Decided challenge table says the measure is "Blocks stacked". The design also asks for a "continuous scale" elsewhere, which an integer count only approximates; the backlog flags this as ambiguous.
 - How to change it later: add a tie-breaking fraction (for example the remaining width of the top block divided by 200) to `simulate`'s score, and regenerate the golden fixture.
 - Confirmed by human: pending (see NEEDS_HUMAN).
+
+### 2026-11-08 — On-screen name for the stacking challenge (T10)
+- Choice: "Tower", defined once in `CHALLENGE_NAMES` in `src/config/challenges.ts`.
+- Reason: the design asks for an original name and art, not those of existing stacking games; the backlog suggested "Tower". The art is plain flat blocks in the Material color roles.
+- How to change it later: edit `CHALLENGE_NAMES.stacking`; the practice page, home link and canvas label follow it.
+- Confirmed by human: pending; judge it at the M1 play-test.
