@@ -238,7 +238,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
   - [ ] The result screens animate in (verdict scales and fades in, mint falling-block confetti on a pass), with instant versions under reduced motion; a component test checks the reduced-motion branch.
   - [ ] The abandoned message says the attempt counted as not passed (human decision: leaving early is a loss).
   - [ ] The page, play and practice CSS modules use only `--fs-*` tokens (no `--md-*`), so T75 can delete the legacy alias block in `tokens.css`.
-  - [ ] e2e, in a real browser: a primary `Button` reached with Tab shows the mint focus ring (its computed `box-shadow` includes the ring), and a loading `Button` keeps its accessible name (jsdom cannot check either; from the T73 quality review).
+  - [ ] e2e, in a real browser: a primary `Button` reached with Tab shows the mint focus ring (its computed `box-shadow` includes the ring), and a loading `Button` keeps its accessible name and focus; the back button is at least 44 by 44 px; the game canvas's colour tokens resolve to non-empty values (jsdom cannot check these; from the T73 reviews).
   - [ ] Existing unit and e2e tests pass with updated selectors only where wording changed on purpose; `npm run verify` and `npm run test:e2e` pass.
 - Notes: Until M2 there is no real streak or meter data, so the home page shows today's challenge prominently and leaves room for them; no invented numbers.
 

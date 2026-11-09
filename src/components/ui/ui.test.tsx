@@ -54,10 +54,42 @@ describe("Button", () => {
     );
     const button = screen.getByRole("button", { name: /Create account/ });
     expect(button.getAttribute("aria-busy")).toBe("true");
-    expect(button).toHaveProperty("disabled", true);
+    expect(button.getAttribute("aria-disabled")).toBe("true");
     expect(button.querySelector("[data-spinner]")).not.toBeNull();
     await userEvent.click(button);
     expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("keeps keyboard focus while it turns busy, and does not submit its form", async () => {
+    const onSubmit = vi.fn((event: { preventDefault: () => void }) => event.preventDefault());
+    const { rerender } = render(
+      <form onSubmit={onSubmit}>
+        <Button type="submit">Save</Button>
+      </form>,
+    );
+    const button = screen.getByRole("button", { name: "Save" });
+    button.focus();
+    rerender(
+      <form onSubmit={onSubmit}>
+        <Button type="submit" loading>
+          Save
+        </Button>
+      </form>,
+    );
+    expect(document.activeElement).toBe(button);
+    await userEvent.click(button);
+    await userEvent.keyboard("{Enter}");
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("defaults to type button, so it never submits a form by accident", () => {
+    render(<Button>Save</Button>);
+    expect(screen.getByRole("button", { name: "Save" }).getAttribute("type")).toBe("button");
+  });
+
+  it("can still be plainly disabled", () => {
+    render(<Button disabled>Start</Button>);
+    expect(screen.getByRole("button", { name: "Start" })).toHaveProperty("disabled", true);
   });
 
   it("spins its loading ring, or holds it still when the player prefers reduced motion", () => {
@@ -89,6 +121,11 @@ describe("LinkButton", () => {
     const link = screen.getByRole("link", { name: "Play today's challenge" });
     expect(link.getAttribute("href")).toBe("/play");
     expect(link.className).toMatch(/secondary/);
+  });
+
+  it("is primary by default", () => {
+    render(<LinkButton href="/play">Play</LinkButton>);
+    expect(screen.getByRole("link", { name: "Play" }).className).toMatch(/primary/);
   });
 });
 

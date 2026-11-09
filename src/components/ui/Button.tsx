@@ -13,16 +13,25 @@ type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className"> & 
   loading?: boolean;
 };
 
-/** The pill button: tangerine for the screen's main action, translucent for the rest. */
-export function Button({ variant = "primary", loading = false, disabled, children, type = "button", ...rest }: ButtonProps) {
+/**
+ * The pill button: tangerine for the screen's main action, translucent for the rest. While
+ * loading it is aria-disabled rather than disabled, so keyboard focus stays on it.
+ */
+export function Button({ variant = "primary", loading = false, disabled, children, type = "button", onClick, ...rest }: ButtonProps) {
   const reduced = usePrefersReducedMotion();
   return (
     <button
       {...rest}
       type={type}
       className={`${styles.button} ${styles[variant]}`}
-      disabled={disabled || loading}
+      disabled={disabled}
+      aria-disabled={loading || undefined}
       aria-busy={loading || undefined}
+      onClick={(event) => {
+        // A busy button ignores presses, including a form submit.
+        if (loading) return event.preventDefault();
+        onClick?.(event);
+      }}
     >
       <span className={loading ? styles.labelHidden : undefined}>{children}</span>
       {loading && (
