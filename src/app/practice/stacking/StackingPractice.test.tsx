@@ -73,7 +73,7 @@ describe("StackingPractice", () => {
     expect(screen.getByRole("heading", { name: "You stacked 1 block" })).toBeTruthy();
   });
 
-  it("never contacts the server", async () => {
+  it("does not fetch anything itself (the e2e test guards the real game)", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     render(<StackingPractice />);
     await userEvent.click(screen.getByRole("button", { name: "Start" }));

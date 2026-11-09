@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { StackingParams, StackingResult } from "@/challenges/stacking/engine";
+import { MAX_TAPS, type StackingParams, type StackingResult } from "@/challenges/stacking/engine";
 import { drawStacking, type StackingColors } from "@/challenges/stacking/render";
 import { CHALLENGE_NAMES } from "@/config/challenges";
 import styles from "./StackingGame.module.css";
@@ -48,8 +48,14 @@ export function StackingGame({ params, onFinish }: Props) {
     let finished = false;
     let frameId = 0;
 
+    // The engine (and the server, for scored runs) only accepts strictly increasing taps, at
+    // most MAX_TAPS of them. Browsers round performance.now() to about 1 ms, so two inputs in
+    // the same moment (a two-finger touch, a click plus Space) would otherwise stamp twice.
     const tap = () => {
-      if (!finished) taps.push(performance.now() - start);
+      const at = performance.now() - start;
+      const last = taps.at(-1);
+      if (finished || taps.length >= MAX_TAPS || (last !== undefined && at <= last)) return;
+      taps.push(at);
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.code !== "Space" || event.repeat) return;
@@ -58,6 +64,7 @@ export function StackingGame({ params, onFinish }: Props) {
     };
     const onPointerDown = (event: PointerEvent) => {
       event.preventDefault();
+      if (event.isPrimary === false) return; // a second finger is not a second tap
       tap();
     };
 
@@ -66,8 +73,11 @@ export function StackingGame({ params, onFinish }: Props) {
       const { result, finished: done } = frameAt(params, taps, elapsedMs);
       const { width, height } = canvas.getBoundingClientRect();
       const devicePixelRatio = window.devicePixelRatio || 1;
-      canvas.width = Math.round(width * devicePixelRatio);
-      canvas.height = Math.round(height * devicePixelRatio);
+      // Resizing clears the backing store, so only do it when the size actually changes.
+      const pixelWidth = Math.round(width * devicePixelRatio);
+      const pixelHeight = Math.round(height * devicePixelRatio);
+      if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
+      if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
       drawStacking(ctx, { params, result, elapsedMs, width, height, devicePixelRatio, colors });
       setBlocks(result.score);
       if (done) {

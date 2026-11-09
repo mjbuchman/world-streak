@@ -68,8 +68,8 @@ describe("drawStacking", () => {
     const taps = Array.from({ length: 40 }, (_, i) => 500 * (i + 1));
     const { rects } = draw(taps, taps.at(-1)! + 100);
     const moving = rects.find((rect) => rect.fill === "moving")!;
-    expect(moving.y).toBeGreaterThanOrEqual(0);
-    expect(moving.y).toBeLessThan(600 / 2);
+    // Two free rows of headroom stay above the moving block.
+    expect(moving.y).toBe(2 * BLOCK_HEIGHT);
     // The base has scrolled out of view, so it is not drawn.
     expect(rects.some((rect) => rect.fill === "base")).toBe(false);
     expect(rects.every((rect) => rect.y + rect.h > 0)).toBe(true);
