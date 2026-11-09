@@ -815,5 +815,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] One shared Material 3 filled-button style (a component or a CSS module) replaces the copies in `play.module.css`, `practice.module.css`, `form.module.css` and `page.module.css` (the home link uses the same `::after` state layer as the others, not a `color-mix` hover).
   - [ ] `src/app/play/error.tsx` shows a calm message with a Reload button when the page's server lookups fail, with a component test.
   - [ ] A server refresh of `/play` during a run (the `key={status.kind}` remount) cannot unmount the running game: `PlayToday` keeps its playing or checking phase, with a test.
+  - [ ] After `router.refresh()` (from a 409 on start or submit), a refresh that returns the same status does not leave the page stuck on "Starting" or "Checking your result": it falls back to a reload message, with a test.
+  - [ ] An e2e test covers the refresh after a submission elsewhere: start in the page, submit through `page.request`, finish in the page, and see the stored result (this fails if the `key` is dropped).
   - [ ] `npm run verify` and the play and practice e2e tests pass; no other behavior changes.
 - Notes: From the T14 quality review. Also add the `data as unknown as Row` cast in `src/lib/attempts/today.ts` to T65's list.
