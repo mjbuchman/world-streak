@@ -1,14 +1,18 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MAX_TAPS, simulate, type StackingParams } from "@/challenges/stacking/engine";
+import { IDLE_LOCK_MS, MAX_TAPS, ROWS, simulate, type StackingParams } from "@/challenges/stacking/engine";
 
 const drawStacking = vi.hoisted(() => vi.fn());
 vi.mock("@/challenges/stacking/render", () => ({ drawStacking }));
 
 import { StackingGame } from "./StackingGame";
 
-const params: StackingParams = { startSpeed: 0.11, ramp: 0.0025, direction: "right", maxDurationMs: 60_000 };
+// Row 1 starts at columns 2-4 moving right, stepping every 160 ms (7 ms faster per row).
+const params: StackingParams = { startStepMs: 160, stepDecayMs: 7, startColumn: 2, direction: "right" };
+
+/** Long enough for idle locks to finish any run (every row locks by itself after 8 s). */
+const UNTIL_THE_END = (ROWS + 1) * IDLE_LOCK_MS;
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["requestAnimationFrame", "cancelAnimationFrame", "performance"] });
@@ -28,7 +32,7 @@ const advance = (ms: number) => act(() => vi.advanceTimersByTime(ms));
 const pressSpace = (init: KeyboardEventInit = {}) => fireEvent.keyDown(window, { key: " ", code: "Space", ...init });
 
 describe("StackingGame", () => {
-  it("records taps from Space and pointer presses as elapsed ms, and finishes at the time limit", () => {
+  it("records taps from Space and pointer presses as elapsed ms, and finishes with the engine's final result", () => {
     const onFinish = vi.fn();
     render(<StackingGame params={params} onFinish={onFinish} />);
 
@@ -40,12 +44,13 @@ describe("StackingGame", () => {
     pressSpace();
     expect(onFinish).not.toHaveBeenCalled();
 
-    advance(60_000);
+    // The player stops; idle locks finish the run.
+    advance(UNTIL_THE_END);
     expect(onFinish).toHaveBeenCalledTimes(1);
     const { taps, result } = onFinish.mock.calls[0][0];
     expect(taps).toEqual([930, 1712, 2577]);
-    // These taps stack (see stackingLoop.test.ts), so the run lasts until the time limit.
-    expect(result).toMatchObject({ score: simulate(params, taps).score, endReason: "time", endedAtMs: 60_000 });
+    // The same result the server gets by replaying the taps to the end.
+    expect(result).toEqual(simulate(params, taps));
   });
 
   it("shows the block count live", () => {
@@ -54,20 +59,24 @@ describe("StackingGame", () => {
     advance(900);
     pressSpace();
     advance(20);
-    expect(screen.getByRole("status").textContent).toBe(`Blocks: ${simulate(params, [900]).score}`);
+    // Row 1 rests on the floor, so the first tap always counts.
+    expect(screen.getByRole("status").textContent).toBe("Blocks: 1");
   });
 
-  it("finishes as soon as a block misses", () => {
-    const steady = { ...params, startSpeed: 0.2, ramp: 0 };
+  it("finishes as soon as a row misses", () => {
+    // Row 1 at 2-4; row 2 one step after appearing at the right wall keeps 3-4; row 3 tapped
+    // as it appears at the left wall (0-1) misses (see stackingLoop.test.ts).
     const onFinish = vi.fn();
-    render(<StackingGame params={steady} onFinish={onFinish} />);
-    advance(750);
+    render(<StackingGame params={params} onFinish={onFinish} />);
+    advance(1);
     pressSpace();
-    advance(1250);
+    advance(169);
+    pressSpace();
+    advance(1);
     pressSpace();
     advance(20);
     expect(onFinish).toHaveBeenCalledTimes(1);
-    expect(onFinish.mock.calls[0][0].result).toMatchObject({ score: 1, endReason: "miss" });
+    expect(onFinish.mock.calls[0][0].result).toMatchObject({ score: 2, endReason: "miss" });
   });
 
   it("draws every frame with the engine state for that moment", () => {
@@ -76,7 +85,7 @@ describe("StackingGame", () => {
     const frame = drawStacking.mock.calls.at(-1)![1];
     expect(frame.params).toBe(params);
     expect(frame.elapsedMs).toBeGreaterThan(80);
-    expect(frame.result.score).toBe(0);
+    expect(frame.result).toEqual(simulate(params, [], frame.elapsedMs));
   });
 
   it("ignores a held Space key and other keys", () => {
@@ -87,7 +96,7 @@ describe("StackingGame", () => {
     advance(100);
     pressSpace({ repeat: true });
     fireEvent.keyDown(window, { key: "Enter", code: "Enter" });
-    advance(60_000);
+    advance(UNTIL_THE_END);
     expect(onFinish.mock.calls[0][0].taps).toEqual([400]);
   });
 
@@ -97,7 +106,7 @@ describe("StackingGame", () => {
     advance(930);
     pressSpace();
     fireEvent.pointerDown(screen.getByRole("img", { name: /tower/i }), { isPrimary: true });
-    advance(60_000);
+    advance(UNTIL_THE_END);
     expect(onFinish.mock.calls[0][0].taps).toEqual([930]);
   });
 
@@ -109,44 +118,31 @@ describe("StackingGame", () => {
     fireEvent.pointerDown(canvas, { isPrimary: true });
     advance(5);
     fireEvent.pointerDown(canvas, { isPrimary: false });
-    advance(60_000);
+    advance(UNTIL_THE_END);
     expect(onFinish.mock.calls[0][0].taps).toEqual([930]);
   });
 
-  it(`never records more than ${MAX_TAPS} taps`, () => {
-    // At 0.2 units/ms a block crosses 100 units in 500 ms, so a tap every 500 ms lands exactly
-    // and the tower never misses. The long time limit leaves room for more than MAX_TAPS taps.
-    const steady = { ...params, startSpeed: 0.2, ramp: 0, maxDurationMs: 200_000 };
+  it(`never records more than ${MAX_TAPS} taps, even in a burst between two frames`, () => {
+    // 20 taps half a millisecond apart all land before the first animation frame, so the run
+    // has not noticed its end yet; the cap keeps the submission valid.
     const onFinish = vi.fn();
-    render(<StackingGame params={steady} onFinish={onFinish} />);
-    for (let i = 0; i < MAX_TAPS + 20; i++) {
-      advance(500);
+    render(<StackingGame params={params} onFinish={onFinish} />);
+    for (let i = 0; i < MAX_TAPS + 5; i++) {
+      advance(0.5);
       pressSpace();
     }
-    advance(200_000);
+    advance(UNTIL_THE_END);
     expect(onFinish.mock.calls[0][0].taps).toHaveLength(MAX_TAPS);
   });
 
-  it("ignores a tap after the time limit that arrives before the next frame", () => {
-    // Frames fall every 16 ms, so the one at 60_016 ms is the first past this limit.
-    const onFinish = vi.fn();
-    render(<StackingGame params={{ ...params, maxDurationMs: 60_008 }} onFinish={onFinish} />);
-    advance(930);
-    pressSpace();
-    advance(60_010 - 930);
-    pressSpace();
-    advance(100);
-    expect(onFinish.mock.calls[0][0].taps).toEqual([930]);
-  });
-
   it("sizes the canvas backing store for the device pixel ratio", () => {
-    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 200, height: 300 } as DOMRect);
+    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 140, height: 300 } as DOMRect);
     vi.stubGlobal("devicePixelRatio", 2);
     render(<StackingGame params={params} onFinish={vi.fn()} />);
     advance(20);
     const canvas = screen.getByRole("img", { name: /tower/i }) as HTMLCanvasElement;
-    expect([canvas.width, canvas.height]).toEqual([400, 600]);
-    expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ width: 200, height: 300, devicePixelRatio: 2 });
+    expect([canvas.width, canvas.height]).toEqual([280, 600]);
+    expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ width: 140, height: 300, devicePixelRatio: 2 });
   });
 
   it("stops Space from scrolling the page", () => {
@@ -162,7 +158,7 @@ describe("StackingGame", () => {
     advance(930);
     pressSpace();
     rerender(<StackingGame params={params} onFinish={second} />);
-    advance(60_000);
+    advance(UNTIL_THE_END);
     expect(first).not.toHaveBeenCalled();
     expect(second.mock.calls[0][0].taps).toEqual([930]);
   });
@@ -179,7 +175,7 @@ describe("StackingGame", () => {
     unmount();
     const draws = drawStacking.mock.calls.length;
     pressSpace();
-    advance(61_000);
+    advance(UNTIL_THE_END);
     expect(drawStacking.mock.calls.length).toBe(draws);
     expect(onFinish).not.toHaveBeenCalled();
   });

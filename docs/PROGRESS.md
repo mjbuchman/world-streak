@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1b Look, feel and Tower rework (M1 done apart from T15; play-tested Nov 9, 2026)
-- Active task: T73 Fresh Sport design system and app shell (next)
+- Active task: T76 Teetering Tower grid engine
 - Blocked tasks: T15 (needs the human's Google OAuth client)
 - Waiting on the human: the Google OAuth client; the second play-test after M1b; see docs/NEEDS_HUMAN.md
 - Next: M1b in order T73, T76, T74, T75, T77 (T76 has no UI dependency and can go early); then the second play-test, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds) and T66 (shared route helpers, before T18).
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-09 — T73 Fresh Sport design system and app shell (PR #25)
+- Hand-written Fresh Sport tokens (`src/app/tokens.css`, palette mirrored in `src/lib/theme/palette.ts` with contrast and drift tests); Unbounded and Manrope; shared components in `src/components/ui/`; the wordmark header. Legacy `--md-*` names are aliased until T74/T75.
+- Review rounds: spec 3, quality 3, tests 3 (focus ring hidden by button shadows, busy buttons unnamed, a hydration mismatch, and the translucent canvas smearing without a clear, all fixed).
+- Notes: `npm run test:e2e:local` now uses port 3100 and `.next-e2e`, so it runs beside the human's `npm run dev`. The Material generator and `npm run tokens` are gone.
 
 ### 2026-11-09 — M1 play-test and re-plan (docs)
 - The human play-tested M1. Feedback: the Tower was far too easy and should be an arcade-style column grid; the look was drab; sign-up should keep the password and ask for it twice; back buttons and spinners everywhere; fun alliterative names. Leaving early is a loss.

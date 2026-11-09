@@ -48,7 +48,7 @@ afterEach(() => {
 // onFinish starts the (async) submission; the test then waits for what it renders.
 const finish = (taps: number[], score: number) =>
   act(async () => {
-    games.at(-1)!.onFinish({ taps, result: { score, blocks: [], endedAtMs: 1000, endReason: "miss", moving: null } });
+    games.at(-1)!.onFinish({ taps, result: { score, rows: [], endedAtMs: 1000, endReason: "miss", moving: null } });
   });
 
 async function startRun() {

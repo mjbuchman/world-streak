@@ -24,6 +24,7 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Where to put it: reply in chat.
 - Why: the M1 play-test asked for a big rework of the look and the Tower; M2 builds the streak and meter on top of it.
 - Agent's recommendation: same steps as the M1 play-test; the agent will list them.
+- Also judge at that play-test: the new Tower's speed (a decent player should reach about row 10) and one judgment call: a row left untapped for 8 seconds drops off and ends the run (DECISIONS, T76).
 
 ### Revisit: location is self-declared, no IP check (blocks nothing; before launch)
 - What is needed: after you research contest rules, say whether self-declared US residence is enough or a check is needed.
