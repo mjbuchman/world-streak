@@ -199,6 +199,11 @@ describe("stacking module", () => {
     expect(stacking.paramsFromSeed(3)).toEqual(paramsFromSeed(3));
   });
 
+  it("reports the last tap's time for the server's timing check, or 0 with no taps", () => {
+    expect(stacking.lastInputMs({ tapsMs: [750, 1250] })).toBe(1250);
+    expect(stacking.lastInputMs({ tapsMs: [] })).toBe(0);
+  });
+
   it("accepts increasing, non-negative taps", () => {
     expect(stacking.inputsSchema.parse({ tapsMs: [0, 10.5, 900] })).toEqual({ tapsMs: [0, 10.5, 900] });
     expect(stacking.inputsSchema.safeParse({ tapsMs: [] }).success).toBe(true);

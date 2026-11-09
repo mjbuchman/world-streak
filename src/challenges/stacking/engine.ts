@@ -132,4 +132,5 @@ export const stacking: ChallengeModule<StackingParams, StackingInputs> = {
   score: (params, inputs) => simulate(params, inputs.tapsMs).score,
   inputsSchema,
   direction: "higher-better",
+  lastInputMs: (inputs) => inputs.tapsMs.at(-1) ?? 0,
 };

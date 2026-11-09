@@ -165,7 +165,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T12 Attempt start endpoint
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T07, T09, T11
 - Acceptance criteria:
   - [ ] `POST /api/attempts/start` returns 401 when signed out, and 403 `{ error: "profile-required" }` when the user has no profile.
@@ -176,7 +176,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T13 Attempt submit endpoint with server replay
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T12
 - Acceptance criteria:
   - [ ] `POST /api/attempts/submit` with `{ attemptId, inputs }` returns 401 when signed out, 400 when the body or `inputs` fail the challenge's `inputsSchema`, and 404 when the attempt is not the caller's.

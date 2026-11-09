@@ -37,6 +37,50 @@ test("an eligible player starts today's attempt once; a second start is refused"
   expect(await second.json()).toEqual({ error: "already-started", submitted: false });
 });
 
+test("the server scores a submission itself and accepts it only once", async ({ page, accounts }) => {
+  const email = accounts.uniqueEmail();
+  await signUpViaForm(page, { email });
+  await expect(page).toHaveURL("/");
+  const { attemptId } = await (await page.request.post("/api/attempts/start")).json();
+
+  const invalid = await page.request.post("/api/attempts/submit", { data: { attemptId, inputs: { tapsMs: [900, 800] } } });
+  expect(invalid.status()).toBe(400);
+  expect(await invalid.json()).toEqual({ error: "invalid-inputs" });
+
+  const unknown = await page.request.post("/api/attempts/submit", {
+    data: { attemptId: "6f1c7d0e-2b9a-4c3e-8d5f-1a2b3c4d5e6f", inputs: { tapsMs: [] } },
+  });
+  expect(unknown.status()).toBe(404);
+
+  // Claims a pass, but no taps stack no blocks.
+  const submitted = await page.request.post("/api/attempts/submit", {
+    data: { attemptId, inputs: { tapsMs: [] }, score: 99, passed: true },
+  });
+  expect(submitted.status()).toBe(200);
+  expect(await submitted.json()).toEqual({ score: 0, passed: false, passTarget: 10 });
+
+  const { data: row, error } = await adminClient()
+    .from("attempts")
+    .select("inputs, score, passed, submitted_at")
+    .eq("id", attemptId)
+    .single();
+  if (error) throw error;
+  expect(row).toMatchObject({ inputs: { tapsMs: [] }, score: 0, passed: false });
+  expect(row.submitted_at).not.toBeNull();
+
+  const again = await page.request.post("/api/attempts/submit", { data: { attemptId, inputs: { tapsMs: [] } } });
+  expect(again.status()).toBe(409);
+  expect(await again.json()).toEqual({ error: "already-submitted" });
+
+  const restart = await page.request.post("/api/attempts/start");
+  expect(await restart.json()).toEqual({ error: "already-started", submitted: true });
+});
+
+test("a signed-out submission is refused", async ({ request }) => {
+  const response = await request.post("/api/attempts/submit", { data: { attemptId: "x", inputs: {} } });
+  expect(response.status()).toBe(401);
+});
+
 test("two simultaneous starts create exactly one attempt", async ({ page, accounts }) => {
   const email = accounts.uniqueEmail();
   await signUpViaForm(page, { email });

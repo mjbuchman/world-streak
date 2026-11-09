@@ -24,4 +24,9 @@ export interface ChallengeModule<Params, Inputs> {
   /** Validates inputs submitted by the client before they are scored. */
   inputsSchema: z.ZodType<Inputs>;
   direction: ScoreDirection;
+  /**
+   * Elapsed ms of the latest input, from the start of the run (0 with no inputs). The server
+   * refuses inputs timed later than the attempt has actually been running.
+   */
+  lastInputMs: (inputs: Inputs) => number;
 }

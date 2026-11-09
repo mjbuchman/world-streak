@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T12 Attempt start endpoint
+- Active task: T13 Attempt submit endpoint with server replay
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-09 — T12 Attempt start endpoint (PR #19)
+- `POST /api/attempts/start` (`src/app/api/attempts/start/route.ts`) over `startAttempt` and `supabaseAttemptStore` in `src/lib/attempts/`; challenge registry in `src/challenges/registry.ts`; real-database e2e in `tests/e2e/attempts.spec.ts` (including a simultaneous-start race).
+- Review rounds: spec 1, quality 1, tests 1.
+- Notes: only the test-reviewer should run e2e during review; `test:e2e:local` always starts its own server on port 3000, so parallel runs fail with EADDRINUSE. Abandoned attempts cannot be restarted (NEEDS_HUMAN confirm).
 
 ### 2026-11-09 — T11 Game days, attempts schema and game date (PR #18)
 - `gameDateAt`/`deadlineFor` (`src/lib/gameDay.ts`, deadline in `src/config/schedule.ts`); migration with `game_days`, `attempts` (unique per user and date, references `profiles`), `game_date_at`, `deadline_utc_hour` and `ensure_game_day` (service role only); pgTAP in `supabase/tests/game_days.test.sql`.
