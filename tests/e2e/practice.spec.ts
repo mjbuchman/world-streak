@@ -42,6 +42,6 @@ test("practice tower works signed out, ends with a score and offers another go",
 
 test("the home page links to practice", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: "Practice the tower" }).click();
+  await page.getByRole("link", { name: "Practice", exact: true }).click();
   await expect(page).toHaveURL("/practice/stacking");
 });

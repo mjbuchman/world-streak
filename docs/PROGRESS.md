@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1 Foundation and first challenge end to end
-- Active task: T60 Practice: move focus to the result when a run ends
+- Active task: T14 Daily play page end to end
 - Blocked tasks: none
 - Waiting on the human: see docs/NEEDS_HUMAN.md
 
@@ -17,6 +17,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-09 — T60 Practice: move focus to the result when a run ends (PR #21)
+- The result heading takes focus when a run ends (so it is announced and a held Space cannot restart); the canvas takes focus when a run starts. Neither shows a focus ring (not Tab stops).
+- Review rounds: spec 2, quality 2, tests 2 (round 1: `StackingPractice.test.tsx` did not check focus after "Play again").
+- Notes: maintainer check after T60 ran: added T66 to T68 and notes on T58 and T62. Biggest risk: scoring and game-date code has no 90% coverage threshold yet (T67).
 
 ### 2026-11-09 — T13 Attempt submit endpoint with server replay (PR #20)
 - `POST /api/attempts/submit` (`src/app/api/attempts/submit/route.ts`) over `submitAttempt` and `supabaseSubmitStore`; `record_attempt_result` (service role only, security definer, locks the attempt and day, checks the deadline by the database clock); `ChallengeModule.lastInputMs`; limits in `src/config/attempts.ts`.

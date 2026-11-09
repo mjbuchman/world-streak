@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { paramsFromSeed, type StackingParams } from "@/challenges/stacking/engine";
+import { blocks } from "@/components/stacking/blocks";
 import { type FinishedRun, StackingGame } from "@/components/stacking/StackingGame";
 import styles from "./practice.module.css";
 
@@ -30,7 +31,7 @@ export function StackingPractice() {
     <section className={styles.panel}>
       {phase.name === "done" ? (
         <h2 ref={resultRef} tabIndex={-1} className={styles.result}>
-          You stacked {phase.score} {phase.score === 1 ? "block" : "blocks"}
+          You stacked {blocks(phase.score)}
         </h2>
       ) : (
         <p className={styles.howTo}>

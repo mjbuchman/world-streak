@@ -189,7 +189,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T14 Daily play page end to end
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T10, T13
 - Acceptance criteria:
   - [ ] `/` shows the game name, the one-sentence pitch ("Play today's challenge; if enough of the world passes, humanity's streak survives."), a "Play today's challenge" link to `/play` and a "Practice" link.
@@ -695,7 +695,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] A signed-in user who opens `/signin` or `/signup` is redirected to `/`.
   - [ ] Sign-in shows a specific message for `email_not_confirmed`, in case email confirmation is ever turned on.
   - [ ] `npm run verify` and `npm run test:e2e` pass.
-- Notes: From the T06 quality review. Not urgent during development; do before the live meter and play pages add traffic (M2). The T10 maintainer check found the comment in `src/components/AccountHeader.tsx` (lines 10-11) wrong: `getClaims` does not verify locally while `signing_keys_path` is commented out in `supabase/config.toml`, so a signed-in render makes two Auth calls today (`getUser` in the proxy, `getClaims` in the header). Fix the comment as part of this task.
+- Notes: From the T06 quality review. Not urgent during development; do before the live meter and play pages add traffic (M2). The T10 maintainer check found the comment in `src/components/AccountHeader.tsx` (lines 10-11) wrong: `getClaims` does not verify locally while `signing_keys_path` is commented out in `supabase/config.toml`, so a signed-in render makes two Auth calls today (`getUser` in the proxy, `getClaims` in the header). Fix the comment as part of this task. The T60 maintainer check adds: `src/proxy.ts` matches `/api/*`, so every signed-in API call makes two Auth `getUser` round trips (the proxy and the route), which matters once the meter is polled (T18/T19).
 
 ### T59 One-command local e2e runs
 - Type: maintenance
@@ -709,7 +709,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T60 Practice: move focus to the result when a run ends
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T10
 - Acceptance criteria:
   - [ ] When a practice run finishes, keyboard focus moves to the result, so a keyboard or screen-reader user is not left on `<body>` (the Start button they pressed was unmounted). The heading "You stacked N blocks" is announced, through a polite live region or because it labels the focused element.
@@ -739,7 +739,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `auth.spec.ts` and `profile.spec.ts` use them with the same assertions.
   - [ ] `hasSessionCookie` uses the `AUTH_COOKIE` regex from `support/session.ts` instead of its own copy.
   - [ ] `npm run test:e2e` passes locally and in CI; `npm run verify` passes; no product behavior changes.
-- Notes: From the maintainer check after T10. T14, T25, T30, T36, T43 and T49 all need a signed-in browser.
+- Notes: From the maintainer check after T10. T14, T25, T30, T36, T43 and T49 all need a signed-in browser. The T60 maintainer check adds: `tests/e2e/attempts.spec.ts` repeats "sign up, then expect `/`" and `adminClient().from(...)` plus `if (error) throw error`; a `signedUpPlayer()` fixture would cover both.
 
 ### T63 Component-test race audit and the Field key warning
 - Type: maintenance
@@ -772,3 +772,50 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] A unit test or CI step fails when the committed types are out of date with the migrations (for example regenerate and compare in the CI job that already starts Supabase, as an added step).
   - [ ] `npm run verify` passes; no product behavior changes.
 - Notes: From the T12 quality review. Worth doing before M2 adds more tables.
+
+### T66 Shared route-handler helpers for API endpoints
+- Type: maintenance
+- Status: todo
+- Depends on: T13
+- Acceptance criteria:
+  - [ ] One server-only module (for example `src/lib/http/route.ts`) provides `jsonNoStore(body, status)` (always `cache-control: no-store`), `requireUser()` (the verified user, or a ready 401 `{ error: "unauthenticated" }`), `readJsonBody(request, maxBytes)` (the parsed body, 413 `too-large` by declared or actual size, or 400 `invalid-body`), and a wrapper that logs a thrown error and answers 500 `{ error: "server-error" }`.
+  - [ ] The start, submit and health routes use them; neither attempts route defines its own `NO_STORE` or error builder.
+  - [ ] One `secureRandomSeed()` replaces the copies in the start route and `StackingPractice.tsx`.
+  - [ ] The helpers have unit tests (401, 413 by header, 413 by size, 400 non-JSON, 500 without details, no-store everywhere); the existing route tests pass unchanged.
+  - [ ] `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T60. Land before T18 (the polled meter), so new routes start from one pattern.
+
+### T67 Coverage thresholds where scoring and game-day logic live
+- Type: maintenance
+- Status: todo
+- Depends on: T13
+- Acceptance criteria:
+  - [ ] `passes(score, target, direction)` moves from `src/lib/attempts/submit.ts` to `src/lib/scoring/` (for example `pass.ts`) with its tests; callers import it from there (the T21 close job will reuse it).
+  - [ ] `vitest.config.mts` sets 90% lines and branches for `src/lib/attempts/**` and `src/lib/gameDay.ts` (both at 100% today, so this only raises thresholds).
+  - [ ] Every threshold glob matches at least one file, or carries a comment naming the task that will fill it (`src/lib/streak/**` matches nothing yet).
+  - [ ] `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T60. CLAUDE.md asks for 90% on scoring and streak logic, but the pass/fail, result storage and game-date code currently falls only under the 70% overall threshold. Do this soon.
+
+### T68 One attempt store and one challenge lookup for start and submit
+- Type: maintenance
+- Status: todo
+- Depends on: T13 (coordinate with T65, which also edits `src/lib/attempts/store.ts`)
+- Acceptance criteria:
+  - [ ] One helper (for example `challengeForGameDay(gameDate, challengeType)` in `src/challenges/registry.ts`) returns the module or throws the unknown-type error, replacing the duplicate checks in `start.ts` and `submit.ts`.
+  - [ ] Both flows read the game day through one store method (`gameDay(gameDate)`: challenge type, pass target, closed); `AttemptStore.challengeTypeFor` is removed.
+  - [ ] The two `findAttempt` methods get distinct names (`findAttemptForDay(userId, gameDate)`, `findAttemptById(attemptId)`), and the store's internal `fail()` is renamed (for example `throwDbError`).
+  - [ ] Unit tests for both flows and stores still cover every status code; `tests/e2e/attempts.spec.ts` is unchanged; `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T60. T17 and T21 will extend these stores.
+
+### T69 Play page polish: shared button styles, error page, stable run
+- Type: maintenance
+- Status: todo
+- Depends on: T14
+- Acceptance criteria:
+  - [ ] One shared Material 3 filled-button style (a component or a CSS module) replaces the copies in `play.module.css`, `practice.module.css`, `form.module.css` and `page.module.css` (the home link uses the same `::after` state layer as the others, not a `color-mix` hover).
+  - [ ] `src/app/play/error.tsx` shows a calm message with a Reload button when the page's server lookups fail, with a component test.
+  - [ ] A server refresh of `/play` during a run (the `key={status.kind}` remount) cannot unmount the running game: `PlayToday` keeps its playing or checking phase, with a test.
+  - [ ] After `router.refresh()` (from a 409 on start or submit), a refresh that returns the same status does not leave the page stuck on "Starting" or "Checking your result": it falls back to a reload message, with a test.
+  - [ ] An e2e test covers the refresh after a submission elsewhere: start in the page, submit through `page.request`, finish in the page, and see the stored result (this fails if the `key` is dropped).
+  - [ ] `npm run verify` and the play and practice e2e tests pass; no other behavior changes.
+- Notes: From the T14 quality review. Also add the `data as unknown as Row` cast in `src/lib/attempts/today.ts` to T65's list.
