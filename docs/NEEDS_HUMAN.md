@@ -12,6 +12,13 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Google OAuth client for sign-in (blocks T15, the last M1 task)
+- What is needed: in Google Cloud Console (free), create an OAuth client of type "Web application" with the authorised redirect URI `http://127.0.0.1:54321/auth/v1/callback`. You get a client ID and a client secret.
+- Where to put it: set them in the shell that starts local Supabase, then restart it. In PowerShell: `$env:SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID = "<client id>"`, `$env:SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET = "<secret>"`, then `npx supabase stop` and `npm run db:start`. (The Supabase CLI reads these from the shell; putting them in `.env.local` does not work.) Then sign in once with "Continue with Google" on `/signin` and tell the agent whether it reached `/complete-profile`.
+- Why: Google sign-in is built and tested up to Google's door (T07), but a real login needs your own OAuth client; agents cannot create accounts.
+- What was tried: everything else for Google sign-in, including an e2e test that checks the hand-off to Google with the configured client ID.
+- Agent's recommendation: do it when convenient; nothing else in M1 or M2 depends on it. Production needs a second redirect URI for the hosted Supabase project at deployment time.
+
 ### Please confirm: brand color and typefaces (blocks nothing)
 - What is needed: confirm or replace the placeholder brand seed color `#B5532A` (warm terracotta) and the typefaces (Roboto Flex for body text, Bricolage Grotesque for the display text). Any free Google Font works.
 - Where to put it: reply in chat. The agent updates `docs/UI_GUIDELINES.md` and the token stylesheet.
