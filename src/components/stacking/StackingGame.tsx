@@ -15,12 +15,7 @@ type Props = { params: StackingParams; onFinish: (run: FinishedRun) => void };
 function themeColors(element: HTMLElement): StackingColors {
   const style = getComputedStyle(element);
   const token = (name: string) => style.getPropertyValue(`--fs-color-${name}`).trim();
-  return {
-    background: token("surface"),
-    base: token("text-muted"),
-    tower: token("mint"),
-    moving: token("tangerine"),
-  };
+  return { empty: token("surface-strong"), tower: token("mint"), moving: token("tangerine") };
 }
 
 /**
@@ -56,7 +51,7 @@ export function StackingGame({ params, onFinish }: Props) {
     const tap = () => {
       const at = performance.now() - start;
       const last = taps.at(-1);
-      if (finished || at > params.maxDurationMs || taps.length >= MAX_TAPS) return;
+      if (finished || taps.length >= MAX_TAPS) return;
       if (last !== undefined && at <= last) return;
       taps.push(at);
     };

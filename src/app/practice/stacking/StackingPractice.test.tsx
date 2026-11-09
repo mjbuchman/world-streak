@@ -35,7 +35,7 @@ const finish = (score: number) =>
   act(() =>
     games.at(-1)!.onFinish({
       taps: [],
-      result: { score, blocks: [], endedAtMs: 1000, endReason: "miss", moving: null },
+      result: { score, rows: [], endedAtMs: 1000, endReason: "miss", moving: null },
     }),
   );
 

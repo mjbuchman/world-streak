@@ -1,12 +1,9 @@
-import { BASE_BLOCK, FIELD_WIDTH, blockLeftAt, type StackingParams, type StackingResult } from "./engine";
+import { COLUMNS, ROWS, columnAt, type StackingParams, type StackingResult } from "./engine";
 
-/** Height of one block, in the engine's logical units (the field is 400 units wide). */
-export const BLOCK_HEIGHT = 20;
+/** The gap between cells, as a fraction of a cell. */
+export const CELL_GAP = 0.12;
 
-/** Rows kept free above the moving block once the tower reaches the top of the view. */
-const HEADROOM_ROWS = 2;
-
-export type StackingColors = { background: string; base: string; tower: string; moving: string };
+export type StackingColors = { empty: string; tower: string; moving: string };
 
 export type StackingFrame = {
   params: StackingParams;
@@ -20,36 +17,31 @@ export type StackingFrame = {
 };
 
 /**
- * Draws one frame. The canvas backing store is `width * devicePixelRatio` pixels wide; the
- * transform maps the 400-unit field onto it, so drawing below is in engine units.
+ * Draws one frame of the grid. The transform makes one unit one cell (the board is COLUMNS
+ * cells wide), so drawing below is in cells, row 1 at the bottom.
  */
 export function drawStacking(ctx: CanvasRenderingContext2D, frame: StackingFrame): void {
   const { params, result, elapsedMs, width, height, devicePixelRatio, colors } = frame;
-  const scale = (width / FIELD_WIDTH) * devicePixelRatio;
+  const scale = (width / COLUMNS) * devicePixelRatio;
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
-  const fieldHeight = (height / width) * FIELD_WIDTH;
-  // Clear first: the background may be translucent (the page shows through), and painting it
-  // over the last frame would build up into an opaque smear.
-  ctx.clearRect(0, 0, FIELD_WIDTH, fieldHeight);
-  ctx.fillStyle = colors.background;
-  ctx.fillRect(0, 0, FIELD_WIDTH, fieldHeight);
+  const fieldHeight = (height / width) * COLUMNS;
+  // Clear first: the cells are translucent, and the page shows through the gaps.
+  ctx.clearRect(0, 0, COLUMNS, fieldHeight);
 
-  // Row 0 is the base. Once the tower nears the top, scroll so the moving row stays in view.
-  const visibleRows = Math.floor(fieldHeight / BLOCK_HEIGHT);
-  const topRow = result.blocks.length + 1;
-  const scrolledRows = Math.max(0, topRow - (visibleRows - 1 - HEADROOM_ROWS));
-  const rowTop = (row: number) => fieldHeight - (row + 1 - scrolledRows) * BLOCK_HEIGHT;
-
-  const drawRow = (row: number, left: number, blockWidth: number, color: string) => {
-    if (row < scrolledRows) return; // scrolled out of view below
+  const cell = (column: number, row: number, color: string) => {
     ctx.fillStyle = color;
-    ctx.fillRect(left, rowTop(row), blockWidth, BLOCK_HEIGHT);
+    ctx.fillRect(column + CELL_GAP / 2, fieldHeight - row + CELL_GAP / 2, 1 - CELL_GAP, 1 - CELL_GAP);
   };
 
-  drawRow(0, BASE_BLOCK.left, BASE_BLOCK.width, colors.base);
-  result.blocks.forEach((block, i) => drawRow(i + 1, block.left, block.width, colors.tower));
+  for (let row = 1; row <= ROWS; row++) {
+    for (let column = 0; column < COLUMNS; column++) cell(column, row, colors.empty);
+  }
+  result.rows.forEach((placed, i) => {
+    for (let c = 0; c < placed.width; c++) cell(placed.left + c, i + 1, colors.tower);
+  });
   if (result.moving) {
-    drawRow(topRow, blockLeftAt(params, result.moving, elapsedMs), result.moving.width, colors.moving);
+    const left = columnAt(params, result.moving, elapsedMs);
+    for (let c = 0; c < result.moving.width; c++) cell(left + c, result.moving.row, colors.moving);
   }
 }

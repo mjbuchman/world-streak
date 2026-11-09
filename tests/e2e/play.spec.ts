@@ -44,13 +44,14 @@ test("a player plays today's attempt once and sees the server's result, also aft
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByRole("status")).toHaveText("Blocks: 0");
 
-  // The seed is random, so the taps cannot be aimed. Two quick drops end the run: each block
-  // starts at the opposite edge, so the second one, dropped at once, misses the first.
+  // The seed is random, so the taps cannot be aimed. Two quick drops, then nothing: either
+  // the second row misses, or the third row drops off after the idle limit (8 s). Either way
+  // the run ends on its own.
   await page.clock.runFor(50);
   await page.keyboard.press("Space");
   await page.clock.runFor(50);
   await page.keyboard.press("Space");
-  await page.clock.runFor(100);
+  await page.clock.runFor(9_000);
 
   const verdict = page.getByRole("heading", { name: /^(Passed|Not this time)$/ });
   await expect(verdict).toBeVisible();

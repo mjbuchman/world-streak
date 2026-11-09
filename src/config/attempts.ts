@@ -1,6 +1,7 @@
 /**
- * How long after starting a scored attempt it can still be submitted. A run lasts at most a
- * minute, so three minutes leaves room for a slow connection without allowing long replays.
+ * How long after starting a scored attempt it can still be submitted. A Teetering Tower run
+ * lasts at most about two minutes (15 rows, each dropping off after 8 s untapped), so three
+ * minutes leaves room for a slow connection without allowing long replays.
  */
 export const ATTEMPT_MAX_AGE_MS = 180_000;
 

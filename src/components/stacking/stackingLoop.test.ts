@@ -1,37 +1,32 @@
 import { describe, expect, it } from "vitest";
-import { simulate, type StackingParams } from "@/challenges/stacking/engine";
+import { IDLE_LOCK_MS, simulate, type StackingParams } from "@/challenges/stacking/engine";
 import { frameAt, type Frame } from "./stackingLoop";
 
-const params: StackingParams = { startSpeed: 0.11, ramp: 0.0025, direction: "right", maxDurationMs: 60_000 };
+const params: StackingParams = { startStepMs: 160, stepDecayMs: 7, startColumn: 2, direction: "right" };
 
 describe("frameAt", () => {
-  it("keeps the run going while the taps are still landing and time is left", () => {
+  it("keeps the run going while it waits for the next tap", () => {
     const frame = frameAt(params, [900], 1500);
     expect(frame.finished).toBe(false);
-    expect(frame.result).toEqual(simulate(params, [900]));
+    expect(frame.result).toEqual(simulate(params, [900], 1500));
+    expect(frame.result.moving).toMatchObject({ row: 2 });
   });
 
   it("finishes on a miss, with the engine's result", () => {
-    const steady = { ...params, startSpeed: 0.2, ramp: 0 };
-    // From the T09 worked example: block 2 lands edge to edge at 2000 ms and misses.
-    const frame = frameAt(steady, [750, 2000], 2010);
-    expect(frame).toEqual({ finished: true, result: simulate(steady, [750, 2000]) });
+    // Row 1 locks at 2-4 straight away; row 2 appears at the right wall (4-6) moving left and
+    // one step later sits at 3-5: it keeps 3-4. Row 3 tapped as it appears at the left wall
+    // (0-1) misses.
+    const taps = [1, 170, 171];
+    const frame = frameAt(params, taps, 200);
+    expect(frame).toEqual({ finished: true, result: simulate(params, taps) });
     expect(frame.result.endReason).toBe("miss");
   });
 
-  it("ends the run at the time limit even when the player stops tapping", () => {
-    const frame = frameAt(params, [900], 60_000);
-    expect(frame.finished).toBe(true);
-    expect(frame.result).toEqual({
-      ...simulate(params, [900]),
-      endReason: "time",
-      endedAtMs: 60_000,
-      moving: null,
-    });
-  });
-
-  it("does not end one frame early", () => {
-    expect(frameAt(params, [], 59_999.9).finished).toBe(false);
+  it("ends the run when a row goes untapped too long, so a player who stops still reaches an end", () => {
+    expect(frameAt(params, [900], 900 + IDLE_LOCK_MS - 1).finished).toBe(false);
+    const ended = frameAt(params, [900], 900 + IDLE_LOCK_MS);
+    expect(ended.finished).toBe(true);
+    expect(ended.result).toMatchObject({ score: 1, endReason: "miss" });
   });
 });
 
@@ -59,14 +54,13 @@ describe("frame-rate independence", () => {
     const at120 = playAtFrameRate(8.3, tapTimes);
     expect(at120.frames).toBeGreaterThan(at60.frames * 1.9);
     expect(at120.frame.result).toEqual(at60.frame.result);
-    expect(at60.frame.result).toMatchObject({ score: simulate(params, tapTimes).score, endReason: "time" });
+    expect(at60.frame.result).toEqual(simulate(params, tapTimes));
   });
 
-  it("gives identical results when the run ends in a miss", () => {
-    const missing = [...tapTimes, 6030];
-    const at60 = playAtFrameRate(16.7, missing);
-    const at120 = playAtFrameRate(8.3, missing);
-    expect(at60.frame.result.endReason).toBe("miss");
+  it("gives identical results when the run ends by an idle drop", () => {
+    const at60 = playAtFrameRate(16.7, [930]);
+    const at120 = playAtFrameRate(8.3, [930]);
+    expect(at60.frame.result.rows.at(-1)!.byTap).toBe(false);
     expect(at120.frame.result).toEqual(at60.frame.result);
   });
 });

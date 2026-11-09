@@ -216,7 +216,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
 
 ### T73 Fresh Sport design system and app shell
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T14
 - Acceptance criteria:
   - [ ] `src/app/tokens.css` is rewritten to the v2 palette, gradients, soft shadows, radii, type scale, 8 px spacing and motion durations (fast about 150 ms, medium about 250 ms, slow about 400 ms, with a `prefers-reduced-motion` override). The Material seed-colour generator (`scripts/generate-tokens.mjs`, `npm run tokens`, `src/config/theme.ts`) is removed if nothing else needs it, with its test.
@@ -256,14 +256,15 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
 
 ### T76 Teetering Tower grid engine
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/stacking/engine.ts` is replaced by a column-grid stacker: a board 7 columns wide and 15 rows tall; each row's block is a run of cells that moves one column at a time, bouncing between the walls; a tap locks it; cells not resting on a cell of the row below fall off, so the next row starts at the surviving width; when no cells survive the run ends (a miss).
   - [ ] The run starts 3 cells wide, and the width is also forced down at set heights like the arcade original (a config table, for example at most 2 cells from row 6 and 1 cell from row 11). Reaching the top row (15) is the winning score and ends the run. There is no time limit; the run ends only on a miss or the win.
   - [ ] Movement is driven by elapsed ms: each row's step interval shortens with height (ranges in `PARAM_RANGES`, picked per seed); `paramsFromSeed` also picks the starting column and direction. The score is the number of rows locked (0 to 15).
   - [ ] Inputs stay `{ tapsMs }` (strictly increasing, at most 15 taps that count); `lastInputMs` and `inputsSchema` keep their contracts so T12, T13 and T14 work unchanged.
-  - [ ] To bound attempt length without a time limit, a row whose block is not tapped within an idle limit (config, default 8 s) locks where it is (judgment call: record it and flag it).
+  - [ ] To bound attempt length without a time limit, a row not tapped within an idle limit (config, default 8 s) drops off and ends the run like a miss (judgment call: record it and flag it). (Changed during the task from "locks where it is", which let a player score rows without tapping.)
+  - [ ] (In scope so the game keeps working) the frame loop, the canvas renderer (a plain 7 x 15 grid of cells) and the game component follow the new engine; T77 adds the polish.
   - [ ] Golden fixtures (exact scores for 3 seeds and fixed taps), determinism and purity tests, and a simulated-player tuning test: a "decent" player (timing error spread you choose and document) reaches about row 10 on average over 200 seeds, a careless one about 4, and a perfect one 15. At least 90% coverage.
 - Notes: Human requirements from the M1 play-test (Nov 9, 2026): very similar to the arcade stacker, set columns, overhang cells are lost, forced narrowing, end only on a miss, cap at a winning score (a leaderboard may come later), a decent player gets 10. Original name and art only. The old continuous engine's DECISIONS entries (speed ranges) are superseded; record the new ones. Attempts already stored keep their old inputs; nothing replays them.
 
