@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 // TypeScript maps the .mjs specifier to the .mts source.
-import { localSupabaseEnv, runE2e, type E2eDeps } from "../../scripts/e2e-local.mjs";
+import { localSupabaseEnv, playwrightEnv, runE2e, type E2eDeps } from "../../scripts/e2e-local.mjs";
 
 const status = [
   'ANON_KEY="ignored"',
@@ -50,6 +50,19 @@ describe("localSupabaseEnv", () => {
   it("allows localhost as well as 127.0.0.1", () => {
     const named = status.replace("127.0.0.1:54321", "localhost:54321");
     expect(localSupabaseEnv(named).NEXT_PUBLIC_SUPABASE_URL).toBe("http://localhost:54321");
+  });
+});
+
+describe("playwrightEnv", () => {
+  it("adds the local keys and its own fresh server, port and build folder, overriding the caller's", () => {
+    const env = playwrightEnv({ PATH: "/bin", E2E_PORT: "3000", NEXT_PUBLIC_SUPABASE_URL: "https://real.example" }, appEnv);
+    expect(env).toEqual({
+      PATH: "/bin",
+      ...appEnv,
+      E2E_FRESH_SERVER: "1",
+      E2E_PORT: "3100",
+      E2E_DIST_DIR: ".next-e2e",
+    });
   });
 });
 

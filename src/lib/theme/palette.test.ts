@@ -48,6 +48,12 @@ describe("Fresh Sport palette", () => {
     for (const name of ["fast", "medium", "slow"]) expect(reduced![1]).toContain(`--fs-duration-${name}: 0ms;`);
   });
 
+  it("has the guideline shapes: pill buttons, 24 px surfaces, 8 px game cells", () => {
+    expect(tokensCss).toContain("--fs-radius-pill: 999px;");
+    expect(tokensCss).toContain("--fs-radius-surface: 24px;");
+    expect(tokensCss).toContain("--fs-radius-cell: 8px;");
+  });
+
   it("checks the highlight surface at the tint tokens.css actually uses", () => {
     expect(tokensCss).toContain(`--fs-gradient-highlight: linear-gradient(150deg, ${HIGHLIGHT_TINT},`);
   });
