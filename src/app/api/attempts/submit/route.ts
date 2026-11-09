@@ -6,6 +6,11 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const NO_STORE = { "cache-control": "no-store" };
 
+// A full stacking run (at most 200 taps) is a few KB; anything far larger is refused unparsed.
+const MAX_BODY_BYTES = 64 * 1024;
+
+const error = (status: number, code: string) => NextResponse.json({ error: code }, { status, headers: NO_STORE });
+
 /**
  * POST /api/attempts/submit with `{ attemptId, inputs }`: the server replays the engine on the
  * attempt's seed, decides pass or fail, and stores the result once. See `submitAttempt` for
@@ -17,13 +22,16 @@ export async function POST(request: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "unauthenticated" }, { status: 401, headers: NO_STORE });
+  if (!user) return error(401, "unauthenticated");
 
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) return error(413, "too-large");
+  const text = await request.text();
+  if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) return error(413, "too-large");
   let body: unknown;
   try {
-    body = await request.json();
+    body = JSON.parse(text);
   } catch {
-    return NextResponse.json({ error: "invalid-body" }, { status: 400, headers: NO_STORE });
+    return error(400, "invalid-body");
   }
 
   try {
@@ -34,8 +42,8 @@ export async function POST(request: Request) {
       store: supabaseSubmitStore(createSupabaseAdminClient()),
     });
     return NextResponse.json(result.body, { status: result.status, headers: NO_STORE });
-  } catch (error) {
-    console.error("Submitting an attempt failed", error);
-    return NextResponse.json({ error: "server-error" }, { status: 500, headers: NO_STORE });
+  } catch (cause) {
+    console.error("Submitting an attempt failed", cause);
+    return error(500, "server-error");
   }
 }

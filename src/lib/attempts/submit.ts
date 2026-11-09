@@ -4,7 +4,9 @@ import type { ChallengeModule, ScoreDirection } from "@/challenges/shared/types"
 import { ATTEMPT_MAX_AGE_MS, INPUT_TIMING_SLACK_MS } from "@/config/attempts";
 import { gameDateAt } from "@/lib/gameDay";
 
-export type RecordStatus = "recorded" | "already-submitted" | "day-closed" | "not-found";
+/** What `record_attempt_result` can answer. */
+export const RECORD_STATUSES = ["recorded", "already-submitted", "day-closed", "not-found"] as const;
+export type RecordStatus = (typeof RECORD_STATUSES)[number];
 
 /** The database operations submitting an attempt needs (see `supabaseSubmitStore`). */
 export type SubmitStore = {
@@ -83,6 +85,8 @@ export async function submitAttempt({
   const replayed = replay(challenge, attempt.seed, request.data.inputs);
   if (!replayed) return fail(400, "invalid-inputs");
 
+  // started_at is the database clock and `now` the app server's; INPUT_TIMING_SLACK_MS also
+  // absorbs a small difference between the two.
   const elapsedMs = now.getTime() - attempt.startedAt.getTime();
   if (elapsedMs > ATTEMPT_MAX_AGE_MS || replayed.lastInputMs > elapsedMs + INPUT_TIMING_SLACK_MS) {
     return fail(422, "implausible-timing");

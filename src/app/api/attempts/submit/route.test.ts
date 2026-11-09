@@ -44,6 +44,26 @@ describe("POST /api/attempts/submit", () => {
     expect(submitAttempt).not.toHaveBeenCalled();
   });
 
+  it("returns 413 for a body over 64 KB, without parsing or submitting it", async () => {
+    signedIn();
+    const huge = JSON.stringify({ attemptId: "a1", inputs: { tapsMs: [], padding: "x".repeat(70_000) } });
+    const response = await post(huge);
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ error: "too-large" });
+    expect(submitAttempt).not.toHaveBeenCalled();
+  });
+
+  it("returns 413 when the declared length is over the limit", async () => {
+    signedIn();
+    const request = new Request("http://localhost/api/attempts/submit", {
+      method: "POST",
+      body: "{}",
+      headers: { "content-length": String(1_000_000) },
+    });
+    expect((await POST(request)).status).toBe(413);
+    expect(submitAttempt).not.toHaveBeenCalled();
+  });
+
   it("submits for the signed-in player with the admin store, and passes the result through", async () => {
     signedIn();
     vi.useFakeTimers({ toFake: ["Date"] });

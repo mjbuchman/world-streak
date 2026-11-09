@@ -57,6 +57,7 @@ test("the server scores a submission itself and accepts it only once", async ({ 
     data: { attemptId, inputs: { tapsMs: [] }, score: 99, passed: true },
   });
   expect(submitted.status()).toBe(200);
+  // 10 is the placeholder target ensure_game_day gives a new day (see DECISIONS, T11).
   expect(await submitted.json()).toEqual({ score: 0, passed: false, passTarget: 10 });
 
   const { data: row, error } = await adminClient()

@@ -1,6 +1,6 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { AttemptStore } from "./start";
-import type { RecordStatus, SubmitStore } from "./submit";
+import { RECORD_STATUSES, type RecordStatus, type SubmitStore } from "./submit";
 
 const UNIQUE_VIOLATION = "23505";
 
@@ -54,8 +54,6 @@ export function supabaseAttemptStore(db: SupabaseClient): AttemptStore {
     },
   };
 }
-
-const RECORD_STATUSES: readonly RecordStatus[] = ["recorded", "already-submitted", "day-closed", "not-found"];
 
 type AttemptRow = { user_id: string; game_date: string; seed: number; started_at: string; submitted_at: string | null };
 type GameDayRow = { challenge_type: string; pass_target: number | string; closed_at: string | null };

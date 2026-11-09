@@ -3,7 +3,9 @@
 --
 -- Returns 'recorded', 'already-submitted', 'day-closed' or 'not-found'. The attempt row and its
 -- game day are locked first, so two simultaneous submissions cannot both record, and the close
--- job cannot close the day between the check and the write.
+-- job cannot close the day between the check and the write. The deadline is checked here too,
+-- with the database clock, so a request that passed the app's check just before midnight
+-- cannot be written just after it.
 create or replace function public.record_attempt_result(
   p_attempt_id uuid,
   p_inputs jsonb,
@@ -17,11 +19,12 @@ security definer
 set search_path = ''
 as $$
 declare
+  v_game_date date;
   v_submitted_at timestamptz;
   v_closed_at timestamptz;
 begin
-  select a.submitted_at, d.closed_at
-    into v_submitted_at, v_closed_at
+  select a.game_date, a.submitted_at, d.closed_at
+    into v_game_date, v_submitted_at, v_closed_at
     from public.attempts a
     join public.game_days d on d.game_date = a.game_date
    where a.id = p_attempt_id
@@ -32,7 +35,8 @@ begin
     return 'not-found';
   elsif v_submitted_at is not null then
     return 'already-submitted';
-  elsif v_closed_at is not null then
+  elsif v_closed_at is not null or v_game_date <> public.game_date_at(now()) then
+    -- Closed by the close job, or past its deadline and not closed yet: either way too late.
     return 'day-closed';
   end if;
 
