@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const getUser = vi.hoisted(() => vi.fn());
 const startAttempt = vi.hoisted(() => vi.fn());
@@ -21,6 +21,11 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
 
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
+
 describe("POST /api/attempts/start", () => {
   it("returns 401 when signed out, without starting anything", async () => {
     getUser.mockResolvedValue({ data: { user: null }, error: { message: "Auth session missing" } });
@@ -32,6 +37,13 @@ describe("POST /api/attempts/start", () => {
 
   it("starts the signed-in player's attempt with the admin store and passes the result through", async () => {
     signedIn();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-08T12:34:56Z"));
+    const fill = (array: Uint32Array) => {
+      array[0] = 3_000_000_000;
+      return array;
+    };
+    vi.spyOn(crypto, "getRandomValues").mockImplementation(fill as typeof crypto.getRandomValues);
     startAttempt.mockResolvedValue({ status: 409, body: { error: "already-started", submitted: true } });
     const response = await POST();
     expect(response.status).toBe(409);
@@ -41,9 +53,9 @@ describe("POST /api/attempts/start", () => {
     const [{ userId, now, store: usedStore, randomSeed }] = startAttempt.mock.calls[0];
     expect(userId).toBe("u1");
     expect(usedStore).toBe(store);
-    expect(Math.abs(now.getTime() - Date.now())).toBeLessThan(5_000);
-    const seed = randomSeed();
-    expect(Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff).toBe(true);
+    expect(now.toISOString()).toBe("2026-11-08T12:34:56.000Z");
+    // The seed comes from the platform's secure random source.
+    expect(randomSeed()).toBe(3_000_000_000);
   });
 
   it("returns 500 without details when starting fails", async () => {

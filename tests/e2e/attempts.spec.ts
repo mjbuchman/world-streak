@@ -16,10 +16,14 @@ test("an eligible player starts today's attempt once; a second start is refused"
   await expect(page).toHaveURL("/");
 
   // page.request shares the browser's session cookies.
+  const before = gameDateAt(new Date());
   const first = await page.request.post("/api/attempts/start");
+  const after = gameDateAt(new Date());
   expect(first.status()).toBe(200);
   const body = await first.json();
-  expect(body).toMatchObject({ gameDate: gameDateAt(new Date()), challengeType: "stacking" });
+  expect(body.challengeType).toBe("stacking");
+  // A run that crosses the deadline could see either date.
+  expect([before, after]).toContain(body.gameDate);
   expect(body.params).toEqual(paramsFromSeed(body.seed));
 
   // The database row holds the same seed the player was given.

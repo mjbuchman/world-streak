@@ -42,6 +42,9 @@ describe("startAttempt", () => {
     });
     expect(store.ensureGameDay).toHaveBeenCalledWith("2026-11-08");
     expect(store.challengeTypeFor).toHaveBeenCalledWith("2026-11-08");
+    // On a fresh day the row only exists once ensureGameDay has run.
+    const order = (fn: unknown) => (fn as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0];
+    expect(order(store.ensureGameDay)).toBeLessThan(order(store.challengeTypeFor));
     expect(store.insertAttempt).toHaveBeenCalledWith({ userId, gameDate: "2026-11-08", seed: 4294967295 });
   });
 
@@ -55,9 +58,10 @@ describe("startAttempt", () => {
   });
 
   it("maps losing a race to a simultaneous request (the unique constraint) to 409", async () => {
-    const findAttempt = vi.fn<AttemptStore["findAttempt"]>().mockResolvedValueOnce(null).mockResolvedValueOnce({ submitted: false });
+    // The winner already submitted, so the answer must come from re-reading its row.
+    const findAttempt = vi.fn<AttemptStore["findAttempt"]>().mockResolvedValueOnce(null).mockResolvedValueOnce({ submitted: true });
     const store = fakeStore({ findAttempt, insertAttempt: vi.fn(async () => "duplicate" as const) });
-    expect(await start(store)).toEqual({ status: 409, body: { error: "already-started", submitted: false } });
+    expect(await start(store)).toEqual({ status: 409, body: { error: "already-started", submitted: true } });
     expect(findAttempt).toHaveBeenCalledTimes(2);
   });
 
@@ -70,6 +74,10 @@ describe("startAttempt", () => {
     const store = fakeStore({ challengeTypeFor: vi.fn(async () => "chess") });
     await expect(start(store)).rejects.toThrow(/chess/);
     expect(store.insertAttempt).not.toHaveBeenCalled();
+  });
+
+  it("accepts the lowest seed, 0", async () => {
+    expect(await start(fakeStore(), 0)).toMatchObject({ status: 200, body: { seed: 0, params: paramsFromSeed(0) } });
   });
 
   it("refuses a seed outside the unsigned 32-bit range", async () => {

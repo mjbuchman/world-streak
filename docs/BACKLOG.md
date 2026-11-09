@@ -761,3 +761,14 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] pgTAP: `table_privs_are` (or `has_table_privilege`) shows neither role has TRUNCATE on `profiles`, `game_days` or `attempts`, and a table created after the migration also lacks it.
   - [ ] `npm run test:db` and `npm run verify` pass; no product behavior changes.
 - Notes: From the T11 quality review. Not exploitable through the API (PostgREST cannot issue TRUNCATE), so this is defence in depth; do it before launch.
+
+### T65 Generated Supabase database types
+- Type: maintenance
+- Status: todo
+- Depends on: T12
+- Acceptance criteria:
+  - [ ] `npm run db:types` writes `src/lib/supabase/database.types.ts` from the local schema (`supabase gen types typescript --local`), and the server, admin and browser clients are typed with it.
+  - [ ] The `data as { ... }` casts in `src/lib/attempts/store.ts` (and any others) are removed.
+  - [ ] A unit test or CI step fails when the committed types are out of date with the migrations (for example regenerate and compare in the CI job that already starts Supabase, as an added step).
+  - [ ] `npm run verify` passes; no product behavior changes.
+- Notes: From the T12 quality review. Worth doing before M2 adds more tables.
