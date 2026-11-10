@@ -270,7 +270,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
 
 ### T77 Teetering Tower renderer and HUD in the new look
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T74, T76
 - Acceptance criteria:
   - [ ] The canvas renderer draws the grid as in the mockup: translucent empty cells, mint placed cells, a tangerine moving block, a target line above the pass row (when a target is given), cells that fall off animating away, and a short landing bounce (reduced motion: no bounce or fall animation). Animations are pure functions of the engine's lock times and the frame's elapsed ms, with unit tests.
@@ -281,7 +281,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
 
 ### T81 /play and practice around the Tower: how-to, big score, follow-ups
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T77
 - Acceptance criteria:
   - [ ] `/play`'s ready state shows how to play (tap, click or Space) and a "Practice first" link, from one shared source with practice (absorbs T71; mark T71 done).
@@ -686,7 +686,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Acceptance criteria:
   - [ ] `npm audit` reports no moderate or higher vulnerabilities, or each remaining one is listed in the PR with why it can't be fixed yet (at T01: 0 in production dependencies, 8 moderate in dev tooling).
   - [ ] If the CI e2e job spends more than 2 minutes building the app inside Playwright's `webServer`, move the build into its own workflow step before `npm run test:e2e` (an addition only) and make `webServer` just run `npm run start`.
-- Notes: Suggested in T01 review (quality-reviewer). Also take the patch updates for `react` and `react-dom` (19.3.0 to 19.3.1, from the T05 maintainer check). Do not take the major bumps (TypeScript 7, ESLint 10): `eslint-config-next` 16.4.5 targets ESLint 9 and TypeScript 5. `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing. From the T10 maintainer check: also take the Supabase CLI 3.0.0 to 3.1.0 update; hold `@material/material-color-utilities` 0.4.0 (pre-1.0 minor) unless the token generator needs it. From the end-of-M1 check: also take `next` and `eslint-config-next` 16.4.6 (patch); if its release notes include security fixes, do this task first.
+- Notes: Suggested in T01 review (quality-reviewer). Also take the patch updates for `react` and `react-dom` (19.3.0 to 19.3.1, from the T05 maintainer check). Do not take the major bumps (TypeScript 7, ESLint 10): `eslint-config-next` 16.4.5 targets ESLint 9 and TypeScript 5. `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing. From the T10 maintainer check: also take the Supabase CLI 3.0.0 to 3.1.0 update; (the `@material/material-color-utilities` hold is moot: T73 removed it). After T77, `npm outdated` also lists `@testing-library/user-event` 14.6.9 (patch); hold `@types/node` 26, which should track the Node 22+ runtime in `engines`. From the end-of-M1 check: also take `next` and `eslint-config-next` 16.4.6 (patch); if its release notes include security fixes, do this task first.
 
 ### T52 Sign-up abuse protection
 - Type: maintenance
@@ -866,6 +866,57 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `npm run test:e2e:local` passes 3 full runs in a row from a cold `.next-e2e` folder.
 - Notes: From the T73 test review: on cold compiles, "Continue with Google goes to Google…" lost its click and "an underage player completing their profile…" had its typed fields cleared; a third run passed 30/30. Fits with T62 (shared e2e helpers). The T74 test review saw the same on a cold compile in `practice.spec.ts` "the home page links to practice" (the click on "Practice first" was lost); include it. Found during T75: with 6 local workers the dev server's Fast Refresh (about 5 s, set off when another worker first opens a page that shares client modules) stalls in-flight sign-up server actions, so the first wave of sign-up tests misses its 5 s URL wait; `--workers=1` passes 36/36 and CI (production build, no Fast Refresh) is unaffected. Consider running `test:e2e:local` against a production build like CI, or warming every route before the tests start.
 
+### T82 One page-title template in the root layout
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `src/app/layout.tsx` metadata uses `title: { default: GAME_NAME, template: "%s | " + GAME_NAME }`, and the six pages that build `` `X | ${GAME_NAME}` `` by hand set only their own part.
+  - [ ] `src/app/layout.test.ts` checks the template (and that changing `GAME_NAME` changes both the default and the template).
+  - [ ] `npm run verify` passes; every rendered `<title>` is identical.
+- Notes: From the maintainer check after T77 (about 40 lines). Stops the copying before `/history`, `/admin` and more practice pages arrive.
+
+### T83 One source for the password rules
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `src/lib/passwords.ts` exports `MIN_PASSWORD_LENGTH` (8) and `MAX_PASSWORD_LENGTH` (72), used by the zod schema in `src/lib/signup.ts` (both messages) and by `SignUpForm.tsx` (`minLength` and the label).
+  - [ ] A unit test checks `minimum_password_length` in `supabase/config.toml` equals `MIN_PASSWORD_LENGTH`.
+  - [ ] Existing sign-up tests pass unchanged; `npm run verify` passes.
+- Notes: From the maintainer check after T77 (about 50 lines).
+
+### T84 Guard the design tokens; one source for the canvas colours
+- Type: maintenance
+- Status: todo
+- Depends on: T81
+- Acceptance criteria:
+  - [ ] A unit test fails if any `var(--name)` under `src/` is neither defined in `src/app/tokens.css`, a `next/font` variable, nor declared in the same file.
+  - [ ] The canvas token mapping in `StackingGame.tsx` becomes one exported constant that `tests/e2e/look.spec.ts` imports instead of its own list.
+  - [ ] A test fails if `CELL_RADIUS_PX` in `render.ts` stops matching `--fs-radius-cell`; `LinkButton` uses the exported `ButtonVariant` type.
+  - [ ] `npm run verify` passes; no behavior change.
+- Notes: From the maintainer check after T77 (about 100 lines). Today only `--md-` is guarded, so a misspelled `var(--fs-…)` would silently resolve to nothing.
+
+### T85 Tower wording: rows, not blocks; stale "does not count" comments
+- Type: maintenance
+- Status: todo
+- Depends on: T81
+- Acceptance criteria:
+  - [ ] The result text on `/play` and practice uses the HUD's unit (for example "You reached row 7. Today's target was row 10."), with `blocks.ts` and the e2e text checks following; wording confirmed by the human first (NEEDS_HUMAN, second play-test).
+  - [ ] The `PlayStatus` comment in `src/lib/attempts/today.ts` says leaving early counts as not passed; the DECISIONS entry "Submissions after the deadline record nothing (T13)" says a run lasts up to about two minutes (15 rows with the 8 s idle drop), not a minute.
+  - [ ] `npm run verify` passes; the only behavior change is the result wording.
+- Notes: From the maintainer check after T77 (about 60 lines). Since T76 the score is rows locked, and a 3-cell row is 3 blocks, so "target was 10 blocks" contradicts "Row 10 to pass".
+
+### T86 Share the attempt response types with /play; enforce test-only player.ts
+- Type: maintenance
+- Status: todo
+- Depends on: T81
+- Acceptance criteria:
+  - [ ] `src/lib/attempts/start.ts` and `submit.ts` export their response body types, and `PlayToday.tsx` builds its `StartBody` and `SubmitBody` from them with type-only imports (narrowing `params` to `StackingParams` until T30).
+  - [ ] An ESLint `no-restricted-imports` rule bans `@/challenges/stacking/player` outside `*.test.ts` (and test support), proven by a lint-rule test like `src/challenges/shared/lintRules.test.ts`.
+  - [ ] `npm run verify` passes; no behavior change.
+- Notes: From the maintainer check after T77 (about 60 lines). T77's `passTarget` had to be added by hand in two places; T30 adds two challenge types to this contract.
+
 ### T80 Fix the missing-key warning in form fields
 - Type: maintenance
 - Status: todo
@@ -905,7 +956,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `vitest.config.mts` sets 90% lines and branches for `src/lib/attempts/**` and `src/lib/gameDay.ts` (both at 100% today, so this only raises thresholds).
   - [ ] Every threshold glob matches at least one file, or carries a comment naming the task that will fill it (`src/lib/streak/**` matches nothing yet).
   - [ ] `npm run verify` passes; no product behavior changes.
-- Notes: From the maintainer check after T60. CLAUDE.md asks for 90% on scoring and streak logic, but the pass/fail, result storage and game-date code currently falls only under the 70% overall threshold. Do this soon.
+- Notes: From the maintainer check after T60. CLAUDE.md asks for 90% on scoring and streak logic, but the pass/fail, result storage and game-date code currently falls only under the 70% overall threshold. Do this soon. From the check after T77: also give `src/app/play/PlayToday.tsx` and `src/app/practice/stacking/StackingPractice.tsx` per-file thresholds (at or below what they measure now); they sit outside `src/components/**`.
 
 ### T68 One attempt store and one challenge lookup for start and submit
 - Type: maintenance
@@ -913,7 +964,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Depends on: T13 (coordinate with T65, which also edits `src/lib/attempts/store.ts`)
 - Acceptance criteria:
   - [ ] One helper (for example `challengeForGameDay(gameDate, challengeType)` in `src/challenges/registry.ts`) returns the module or throws the unknown-type error, replacing the duplicate checks in `start.ts` and `submit.ts`.
-  - [ ] Both flows read the game day through one store method (`gameDay(gameDate)`: challenge type, pass target, closed); `AttemptStore.challengeTypeFor` is removed.
+  - [ ] Both flows read the game day through one store method (`gameDay(gameDate)`: challenge type, pass target, closed), merging start's `gameDayFor` (added in T77) and submit's `gameDay`, which run the same query and parse.
   - [ ] The two `findAttempt` methods get distinct names (`findAttemptForDay(userId, gameDate)`, `findAttemptById(attemptId)`), and the store's internal `fail()` is renamed (for example `throwDbError`).
   - [ ] Unit tests for both flows and stores still cover every status code; `tests/e2e/attempts.spec.ts` is unchanged; `npm run verify` passes; no product behavior changes.
 - Notes: From the maintainer check after T60. T17 and T21 will extend these stores. From the end-of-M1 check: `todaysAttempt` in `src/lib/attempts/today.ts` is a third reader of "the player's attempt for a game date"; fold it into the same store method.
@@ -946,7 +997,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T71 Show how to play on /play before the one scored attempt
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T14
 - Acceptance criteria:
   - [ ] The stacking how-to text has one source (for example `STACKING_HOW_TO` in `src/config/challenges.ts` or a small component), used by `StackingPractice.tsx` and the ready state of `PlayToday.tsx`; the practice wording stays the same.

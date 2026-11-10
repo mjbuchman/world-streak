@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1b Look, feel and Tower rework (M1 done apart from T15; play-tested Nov 9, 2026)
-- Active task: T77 Teetering Tower renderer and HUD in the new look
+- Active task: T81 /play and practice around the Tower (the last M1b task)
 - Blocked tasks: T15 (needs the human's Google OAuth client)
 - Waiting on the human: the Google OAuth client; the second play-test after M1b; see docs/NEEDS_HUMAN.md
 - Next: M1b's last two tasks, T77 then T81 (T77 was split); then the maintainer check and the second play-test, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds) and T66 (shared route helpers, before T18).
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-10 — T77 Teetering Tower renderer and HUD in the new look (PR #29)
+- Rounded 8 px cells; lost cells fall and fade (400 ms) and a tapped row bounces (180 ms), both pure functions of the engine's lock times and off under reduced motion; a target line on `/play`. The start endpoint returns the day's pass target; the HUD shows "Row N", "Row N to pass" on `/play` and the visit's best in practice.
+- Review rounds: spec 2, quality 2, tests 2 (round 1: square cells; the colour-token mapping was untested).
+- Notes: T77 was split; the rest is T81. Merges since the M1 maintainer check: 5, so the maintainer ran after this merge.
 
 ### 2026-11-09 — T75 Sign-in, sign-up and profile screens: Fresh Sport and fixes (PR #28)
 - Account pages in the page shell with a back button and a surface card; new fields; the pill submit button with its spinner; Google as the secondary pill. Sign-up has "Confirm password" (checked in the form and on the server) and keeps both passwords after a failed submit (ref plus layout effect, never in the HTML). The `--md-*` aliases are gone, with a test over all of `src/`.

@@ -3,6 +3,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { paramsFromSeed, type StackingParams, type StackingResult } from "@/challenges/stacking/engine";
+import { STACKING_HOW_TO } from "@/config/challenges";
 
 type GameProps = {
   params: StackingParams;
@@ -62,6 +63,32 @@ async function startRun() {
 }
 
 describe("PlayToday", () => {
+  it("shows how to play and offers practice first, before the one scored attempt", () => {
+    render(<PlayToday initial={{ kind: "ready" }} />);
+    const howTo = screen.getByText(STACKING_HOW_TO);
+    const rule = screen.getByText(/one scored attempt/i);
+    // The controls come before the rule, so nobody spends the attempt without seeing them.
+    expect(howTo.compareDocumentPosition(rule) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Practice first" }).getAttribute("href")).toBe("/practice/stacking");
+  });
+
+  it("shows the how-to only before Start", async () => {
+    for (const initial of [{ kind: "submitted", score: 11, passed: true, passTarget: 10 }, { kind: "abandoned" }] as const) {
+      render(<PlayToday initial={initial} />);
+      expect(screen.queryByText(STACKING_HOW_TO)).toBeNull();
+      cleanup();
+    }
+    respond(json(200, started));
+    await startRun();
+    expect(screen.queryByText(STACKING_HOW_TO)).toBeNull();
+    expect(screen.queryByRole("link", { name: "Practice first" })).toBeNull();
+  });
+
+  it("shows the score as the result's big number", () => {
+    const { container } = render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
+    expect(container.querySelector("[data-big-score]")?.textContent).toBe("11");
+  });
+
   it("explains the one-attempt rule, including leaving early, before Start", () => {
     render(<PlayToday initial={{ kind: "ready" }} />);
     expect(screen.getByText(/one scored attempt/i)).toBeTruthy();
@@ -236,6 +263,8 @@ describe("PlayToday", () => {
       expect((await screen.findByRole("alert")).textContent).toBe(message);
       expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Not counted" }));
       expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
+      // A way back home here too, like every other finished state.
+      expect(screen.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/");
       cleanup();
       games.length = 0;
     }

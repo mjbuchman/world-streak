@@ -2,9 +2,14 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IDLE_LOCK_MS, MAX_TAPS, ROWS, simulate, type StackingParams } from "@/challenges/stacking/engine";
+import { FALL_MS } from "@/challenges/stacking/render";
 
 const drawStacking = vi.hoisted(() => vi.fn());
-vi.mock("@/challenges/stacking/render", () => ({ drawStacking }));
+// Only the drawing is replaced; the real constants (FALL_MS) stay.
+vi.mock("@/challenges/stacking/render", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/challenges/stacking/render")>()),
+  drawStacking,
+}));
 
 import { StackingGame } from "./StackingGame";
 
@@ -134,10 +139,47 @@ describe("StackingGame", () => {
     advance(1);
     pressSpace();
     advance(20);
+    // The missed row falls away first (FALL_MS), then the run is reported.
+    expect(onFinish).not.toHaveBeenCalled();
+    advance(FALL_MS);
     expect(onFinish).toHaveBeenCalledTimes(1);
     expect(onFinish.mock.calls[0][0].result).toMatchObject({ score: 2, endReason: "miss" });
     // With no row in play, the HUD settles on the rows stacked.
     expect(screen.getByRole("status").textContent).toBe("Row 2");
+  });
+
+  it("ignores taps while the last row falls, and reports the run as it ended", () => {
+    const onFinish = vi.fn();
+    render(<StackingGame params={params} onFinish={onFinish} />);
+    advance(1);
+    pressSpace();
+    advance(169);
+    pressSpace();
+    advance(1);
+    pressSpace(); // the miss
+    advance(50);
+    pressSpace(); // too late: the run is over
+    advance(FALL_MS);
+    expect(onFinish).toHaveBeenCalledTimes(1);
+    expect(onFinish.mock.calls[0][0].taps).toHaveLength(3);
+  });
+
+  it("reports the end at once under reduced motion, as there is no fall to watch", () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query === "(prefers-reduced-motion: reduce)",
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    const onFinish = vi.fn();
+    render(<StackingGame params={params} onFinish={onFinish} />);
+    advance(1);
+    pressSpace();
+    advance(169);
+    pressSpace();
+    advance(1);
+    pressSpace();
+    advance(20);
+    expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
   it("draws every frame with the engine state for that moment", () => {

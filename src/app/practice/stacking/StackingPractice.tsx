@@ -7,6 +7,7 @@ import { type FinishedRun, StackingGame } from "@/components/stacking/StackingGa
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { Surface } from "@/components/ui/Surface";
+import { STACKING_HOW_TO } from "@/config/challenges";
 import styles from "./practice.module.css";
 
 type Phase = { name: "ready" } | { name: "playing"; params: StackingParams } | { name: "done"; score: number };
@@ -38,6 +39,10 @@ export function StackingPractice() {
   if (phase.name === "done") {
     return (
       <section className={styles.result}>
+        {/* The big number repeats the heading for the eye; screen readers get the heading. */}
+        <p data-big-score aria-hidden="true" className={styles.score}>
+          {phase.score}
+        </p>
         <h2 ref={resultRef} tabIndex={-1} className={styles.verdict}>
           You stacked {blocks(phase.score)}
         </h2>
@@ -54,10 +59,7 @@ export function StackingPractice() {
 
   return (
     <Surface>
-      <p>
-        A row of blocks slides across the board. Tap, click or press Space to lock it over the row below. Blocks that hang
-        over the edge fall off, so the tower gets narrower. Practice never counts.
-      </p>
+      <p>{`${STACKING_HOW_TO} Practice never counts.`}</p>
       <Button onClick={play}>Start</Button>
     </Surface>
   );
