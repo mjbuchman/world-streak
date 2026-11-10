@@ -1,6 +1,6 @@
 import { DEADLINE_UTC_HOUR } from "@/config/schedule";
 
-const HOUR_MS = 60 * 60 * 1000;
+export const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
 /** A deadline hour outside 0-23 would silently shift every game day, so refuse it. */

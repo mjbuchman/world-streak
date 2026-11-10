@@ -7,6 +7,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip static files and images; everything else gets a fresh session.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
+  // Skip static files, images and the public meter (its answers are cached for everyone, so it
+  // must never refresh a session or set a cookie); everything else gets a fresh session.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/meter$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };

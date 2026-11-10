@@ -354,6 +354,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
   - [ ] It polls `/api/meter` every 60 s only while `document.visibilityState === "visible"`. When the tab is hidden, it stops polling, and when it becomes visible, it fetches immediately and resumes (tested with fake timers and a mocked `visibilitychange`).
   - [ ] Shown on `/` and below the result on `/play`.
   - [ ] e2e: `/` shows the meter label or the hidden message.
+- Notes: From the T18 spec review: the endpoint's cache (`s-maxage=30, stale-while-revalidate=30`) can serve a reading taken just before the hidden window for up to about 60 s after it starts. That only shows pre-window data, but the UI should switch to hidden by its own clock at `closesAt - METER_HIDE_HOURS`, not only when a reply says `hidden`.
 
 ### T20 Local fake-player seeding script
 - Type: infra

@@ -20,7 +20,7 @@ describe("proxy matcher", () => {
   // Next.js anchors matcher patterns to the whole path.
   const matcher = new RegExp(`^${config.matcher[0]}$`);
 
-  it.each(["/", "/signin", "/signup", "/rules", "/api/health", "/play/today"])("runs on %s", (path) => {
+  it.each(["/", "/signin", "/signup", "/rules", "/api/health", "/api/attempts/start", "/api/meters", "/play/today"])("runs on %s", (path) => {
     expect(matcher.test(path)).toBe(true);
   });
 
@@ -30,4 +30,10 @@ describe("proxy matcher", () => {
       expect(matcher.test(path)).toBe(false);
     },
   );
+
+  // The meter is cached publicly; a session refresh there could put a player's cookie on a shared
+  // response (and would cost an Auth round trip on every poll).
+  it("skips the public meter", () => {
+    expect(matcher.test("/api/meter")).toBe(false);
+  });
 });

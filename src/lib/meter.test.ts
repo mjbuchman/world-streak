@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
-import { meterBody, readMeter, type MeterRow } from "./meter";
+import { meterBody, meterCacheSeconds, readMeter, type MeterRow } from "./meter";
 
 // Game date 2026-11-08 closes at midnight UTC on Nov 9; the meter hides from 21:00 UTC.
 const open = new Date("2026-11-08T20:59:59Z");
@@ -42,6 +42,28 @@ describe("meterBody", () => {
   it("gives a null pass rate when every attempt so far has zero weight", () => {
     const body = meterBody(open, "2026-11-08", { threshold: 0.6, attempts: 3, weightedAttempts: 0, weightedPasses: 0 });
     expect(body).toMatchObject({ passRate: null, attempts: 3 });
+  });
+});
+
+describe("meterCacheSeconds", () => {
+  const at = (iso: string) => new Date(iso);
+  const openBody = meterBody(open, "2026-11-08", row);
+  const hiddenBody = meterBody(hidden, "2026-11-08", row);
+
+  it("caches for 30 s when the reading stays current for a while", () => {
+    expect(meterCacheSeconds(openBody, at("2026-11-08T12:00:00Z"))).toBe(30);
+    expect(meterCacheSeconds(hiddenBody, at("2026-11-08T22:00:00Z"))).toBe(30);
+  });
+
+  it("caches an open reading only until the hidden window starts, counting the stale grace too", () => {
+    // 50 s before 21:00: 25 s fresh plus 25 s stale ends exactly at 21:00.
+    expect(meterCacheSeconds(openBody, at("2026-11-08T20:59:10Z"))).toBe(25);
+    expect(meterCacheSeconds(openBody, at("2026-11-08T20:59:59Z"))).toBe(0);
+  });
+
+  it("caches a hidden reading only until the deadline", () => {
+    expect(meterCacheSeconds(hiddenBody, at("2026-11-08T23:59:40Z"))).toBe(10);
+    expect(meterCacheSeconds(hiddenBody, at("2026-11-08T23:59:59.500Z"))).toBe(0);
   });
 });
 
@@ -96,10 +118,23 @@ describe("readMeter", () => {
     expect(calls.filter(([method]) => method === "from")).toEqual([["from", "game_days"]]);
   });
 
-  it("reads the game date at the deadline, not the calendar date", async () => {
-    const { db, calls } = fakeDb({ data: null, error: null });
-    await readMeter(db, new Date("2026-11-09T00:00:00Z"));
-    expect(calls).toContainEqual(["eq", "game_date", "2026-11-09"]);
+  it("opens the next day's meter at the deadline", async () => {
+    // A millisecond before midnight UTC is the hidden end of Nov 8; midnight is the open start of Nov 9.
+    const before = fakeDb({ data: null, error: null });
+    expect(await readMeter(before.db, new Date("2026-11-08T23:59:59.999Z"))).toMatchObject({
+      gameDate: "2026-11-08",
+      status: "hidden",
+      closesAt: "2026-11-09T00:00:00.000Z",
+    });
+    expect(before.calls).toContainEqual(["eq", "game_date", "2026-11-08"]);
+
+    const at = fakeDb({ data: null, error: null });
+    expect(await readMeter(at.db, new Date("2026-11-09T00:00:00Z"))).toMatchObject({
+      gameDate: "2026-11-09",
+      status: "open",
+      closesAt: "2026-11-10T00:00:00.000Z",
+    });
+    expect(at.calls).toContainEqual(["eq", "game_date", "2026-11-09"]);
   });
 
   it("reads the counters whether they come back as an object or a one-element array", async () => {

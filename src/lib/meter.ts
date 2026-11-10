@@ -1,8 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { METER_HIDE_HOURS } from "@/config/meter";
-import { deadlineFor, gameDateAt } from "@/lib/gameDay";
-
-const HOUR_MS = 60 * 60 * 1000;
+import { METER_CACHE_SECONDS, METER_HIDE_HOURS } from "@/config/meter";
+import { deadlineFor, gameDateAt, HOUR_MS } from "@/lib/gameDay";
 
 /** What the meter needs about one game day. */
 export type MeterRow = {
@@ -28,7 +26,8 @@ export type MeterBody =
 
 /**
  * The meter at `now`. In the final METER_HIDE_HOURS before the deadline the response carries no
- * pass rate or attempt count at all, so nothing can be read from it.
+ * pass rate or attempt count at all; the counters themselves are server-only, so this answer is
+ * the only way to read them.
  */
 export function meterBody(now: Date, gameDate: string, row: MeterRow): MeterBody {
   const deadline = deadlineFor(gameDate);
@@ -50,8 +49,21 @@ type DayRow = {
 };
 
 /**
+ * How long a CDN may keep `body`: METER_CACHE_SECONDS, but never past the moment the reading
+ * goes out of date (the hidden window starting, or the deadline). The cache may also serve a
+ * stale copy for as long again while it refreshes, so both periods must fit before that moment.
+ */
+export function meterCacheSeconds(body: MeterBody, now: Date): number {
+  const closes = new Date(body.closesAt).getTime();
+  const outOfDateAt = body.status === "open" ? closes - METER_HIDE_HOURS * HOUR_MS : closes;
+  const secondsLeft = Math.floor((outOfDateAt - now.getTime()) / 1000);
+  return Math.max(0, Math.min(METER_CACHE_SECONDS, Math.floor(secondsLeft / 2)));
+}
+
+/**
  * Reads today's meter: the day's threshold and its running counters, in one query. It never
- * counts attempt rows (the counters are kept as attempts start and pass, T17).
+ * counts attempt rows (the counters are kept as attempts start and pass, T17). Pass the
+ * service-role client: the counters are server-only, so that the hidden window means something.
  */
 export async function readMeter(db: Pick<SupabaseClient, "from">, now: Date): Promise<MeterBody> {
   const gameDate = gameDateAt(now);
@@ -68,7 +80,7 @@ export async function readMeter(db: Pick<SupabaseClient, "from">, now: Date): Pr
   // PostgREST returns numeric columns as JSON numbers or strings depending on size.
   return meterBody(now, gameDate, {
     threshold: day ? Number(day.survival_threshold) : null,
-    attempts: counters?.attempts ?? 0,
+    attempts: Number(counters?.attempts ?? 0),
     weightedAttempts: Number(counters?.weighted_attempts ?? 0),
     weightedPasses: Number(counters?.weighted_passes ?? 0),
   });

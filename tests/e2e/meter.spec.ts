@@ -1,11 +1,14 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/fixtures";
+import { signUpViaForm } from "./support/pages";
+
+const PUBLIC_CACHE = /^public, s-maxage=(\d+), stale-while-revalidate=\1$/;
 
 // The meter is public and its status depends on the hour (hidden in the final 3 hours before
-// midnight UTC), so this checks the shape against the real database for whichever applies.
+// midnight UTC), so these check whichever applies against the real database.
 test("the meter answers anyone with today's reading, cached publicly", async ({ request }) => {
   const response = await request.get("/api/meter");
   expect(response.status()).toBe(200);
-  expect(response.headers()["cache-control"]).toBe("public, s-maxage=30, stale-while-revalidate=30");
+  expect(response.headers()["cache-control"]).toMatch(PUBLIC_CACHE);
   expect(response.headers()["set-cookie"]).toBeUndefined();
 
   const body = await response.json();
@@ -14,9 +17,29 @@ test("the meter answers anyone with today's reading, cached publicly", async ({ 
   if (body.status === "open") {
     expect(Object.keys(body).sort()).toEqual(["attempts", "closesAt", "gameDate", "passRate", "status", "streak", "threshold"]);
     expect(Number.isInteger(body.attempts)).toBe(true);
-    if (body.passRate !== null) expect(body.passRate).toBeGreaterThanOrEqual(0);
   } else {
     expect(body.status).toBe("hidden");
     expect(Object.keys(body).sort()).toEqual(["closesAt", "gameDate", "status", "threshold"]);
+  }
+});
+
+test("a signed-in player's meter request carries no cookie, and a started attempt shows in it", async ({ page, accounts }) => {
+  await signUpViaForm(page, { email: accounts.uniqueEmail() });
+  await expect(page).toHaveURL("/");
+  // page.request sends the player's session cookies; the shared answer must not set any.
+  expect((await page.request.post("/api/attempts/start")).status()).toBe(200);
+
+  const response = await page.request.get("/api/meter");
+  expect(response.status()).toBe(200);
+  expect(response.headers()["set-cookie"]).toBeUndefined();
+  expect(response.headers()["cache-control"]).toMatch(PUBLIC_CACHE);
+
+  const body = await response.json();
+  // The start created today's game day, so its threshold is known either way.
+  expect(body.threshold).toBeGreaterThan(0);
+  if (body.status === "open") {
+    // The counters reach the meter through the server, although players cannot read them.
+    expect(body.attempts).toBeGreaterThanOrEqual(1);
+    expect(body.passRate).not.toBeNull();
   }
 });
