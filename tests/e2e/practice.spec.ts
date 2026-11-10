@@ -58,6 +58,8 @@ test("a deliberate miss in practice ends the run with the score the engine gives
   await page.clock.pauseAt(new Date("2026-01-01T00:00:30Z"));
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByRole("status")).toHaveText("Row 1");
+  // The header hides during practice runs too (DECISIONS, T81).
+  await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeHidden();
 
   const params = paramsFromSeed(seed);
   const taps = tapsForAMiss(params);
@@ -67,7 +69,11 @@ test("a deliberate miss in practice ends the run with the score the engine gives
   await page.clock.runFor(FALL_MS + 50);
 
   await expect(page.getByRole("heading", { name: `You stacked ${blocks(score)}` })).toBeVisible();
-  await expect(page.locator("[data-big-score]")).toHaveText(String(score));
+  const bigScore = page.locator("[data-big-score]");
+  await expect(bigScore).toHaveText(String(score));
+  // Scoreboard style: the display face.
+  expect(await bigScore.evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(/Unbounded/i);
+  await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
 
   // The next run shows this visit's best.
   await page.getByRole("button", { name: "Play again" }).click();

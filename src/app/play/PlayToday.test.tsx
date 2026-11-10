@@ -84,6 +84,13 @@ describe("PlayToday", () => {
     expect(screen.queryByRole("link", { name: "Practice first" })).toBeNull();
   });
 
+  it("hides Practice first while Start is busy, as leaving then would lose the attempt", async () => {
+    fetchSpy.mockReturnValueOnce(new Promise(() => undefined));
+    render(<PlayToday initial={{ kind: "ready" }} />);
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    expect(screen.queryByRole("link", { name: "Practice first" })).toBeNull();
+  });
+
   it("shows the score as the result's big number", () => {
     const { container } = render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
     expect(container.querySelector("[data-big-score]")?.textContent).toBe("11");

@@ -129,7 +129,7 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
             {passed ? "Passed" : "Not this time"}
           </h2>
           {/* The big number repeats the sentence below for the eye; screen readers get the sentence. */}
-          <p data-big-score aria-hidden="true" className={styles.score}>
+          <p data-big-score aria-hidden="true" className={`${styles.score} ${passed ? styles.passed : ""}`}>
             {score}
           </p>
           <p className={styles.summary}>
@@ -188,9 +188,12 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
           <Button onClick={start} loading={phase.name === "starting"}>
             Start
           </Button>
-          <Link href="/practice/stacking" className={styles.practice}>
-            Practice first
-          </Link>
+          {/* Gone once Start is pressed: leaving after the server creates the attempt would lose it. */}
+          {phase.name === "ready" && (
+            <Link href="/practice/stacking" className={styles.practice}>
+              Practice first
+            </Link>
+          )}
         </Surface>
       );
   }

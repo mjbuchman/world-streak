@@ -124,7 +124,7 @@ export function StackingGame({ params, onFinish, passTarget: target, best = 0 }:
   }, [params]);
 
   return (
-    // data-game-running lets the page shell hide its back button while the run is on.
+    // data-game-running lets the page hide its back button and the header while the run is on.
     <div className={styles.game} data-game-running="">
       <div className={styles.hud}>
         <p role="status" className={styles.count}>
