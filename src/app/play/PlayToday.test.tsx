@@ -110,7 +110,7 @@ describe("PlayToday", () => {
     respond(json(200, started), json(409, { error: "day-closed" }));
     await startRun();
     await finish([900], 1);
-    expect((await screen.findByRole("heading", { name: "Not counted" })).className).not.toMatch(/resultMint|resultGlow/);
+    expect((await screen.findByRole("heading", { name: "Counted as not passed" })).className).not.toMatch(/resultMint|resultGlow/);
   });
 
   it("shows the score as the result's big number, above the verdict as in practice", () => {
@@ -281,19 +281,23 @@ describe("PlayToday", () => {
   });
 
   it("explains a submission the server refused or could not receive", async () => {
-    const cases: [Response | Error, string][] = [
-      [json(409, { error: "day-closed" }), "Today's challenge closed before your result arrived, so it was not counted."],
-      [json(422, { error: "implausible-timing" }), "Your result could not be checked, so it was not counted."],
-      [json(500, { error: "server-error" }), "Your result could not be sent. Reload the page to see whether it counted."],
-      [json(422, { error: "something-new" }), "Your result could not be sent. Reload the page to see whether it counted."],
-      [new Error("offline"), "Your result could not be sent. Reload the page to see whether it counted."],
+    // A refused result still counts as an attempt that did not pass (started attempts count, T17);
+    // one that never arrived may or may not have been recorded.
+    const refused = "Counted as not passed";
+    const notSent = "Result not sent";
+    const cases: [Response | Error, string, string][] = [
+      [json(409, { error: "day-closed" }), refused, "Today's challenge closed before your result arrived, so it counted as not passed."],
+      [json(422, { error: "implausible-timing" }), refused, "Your result could not be checked, so it counted as not passed."],
+      [json(500, { error: "server-error" }), notSent, "Your result could not be sent. Reload the page to see whether it counted."],
+      [json(422, { error: "something-new" }), notSent, "Your result could not be sent. Reload the page to see whether it counted."],
+      [new Error("offline"), notSent, "Your result could not be sent. Reload the page to see whether it counted."],
     ];
-    for (const [failure, message] of cases) {
+    for (const [failure, heading, message] of cases) {
       respond(json(200, started), failure);
       await startRun();
       await finish([900], 1);
       expect((await screen.findByRole("alert")).textContent).toBe(message);
-      expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Not counted" }));
+      expect(document.activeElement).toBe(screen.getByRole("heading", { name: heading }));
       expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
       // A way back home here too, like every other finished state.
       expect(screen.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/");

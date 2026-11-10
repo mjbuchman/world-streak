@@ -322,7 +322,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T17 Running counters per game day
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T13, T16
 - Acceptance criteria:
   - [ ] A migration creates `game_day_counters` (`game_date pk references game_days`, `attempts int`, `passes int`, `weighted_attempts numeric`, `weighted_passes numeric`, `updated_at`).
@@ -375,7 +375,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
   - [ ] pgTAP: 10 attempts with 6 passes at threshold 0.60 is survived (the boundary counts); 5 of 10 is broken; 3 consecutive survived days give current streak 3, and a broken fourth day gives 0 with best 3; an idempotent re-run changes nothing.
   - [ ] A day with 0 attempts closes as `broken` with `final_pass_rate null` (judgment call, record it and flag it).
   - [ ] SQL view or function `world_streak()` returns `{ current, best, current_start_date }`, readable by everyone. `/api/meter` now fills `streak`.
-- Notes: Pass rate is weighted per the definition "among counted accounts" (weights from T17). The cycle-aware streak reset comes later (T34). From the T11 quality review: add a `game_days` check that `outcome` and `closed_at` are both set or both null, so a half-closed day cannot be stored (`final_pass_rate` is already checked to be between 0 and 1). From the T81 quality review: the game reports a finished run from its animation loop, which browsers pause in a hidden tab, so a run that ends while the tab is hidden is submitted only when the player returns. Near the deadline that can turn into "day closed"; if it matters, finish the run with a timer when `document.hidden` (the server scores the taps either way).
+- Notes: Pass rate is weighted per the definition "among counted accounts" (weights from T17). The cycle-aware streak reset comes later (T34). From the T11 quality review: add a `game_days` check that `outcome` and `closed_at` are both set or both null, so a half-closed day cannot be stored (`final_pass_rate` is already checked to be between 0 and 1). From the T81 quality review: the game reports a finished run from its animation loop, which browsers pause in a hidden tab, so a run that ends while the tab is hidden is submitted only when the player returns. Near the deadline that can turn into "day closed"; if it matters, finish the run with a timer when `document.hidden` (the server scores the taps either way). From the T17 quality review: (1) `startAttempt` never checks `closed_at`, so a start that computes its game date just before the deadline and inserts after the close job ran would raise that day's counters past its frozen `final_pass_rate`; refuse starts on a closed day (in `startAttempt` and, safest, in the count trigger or an insert check). (2) In `record_attempt_result`, raise if the pass's counter update finds no row (it currently changes 0 rows silently). (3) Counter updates serialize on one row per day; fine for the MVP, note it as a scaling limit. (4) `stamp_attempt_weight` could be `security invoker`.
 
 ### T22 Prepare next day: pass target and threshold
 - Type: feature
@@ -989,7 +989,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] The `PlayStatus` "abandoned" comment in `src/lib/attempts/today.ts` says the same.
   - [ ] `PlayToday.test.tsx` and `tests/e2e/play.spec.ts` check the new text.
   - [ ] `npm run verify` and `npm run test:e2e` pass; the only behavior change is this message.
-- Notes: From the maintainer check after T16 (about 20 lines). When this task touches `today.ts`, also consider a read-only player store for `findAttemptForDay` (taking only `from`), so the player's client cannot reach the service-role methods by type rather than by comment (T68 quality review). Since T87 the server accepts a run until the day's deadline, so a player who opens `/play` in a second tab mid-run is told "You left today's attempt before finishing, so it counted as not passed", yet the first tab can still submit a pass. Scoring and counters are correct; only the message is wrong. needs-human: wording.
+- Notes: From the maintainer check after T16 (about 20 lines). When this task touches `today.ts`, also consider a read-only player store for `findAttemptForDay` (taking only `from`), so the player's client cannot reach the service-role methods by type rather than by comment (T68 quality review). Since T87 the server accepts a run until the day's deadline, so a player who opens `/play` in a second tab mid-run is told "You left today's attempt before finishing, so it counted as not passed", yet the first tab can still submit a pass. Scoring and counters are correct; only the message is wrong. Wording approved by the human (Nov 10; see DECISIONS).
 
 ### T66 Shared route-handler helpers for API endpoints
 - Type: maintenance
@@ -1016,7 +1016,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T68 One attempt store and one challenge lookup for start and submit
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T13 (coordinate with T65, which also edits `src/lib/attempts/store.ts`)
 - Acceptance criteria:
   - [ ] One helper (for example `challengeForGameDay(gameDate, challengeType)` in `src/challenges/registry.ts`) returns the module or throws the unknown-type error, replacing the duplicate checks in `start.ts` and `submit.ts`.

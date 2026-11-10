@@ -29,7 +29,7 @@ type Phase =
   // fresh: the verdict arrived in this visit (celebrated), not loaded on a later visit (not replayed).
   | { name: "result"; verdict: Verdict; fresh: boolean }
   | { name: "abandoned" }
-  | { name: "failed"; message: string };
+  | { name: "failed"; heading: string; message: string };
 
 const START_FAILED = "Today's attempt could not be started. Please try again.";
 // Trying again cannot fix these two, so say what will.
@@ -37,10 +37,13 @@ const START_REFUSED: Record<number, string> = {
   401: "Your session has ended. Sign in again to play.",
   403: "Finish setting up your account to play.",
 };
-const SUBMIT_FAILED = "Your result could not be sent. Reload the page to see whether it counted.";
+// A refused result still counts as an attempt that did not pass (started attempts count, T17).
+// One that never arrived may or may not have been recorded, so it says only that.
+const SUBMIT_FAILED = { heading: "Result not sent", message: "Your result could not be sent. Reload the page to see whether it counted." };
+const REFUSED_HEADING = "Counted as not passed";
 const SUBMIT_REFUSED: Record<string, string> = {
-  "day-closed": "Today's challenge closed before your result arrived, so it was not counted.",
-  "implausible-timing": "Your result could not be checked, so it was not counted.",
+  "day-closed": "Today's challenge closed before your result arrived, so it counted as not passed.",
+  "implausible-timing": "Your result could not be checked, so it counted as not passed.",
 };
 
 function initialPhase(status: PlayStatus): Phase {
@@ -97,9 +100,10 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
       if (!("error" in body)) return setPhase({ name: "result", verdict: body, fresh: true });
       // Already recorded (perhaps from another tab): the refreshed page shows the stored result.
       if (body.error === "already-submitted") return router.refresh();
-      return setPhase({ name: "failed", message: SUBMIT_REFUSED[body.error] ?? SUBMIT_FAILED });
+      const refused = SUBMIT_REFUSED[body.error];
+      return setPhase({ name: "failed", ...(refused ? { heading: REFUSED_HEADING, message: refused } : SUBMIT_FAILED) });
     } catch {
-      setPhase({ name: "failed", message: SUBMIT_FAILED });
+      setPhase({ name: "failed", ...SUBMIT_FAILED });
     }
   }
 
@@ -157,7 +161,7 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
 
     case "failed":
       return (
-        <ResultHero heading="Not counted" headingRef={headingRef} actions={backHome}>
+        <ResultHero heading={phase.heading} headingRef={headingRef} actions={backHome}>
           <p role="alert">{phase.message}</p>
         </ResultHero>
       );
