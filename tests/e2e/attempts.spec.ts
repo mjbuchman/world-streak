@@ -31,6 +31,9 @@ test("an eligible player starts today's attempt once; a second start is refused"
   const { data: rows, error } = await adminClient().from("attempts").select("id, seed, submitted_at").eq("user_id", user!.id);
   if (error) throw error;
   expect(rows).toEqual([{ id: body.attemptId, seed: body.seed, submitted_at: null }]);
+  // Today's target comes with the instance, read from the game day the start just created.
+  const { data: day } = await adminClient().from("game_days").select("pass_target").eq("game_date", body.gameDate).single();
+  expect(body.passTarget).toBe(Number(day!.pass_target));
 
   const second = await page.request.post("/api/attempts/start");
   expect(second.status()).toBe(409);

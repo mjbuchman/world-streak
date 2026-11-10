@@ -12,7 +12,7 @@ test("practice tower works signed out, ends with a score and offers another go",
   await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
 
   await page.getByRole("button", { name: "Start" }).click();
-  await expect(page.getByRole("status")).toHaveText("Blocks: 0");
+  await expect(page.getByRole("status")).toHaveText("Row 1");
   for (let tap = 0; tap < 3; tap++) {
     await page.clock.runFor(400);
     await page.keyboard.press("Space");
@@ -35,7 +35,7 @@ test("practice tower works signed out, ends with a score and offers another go",
   await expect(page.getByRole("status")).toHaveCount(0);
 
   await page.getByRole("button", { name: "Play again" }).click();
-  await expect(page.getByRole("status")).toHaveText("Blocks: 0");
+  await expect(page.getByRole("status")).toHaveText("Row 1");
   await expect(page.getByRole("img", { name: /game area/ })).toBeFocused();
   expect(attemptRequests).toEqual([]);
 });

@@ -16,13 +16,13 @@ import styles from "./play.module.css";
 type Verdict = { score: number; passed: boolean; passTarget: number };
 
 // The parts of the endpoints' JSON this page reads (see src/lib/attempts/start.ts and submit.ts).
-type StartBody = { attemptId: string; params: StackingParams } | { error: string; submitted?: boolean };
+type StartBody = { attemptId: string; params: StackingParams; passTarget: number } | { error: string; submitted?: boolean };
 type SubmitBody = Verdict | { error: string };
 
 type Phase =
   | { name: "ready"; error?: string }
   | { name: "starting" }
-  | { name: "playing"; attemptId: string; params: StackingParams }
+  | { name: "playing"; attemptId: string; params: StackingParams; passTarget: number }
   | { name: "checking" }
   // fresh: the verdict arrived in this visit (celebrated), not loaded on a later visit (not replayed).
   | { name: "result"; verdict: Verdict; fresh: boolean }
@@ -67,7 +67,10 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
     try {
       const response = await fetch("/api/attempts/start", { method: "POST" });
       const body: StartBody = await response.json();
-      if ("attemptId" in body) return setPhase({ name: "playing", attemptId: body.attemptId, params: body.params });
+      if ("attemptId" in body) {
+        const { attemptId, params, passTarget } = body;
+        return setPhase({ name: "playing", attemptId, params, passTarget });
+      }
       if (response.status === 409) {
         // Already submitted (perhaps in another tab): the page shows that result once refreshed.
         if (body.submitted) return router.refresh();
@@ -100,7 +103,13 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
 
   switch (phase.name) {
     case "playing":
-      return <StackingGame params={phase.params} onFinish={(run) => submit(phase.attemptId, run)} />;
+      return (
+        <StackingGame
+          params={phase.params}
+          passTarget={phase.passTarget}
+          onFinish={(run) => submit(phase.attemptId, run)}
+        />
+      );
 
     case "checking":
       return (

@@ -1,3 +1,4 @@
+import { gameDateAt } from "../../src/lib/gameDay";
 import { expect, test } from "./support/fixtures";
 import { signUpViaForm } from "./support/pages";
 import { adminClient, findUserByEmail } from "./support/supabase";
@@ -46,7 +47,10 @@ test("a player plays today's attempt once and sees the server's result, also aft
   await expect(back).toHaveAttribute("href", "/");
   await page.clock.pauseAt(new Date("2026-01-01T00:00:30Z"));
   await page.getByRole("button", { name: "Start" }).click();
-  await expect(page.getByRole("status")).toHaveText("Blocks: 0");
+  await expect(page.getByRole("status")).toHaveText("Row 1");
+  // Today's target, as stored on the game day the start created.
+  const { data: day } = await adminClient().from("game_days").select("pass_target").eq("game_date", gameDateAt(new Date())).single();
+  await expect(page.getByText(`Row ${Number(day!.pass_target)} to pass`)).toBeVisible();
   await expect(back).toBeHidden();
 
   // The seed is random, so the taps cannot be aimed. Two quick drops, then nothing: either

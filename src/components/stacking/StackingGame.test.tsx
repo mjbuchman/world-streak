@@ -53,14 +53,43 @@ describe("StackingGame", () => {
     expect(result).toEqual(simulate(params, taps));
   });
 
-  it("shows the block count live", () => {
+  it("shows the row in play live", () => {
     render(<StackingGame params={params} onFinish={vi.fn()} />);
-    expect(screen.getByRole("status").textContent).toBe("Blocks: 0");
+    expect(screen.getByRole("status").textContent).toBe("Row 1");
     advance(900);
     pressSpace();
     advance(20);
     // Row 1 rests on the floor, so the first tap always counts.
-    expect(screen.getByRole("status").textContent).toBe("Blocks: 1");
+    expect(screen.getByRole("status").textContent).toBe("Row 2");
+  });
+
+  it("shows today's target on /play, and draws its line", () => {
+    render(<StackingGame params={params} onFinish={vi.fn()} passTarget={10} />);
+    expect(screen.getByText("Row 10 to pass")).toBeTruthy();
+    advance(20);
+    expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ passTarget: 10 });
+  });
+
+  it("shows the best row of this visit in practice, once there is one", () => {
+    const { rerender } = render(<StackingGame params={params} onFinish={vi.fn()} best={0} />);
+    expect(screen.queryByText(/Best/)).toBeNull();
+    rerender(<StackingGame params={params} onFinish={vi.fn()} best={7} />);
+    expect(screen.getByText("Best: row 7")).toBeTruthy();
+    expect(screen.queryByText(/to pass/)).toBeNull();
+  });
+
+  it("tells the renderer to skip the falling and bounce animations under reduced motion", () => {
+    for (const reduced of [false, true]) {
+      vi.stubGlobal("matchMedia", (query: string) => ({
+        matches: query === "(prefers-reduced-motion: reduce)" ? reduced : false,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }));
+      render(<StackingGame params={params} onFinish={vi.fn()} />);
+      advance(20);
+      expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ reducedMotion: reduced });
+      cleanup();
+    }
   });
 
   it("finishes as soon as a row misses", () => {

@@ -244,7 +244,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
 
 ### T75 Sign-in, sign-up and profile screens: Fresh Sport and fixes
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T73
 - Acceptance criteria:
   - [ ] `/signup` keeps the typed password (and confirmation) after a failed submit; it is held in client state and never sent back by the server.
@@ -268,17 +268,28 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
   - [ ] Golden fixtures (exact scores for 3 seeds and fixed taps), determinism and purity tests, and a simulated-player tuning test: a "decent" player (timing error spread you choose and document) reaches about row 10 on average over 200 seeds, a careless one about 4, and a perfect one 15. At least 90% coverage.
 - Notes: Human requirements from the M1 play-test (Nov 9, 2026): very similar to the arcade stacker, set columns, overhang cells are lost, forced narrowing, end only on a miss, cap at a winning score (a leaderboard may come later), a decent player gets 10. Original name and art only. The old continuous engine's DECISIONS entries (speed ranges) are superseded; record the new ones. Attempts already stored keep their old inputs; nothing replays them.
 
-### T77 Teetering Tower renderer, practice and play in the new look
+### T77 Teetering Tower renderer and HUD in the new look
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T74, T76
 - Acceptance criteria:
-  - [ ] The canvas renderer draws the grid as in the mockup: translucent empty cells, mint placed cells, a tangerine moving block, the row-10 target line, cells that fall off animating away, and a short landing bounce (reduced motion: no bounce or fall animation).
+  - [ ] The canvas renderer draws the grid as in the mockup: translucent empty cells, mint placed cells, a tangerine moving block, a target line above the pass row (when a target is given), cells that fall off animating away, and a short landing bounce (reduced motion: no bounce or fall animation). Animations are pure functions of the engine's lock times and the frame's elapsed ms, with unit tests.
   - [ ] The game loop steps the block by the engine's elapsed-ms schedule, so frame rate does not change results (a 60 vs 120 fps test as in T10).
-  - [ ] The HUD shows the current row and "Row 10 to pass" on `/play` (today's target from the server) and the best row on practice.
-  - [ ] `/play`'s ready state shows how to play (tap, click or Space) and a "Practice first" link, from one shared source with practice (absorbs T71).
+  - [ ] The HUD shows the current row and, on `/play`, "Row N to pass" with today's target from the server; practice shows the best row of this visit.
+  - [ ] `npm run verify` and `npm run test:e2e` pass.
+- Notes: Split on Nov 9, 2026 (the whole was well over 400 lines); the page-level half is T81. The pass target placeholder (10) stays until real scores exist.
+
+### T81 /play and practice around the Tower: how-to, big score, follow-ups
+- Type: feature
+- Status: todo
+- Depends on: T77
+- Acceptance criteria:
+  - [ ] `/play`'s ready state shows how to play (tap, click or Space) and a "Practice first" link, from one shared source with practice (absorbs T71; mark T71 done).
+  - [ ] The result screens show the score as a big Unbounded number, as in the mockup.
+  - [ ] Decide whether UI rule 8 covers the account header links during a run on `/play`: either hide them like the back button, or record why not in DECISIONS.
+  - [ ] Tests: the refused-submission ("failed") state is in the "Back to home" unit test, and the home page's Teetering Tower card (heading, Play and Practice first links) is checked.
   - [ ] e2e: practice and play runs end on a deliberate miss with a paused clock, and the stored result matches what was shown; `npm run verify` and `npm run test:e2e` pass.
-- Notes: The pass target placeholder (10) stays until real scores exist. From the T74 reviews (non-blocking): show the result's score as a big Unbounded number, as in the mockup; the account header links stay active during a run on `/play` (decide whether rule 8 covers them, and either hide them like the back button or say why not); add the refused-submission ("failed") state to the "Back to home" unit test, and a check of the home page's Teetering Tower card.
+- Notes: Split from T77 (Nov 9, 2026); the follow-ups come from the T74 reviews. Last task of M1b: then the maintainer check and the second play-test.
 
 ## M2 The world streak
 
@@ -941,7 +952,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] The `/play` ready state shows it above the one-attempt rule, plus a "Try it in practice first" link to `/practice/stacking`.
   - [ ] Component tests: the ready state shows the how-to and the link; the result, abandoned and playing states do not. `StackingPractice.test.tsx` passes unchanged.
   - [ ] `npm run verify` passes; the only behavior change is the added instructions and link.
-- Notes: From the end-of-M1 maintainer check. Today a player who comes straight from the home page uses their only daily attempt without seeing the controls. Absorbed into T77 (Nov 9, 2026): mark this done when T77 merges.
+- Notes: From the end-of-M1 maintainer check. Today a player who comes straight from the home page uses their only daily attempt without seeing the controls. Absorbed into T81 (split from T77, Nov 9, 2026): mark this done when T81 merges.
 
 ### T72 Unit test for the /play server page
 - Type: maintenance

@@ -4,7 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { paramsFromSeed, type StackingParams, type StackingResult } from "@/challenges/stacking/engine";
 
-type GameProps = { params: StackingParams; onFinish: (run: { taps: number[]; result: StackingResult }) => void };
+type GameProps = {
+  params: StackingParams;
+  onFinish: (run: { taps: number[]; result: StackingResult }) => void;
+  passTarget?: number;
+};
 const games = vi.hoisted(() => [] as GameProps[]);
 vi.mock("@/components/stacking/StackingGame", () => ({
   StackingGame: (props: GameProps) => {
@@ -20,7 +24,7 @@ import { PlayToday } from "./PlayToday";
 
 const attemptId = "0b6d1d6c-6c1e-4b8e-9a4a-5f3c2d1e0a9b";
 const params = paramsFromSeed(77);
-const started = { attemptId, gameDate: "2026-11-08", challengeType: "stacking", seed: 77, params };
+const started = { attemptId, gameDate: "2026-11-08", challengeType: "stacking", seed: 77, params, passTarget: 12 };
 
 let fetchSpy: ReturnType<typeof vi.fn<typeof fetch>>;
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status });
@@ -71,6 +75,8 @@ describe("PlayToday", () => {
     await startRun();
     expect(fetchSpy).toHaveBeenCalledWith("/api/attempts/start", { method: "POST" });
     expect(games.at(-1)!.params).toEqual(params);
+    // Today's target from the server, for the HUD and the target line.
+    expect(games.at(-1)!.passTarget).toBe(12);
   });
 
   it("submits only the taps, then shows the server's verdict with the score and target", async () => {

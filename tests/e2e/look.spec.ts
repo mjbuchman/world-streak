@@ -72,7 +72,9 @@ test("the game canvas finds its colour tokens", async ({ page }) => {
   await expect(canvas).toBeVisible();
   const tokens = await canvas.evaluate((el) => {
     const style = getComputedStyle(el);
-    return ["surface-strong", "mint", "tangerine"].map((name) => style.getPropertyValue(`--fs-color-${name}`).trim());
+    return ["surface-strong", "mint", "tangerine", "mint-dark", "mint-light"].map((name) =>
+      style.getPropertyValue(`--fs-color-${name}`).trim(),
+    );
   });
   for (const value of tokens) expect(value).not.toBe("");
 });
