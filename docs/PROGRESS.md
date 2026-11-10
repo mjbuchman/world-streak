@@ -4,11 +4,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M1b Look, feel and Tower rework (M1 done apart from T15; play-tested Nov 9, 2026)
-- Active task: T81 /play and practice around the Tower (the last M1b task)
+- Milestone: M1b Look, feel and Tower rework is complete (Nov 10, 2026); waiting for the human's second play-test before M2
+- Active task: none
 - Blocked tasks: T15 (needs the human's Google OAuth client)
-- Waiting on the human: the Google OAuth client; the second play-test after M1b; see docs/NEEDS_HUMAN.md
-- Next: M1b's last two tasks, T77 then T81 (T77 was split); then the maintainer check and the second play-test, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds) and T66 (shared route helpers, before T18).
+- Waiting on the human: the second play-test (M2 waits for it), the Google OAuth client; see docs/NEEDS_HUMAN.md
+- Next: after the play-test, act on its feedback, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds), T66 (shared route helpers, before T18), T68 and T86 (the attempts flow), T78 (local parallel e2e).
 
 ## Log
 
@@ -18,6 +18,14 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-10 — M1b complete
+- The Fresh Sport look (T73), the grid Teetering Tower (T76), restyled home, play and practice (T74), account screens with confirm password (T75), the Tower's renderer and HUD (T77) and the screens around it (T81) are merged. The maintainer check after T77 (one merge before the end) serves as the end-of-milestone check: T82 to T86 added.
+- Notes: the second play-test checklist is in NEEDS_HUMAN. Run local e2e with `--workers=1` (T78).
+
+### 2026-11-10 — T81 /play and practice around the Tower (PR #30)
+- How-to and "Practice first" on `/play` (from `STACKING_HOW_TO`, absorbing T71; the link goes once Start is pressed); big Unbounded score on results; the header hides during a run (DECISIONS); the missed row falls for `FALL_MS` before the result. e2e runs end on a deliberate miss computed with the real engine (`tests/e2e/support/tower.ts`) and check shown, stored and engine scores agree.
+- Review rounds: spec 2, quality 2, tests 2 (round 1: the Practice link stayed live while starting; the fall's length and drawing were not pinned).
 
 ### 2026-11-10 — T77 Teetering Tower renderer and HUD in the new look (PR #29)
 - Rounded 8 px cells; lost cells fall and fade (400 ms) and a tapped row bounces (180 ms), both pure functions of the engine's lock times and off under reduced motion; a target line on `/play`. The start endpoint returns the day's pass target; the HUD shows "Row N", "Row N to pass" on `/play` and the visit's best in practice.

@@ -281,7 +281,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
 
 ### T81 /play and practice around the Tower: how-to, big score, follow-ups
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T77
 - Acceptance criteria:
   - [ ] `/play`'s ready state shows how to play (tap, click or Space) and a "Practice first" link, from one shared source with practice (absorbs T71; mark T71 done).
@@ -363,7 +363,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
   - [ ] pgTAP: 10 attempts with 6 passes at threshold 0.60 is survived (the boundary counts); 5 of 10 is broken; 3 consecutive survived days give current streak 3, and a broken fourth day gives 0 with best 3; an idempotent re-run changes nothing.
   - [ ] A day with 0 attempts closes as `broken` with `final_pass_rate null` (judgment call, record it and flag it).
   - [ ] SQL view or function `world_streak()` returns `{ current, best, current_start_date }`, readable by everyone. `/api/meter` now fills `streak`.
-- Notes: Pass rate is weighted per the definition "among counted accounts" (weights from T17). The cycle-aware streak reset comes later (T34). From the T11 quality review: add a `game_days` check that `outcome` and `closed_at` are both set or both null, so a half-closed day cannot be stored (`final_pass_rate` is already checked to be between 0 and 1).
+- Notes: Pass rate is weighted per the definition "among counted accounts" (weights from T17). The cycle-aware streak reset comes later (T34). From the T11 quality review: add a `game_days` check that `outcome` and `closed_at` are both set or both null, so a half-closed day cannot be stored (`final_pass_rate` is already checked to be between 0 and 1). From the T81 quality review: the game reports a finished run from its animation loop, which browsers pause in a hidden tab, so a run that ends while the tab is hidden is submitted only when the player returns. Near the deadline that can turn into "day closed"; if it matters, finish the run with a timer when `document.hidden` (the server scores the taps either way).
 
 ### T22 Prepare next day: pass target and threshold
 - Type: feature
@@ -997,7 +997,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T71 Show how to play on /play before the one scored attempt
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T14
 - Acceptance criteria:
   - [ ] The stacking how-to text has one source (for example `STACKING_HOW_TO` in `src/config/challenges.ts` or a small component), used by `StackingPractice.tsx` and the ready state of `PlayToday.tsx`; the practice wording stays the same.
