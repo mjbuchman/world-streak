@@ -96,6 +96,23 @@ describe("PlayToday", () => {
     expect(screen.getByText("You didn't stack a row. Today's target was row 11.")).toBeTruthy();
   });
 
+  it("makes a pass glow mint, and leaves a fail or a refused submission plain", async () => {
+    render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
+    const passed = screen.getByRole("heading", { name: "Passed" });
+    expect(passed.className).toMatch(/resultMint/);
+    expect(passed.className).toMatch(/resultGlow/);
+    cleanup();
+
+    render(<PlayToday initial={{ kind: "submitted", score: 3, passed: false, passTarget: 10 }} />);
+    expect(screen.getByRole("heading", { name: "Not this time" }).className).not.toMatch(/resultMint|resultGlow/);
+    cleanup();
+
+    respond(json(200, started), json(409, { error: "day-closed" }));
+    await startRun();
+    await finish([900], 1);
+    expect((await screen.findByRole("heading", { name: "Not counted" })).className).not.toMatch(/resultMint|resultGlow/);
+  });
+
   it("shows the score as the result's big number, above the verdict as in practice", () => {
     const { container } = render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
     const score = container.querySelector("[data-big-score]")!;

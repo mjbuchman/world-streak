@@ -43,6 +43,7 @@ export function StackingPractice() {
         score={phase.score}
         heading={reachedRow(phase.score)}
         headingRef={resultRef}
+        tone="practice"
         actions={
           <>
             <Button onClick={play}>Play again</Button>

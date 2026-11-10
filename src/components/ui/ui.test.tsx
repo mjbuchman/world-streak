@@ -215,11 +215,29 @@ describe("ResultHero", () => {
     expect(ref.current).toBe(screen.getByRole("heading", { name: "Passed" }));
   });
 
-  it("can celebrate with confetti, and can leave the score out (a refused submission has none)", () => {
-    stubReducedMotion(false);
-    const { container } = render(<ResultHero heading="Not counted" confetti actions={null} />);
-    expect(container.querySelector("[data-confetti]")).not.toBeNull();
+  it("can leave the score out (a refused submission has none)", () => {
+    const { container } = render(<ResultHero heading="Not counted" actions={null} />);
     expect(container.querySelector("[data-big-score]")).toBeNull();
+  });
+
+  it("can celebrate with confetti", () => {
+    stubReducedMotion(false);
+    const { container } = render(<ResultHero score={12} heading="Passed" confetti actions={null} />);
+    expect(container.querySelector("[data-confetti]")).not.toBeNull();
+  });
+
+  it.each([
+    // tone, mint, glow
+    [undefined, false, false], // the default is plain: celebration is opt-in
+    ["plain", false, false],
+    ["practice", true, false],
+    ["pass", true, true],
+  ] as const)("styles the score and heading for tone %s (mint %s, glow %s)", (tone, mint, glow) => {
+    const { container } = render(<ResultHero score={7} heading="Result" tone={tone} actions={null} />);
+    for (const element of [container.querySelector("[data-big-score]")!, screen.getByRole("heading", { name: "Result" })]) {
+      expect(/resultMint/.test(element.className)).toBe(mint);
+      expect(/resultGlow/.test(element.className)).toBe(glow);
+    }
   });
 });
 

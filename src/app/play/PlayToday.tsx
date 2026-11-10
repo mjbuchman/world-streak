@@ -7,8 +7,8 @@ import type { StackingParams } from "@/challenges/stacking/engine";
 import { reachedRow, targetRow } from "@/components/stacking/rows";
 import { type FinishedRun, StackingGame } from "@/components/stacking/StackingGame";
 import { Button } from "@/components/ui/Button";
-import { ResultHero } from "@/components/ui/ResultHero";
 import { LinkButton } from "@/components/ui/LinkButton";
+import { ResultHero } from "@/components/ui/ResultHero";
 import { Spinner } from "@/components/ui/Spinner";
 import { Surface } from "@/components/ui/Surface";
 import { STACKING_HOW_TO } from "@/config/challenges";
@@ -133,7 +133,7 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
           score={score}
           heading={passed ? "Passed" : "Not this time"}
           headingRef={headingRef}
-          tone={passed ? "highlight" : "plain"}
+          tone={passed ? "pass" : "plain"}
           confetti={passed && phase.fresh}
           actions={backHome}
         >
@@ -157,7 +157,7 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
 
     case "failed":
       return (
-        <ResultHero heading="Not counted" headingRef={headingRef} tone="plain" actions={backHome}>
+        <ResultHero heading="Not counted" headingRef={headingRef} actions={backHome}>
           <p role="alert">{phase.message}</p>
         </ResultHero>
       );

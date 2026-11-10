@@ -256,8 +256,12 @@
   box-shadow: none;
 }
 
-.resultHighlight {
+.resultMint {
   color: var(--fs-color-mint);
+}
+
+/* Only a pass on /play glows. */
+.resultGlow {
   text-shadow: 0 0 28px color-mix(in srgb, var(--fs-color-mint) 45%, transparent);
 }
 
