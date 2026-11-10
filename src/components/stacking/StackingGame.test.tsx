@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { IDLE_LOCK_MS, MAX_TAPS, ROWS, simulate, type StackingParams } from "@/challenges/stacking/engine";
+import { MAX_TAPS, simulate, type StackingParams } from "@/challenges/stacking/engine";
+import { tapsForAMiss } from "@/challenges/stacking/player";
 import { FALL_MS } from "@/challenges/stacking/render";
 
 const drawStacking = vi.hoisted(() => vi.fn());
@@ -16,10 +17,11 @@ import { StackingGame } from "./StackingGame";
 // Row 1 starts at columns 2-4 moving right, stepping every 160 ms (7 ms faster per row).
 const params: StackingParams = { startStepMs: 160, stepDecayMs: 7, startColumn: 2, direction: "right" };
 
-/** Long enough for idle locks to finish any run (every row locks by itself after 8 s). */
-const UNTIL_THE_END = (ROWS + 1) * IDLE_LOCK_MS;
+/** Ms advanced since the test began; each test renders its game at 0. */
+let elapsed = 0;
 
 beforeEach(() => {
+  elapsed = 0;
   vi.useFakeTimers({ toFake: ["requestAnimationFrame", "cancelAnimationFrame", "performance"] });
   // jsdom has no canvas; the renderer is mocked, so any object will do.
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({} as CanvasRenderingContext2D);
@@ -33,8 +35,26 @@ afterEach(() => {
   drawStacking.mockReset();
 });
 
-const advance = (ms: number) => act(() => vi.advanceTimersByTime(ms));
+const advance = (ms: number) => {
+  elapsed += ms;
+  act(() => vi.advanceTimersByTime(ms));
+};
 const pressSpace = (init: KeyboardEventInit = {}) => fireEvent.keyDown(window, { key: " ", code: "Space", ...init });
+
+/**
+ * Ends the run (there is no time limit, so it never ends by itself): after `taps` (the taps
+ * counted so far) it taps a deliberate miss worked out with the engine, then lets the last
+ * fall play out. Returns every tap the game should report.
+ */
+function missAndFinish(taps: number[]): number[] {
+  const all = tapsForAMiss(params, taps, Math.ceil(elapsed) + 1);
+  for (const tap of all.slice(taps.length)) {
+    advance(tap - elapsed);
+    pressSpace();
+  }
+  advance(FALL_MS + 50);
+  return all;
+}
 
 describe("StackingGame", () => {
   it("records taps from Space and pointer presses as elapsed ms, and finishes with the engine's final result", () => {
@@ -49,11 +69,14 @@ describe("StackingGame", () => {
     pressSpace();
     expect(onFinish).not.toHaveBeenCalled();
 
-    // The player stops; idle locks finish the run.
-    advance(UNTIL_THE_END);
+    // Nothing ends the run until a tap does: no time limit.
+    advance(60_000);
+    expect(onFinish).not.toHaveBeenCalled();
+    const expected = missAndFinish([930, 1712, 2577]);
     expect(onFinish).toHaveBeenCalledTimes(1);
     const { taps, result } = onFinish.mock.calls[0][0];
-    expect(taps).toEqual([930, 1712, 2577]);
+    expect(taps).toEqual(expected);
+    expect(taps.slice(0, 3)).toEqual([930, 1712, 2577]);
     // The same result the server gets by replaying the taps to the end.
     expect(result).toEqual(simulate(params, taps));
   });
@@ -228,8 +251,9 @@ describe("StackingGame", () => {
     advance(100);
     pressSpace({ repeat: true });
     fireEvent.keyDown(window, { key: "Enter", code: "Enter" });
-    advance(UNTIL_THE_END);
-    expect(onFinish.mock.calls[0][0].taps).toEqual([400]);
+    expect(onFinish.mock.calls[0]).toBeUndefined();
+    const expected = missAndFinish([400]);
+    expect(onFinish.mock.calls[0][0].taps).toEqual(expected);
   });
 
   it("records one tap when two inputs land at the same moment", () => {
@@ -238,8 +262,8 @@ describe("StackingGame", () => {
     advance(930);
     pressSpace();
     fireEvent.pointerDown(screen.getByRole("img", { name: /tower/i }), { isPrimary: true });
-    advance(UNTIL_THE_END);
-    expect(onFinish.mock.calls[0][0].taps).toEqual([930]);
+    const expected = missAndFinish([930]);
+    expect(onFinish.mock.calls[0][0].taps).toEqual(expected);
   });
 
   it("ignores a second finger on the canvas", () => {
@@ -250,8 +274,8 @@ describe("StackingGame", () => {
     fireEvent.pointerDown(canvas, { isPrimary: true });
     advance(5);
     fireEvent.pointerDown(canvas, { isPrimary: false });
-    advance(UNTIL_THE_END);
-    expect(onFinish.mock.calls[0][0].taps).toEqual([930]);
+    const expected = missAndFinish([930]);
+    expect(onFinish.mock.calls[0][0].taps).toEqual(expected);
   });
 
   it(`never records more than ${MAX_TAPS} taps, even in a burst between two frames`, () => {
@@ -263,7 +287,8 @@ describe("StackingGame", () => {
       advance(0.5);
       pressSpace();
     }
-    advance(UNTIL_THE_END);
+    // Fifteen counted taps lock fifteen rows (or end the run sooner), so the run is over.
+    advance(FALL_MS + 50);
     expect(onFinish.mock.calls[0][0].taps).toHaveLength(MAX_TAPS);
   });
 
@@ -290,9 +315,9 @@ describe("StackingGame", () => {
     advance(930);
     pressSpace();
     rerender(<StackingGame params={params} onFinish={second} />);
-    advance(UNTIL_THE_END);
+    const expected = missAndFinish([930]);
     expect(first).not.toHaveBeenCalled();
-    expect(second.mock.calls[0][0].taps).toEqual([930]);
+    expect(second.mock.calls[0][0].taps).toEqual(expected);
   });
 
   it("marks itself as a running game, so the page can hide its back button", () => {
@@ -312,7 +337,7 @@ describe("StackingGame", () => {
     unmount();
     const draws = drawStacking.mock.calls.length;
     pressSpace();
-    advance(UNTIL_THE_END);
+    advance(60_000);
     expect(drawStacking.mock.calls.length).toBe(draws);
     expect(onFinish).not.toHaveBeenCalled();
   });

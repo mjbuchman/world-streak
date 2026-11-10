@@ -119,7 +119,7 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 
 ### 2026-11-09 — Submissions after the deadline record nothing (T13)
 - Choice: `POST /api/attempts/submit` answers 409 `day-closed`, and stores nothing, once the attempt's game date has passed or its day is closed, even if the attempt started before the deadline. `record_attempt_result` repeats both checks (closed, and game date passed by the database clock) under row locks, so the close job and a late submission cannot interleave.
-- Reason: the day's pass rate must be final at the deadline; accepting late results would change a day that has already closed for everyone. A run lasts at most a minute, so this only affects attempts started in the last minute or so.
+- Reason: the day's pass rate must be final at the deadline; accepting late results would change a day that has already closed for everyone. Since T87 a run has no time limit, so a run still going at the deadline does not count; players should start well before it.
 - How to change it later: a grace period would need the close job (T21/T23) to wait for it, plus a matching check in `submitAttempt`.
 - Confirmed by human: yes (Nov 9), no grace period.
 
@@ -148,16 +148,24 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
   - **Idle drop** (judgment call): a row nobody taps for 8 s drops off and ends the run like a miss. Without a time limit, this keeps every run finite, so the server can always replay a submission, and nobody scores without tapping.
 - Reason: the human's M1 play-test requirements (arcade-style grid, forced narrowing, end only on a miss, a winning top row, a decent player reaches 10). Supersedes the T09 speed-range entry.
 - How to change it later: `PARAM_RANGES`, `MIN_STEP_MS`, `WIDTH_CAPS` and `IDLE_LOCK_MS` in `src/challenges/stacking/engine.ts`; the tuning and golden tests pin them, so a change is deliberate.
-- Confirmed by human: pending, at the second play-test (see NEEDS_HUMAN).
+- Confirmed by human: speed yes, for now (Nov 10; more testers later). Idle drop: changed, removed so slow players are never timed out (T87; see "Human decisions at the second play-test").
 
 ### 2026-11-10 — The header hides during a running game (T81)
 - Choice: while a game runs (practice or `/play`), the top bar (wordmark, Sign in or Sign out) is hidden like the back button, keeping its space so the board does not move; it returns with the result.
 - Reason: UI rule 8 removes the way back during a running game. On `/play` a stray tap on a header link mid-run would forfeit the day's only attempt (leaving early counts as not passed), and treating practice the same keeps the game screen consistent and focused.
 - How to change it later: the `:global(body):has([data-game-running]) .bar` rule in `src/components/AccountHeader.module.css` (narrow it to `/play` by adding a marker only PlayToday sets).
-- Confirmed by human: pending, at the second play-test.
+- Confirmed by human: yes (Nov 10).
 
 ### 2026-11-09 — Which forms keep a typed password after an error (T75)
 - Choice: sign-up keeps both the password and its confirmation after a failed submit (the human's play-test request); sign-in still clears the password after "Email or password is incorrect", the usual practice, so a wrong password is not resubmitted by accident. Neither password is ever sent back by the server.
 - Reason: the play-test feedback named the create-account form only; T75's criteria cover `/signup`.
 - How to change it later: `SignInForm.tsx` could keep its password the way `SignUpForm.tsx` does: save the values in a ref at submit and write them back to the inputs in a layout effect after React's form reset. Never use `defaultValue` for a password, which puts it in the page's HTML as a `value` attribute.
-- Confirmed by human: pending, at the second play-test.
+- Confirmed by human: yes (Nov 10).
+
+### 2026-11-10 — Human decisions at the second play-test (overrides)
+- **Tower speed:** keep the current tuning; fine-tune later with more testers (NEEDS_HUMAN).
+- **Idle drop:** remove it. "We don't want to time out slow players." A row waits for its tap as long as the player likes (T87). Consequences: a run is no longer bounded in time, so the 3-minute submission age limit goes too (the day's deadline still applies, and the "taps from the future" check stays); a player who walks away mid-run never submits, which counts as an attempt that did not pass (T17).
+- **Result wording:** use rows, as the HUD does: "You reached row 7. Today's target was row 10." (T85).
+- **Result layout:** the practice layout (big score above the heading) for both result screens (T79).
+- **Accessibility:** keep building it in; the human tests it later in one pass (NEEDS_HUMAN).
+- Confirmed by human: yes (these are the human's decisions).

@@ -4,8 +4,7 @@ export type Frame = { result: StackingResult; finished: boolean };
 
 /**
  * The game state at `elapsedMs`, given every tap so far. Taps carry the time of their input
- * event, not of the frame that read them, and idle locks happen at exact times inside the
- * engine, so the result never depends on the frame rate.
+ * event, not of the frame that read them, so the result never depends on the frame rate.
  */
 export function frameAt(params: StackingParams, taps: readonly number[], elapsedMs: number): Frame {
   const result = simulate(params, taps, elapsedMs);

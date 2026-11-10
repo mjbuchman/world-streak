@@ -1,4 +1,5 @@
-import { paramsFromSeed } from "../../src/challenges/stacking/engine";
+import { paramsFromSeed, simulate } from "../../src/challenges/stacking/engine";
+import { tapsForAMiss } from "../../src/challenges/stacking/player";
 import { gameDateAt } from "../../src/lib/gameDay";
 import { expect, test } from "./support/fixtures";
 import { signUpViaForm } from "./support/pages";
@@ -44,24 +45,32 @@ test("the server scores a submission itself and accepts it only once", async ({ 
   const email = accounts.uniqueEmail();
   await signUpViaForm(page, { email });
   await expect(page).toHaveURL("/");
-  const { attemptId } = await (await page.request.post("/api/attempts/start")).json();
+  const { attemptId, params } = await (await page.request.post("/api/attempts/start")).json();
+  // A short finished run on the issued instance; wait until its last tap is not in the future.
+  const tapsMs = tapsForAMiss(params);
+  const score = simulate(params, tapsMs).score;
+  await page.waitForTimeout(Math.max(0, tapsMs.at(-1)! - 1_000));
 
   const invalid = await page.request.post("/api/attempts/submit", { data: { attemptId, inputs: { tapsMs: [900, 800] } } });
   expect(invalid.status()).toBe(400);
   expect(await invalid.json()).toEqual({ error: "invalid-inputs" });
+  // Taps that stop before the run ended are not a real submission either.
+  const unfinished = await page.request.post("/api/attempts/submit", { data: { attemptId, inputs: { tapsMs: [] } } });
+  expect(unfinished.status()).toBe(400);
 
   const unknown = await page.request.post("/api/attempts/submit", {
-    data: { attemptId: "6f1c7d0e-2b9a-4c3e-8d5f-1a2b3c4d5e6f", inputs: { tapsMs: [] } },
+    data: { attemptId: "6f1c7d0e-2b9a-4c3e-8d5f-1a2b3c4d5e6f", inputs: { tapsMs } },
   });
   expect(unknown.status()).toBe(404);
 
-  // Claims a pass, but no taps stack no blocks.
+  // Claims a pass; the server scores the taps itself.
   const submitted = await page.request.post("/api/attempts/submit", {
-    data: { attemptId, inputs: { tapsMs: [] }, score: 99, passed: true },
+    data: { attemptId, inputs: { tapsMs }, score: 99, passed: true },
   });
   expect(submitted.status()).toBe(200);
-  // 10 is the placeholder target ensure_game_day gives a new day (see DECISIONS, T11).
-  expect(await submitted.json()).toEqual({ score: 0, passed: false, passTarget: 10 });
+  // 10 is the placeholder target ensure_game_day gives a new day (see DECISIONS, T11); a
+  // deliberate miss stacks far fewer rows.
+  expect(await submitted.json()).toEqual({ score, passed: false, passTarget: 10 });
 
   const { data: row, error } = await adminClient()
     .from("attempts")
@@ -69,10 +78,10 @@ test("the server scores a submission itself and accepts it only once", async ({ 
     .eq("id", attemptId)
     .single();
   if (error) throw error;
-  expect(row).toMatchObject({ inputs: { tapsMs: [] }, score: 0, passed: false });
+  expect(row).toMatchObject({ inputs: { tapsMs }, score, passed: false });
   expect(row.submitted_at).not.toBeNull();
 
-  const again = await page.request.post("/api/attempts/submit", { data: { attemptId, inputs: { tapsMs: [] } } });
+  const again = await page.request.post("/api/attempts/submit", { data: { attemptId, inputs: { tapsMs } } });
   expect(again.status()).toBe(409);
   expect(await again.json()).toEqual({ error: "already-submitted" });
 

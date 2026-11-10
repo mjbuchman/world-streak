@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { CHALLENGES, isChallengeType } from "@/challenges/registry";
 import type { ChallengeModule, ScoreDirection } from "@/challenges/shared/types";
-import { ATTEMPT_MAX_AGE_MS, INPUT_TIMING_SLACK_MS } from "@/config/attempts";
+import { INPUT_TIMING_SLACK_MS } from "@/config/attempts";
 import { gameDateAt } from "@/lib/gameDay";
 
 /** What `record_attempt_result` can answer. */
@@ -41,7 +41,10 @@ function replay<Params, Inputs>(module: ChallengeModule<Params, Inputs>, seed: n
   const parsed = module.inputsSchema.safeParse(rawInputs);
   if (!parsed.success) return null;
   const inputs = parsed.data;
-  return { inputs, score: module.score(module.paramsFromSeed(seed), inputs), lastInputMs: module.lastInputMs(inputs) };
+  const params = module.paramsFromSeed(seed);
+  // The game submits only finished runs; anything else is not a real submission.
+  if (!module.finished(params, inputs)) return null;
+  return { inputs, score: module.score(params, inputs), lastInputMs: module.lastInputMs(inputs) };
 }
 
 /** Whether a score meets the day's target: at least it when higher is better, at most it otherwise. */
@@ -85,12 +88,12 @@ export async function submitAttempt({
   const replayed = replay(challenge, attempt.seed, request.data.inputs);
   if (!replayed) return fail(400, "invalid-inputs");
 
-  // started_at is the database clock and `now` the app server's; INPUT_TIMING_SLACK_MS also
-  // absorbs a small difference between the two.
+  // No taps from the future. There is no upper limit: a run may take as long as the player
+  // likes (human decision, T87); the day's deadline above is the only limit. started_at is the
+  // database clock and `now` the app server's; INPUT_TIMING_SLACK_MS also absorbs a small
+  // difference between the two.
   const elapsedMs = now.getTime() - attempt.startedAt.getTime();
-  if (elapsedMs > ATTEMPT_MAX_AGE_MS || replayed.lastInputMs > elapsedMs + INPUT_TIMING_SLACK_MS) {
-    return fail(422, "implausible-timing");
-  }
+  if (replayed.lastInputMs > elapsedMs + INPUT_TIMING_SLACK_MS) return fail(422, "implausible-timing");
 
   const passed = passes(replayed.score, day.passTarget, challenge.direction);
   const recorded = await store.recordResult({ attemptId, inputs: replayed.inputs, score: replayed.score, passed });

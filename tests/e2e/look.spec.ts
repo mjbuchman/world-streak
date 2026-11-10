@@ -1,5 +1,8 @@
+import { paramsFromSeed } from "../../src/challenges/stacking/engine";
+import { FALL_MS } from "../../src/challenges/stacking/render";
 import { expect, test } from "./support/fixtures";
 import { signUpViaForm } from "./support/pages";
+import { pinSeed, playTaps, tapsForAMiss } from "./support/tower";
 
 // Checks only a real browser can make (jsdom has no layout, CSS or canvas): focus visibility,
 // busy buttons, touch-target size and the game's colour tokens.
@@ -51,6 +54,8 @@ test("the back button is at least 44 by 44 px and goes home", async ({ page }) =
 });
 
 test("the back button hides during a run and returns with the result", async ({ page }) => {
+  const seed = 4242;
+  await pinSeed(page, seed);
   await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
   await page.goto("/practice/stacking");
   const back = page.getByRole("main").getByRole("link", { name: "Back", exact: true });
@@ -59,8 +64,14 @@ test("the back button hides during a run and returns with the result", async ({ 
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByRole("img", { name: /game area/ })).toBeVisible();
   await expect(back).toBeHidden();
-  // Let the untapped first row drop off (8 s), which ends the run.
-  await page.clock.runFor(9_000);
+  // Still hidden while the player takes their time (no time limit), until a miss ends the run.
+  await page.clock.runFor(20_000);
+  await expect(back).toBeHidden();
+  const taps = tapsForAMiss(paramsFromSeed(seed), [], 20_001);
+  await page.clock.runFor(taps[0] - 20_000);
+  await page.keyboard.press("Space");
+  await playTaps(page, taps.map((tap) => tap - taps[0]).slice(1));
+  await page.clock.runFor(FALL_MS + 50);
   await expect(page.getByRole("heading", { name: /^You stacked/ })).toBeVisible();
   await expect(back).toBeVisible();
 });

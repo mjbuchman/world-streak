@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   COLUMNS,
-  IDLE_LOCK_MS,
   MAX_TAPS,
   MIN_STEP_MS,
   PARAM_RANGES,
@@ -38,7 +37,7 @@ const moving = (overrides: Partial<MovingRow> = {}): MovingRow => ({
 function stackOnColumnZero(params: StackingParams, rowCount: number): number[] {
   const taps: number[] = [];
   for (let row = 1; row <= rowCount; row++) {
-    // Look at the run as it is just after the last tap, before any idle lock.
+    // Look at the run as it is just after the last tap.
     const next = simulate(params, taps, (taps.at(-1) ?? 0) + 1).moving!;
     const step = stepMs(params, next.row);
     let t = next.startMs + step / 2;
@@ -99,7 +98,7 @@ describe("columnAt", () => {
 describe("simulate", () => {
   it("locks row 1 wherever it is: the floor holds every cell", () => {
     const result = simulate(steady, [250], 300);
-    expect(result.rows[0]).toEqual({ left: 2, width: 3, lostColumns: [], lockedAtMs: 250, byTap: true });
+    expect(result.rows[0]).toEqual({ left: 2, width: 3, lostColumns: [], lockedAtMs: 250 });
     expect(result.score).toBe(1);
   });
 
@@ -107,7 +106,7 @@ describe("simulate", () => {
     // Row 1 locks at columns 2-4. Row 2 appears at the right wall (columns 4-6) moving left;
     // tapped one step later it sits at 3-5, so column 5 falls and 3-4 stay.
     const result = simulate(steady, [250, 350], 360);
-    expect(result.rows[1]).toEqual({ left: 3, width: 2, lostColumns: [5], lockedAtMs: 350, byTap: true });
+    expect(result.rows[1]).toEqual({ left: 3, width: 2, lostColumns: [5], lockedAtMs: 350 });
     expect(result.moving).toMatchObject({ row: 3, width: 2, startMs: 350, startColumn: 0, direction: "right" });
   });
 
@@ -149,46 +148,31 @@ describe("simulate", () => {
     expect(simulate(steady, [...taps, taps.at(-1)! + 50])).toEqual(result);
   });
 
-  it("is still running before the row's tap or idle lock", () => {
+  it("is still running before the row's tap", () => {
     const result = simulate(steady, [], 1000);
     expect(result).toMatchObject({ score: 0, endReason: "running", rows: [] });
     expect(result.moving).toMatchObject({ row: 1, startMs: 0 });
   });
 
-  it(`drops a row nobody taps for ${IDLE_LOCK_MS} ms, which ends the run like a miss`, () => {
-    const column = columnAt(steady, moving(), IDLE_LOCK_MS);
-    const result = simulate(steady, [], IDLE_LOCK_MS);
-    expect(result.rows[0]).toEqual({
-      left: column,
-      width: 0,
-      lostColumns: [column, column + 1, column + 2],
-      lockedAtMs: IDLE_LOCK_MS,
-      byTap: false,
-    });
-    expect(result).toMatchObject({ endReason: "miss", score: 0, endedAtMs: IDLE_LOCK_MS, moving: null });
-    expect(simulate(steady, [], IDLE_LOCK_MS - 1).rows).toEqual([]);
+  it("waits for a row's tap as long as it takes: no time limit (human decision, second play-test)", () => {
+    const anHour = 3_600_000;
+    // Still moving an hour later, untouched.
+    const waiting = simulate(steady, [], anHour);
+    expect(waiting).toMatchObject({ endReason: "running", score: 0, rows: [], moving: { row: 1 } });
+    // A tap an hour in locks the row wherever it is then.
+    const late = simulate(steady, [anHour], anHour);
+    expect(late.rows[0]).toEqual({ left: columnAt(steady, moving(), anHour), width: 3, lostColumns: [], lockedAtMs: anHour });
   });
 
-  it("counts a tap only strictly before the idle limit, and only up to now", () => {
-    // A tap at exactly the limit is too late: the row has already dropped.
-    expect(simulate(steady, [IDLE_LOCK_MS])).toMatchObject({ score: 0, endReason: "miss" });
-    expect(simulate(steady, [IDLE_LOCK_MS]).rows[0].byTap).toBe(false);
-    expect(simulate(steady, [IDLE_LOCK_MS - 1]).rows[0].byTap).toBe(true);
+  it("leaves a run whose taps stop part-way unfinished, keeping the rows locked, even replayed to the end", () => {
+    expect(simulate(steady, [])).toMatchObject({ endReason: "running", score: 0, moving: { row: 1 } });
+    expect(simulate(steady, [250])).toMatchObject({ endReason: "running", score: 1, endedAtMs: 250, moving: { row: 2 } });
+  });
+
+  it("counts a tap only up to now", () => {
     // The live view includes a tap that landed exactly now, but not one from the future.
     expect(simulate(steady, [250], 250).rows).toHaveLength(1);
     expect(simulate(steady, [250], 249).rows).toHaveLength(0);
-  });
-
-  it("ends a run that stops part-way at the next idle drop, keeping the rows already locked", () => {
-    const result = simulate(steady, [250]);
-    expect(result).toMatchObject({ score: 1, endReason: "miss", endedAtMs: 250 + IDLE_LOCK_MS });
-  });
-
-  it("always finishes when replayed to the end, and nobody scores without tapping", () => {
-    for (let seed = 0; seed < 50; seed++) {
-      const result = simulate(paramsFromSeed(seed), []);
-      expect(result).toMatchObject({ endReason: "miss", score: 0 });
-    }
   });
 
   it("ignores a tap at or before the moment its row appeared, and taps after the end", () => {
@@ -242,6 +226,13 @@ describe("stacking module", () => {
     expect(stacking.paramsFromSeed(3)).toEqual(paramsFromSeed(3));
   });
 
+  it("says whether the taps finish the run: a miss or the top, not taps that stop short", () => {
+    expect(stacking.finished(steady, { tapsMs: [1, 2] })).toBe(true); // a miss
+    expect(stacking.finished(steady, { tapsMs: stackOnColumnZero(steady, ROWS) })).toBe(true); // the top
+    expect(stacking.finished(steady, { tapsMs: [250] })).toBe(false);
+    expect(stacking.finished(steady, { tapsMs: [] })).toBe(false);
+  });
+
   it("reports the last tap's time for the server's timing check, or 0 with no taps", () => {
     expect(stacking.lastInputMs({ tapsMs: [750, 1250] })).toBe(1250);
     expect(stacking.lastInputMs({ tapsMs: [] })).toBe(0);
@@ -281,17 +272,17 @@ describe("stacking module", () => {
 
 describe("golden runs", () => {
   // Three committed seeds and tap sequences (from the simulated player in player.ts) with their
-  // exact results: one ends in a miss, one at the top, and one is finished by idle locks. If
-  // this fails, replayed official scores have changed: never regenerate the fixture to make it
-  // pass without a recorded decision.
+  // exact results: one ends in a miss, one at the top, and one stops short and stays unfinished.
+  // If this fails, replayed official scores have changed: never regenerate the fixture to make
+  // it pass without a recorded decision. (T87 removed the idle drop by the human's decision:
+  // the third run used to end by an idle drop; the same taps now leave it unfinished.)
   it.each(golden)("seed $seed scores exactly as committed", ({ seed, params, tapsMs, result }) => {
     expect(paramsFromSeed(seed)).toEqual(params);
     expect(simulate(paramsFromSeed(seed), tapsMs)).toMatchObject(result);
     expect(stacking.score(paramsFromSeed(seed), { tapsMs })).toBe(result.score);
   });
 
-  it("covers every way a run ends, including an idle drop", () => {
-    expect(golden.map((run) => run.result.endReason).sort()).toEqual(["miss", "miss", "top"]);
-    expect(golden.some((run) => run.result.rows.some((row) => !row.byTap))).toBe(true);
+  it("covers a miss, the top, and a run that stops short", () => {
+    expect(golden.map((run) => run.result.endReason).sort()).toEqual(["miss", "running", "top"]);
   });
 });

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { IDLE_LOCK_MS, simulate, type StackingParams } from "@/challenges/stacking/engine";
+import { simulate, type StackingParams } from "@/challenges/stacking/engine";
+import { tapsForAMiss } from "@/challenges/stacking/player";
 import { frameAt, type Frame } from "./stackingLoop";
 
 const params: StackingParams = { startStepMs: 160, stepDecayMs: 7, startColumn: 2, direction: "right" };
@@ -22,11 +23,10 @@ describe("frameAt", () => {
     expect(frame.result.endReason).toBe("miss");
   });
 
-  it("ends the run when a row goes untapped too long, so a player who stops still reaches an end", () => {
-    expect(frameAt(params, [900], 900 + IDLE_LOCK_MS - 1).finished).toBe(false);
-    const ended = frameAt(params, [900], 900 + IDLE_LOCK_MS);
-    expect(ended.finished).toBe(true);
-    expect(ended.result).toMatchObject({ score: 1, endReason: "miss" });
+  it("keeps waiting for a slow player: no time limit (T87)", () => {
+    const anHourLater = frameAt(params, [900], 900 + 3_600_000);
+    expect(anHourLater.finished).toBe(false);
+    expect(anHourLater.result).toMatchObject({ score: 1, endReason: "running", moving: { row: 2 } });
   });
 });
 
@@ -47,7 +47,9 @@ function playAtFrameRate(intervalMs: number, tapTimes: number[]): { frame: Frame
 }
 
 describe("frame-rate independence", () => {
-  const tapTimes = [930, 1712, 2577, 3401, 4290, 5133, 6020];
+  // Seven taps, finished with a deliberate miss if they have not ended the run already.
+  const seven = [930, 1712, 2577, 3401, 4290, 5133, 6020];
+  const tapTimes = simulate(params, seven).endReason === "running" ? tapsForAMiss(params, seven, 6021) : seven;
 
   it("gives identical results at 60 and 120 frames per second", () => {
     const at60 = playAtFrameRate(16.7, tapTimes);
@@ -57,10 +59,11 @@ describe("frame-rate independence", () => {
     expect(at60.frame.result).toEqual(simulate(params, tapTimes));
   });
 
-  it("gives identical results when the run ends by an idle drop", () => {
-    const at60 = playAtFrameRate(16.7, [930]);
-    const at120 = playAtFrameRate(8.3, [930]);
-    expect(at60.frame.result.rows.at(-1)!.byTap).toBe(false);
+  it("gives identical results for a run that ends on a deliberate miss", () => {
+    const taps = tapsForAMiss(params);
+    const at60 = playAtFrameRate(16.7, taps);
+    const at120 = playAtFrameRate(8.3, taps);
+    expect(at60.frame.result.endReason).toBe("miss");
     expect(at120.frame.result).toEqual(at60.frame.result);
   });
 });

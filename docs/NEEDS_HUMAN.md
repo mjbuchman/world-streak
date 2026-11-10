@@ -13,18 +13,23 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 -->
 
 ### Google OAuth client for sign-in (blocks T15, the last M1 task)
-- What is needed: in Google Cloud Console (free), create an OAuth client of type "Web application" with the authorised redirect URI `http://127.0.0.1:54321/auth/v1/callback`. You get a client ID and a client secret.
+- What is needed: in Google Cloud Console (free), create a project, an OAuth consent screen (External, in Testing, with your Gmail as a test user) and an OAuth client of type "Web application" with the authorised redirect URI `http://127.0.0.1:54321/auth/v1/callback`. You get a client ID and a client secret. Step-by-step instructions were given in chat on Nov 10, 2026. `setx` makes the two variables below permanent for your user.
 - Where to put it: set them in the shell that starts local Supabase, then restart it. In PowerShell: `$env:SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID = "<client id>"`, `$env:SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET = "<secret>"`, then `npx supabase stop` and `npm run db:start`. (The Supabase CLI reads these from the shell; putting them in `.env.local` does not work.) Then sign in once with "Continue with Google" on `/signin` and tell the agent whether it reached `/complete-profile`.
 - Why: Google sign-in is built and tested up to Google's door (T07), but a real login needs your own OAuth client; agents cannot create accounts.
 - What was tried: everything else for Google sign-in, including an e2e test that checks the hand-off to Google with the configured client ID.
 - Agent's recommendation: do it when convenient; nothing else in M1 or M2 depends on it. Production needs a second redirect URI for the hosted Supabase project at deployment time.
 
-### Second play-test after M1b (blocks M2)
-- What is needed: when the agent reports M1b done, play-test again (the Fresh Sport look, the new grid Teetering Tower, the sign-up fixes) and say whether M2 can start.
-- Where to put it: reply in chat.
-- Why: the M1 play-test asked for a big rework of the look and the Tower; M2 builds the streak and meter on top of it.
-- Agent's recommendation: same steps as the M1 play-test; the agent will list them.
-- Also judge at that play-test: the new Tower's speed (a decent player should reach about row 10) and two judgment calls: a row left untapped for 8 seconds drops off and ends the run (DECISIONS, T76); sign-up now keeps your passwords after an error, but sign-in still clears the password after a wrong one, as most sites do (DECISIONS, T75). Also say how the result should read: the HUD counts rows ("Row 10 to pass") but the result says "You stacked 7 blocks. Today's target was 10 blocks", and a row can hold up to 3 blocks; the agent suggests "You reached row 7. Today's target was row 10." (T85). If you can, try a run with a screen reader on: the "Row N" counter is announced as it changes, which may be too chatty during fast play (T77 review).
+### Accessibility pass (blocks nothing; before launch)
+- What is needed: one session testing the app with a screen reader and keyboard only (and reduced motion on), all at once, once the main screens exist.
+- Where to put it: reply in chat with anything that is hard to use.
+- Why: you asked to batch accessibility testing for later (Nov 10, 2026); agents keep building it in meanwhile. Known question to check then: whether the live "Row N" counter is too chatty during fast play (T77 review).
+- Agent's recommendation: do it after M2 or M3, when the meter and history exist too.
+
+### Tower speed with more players (blocks nothing; before launch)
+- What is needed: a few other people to play the Tower, to fine-tune its speed so a decent player reaches about row 10.
+- Where to put it: reply in chat with how far people got.
+- Why: you found it challenging but winnable as an above-average player (Nov 10, 2026) and kept the speed for now.
+- Agent's recommendation: do it with a deployed preview, so testers need no setup.
 
 ### Revisit: location is self-declared, no IP check (blocks nothing; before launch)
 - What is needed: after you research contest rules, say whether self-declared US residence is enough or a check is needed.
@@ -39,6 +44,8 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: do it before the public launch. T52 works without the keys locally (it skips the CAPTCHA and logs a warning).
 
 ## Resolved
+
+- **Second play-test after M1b** (Nov 10, 2026): done. Speed kept for now (more testers later); remove the idle drop (T87); sign-up and sign-in as built; the header hides during runs; result wording in rows (T85); results laid out like practice (T79); accessibility tested later in one batch. M2 may start after these follow-ups.
 
 - **M1 play-test** (Nov 9, 2026): done. Feedback became milestone M1b in the backlog (Fresh Sport redesign, grid Teetering Tower, sign-up fixes).
 - **Brand colour and typefaces** (Nov 9): replaced by the Fresh Sport direction (deep teal, mint, tangerine; Unbounded and Manrope). UI guidelines v2 approved.

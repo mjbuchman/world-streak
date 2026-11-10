@@ -1,30 +1,31 @@
 import { paramsFromSeed, simulate } from "../../src/challenges/stacking/engine";
 import { FALL_MS } from "../../src/challenges/stacking/render";
-import { expect, test } from "./support/fixtures";
 import { blocks } from "../../src/components/stacking/blocks";
-import { playTaps, tapsForAMiss } from "./support/tower";
+import { expect, test } from "./support/fixtures";
+import { pinSeed, playTaps, tapsForAMiss } from "./support/tower";
 
 test("practice tower works signed out, ends with a score and offers another go", async ({ page }) => {
   const attemptRequests: string[] = [];
   page.on("request", (request) => {
     if (new URL(request.url()).pathname.startsWith("/api/attempts")) attemptRequests.push(request.url());
   });
-  // A controllable clock drives performance.now() and requestAnimationFrame, so taps land at
-  // exact times and the one-minute run can be skipped through.
-  await page.clock.install();
+  // A paused clock drives performance.now() and requestAnimationFrame, and a pinned seed fixes
+  // the run, so the test can end it with a deliberate miss (a row never ends by itself).
+  const seed = 777;
+  await pinSeed(page, seed);
+  await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
   await page.goto("/practice/stacking");
   await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
+  await page.clock.pauseAt(new Date("2026-01-01T00:00:30Z"));
 
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByRole("status")).toHaveText("Row 1");
-  for (let tap = 0; tap < 3; tap++) {
-    await page.clock.runFor(400);
-    await page.keyboard.press("Space");
-  }
-  // The last drop's Space is still held down when the run ends.
-  await page.clock.runFor(400);
+  const taps = tapsForAMiss(paramsFromSeed(seed));
+  await playTaps(page, taps.slice(0, -1));
+  // The missing tap's Space is still held down when the run ends.
+  await page.clock.runFor(taps.at(-1)! - (taps.at(-2) ?? 0));
   await page.keyboard.down("Space");
-  await page.clock.runFor(61_000);
+  await page.clock.runFor(FALL_MS + 50);
 
   const result = page.getByRole("heading", { name: /^You stacked \d+ blocks?$/ });
   await expect(result).toBeVisible();
@@ -47,12 +48,7 @@ test("practice tower works signed out, ends with a score and offers another go",
 test("a deliberate miss in practice ends the run with the score the engine gives, and a best row", async ({ page }) => {
   // Pin the browser's random seed, so the test knows the run's params and can aim its taps.
   const seed = 12345;
-  await page.addInitScript((value) => {
-    crypto.getRandomValues = (<T extends ArrayBufferView | null>(array: T): T => {
-      if (array instanceof Uint32Array) array.fill(value);
-      return array;
-    }) as Crypto["getRandomValues"];
-  }, seed);
+  await pinSeed(page, seed);
   await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
   await page.goto("/practice/stacking");
   await page.clock.pauseAt(new Date("2026-01-01T00:00:30Z"));

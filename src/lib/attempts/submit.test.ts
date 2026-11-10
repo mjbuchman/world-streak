@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { stacking } from "@/challenges/stacking/engine";
-import { ATTEMPT_MAX_AGE_MS } from "@/config/attempts";
+import { simulate, stacking } from "@/challenges/stacking/engine";
+import { tapsForAMiss } from "@/challenges/stacking/player";
 import { passes, submitAttempt, type SubmitStore } from "./submit";
 
 const userId = "8f14e45f-ceea-467a-9f9b-1b6f0f0e2f11";
@@ -10,8 +10,12 @@ const startedAt = new Date("2026-11-08T12:00:00.000Z");
 // 30 s after the start, still game date Nov 8.
 const now = new Date("2026-11-08T12:00:30.000Z");
 
-// Taps that stack on this seed (checked below), so the score is above 0.
+const params = stacking.paramsFromSeed(seed);
+// A finished run on this seed that stacks some rows (both checked below). The game only
+// submits finished runs.
 const goodTaps = [930, 1712, 2577];
+// The shortest finished run: whatever the search finds first.
+const shortRun = tapsForAMiss(params);
 
 function fakeStore(overrides: Partial<SubmitStore> = {}): SubmitStore {
   return {
@@ -42,6 +46,7 @@ describe("submitAttempt", () => {
     const store = fakeStore();
     const score = stacking.score(stacking.paramsFromSeed(seed), { tapsMs: goodTaps });
     expect(score).toBeGreaterThan(0);
+    expect(simulate(params, goodTaps).endReason).not.toBe("running");
 
     const result = await submit({ attemptId, inputs: { tapsMs: goodTaps } }, store);
 
@@ -52,11 +57,21 @@ describe("submitAttempt", () => {
   });
 
   it("decides pass or fail from the day's target, never from the request", async () => {
-    // Claims a pass with inputs that score 0.
-    const store = fakeStore();
-    const result = await submit({ attemptId, inputs: { tapsMs: [] }, score: 99, passed: true }, store);
-    expect(result).toEqual({ status: 200, body: { score: 0, passed: false, passTarget: 2 } });
-    expect(store.recordResult).toHaveBeenCalledWith({ attemptId, inputs: { tapsMs: [] }, score: 0, passed: false });
+    // Claims a pass with a run that scores below the target.
+    const score = simulate(params, shortRun).score;
+    const store = fakeStore({ gameDay: vi.fn(async () => ({ challengeType: "stacking", passTarget: score + 1, closed: false })) });
+    const result = await submit({ attemptId, inputs: { tapsMs: shortRun }, score: 99, passed: true }, store);
+    expect(result).toEqual({ status: 200, body: { score, passed: false, passTarget: score + 1 } });
+    expect(store.recordResult).toHaveBeenCalledWith({ attemptId, inputs: { tapsMs: shortRun }, score, passed: false });
+  });
+
+  it("refuses taps that stop before the run ended (the game only submits finished runs)", async () => {
+    for (const tapsMs of [[], [930]]) {
+      expect(simulate(params, tapsMs).endReason).toBe("running");
+      const store = fakeStore();
+      expect(await submit({ attemptId, inputs: { tapsMs } }, store)).toEqual({ status: 400, body: { error: "invalid-inputs" } });
+      expect(store.recordResult).not.toHaveBeenCalled();
+    }
   });
 
   it("passes a score equal to the target (higher is better), and fails one below it", async () => {
@@ -67,7 +82,7 @@ describe("submitAttempt", () => {
   });
 
   it("returns 400 for a malformed body, without touching the database", async () => {
-    for (const body of [null, "x", {}, { attemptId: "not-a-uuid", inputs: {} }, { inputs: { tapsMs: [] } }]) {
+    for (const body of [null, "x", {}, { attemptId: "not-a-uuid", inputs: {} }, { inputs: { tapsMs: shortRun } }]) {
       const store = fakeStore();
       expect(await submit(body, store)).toEqual({ status: 400, body: { error: "invalid-body" } });
       expect(store.findAttempt).not.toHaveBeenCalled();
@@ -84,12 +99,12 @@ describe("submitAttempt", () => {
 
   it("returns 404 for an unknown attempt or someone else's", async () => {
     const missing = fakeStore({ findAttempt: vi.fn(async () => null) });
-    expect(await submit({ attemptId, inputs: { tapsMs: [] } }, missing)).toEqual({ status: 404, body: { error: "not-found" } });
+    expect(await submit({ attemptId, inputs: { tapsMs: shortRun } }, missing)).toEqual({ status: 404, body: { error: "not-found" } });
 
     const theirs = fakeStore({
       findAttempt: vi.fn(async () => ({ userId: "someone-else", gameDate: "2026-11-08", seed, startedAt, submitted: false })),
     });
-    expect(await submit({ attemptId, inputs: { tapsMs: [] } }, theirs)).toEqual({ status: 404, body: { error: "not-found" } });
+    expect(await submit({ attemptId, inputs: { tapsMs: shortRun } }, theirs)).toEqual({ status: 404, body: { error: "not-found" } });
     expect(theirs.recordResult).not.toHaveBeenCalled();
   });
 
@@ -97,7 +112,7 @@ describe("submitAttempt", () => {
     const store = fakeStore({
       findAttempt: vi.fn(async () => ({ userId, gameDate: "2026-11-08", seed, startedAt, submitted: true })),
     });
-    expect(await submit({ attemptId, inputs: { tapsMs: [] } }, store)).toEqual({ status: 409, body: { error: "already-submitted" } });
+    expect(await submit({ attemptId, inputs: { tapsMs: shortRun } }, store)).toEqual({ status: 409, body: { error: "already-submitted" } });
     expect(store.recordResult).not.toHaveBeenCalled();
   });
 
@@ -115,31 +130,29 @@ describe("submitAttempt", () => {
     expect(late.recordResult).not.toHaveBeenCalled();
 
     const closed = fakeStore({ gameDay: vi.fn(async () => ({ challengeType: "stacking", passTarget: 2, closed: true })) });
-    expect(await submit({ attemptId, inputs: { tapsMs: [] } }, closed)).toEqual({ status: 409, body: { error: "day-closed" } });
+    expect(await submit({ attemptId, inputs: { tapsMs: shortRun } }, closed)).toEqual({ status: 409, body: { error: "day-closed" } });
     expect(closed.recordResult).not.toHaveBeenCalled();
   });
 
   it("returns 422 when the last input is later than the attempt has been running, plus 2 s of slack", async () => {
-    // 30 s since the start: an input at 32,000 ms is allowed, one at 32,001 ms is not.
-    expect((await submit({ attemptId, inputs: { tapsMs: [32_000] } })).status).toBe(200);
+    // A run whose last tap is at `last` ms may arrive once the attempt has run `last - 2000` ms.
+    const last = shortRun.at(-1)!;
+    const after = (elapsedMs: number) => new Date(startedAt.getTime() + elapsedMs);
+    expect((await submit({ attemptId, inputs: { tapsMs: shortRun } }, fakeStore(), after(last - 2_000))).status).toBe(200);
     const store = fakeStore();
-    expect(await submit({ attemptId, inputs: { tapsMs: [32_001] } }, store)).toEqual({
+    expect(await submit({ attemptId, inputs: { tapsMs: shortRun } }, store, after(last - 2_001))).toEqual({
       status: 422,
       body: { error: "implausible-timing" },
     });
     expect(store.recordResult).not.toHaveBeenCalled();
   });
 
-  it("returns 422 when the attempt is older than the maximum age", async () => {
-    const atLimit = new Date(startedAt.getTime() + ATTEMPT_MAX_AGE_MS);
-    expect((await submit({ attemptId, inputs: { tapsMs: [] } }, fakeStore(), atLimit)).status).toBe(200);
-    const store = fakeStore();
-    const tooOld = new Date(startedAt.getTime() + ATTEMPT_MAX_AGE_MS + 1);
-    expect(await submit({ attemptId, inputs: { tapsMs: [] } }, store, tooOld)).toEqual({
-      status: 422,
-      body: { error: "implausible-timing" },
-    });
-    expect(store.recordResult).not.toHaveBeenCalled();
+  it("accepts a slow run: there is no time limit, only the day's deadline (human decision, T87)", async () => {
+    // A player who waited ten minutes on row 1 before playing it out.
+    const slow = tapsForAMiss(params, [600_000], 600_001);
+    const tenMinutesLater = new Date(startedAt.getTime() + slow.at(-1)! + 5_000);
+    const result = await submit({ attemptId, inputs: { tapsMs: slow } }, fakeStore(), tenMinutesLater);
+    expect(result).toMatchObject({ status: 200, body: { score: simulate(params, slow).score } });
   });
 
   it("reports what the database found if a simultaneous submission or the close job got there first", async () => {
@@ -149,12 +162,12 @@ describe("submitAttempt", () => {
       ["not-found", 404],
     ] as const) {
       const store = fakeStore({ recordResult: vi.fn(async () => status) });
-      expect(await submit({ attemptId, inputs: { tapsMs: [] } }, store)).toEqual({ status: error, body: { error: status } });
+      expect(await submit({ attemptId, inputs: { tapsMs: shortRun } }, store)).toEqual({ status: error, body: { error: status } });
     }
   });
 
   it("fails loudly on a game day whose challenge type the server does not know", async () => {
     const store = fakeStore({ gameDay: vi.fn(async () => ({ challengeType: "chess", passTarget: 1, closed: false })) });
-    await expect(submit({ attemptId, inputs: { tapsMs: [] } }, store)).rejects.toThrow(/chess/);
+    await expect(submit({ attemptId, inputs: { tapsMs: shortRun } }, store)).rejects.toThrow(/chess/);
   });
 });
