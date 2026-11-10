@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T18 Cached meter endpoint
+- Active task: T94 One meter-window helper (before T19)
 - Blocked tasks: none
-- Waiting on the human: later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: M2 in order after T17 (T18 meter endpoint, T19 meter UI, T20 fake players, T21 daily close). T91 (approved wording) fits in when convenient.
+- Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
+- Next: T94, then T19 meter UI, T20 fake players; T92 and T93 before T21 daily close. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,14 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-10 — Maintainer check after T18
+- Health good (604 unit, 210 pgTAP; no TODOs; audit issues dev-only). New tasks T92 (one strict numeric parser), T93 (counter integrity, taking the T17 follow-ups out of T21) and T94 (one meter-window helper, before T19). Merges since this check: 0.
+
+### 2026-11-10 — T18 Cached meter endpoint (PR #41)
+- `GET /api/meter`: public, read-only, one query on `game_days` with its counters embedded; hidden (no rate or count) for the final `METER_HIDE_HOURS = 3`; cached publicly for 30 s, shrinking to `no-store` near 21:00 and midnight UTC.
+- Review rounds: spec 2, quality 2, tests 2. Round 1 (quality): the proxy refreshed sessions on the cached meter, and the anon key could read the counters, bypassing the hidden window. Fixed: the proxy skips `/api/meter`, and migration `20261110020000_private_day_counters` makes the counters server-only (the meter reads them with the service role).
+- Notes: T19 should switch to hidden by its own clock (via T94's helper) and render `threshold: null`.
 
 ### 2026-11-10 — T17 Running counters per game day (PR #40)
 - `game_day_counters` per day; an attempt counts when it starts (after-insert trigger, with the weight stamped on the row as `counted_weight`), a recorded pass adds the same weight in `record_attempt_result`. `/play` now says "Counted as not passed" for a refused result and "Result not sent" when it never arrived (please-confirm in NEEDS_HUMAN).

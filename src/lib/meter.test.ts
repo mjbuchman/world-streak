@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
-import { meterBody, meterCacheSeconds, readMeter, type MeterRow } from "./meter";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { meterBody, meterCacheSeconds, meterHiddenFrom, readMeter, type MeterRow } from "./meter";
 
 // Game date 2026-11-08 closes at midnight UTC on Nov 9; the meter hides from 21:00 UTC.
 const open = new Date("2026-11-08T20:59:59Z");
@@ -42,6 +44,32 @@ describe("meterBody", () => {
   it("gives a null pass rate when every attempt so far has zero weight", () => {
     const body = meterBody(open, "2026-11-08", { threshold: 0.6, attempts: 3, weightedAttempts: 0, weightedPasses: 0 });
     expect(body).toMatchObject({ passRate: null, attempts: 3 });
+  });
+});
+
+describe("meterHiddenFrom", () => {
+  it("is METER_HIDE_HOURS before the deadline, from a Date or an ISO string", () => {
+    expect(meterHiddenFrom(new Date(closesAt)).toISOString()).toBe("2026-11-08T21:00:00.000Z");
+    expect(meterHiddenFrom(closesAt).toISOString()).toBe("2026-11-08T21:00:00.000Z");
+  });
+
+  it("splits open from hidden at exactly that instant", () => {
+    const from = meterHiddenFrom(closesAt).getTime();
+    expect(new Date("2026-11-08T20:59:59.999Z").getTime()).toBeLessThan(from);
+    expect(new Date("2026-11-08T21:00:00.000Z").getTime()).toBe(from);
+    expect(meterBody(new Date("2026-11-08T20:59:59.999Z"), "2026-11-08", row).status).toBe("open");
+    expect(meterBody(new Date("2026-11-08T21:00:00.000Z"), "2026-11-08", row).status).toBe("hidden");
+  });
+
+  it("lives in a module client code can import: Supabase is imported as a type only", () => {
+    // The meter UI (T19) imports this module in the browser; a runtime Supabase import would
+    // pull the client into the bundle.
+    const source = readFileSync(path.join(import.meta.dirname, "meter.ts"), "utf8");
+    const imports = source.split(/\r?\n/).filter((line) => line.startsWith("import "));
+    expect(imports.filter((line) => line.includes("@supabase/"))).toEqual([
+      'import type { SupabaseClient } from "@supabase/supabase-js";',
+    ]);
+    expect(imports.some((line) => /server-only|lib\/supabase\//.test(line))).toBe(false);
   });
 });
 

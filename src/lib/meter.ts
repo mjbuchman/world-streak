@@ -1,6 +1,13 @@
+// Client-safe: the meter UI imports these types and helpers in the browser, so Supabase is
+// imported as a type only (a test checks this).
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { METER_CACHE_SECONDS, METER_HIDE_HOURS } from "@/config/meter";
 import { deadlineFor, gameDateAt, HOUR_MS } from "@/lib/gameDay";
+
+/** When the meter hides for the day closing at `closesAt`: METER_HIDE_HOURS before it. */
+export function meterHiddenFrom(closesAt: Date | string): Date {
+  return new Date(new Date(closesAt).getTime() - METER_HIDE_HOURS * HOUR_MS);
+}
 
 /** What the meter needs about one game day. */
 export type MeterRow = {
@@ -32,7 +39,7 @@ export type MeterBody =
 export function meterBody(now: Date, gameDate: string, row: MeterRow): MeterBody {
   const deadline = deadlineFor(gameDate);
   const closesAt = deadline.toISOString();
-  if (now.getTime() >= deadline.getTime() - METER_HIDE_HOURS * HOUR_MS) {
+  if (now.getTime() >= meterHiddenFrom(deadline).getTime()) {
     return { gameDate, status: "hidden", threshold: row.threshold, closesAt };
   }
   // With no weighted attempts yet the rate is unknown, not 0% and not NaN.
@@ -54,8 +61,7 @@ type DayRow = {
  * stale copy for as long again while it refreshes, so both periods must fit before that moment.
  */
 export function meterCacheSeconds(body: MeterBody, now: Date): number {
-  const closes = new Date(body.closesAt).getTime();
-  const outOfDateAt = body.status === "open" ? closes - METER_HIDE_HOURS * HOUR_MS : closes;
+  const outOfDateAt = (body.status === "open" ? meterHiddenFrom(body.closesAt) : new Date(body.closesAt)).getTime();
   const secondsLeft = Math.floor((outOfDateAt - now.getTime()) / 1000);
   return Math.max(0, Math.min(METER_CACHE_SECONDS, Math.floor(secondsLeft / 2)));
 }
