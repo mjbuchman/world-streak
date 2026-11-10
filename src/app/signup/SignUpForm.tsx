@@ -1,6 +1,6 @@
 "use client";
 
-import { type ChangeEvent, type FormEvent, useActionState, useRef, useState } from "react";
+import { type ChangeEvent, type FormEvent, useActionState, useLayoutEffect, useRef, useState } from "react";
 import { BirthDateInput, CountrySelect, RulesAgreement } from "@/components/form/EligibilityFields";
 import { Field, TextInput } from "@/components/form/Field";
 import { FormAlert, SubmitButton } from "@/components/form/FormParts";
@@ -13,33 +13,45 @@ type Passwords = { password: string; confirm: string };
 
 /** The two password fields' current values, read from the form itself. */
 function readPasswords(form: HTMLFormElement): Passwords {
-  const value = (name: string) => (form.elements.namedItem(name) as HTMLInputElement).value;
+  const value = (name: string) => {
+    const field = form.elements.namedItem(name);
+    return field instanceof HTMLInputElement ? field.value : "";
+  };
   return { password: value("password"), confirm: value("confirmPassword") };
 }
 
 export function SignUpForm() {
   const [state, formAction, pending] = useActionState<SignUpState | null, FormData>(signUpAction, null);
-  // What was in the password fields at the last submit. React resets a form's fields to their
-  // defaultValue after an action, so these become the defaults: a failed submit keeps them. They
-  // stay in the browser; the server never sends a password back. The fields stay uncontrolled,
-  // so typing before hydration is not lost either.
-  const [kept, setKept] = useState<Passwords>({ password: "", confirm: "" });
+  // What was in the password fields at the last submit, so a failed submit keeps them. Held in a
+  // ref and written straight back to the inputs: never echoed by the server, and never put in
+  // the page's HTML (a defaultValue would show up as a value="" attribute).
+  const kept = useRef<Passwords>({ password: "", confirm: "" });
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmRef = useRef<HTMLInputElement>(null);
   // Shown when a submit is stopped for a mismatch; cleared live once the two fields agree.
   const [mismatch, setMismatch] = useState(false);
-  const confirmRef = useRef<HTMLInputElement>(null);
 
   const failed = state && !state.ok ? state : null;
   const errors = failed?.fieldErrors ?? {};
   const values = failed?.values;
   const confirmError = mismatch ? PASSWORD_MISMATCH : errors.confirmPassword;
 
+  // React resets the form's fields after an action; put the passwords back once it has (layout
+  // effects run after that reset and before the browser paints, so they never flash empty).
+  useLayoutEffect(() => {
+    if (!failed) return;
+    if (passwordRef.current) passwordRef.current.value = kept.current.password;
+    if (confirmRef.current) confirmRef.current.value = kept.current.confirm;
+  }, [failed]);
+
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     const passwords = readPasswords(event.currentTarget);
-    setKept(passwords);
-    if (passwords.password === passwords.confirm) return;
+    kept.current = passwords;
+    const matches = passwords.password === passwords.confirm;
+    setMismatch(!matches);
+    if (matches) return;
     // Stop here: nothing is sent, and focus goes to the field that needs fixing.
     event.preventDefault();
-    setMismatch(true);
     confirmRef.current?.focus();
   }
 
@@ -63,11 +75,11 @@ export function SignUpForm() {
         {(control) => (
           <TextInput
             {...control}
+            ref={passwordRef}
             type="password"
             autoComplete="new-password"
             minLength={8}
             required
-            defaultValue={kept.password}
             onChange={onPasswordChange}
           />
         )}
@@ -81,7 +93,6 @@ export function SignUpForm() {
             type="password"
             autoComplete="new-password"
             required
-            defaultValue={kept.confirm}
             onChange={onPasswordChange}
           />
         )}

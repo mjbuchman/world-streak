@@ -121,6 +121,8 @@ describe("SignUpForm", () => {
     await screen.findByText("taken");
     expect(passwordInput().value).toBe("secret-password");
     expect(confirmInput().value).toBe("secret-password");
+    // Restored as live values only: the password never appears in the page's HTML.
+    expect(document.body.innerHTML).not.toContain("secret-password");
   });
 
   it("stops a mismatched confirmation before sending anything, with the error next to it", async () => {
@@ -129,10 +131,19 @@ describe("SignUpForm", () => {
     expect(signUpAction).not.toHaveBeenCalled();
     expect(confirmInput().getAttribute("aria-invalid")).toBe("true");
     expect(confirmInput().getAttribute("aria-describedby")).toBe(message.id);
+    expect(document.activeElement).toBe(confirmInput());
     // Nothing typed is lost, and fixing the confirmation clears the error.
     expect(passwordInput().value).toBe("secret-password");
     await userEvent.clear(confirmInput());
     await userEvent.type(confirmInput(), "secret-password");
+    expect(screen.queryByText("The passwords don't match.")).toBeNull();
+  });
+
+  it("clears the mismatch error when the password is changed to match the confirmation", async () => {
+    await fillAndSubmit({ confirm: "secret-passwort" });
+    await screen.findByText("The passwords don't match.");
+    await userEvent.clear(passwordInput());
+    await userEvent.type(passwordInput(), "secret-passwort");
     expect(screen.queryByText("The passwords don't match.")).toBeNull();
   });
 
