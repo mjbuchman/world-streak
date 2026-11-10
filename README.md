@@ -185,8 +185,10 @@ Fill in `.env.local` from the output of `npx supabase status`: copy **API URL** 
    npm.cmd run db:start
    ```
 
-   To keep them for every new window, run `setx SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID "<client id>"` and `setx SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET "<client secret>"` once, then open a new window.
-4. Check: on `/signin`, "Continue with Google" leads to Google, then (for a new account) to "Finish setting up your account", then home, signed in. If Google says "The OAuth client was not found", Supabase started without the keys: repeat step 3 in the same window.
+   On macOS or Linux (bash): `export SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=<client id>` and `export SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=<client secret>`, then `npx supabase stop` and `npm run db:start`.
+
+   To keep them for every new PowerShell window, run `setx SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID "<client id>"` and `setx SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET "<client secret>"` once, then open a new window (`setx` does not change the window it runs in). This stores the secret for your Windows user account, where every program you start can read it; that is fine for a local test client. Remove it with `setx SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET ""` or under System Properties > Environment Variables.
+4. Check: on `/signin`, "Continue with Google" leads to Google, then (for a new account) to "Finish setting up your account", then home, signed in. If Google says "The OAuth client was not found", Supabase started without the keys: set the two variables, then stop and start Supabase again, all in that same window.
 
 Deployment will need a second redirect URI for the hosted Supabase project.
 
