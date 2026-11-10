@@ -15,8 +15,9 @@ export type GameSettings = {
   fullWeightAfterDays: number;
 };
 
-// Postgres numerics may reach us as JSON numbers or as strings, depending on the driver.
-const numeric = z.union([z.number(), z.string().trim().min(1).transform(Number)]).pipe(z.number().finite());
+// Postgres numerics may reach us as JSON numbers or as plain decimal strings, depending on the
+// driver. Integer columns always arrive as JSON numbers, so they take numbers only.
+const numeric = z.union([z.number(), z.string().regex(/^-?\d+(\.\d+)?$/).transform(Number)]).pipe(z.number().finite());
 const fraction = numeric.pipe(z.number().min(0).max(1));
 const nonNegative = numeric.pipe(z.number().min(0));
 
@@ -28,7 +29,9 @@ const rowSchema = z.object({
   threshold_streak_step: nonNegative,
   percentile_lookback_days: z.number().int().min(1),
   percentile_min_sample: z.number().int().min(1),
-  default_pass_targets: z.record(z.string(), z.number().finite().min(0)),
+  default_pass_targets: z
+    .record(z.string(), z.number().finite().min(0))
+    .refine((targets) => "stacking" in targets, "must include stacking"),
   new_account_weight: fraction,
   full_weight_after_days: z.number().int().min(0),
 });

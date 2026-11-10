@@ -3,6 +3,25 @@
 -- The launch values are the design doc's recommendations for its Open items (see
 -- docs/DECISIONS.md, T16): a 60% survival threshold, pass targets at the score 80% of recent
 -- players reach, flat (0) steps as the streak grows, and full weight for new accounts.
+
+-- Whether `targets` maps challenge types to non-negative numbers. An admin edits this row by
+-- hand, so the database refuses a typo that would make every new game day fail to insert.
+-- The case expressions keep the casts from running on values of the wrong type.
+create or replace function public.pass_targets_are_valid(targets jsonb)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+    when jsonb_typeof(targets) is distinct from 'object' then false
+    else not exists (
+      select 1 from jsonb_each(targets) as t(challenge, target)
+      where case when jsonb_typeof(t.target) = 'number' then (t.target #>> '{}')::numeric < 0 else true end
+    )
+  end;
+$$;
+
 create table public.game_settings (
   id boolean primary key default true,
   default_survival_threshold numeric not null default 0.60 check (default_survival_threshold between 0 and 1),
@@ -11,8 +30,10 @@ create table public.game_settings (
   threshold_streak_step numeric not null default 0 check (threshold_streak_step >= 0),
   percentile_lookback_days integer not null default 14 check (percentile_lookback_days >= 1),
   percentile_min_sample integer not null default 50 check (percentile_min_sample >= 1),
-  -- Keyed by challenge type. A placeholder until T22 sets targets from recent scores.
-  default_pass_targets jsonb not null default '{"stacking": 10}' check (jsonb_typeof(default_pass_targets) = 'object'),
+  -- Keyed by challenge type. A placeholder until T22 sets targets from recent scores. Stacking
+  -- is required because ensure_game_day reads it (until the rotation, T31).
+  default_pass_targets jsonb not null default '{"stacking": 10}'
+    check (public.pass_targets_are_valid(default_pass_targets) and default_pass_targets ? 'stacking'),
   new_account_weight numeric not null default 1.0 check (new_account_weight between 0 and 1),
   full_weight_after_days integer not null default 0 check (full_weight_after_days >= 0),
   constraint game_settings_single_row check (id)
@@ -53,18 +74,26 @@ create policy game_settings_update_admin on public.game_settings
   with check ((select public.is_admin()));
 
 -- New game days now take their defaults from game_settings instead of literals. The challenge
--- stays stacking until the rotation (T31).
+-- stays stacking until the rotation (T31). A missing settings row raises an error here rather
+-- than silently creating no day (which would only surface later as a foreign-key error).
 create or replace function public.ensure_game_day(d date)
 returns void
-language sql
+language plpgsql
 volatile
 security invoker
 set search_path = ''
 as $$
+declare
+  s public.game_settings;
+begin
+  select * into s from public.game_settings;
+  if not found then
+    raise exception 'game_settings has no row';
+  end if;
   insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold)
-  select d, 'stacking', (s.default_pass_targets ->> 'stacking')::numeric, s.default_survival_threshold
-  from public.game_settings s
+  values (d, 'stacking', (s.default_pass_targets ->> 'stacking')::numeric, s.default_survival_threshold)
   on conflict (game_date) do nothing;
+end;
 $$;
 
 -- create or replace keeps the existing grants, but restate them so this file stands alone.

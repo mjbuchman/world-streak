@@ -1,5 +1,5 @@
 begin;
-select plan(48);
+select plan(59);
 
 -- Structure and the launch defaults.
 select has_table('public', 'game_settings', 'game_settings table exists');
@@ -68,6 +68,35 @@ select throws_ok(
   $$update public.game_settings set default_pass_targets = '[10]'$$,
   '23514', null, 'default pass targets are an object keyed by challenge'
 );
+select throws_ok(
+  $$update public.game_settings set default_pass_targets = '{}'$$,
+  '23514', null, 'default pass targets must include stacking, which ensure_game_day reads'
+);
+select throws_ok(
+  $$update public.game_settings set default_pass_targets = '{"stacking": "ten"}'$$,
+  '23514', null, 'a default pass target must be a number'
+);
+select throws_ok(
+  $$update public.game_settings set default_pass_targets = '{"stacking": -1}'$$,
+  '23514', null, 'a default pass target cannot be negative'
+);
+select throws_ok(
+  $$update public.game_settings set default_pass_targets = '{"stacking": 10, "flashCount": null}'$$,
+  '23514', null, 'every challenge''s default pass target must be a number, not only stacking''s'
+);
+select lives_ok(
+  $$update public.game_settings set default_pass_targets = '{"stacking": 10, "flashCount": 7.5}'$$,
+  'default pass targets may list more challenges'
+);
+update public.game_settings set default_pass_targets = '{"stacking": 10}';
+
+-- Without its row, ensure_game_day fails loudly instead of creating no day.
+delete from public.game_settings;
+select throws_ok(
+  $$select public.ensure_game_day('2026-11-21')$$,
+  'P0001', 'game_settings has no row', 'ensure_game_day refuses to run without the settings row'
+);
+insert into public.game_settings default values;
 
 -- Row-level security and the admin helper.
 select ok((select relrowsecurity from pg_class where oid = 'public.game_settings'::regclass), 'RLS is enabled on game_settings');
@@ -111,22 +140,33 @@ select results_eq(
   'a new game day takes its pass target and survival threshold from game_settings'
 );
 update public.game_settings set default_survival_threshold = 0.60, default_pass_targets = '{"stacking": 10}';
+select public.ensure_game_day('2026-11-20');
+select results_eq(
+  $$select pass_target, survival_threshold from public.game_days where game_date = '2026-11-20'$$,
+  $$values (12::numeric, 0.55::numeric)$$,
+  'changing the settings leaves an existing game day as it was'
+);
 
 -- Act as user A, a player.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
 set local role authenticated;
 select is(public.is_admin(), false, 'is_admin is false for a player');
 select is((select count(*)::int from public.game_settings), 1, 'a player can read the settings');
--- No error, but RLS filters the row out; the superuser check at the end shows nothing changed.
+-- No error, but RLS filters the row out; each check right after shows nothing changed.
 select lives_ok(
   $$update public.game_settings set default_survival_threshold = 0.10$$,
   'setup: a player tries to lower the survival threshold'
+);
+select is(
+  (select default_survival_threshold from public.game_settings), 0.60::numeric,
+  'a player''s update affected 0 rows: the threshold is still 60%'
 );
 select throws_ok(
   $$insert into public.game_settings (id) values (true)$$,
   '42501', null, 'a player cannot insert settings'
 );
 select lives_ok($$delete from public.game_settings$$, 'setup: a player tries to delete the settings row');
+select is((select count(*)::int from public.game_settings), 1, 'a player''s delete affected 0 rows');
 
 -- Act as user B, an admin.
 reset role;
@@ -142,6 +182,7 @@ select is(
   'the admin''s update took effect'
 );
 select lives_ok($$delete from public.game_settings$$, 'setup: an admin tries to delete the settings row');
+select is((select count(*)::int from public.game_settings), 1, 'an admin''s delete affected 0 rows');
 select throws_ok(
   $$insert into public.game_settings (id) values (true)$$,
   '42501', null, 'even an admin cannot insert settings'
@@ -156,6 +197,10 @@ select is((select count(*)::int from public.game_settings), 1, 'an anonymous vis
 select lives_ok(
   $$update public.game_settings set default_survival_threshold = 0.10$$,
   'setup: an anonymous visitor tries to lower the survival threshold'
+);
+select is(
+  (select default_survival_threshold from public.game_settings), 0.65::numeric,
+  'an anonymous visitor''s update affected 0 rows'
 );
 reset role;
 
