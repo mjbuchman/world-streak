@@ -71,7 +71,8 @@ describe("StackingGame", () => {
   });
 
   it("rounds a fractional target up, for the HUD and the line", () => {
-    render(<StackingGame params={params} onFinish={vi.fn()} passTarget={10.5} />);
+    // 10.2 rounds to 10 but up to 11: reaching row 10 would not be enough.
+    render(<StackingGame params={params} onFinish={vi.fn()} passTarget={10.2} />);
     expect(screen.getByText("Row 11 to pass")).toBeTruthy();
     advance(20);
     expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ passTarget: 11 });

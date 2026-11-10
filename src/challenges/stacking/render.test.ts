@@ -171,6 +171,12 @@ describe("fallingCells", () => {
     expect(fallingCells(result, 350)).toEqual([{ column: 5, row: 2, drop: 0, alpha: 1 }]);
   });
 
+  it("is a quarter of the way down and half faded halfway through", () => {
+    const [mid] = fallingCells(result, 350 + FALL_MS / 2);
+    expect(mid.drop).toBeCloseTo(0.75); // 3 cells x (1/2)^2
+    expect(mid.alpha).toBeCloseTo(0.5);
+  });
+
   it("speeds up as it falls and fades out", () => {
     const [early] = fallingCells(result, 350 + FALL_MS / 4);
     const [late] = fallingCells(result, 350 + (FALL_MS * 3) / 4);
@@ -204,11 +210,16 @@ describe("landingLift", () => {
     expect(liftAt(350)).toEqual({ row: 2, lift: 0 });
     const mid = liftAt(350 + BOUNCE_MS / 2)!;
     expect(mid.row).toBe(2);
+    expect(mid.lift).toBeCloseTo(0.18); // the full lift, at the top of the half sine
     expect(mid.lift).toBeGreaterThan(liftAt(350 + BOUNCE_MS / 4)!.lift);
   });
 
-  it("is null once settled, and for a row that dropped by itself", () => {
+  it("is null once settled, for a miss, and for a row that dropped by itself", () => {
     expect(liftAt(350 + BOUNCE_MS)).toBeNull();
+    // A tapped miss locks a row of width 0: nothing landed, so nothing bounces.
+    const missed = simulate(params, [250, 350, 351]);
+    expect(missed.rows.at(-1)).toMatchObject({ width: 0, byTap: true });
+    expect(landingLift(missed, 351 + BOUNCE_MS / 2)).toBeNull();
     const idle = simulate(params, [250], 250 + 9_000);
     expect(idle.rows.at(-1)!.byTap).toBe(false);
     expect(landingLift(idle, idle.rows.at(-1)!.lockedAtMs + 10)).toBeNull();

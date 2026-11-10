@@ -408,7 +408,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
   - [ ] Changing today's survival threshold is reflected in `/api/meter` on the next cache refresh.
   - [ ] Local `supabase/seed.sql` creates an admin user `admin@local.test` (documented password in README, local only).
   - [ ] Unit tests for the server action (non-admin is rejected, invalid threshold 1.5 is rejected, closed day is rejected). e2e: an admin changes tomorrow's threshold to 55% and sees it persisted; a normal user gets 404.
-- Notes: This is the MVP scope's "Admin controls to set pass targets and the survival threshold manually". Making the owner's real account an admin in production is a deployment step (see T50).
+- Notes: This is the MVP scope's "Admin controls to set pass targets and the survival threshold manually". Making the owner's real account an admin in production is a deployment step (see T50). From the T77 review: the Tower's pass target must stay within the board (1 to 15 rows; the HUD rounds a fractional target up), or the target line is drawn off the grid; validate that range for stacking days.
 
 ## M3 More challenges and sharing
 
