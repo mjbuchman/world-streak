@@ -12,6 +12,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Wording for an unfinished attempt on /play (blocks T91)
+- What is needed: approve or rewrite this message, shown on `/play` when today's attempt was started but not submitted: "You started today's attempt but haven't finished it here. If it's still open in another tab, finish it there before the day ends. Otherwise it counts as not passed. Come back tomorrow."
+- Where to put it: reply in chat.
+- Why: since runs have no time limit (T87), a run left open in another tab can still be submitted, so today's "You left today's attempt before finishing, so it counted as not passed" can be wrong.
+- Agent's recommendation: the text above.
+
 ### Please confirm: launch values in game_settings (blocks nothing)
 - What is needed: a yes, or new values, for: survival threshold 60%; pass target at the 80th percentile of recent scores; no rise in target or threshold as the streak grows (step 0); new accounts count fully from day one; the percentile looks back 14 days and needs at least 50 scores; until then, a Teetering Tower day defaults to a target of row 10 (the T11 placeholder you kept).
 - Where to put it: reply in chat. The values live in one database row an admin can edit, so changing them later needs no code.
