@@ -230,7 +230,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
 
 ### T74 Restyle home, play and practice in Fresh Sport
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T73
 - Acceptance criteria:
   - [ ] Home, `/play` (every state: ready, starting, playing, checking, result, abandoned, refused) and `/practice/stacking` use the shared components and match the mockup's direction: big Unbounded headings and numbers, translucent surfaces, tangerine primary action, mint for good news.
@@ -244,7 +244,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
 
 ### T75 Sign-in, sign-up and profile screens: Fresh Sport and fixes
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T73
 - Acceptance criteria:
   - [ ] `/signup` keeps the typed password (and confirmation) after a failed submit; it is held in client state and never sent back by the server.
@@ -278,7 +278,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
   - [ ] The HUD shows the current row and "Row 10 to pass" on `/play` (today's target from the server) and the best row on practice.
   - [ ] `/play`'s ready state shows how to play (tap, click or Space) and a "Practice first" link, from one shared source with practice (absorbs T71).
   - [ ] e2e: practice and play runs end on a deliberate miss with a paused clock, and the stored result matches what was shown; `npm run verify` and `npm run test:e2e` pass.
-- Notes: The pass target placeholder (10) stays until real scores exist.
+- Notes: The pass target placeholder (10) stays until real scores exist. From the T74 reviews (non-blocking): show the result's score as a big Unbounded number, as in the mockup; the account header links stay active during a run on `/play` (decide whether rule 8 covers them, and either hide them like the back button or say why not); add the refused-submission ("failed") state to the "Back to home" unit test, and a check of the home page's Teetering Tower card.
 
 ## M2 The world streak
 
@@ -306,7 +306,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
   - [ ] RLS: counters are readable by everyone, with no write policies.
   - [ ] pgTAP: after recording 3 attempts (2 passed) for one date with weights 1, counters read `attempts 3, passes 2, weighted_attempts 3, weighted_passes 2`; a user with weight 0.5 who passes adds 0.5 to both weighted columns; an abandoned (started, never submitted) attempt counts as an attempt that did not pass.
   - [ ] An attempt is counted in `attempts`/`weighted_attempts` when it starts (in the start endpoint's insert, same transaction), and in `passes`/`weighted_passes` when a passing result is recorded, so abandoning cannot hide a fail.
-- Notes: The design requires running counters rather than counting rows on request. Pass rate = `weighted_passes / weighted_attempts` among counted accounts. Human decision (Nov 9, 2026): leaving early is a loss, so started attempts count; this overrides the design doc's "abandoning records nothing" (see DECISIONS). The live meter briefly counts in-flight runs as not passed, which is acceptable.
+- Notes: The design requires running counters rather than counting rows on request. Pass rate = `weighted_passes / weighted_attempts` among counted accounts. Human decision (Nov 9, 2026): leaving early is a loss, so started attempts count; this overrides the design doc's "abandoning records nothing" (see DECISIONS). The live meter briefly counts in-flight runs as not passed, which is acceptable. From the T74 spec review: `/play` still calls a refused submission "Not counted" ("…so it was not counted"); once started attempts count, reword it (for example "Counted as not passed").
 
 ### T18 Cached meter endpoint
 - Type: feature
@@ -852,7 +852,15 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Acceptance criteria:
   - [ ] The sign-in helper in `tests/e2e/profile.spec.ts` (and any shared sign-in, sign-up or Google helper) waits until the page has hydrated before typing or clicking (for example wait for a hydration marker or for the submit button to be enabled by client code), so typed values are not wiped and clicks are not lost on a cold dev-server compile. No timeouts are simply raised.
   - [ ] `npm run test:e2e:local` passes 3 full runs in a row from a cold `.next-e2e` folder.
-- Notes: From the T73 test review: on cold compiles, "Continue with Google goes to Google…" lost its click and "an underage player completing their profile…" had its typed fields cleared; a third run passed 30/30. Fits with T62 (shared e2e helpers). The T74 test review saw the same on a cold compile in `practice.spec.ts` "the home page links to practice" (the click on "Practice first" was lost); include it.
+- Notes: From the T73 test review: on cold compiles, "Continue with Google goes to Google…" lost its click and "an underage player completing their profile…" had its typed fields cleared; a third run passed 30/30. Fits with T62 (shared e2e helpers). The T74 test review saw the same on a cold compile in `practice.spec.ts` "the home page links to practice" (the click on "Practice first" was lost); include it. Found during T75: with 6 local workers the dev server's Fast Refresh (about 5 s, set off when another worker first opens a page that shares client modules) stalls in-flight sign-up server actions, so the first wave of sign-up tests misses its 5 s URL wait; `--workers=1` passes 36/36 and CI (production build, no Fast Refresh) is unaffected. Consider running `test:e2e:local` against a production build like CI, or warming every route before the tests start.
+
+### T80 Fix the missing-key warning in form fields
+- Type: maintenance
+- Status: todo
+- Depends on: T75
+- Acceptance criteria:
+  - [ ] The React warning "Each child in a list should have a unique key prop. Check the render method of `Field`" no longer appears on `/signup`, `/signin` or `/complete-profile` (a component test fails on that console error).
+- Notes: Seen in every e2e run's server log since T55. In dev it also opens Next's error overlay, whose stack-frame lookups slow the dev server under parallel e2e (see T78).
 
 ### T79 One shared result-hero style for play and practice
 - Type: maintenance

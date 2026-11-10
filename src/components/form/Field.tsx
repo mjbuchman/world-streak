@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, ReactNode } from "react";
+import type { InputHTMLAttributes, ReactNode, Ref } from "react";
 import styles from "./form.module.css";
 
 /** Props every form control receives from its Field, so labels and errors stay wired up. */
@@ -50,7 +50,9 @@ export function Field({ name, label, error, layout = "stacked", children }: Fiel
   );
 }
 
-/** Material 3 outlined text input. Its look comes from the form styles, so it takes no className. */
-export function TextInput(props: Omit<InputHTMLAttributes<HTMLInputElement>, "className">) {
+type TextInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "className"> & { ref?: Ref<HTMLInputElement> };
+
+/** The Fresh Sport text field. Its look comes from the form styles, so it takes no className. */
+export function TextInput(props: TextInputProps) {
   return <input {...props} className={styles.input} />;
 }

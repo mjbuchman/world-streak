@@ -1,55 +1,70 @@
-/* Shared Material 3 form styles: fields, inputs, errors, checkbox row and filled button. */
+/* Shared Fresh Sport form styles: fields, inputs, errors and the checkbox row. */
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .label {
-  font-size: var(--md-sys-typescale-label-large-size);
-  line-height: var(--md-sys-typescale-label-large-line-height);
-  font-weight: var(--md-sys-typescale-label-large-weight);
-  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--fs-text-small);
+  font-weight: 700;
+  color: var(--fs-color-text-muted);
 }
 
-/* Material 3 outlined text field. */
+/* A translucent field that lights up mint when focused. */
 .input {
   min-height: 56px;
   padding: 0 var(--space-4);
-  border: 1px solid var(--md-sys-color-outline);
-  border-radius: var(--md-sys-shape-corner-extra-small);
-  background: transparent;
-  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--fs-color-surface-border);
+  border-radius: var(--fs-radius-field);
+  background: var(--fs-color-surface);
+  color: var(--fs-color-text);
   font: inherit;
-  font-size: var(--md-sys-typescale-body-large-size);
+  font-size: var(--fs-text-body);
+  transition:
+    border-color var(--fs-duration-fast) var(--fs-ease-out),
+    background-color var(--fs-duration-fast) var(--fs-ease-out),
+    box-shadow var(--fs-duration-fast) var(--fs-ease-out);
+}
+
+/* The native date picker icon follows the light text colour. */
+.input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.7;
+}
+
+.input option {
+  background: var(--fs-color-ground-deep);
+  color: var(--fs-color-text);
 }
 
 .input:hover {
-  border-color: var(--md-sys-color-on-surface);
+  border-color: color-mix(in srgb, var(--fs-color-text) 30%, transparent);
 }
 
 .input:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: -1px;
-  border-color: var(--md-sys-color-primary);
+  border-color: var(--fs-color-mint);
+  background: var(--fs-color-surface-strong);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fs-color-mint) 30%, transparent);
+  outline: none;
 }
 
 .input[aria-invalid="true"] {
-  border-color: var(--md-sys-color-error);
+  border-color: var(--fs-color-error);
 }
 
 .fieldError {
-  color: var(--md-sys-color-error);
-  font-size: var(--md-sys-typescale-body-small-size);
-  line-height: var(--md-sys-typescale-body-small-line-height);
+  color: var(--fs-color-error);
+  font-size: var(--fs-text-small);
+  font-weight: 600;
 }
 
 .formError {
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--md-sys-shape-corner-small);
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
+  border-radius: var(--fs-radius-field);
+  background: var(--fs-color-error-surface);
+  color: var(--fs-color-text);
 }
 
 .checkboxRow {
@@ -59,57 +74,8 @@
   min-height: 48px;
 }
 
-.checkboxRow a {
-  color: var(--md-sys-color-primary);
-}
-
 .checkbox {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--md-sys-color-primary);
-}
-
-/* Material 3 filled button, with a 48dp touch target. */
-.submit {
-  min-height: 48px;
-  margin-top: var(--space-2);
-  border: none;
-  border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-  font: inherit;
-  font-size: var(--md-sys-typescale-label-large-size);
-  font-weight: var(--md-sys-typescale-label-large-weight);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-/* State layer: 8% on-primary on hover, 10% on press. */
-.submit::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--md-sys-color-on-primary);
-  opacity: 0;
-  transition: opacity var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
-}
-
-.submit:hover::after {
-  opacity: 0.08;
-}
-
-.submit:active::after {
-  opacity: 0.1;
-}
-
-.submit:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: 2px;
-}
-
-.submit:disabled {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
-  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
-  cursor: default;
+  width: 22px;
+  height: 22px;
+  accent-color: var(--fs-color-mint);
 }

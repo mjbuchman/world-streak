@@ -26,7 +26,7 @@ export function SignInForm() {
         {(control) => <TextInput {...control} type="password" autoComplete="current-password" required />}
       </Field>
 
-      <SubmitButton pending={pending} label="Sign in" pendingLabel="Signing in" />
+      <SubmitButton pending={pending} label="Sign in" />
     </form>
   );
 }

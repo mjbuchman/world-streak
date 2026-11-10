@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1b Look, feel and Tower rework (M1 done apart from T15; play-tested Nov 9, 2026)
-- Active task: T74 Restyle home, play and practice in Fresh Sport
+- Active task: T75 Sign-in, sign-up and profile screens: Fresh Sport and fixes
 - Blocked tasks: T15 (needs the human's Google OAuth client)
 - Waiting on the human: the Google OAuth client; the second play-test after M1b; see docs/NEEDS_HUMAN.md
 - Next: M1b in order T73, T76, T74, T75, T77 (T76 has no UI dependency and can go early); then the second play-test, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds) and T66 (shared route helpers, before T18).
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-09 — T74 Restyle home, play and practice in Fresh Sport (PR #27)
+- Home with the big title and the highlighted Teetering Tower card; `/play` and practice in the page shell with a back button (hidden while a game runs, via `data-game-running`), busy Start, a visible checking spinner, a verdict reveal and confetti on a fresh pass; "counted as not passed" wording; `tests/e2e/look.spec.ts` for real-browser checks.
+- Review rounds: spec 2, quality 2, tests 2 (round 1: the back button stayed beside the board during a scored run).
+- Notes: follow-ups recorded in T77, T17, T78 and the new T79. Merges since the M1 maintainer check: T73, T76, T74 (3).
 
 ### 2026-11-09 — T76 Teetering Tower grid engine (PR #26)
 - Column-grid stacker in `src/challenges/stacking/engine.ts` (7 x 15, forced narrowing at rows 6 and 11, top row wins, no time limit, an untapped row drops off after 8 s); tuned with `player.ts` (decent ±80 ms reaches about 10); plain grid renderer and loop.

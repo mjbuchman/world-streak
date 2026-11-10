@@ -1,49 +1,38 @@
-/* Layout for the account pages (sign up, sign in): page width, title, intro, form spacing. */
-
-.main {
-  max-width: 440px;
-  margin: 0 auto;
-  padding: var(--space-8) var(--space-4);
-}
-
-.title {
-  font-family: var(--md-sys-typescale-headline-medium-font);
-  font-size: var(--md-sys-typescale-headline-medium-size);
-  line-height: var(--md-sys-typescale-headline-medium-line-height);
-  font-weight: var(--md-sys-typescale-headline-medium-weight);
-}
+/* The account pages (sign up, sign in, finish setting up): intro, divider, form and switch link. */
 
 .intro {
-  margin-top: var(--space-2);
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: var(--md-sys-typescale-body-medium-size);
-  line-height: var(--md-sys-typescale-body-medium-line-height);
+  color: var(--fs-color-text-muted);
+  line-height: 1.5;
 }
 
 .form {
-  margin-top: var(--space-6);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
+/* Separates "Continue with Google" from the email form: a line either side of the words. */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--fs-color-text-muted);
+  font-size: var(--fs-text-small);
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--fs-color-surface-border);
+}
+
 .switch {
-  margin-top: var(--space-6);
-  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+  color: var(--fs-color-text-muted);
 }
 
 .switch a {
-  color: var(--md-sys-color-primary);
-}
-
-/* Separates "Continue with Google" from the email form. */
-.divider {
-  margin-top: var(--space-6);
-  text-align: center;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: var(--md-sys-typescale-body-medium-size);
-}
-
-.alert {
-  margin-top: var(--space-6);
+  font-weight: 700;
 }

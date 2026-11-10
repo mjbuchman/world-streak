@@ -25,6 +25,7 @@ function form(overrides: Record<string, string> = {}): FormData {
   const fields = {
     email: "player@example.com",
     password: "correct horse",
+    confirmPassword: "correct horse",
     birthDate: "1990-05-05",
     country: "US",
     agree: "on",
@@ -113,8 +114,14 @@ describe("signUpAction", () => {
     expect(createAdmin).not.toHaveBeenCalled();
   });
 
+  it("rejects a mismatched confirmation without touching Supabase", async () => {
+    const result = await signUpAction(null, form({ confirmPassword: "correct horses" }));
+    expect(result).toMatchObject({ ok: false, fieldErrors: { confirmPassword: "The passwords don't match." } });
+    expect(createAdmin).not.toHaveBeenCalled();
+  });
+
   it("rejects a short password without touching Supabase", async () => {
-    const result = await signUpAction(null, form({ password: "short" }));
+    const result = await signUpAction(null, form({ password: "short", confirmPassword: "short" }));
     expect(result).toMatchObject({ ok: false, fieldErrors: { password: expect.any(String) } });
     expect(createAdmin).not.toHaveBeenCalled();
   });

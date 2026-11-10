@@ -7,6 +7,7 @@ function validForm(overrides: Record<string, string | null> = {}): FormData {
   const fields: Record<string, string | null> = {
     email: "player@example.com",
     password: "correct horse",
+    confirmPassword: "correct horse",
     birthDate: "1990-05-05",
     country: "us",
     agree: "on",
@@ -58,13 +59,36 @@ describe("signUp validation", () => {
   });
 
   it("accepts a password of exactly 8 characters", async () => {
-    expect(await signUp(validForm({ password: "12345678" }), deps)).toEqual({ ok: true });
+    expect(await signUp(validForm({ password: "12345678", confirmPassword: "12345678" }), deps)).toEqual({ ok: true });
   });
 
   it("rejects a password longer than 72 characters, Supabase's limit", async () => {
-    const result = await signUp(validForm({ password: "x".repeat(73) }), deps);
+    const long = "x".repeat(73);
+    const result = await signUp(validForm({ password: long, confirmPassword: long }), deps);
     expect(result).toMatchObject({ ok: false, fieldErrors: { password: "Use at most 72 characters." } });
-    expect(await signUp(validForm({ password: "x".repeat(72) }), deps)).toEqual({ ok: true });
+    const max = "x".repeat(72);
+    expect(await signUp(validForm({ password: max, confirmPassword: max }), deps)).toEqual({ ok: true });
+  });
+
+  it.each([
+    ["different", "correct horses"],
+    ["missing", null],
+  ])("rejects a confirmation that is %s, without creating anything", async (_label, confirmPassword) => {
+    const result = await signUp(validForm({ confirmPassword }), deps);
+    expect(result).toMatchObject({ ok: false, fieldErrors: { confirmPassword: "The passwords don't match." } });
+    expectNoAccountCreated();
+  });
+
+  it("reports a short password once, not also as a mismatch, when both are equally short", async () => {
+    const result = await signUp(validForm({ password: "short", confirmPassword: "short" }), deps);
+    expect(result).toMatchObject({ ok: false, fieldErrors: { password: "Use at least 8 characters." } });
+    expect(result.ok === false && result.fieldErrors?.confirmPassword).toBeFalsy();
+  });
+
+  it("never echoes either password back in the returned values", async () => {
+    const result = await signUp(validForm({ confirmPassword: "something else" }), deps);
+    expect(JSON.stringify(result)).not.toContain("correct horse");
+    expect(JSON.stringify(result)).not.toContain("something else");
   });
 
   it.each([

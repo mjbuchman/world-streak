@@ -149,3 +149,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: the human's M1 play-test requirements (arcade-style grid, forced narrowing, end only on a miss, a winning top row, a decent player reaches 10). Supersedes the T09 speed-range entry.
 - How to change it later: `PARAM_RANGES`, `MIN_STEP_MS`, `WIDTH_CAPS` and `IDLE_LOCK_MS` in `src/challenges/stacking/engine.ts`; the tuning and golden tests pin them, so a change is deliberate.
 - Confirmed by human: pending, at the second play-test (see NEEDS_HUMAN).
+
+### 2026-11-09 — Which forms keep a typed password after an error (T75)
+- Choice: sign-up keeps both the password and its confirmation after a failed submit (the human's play-test request); sign-in still clears the password after "Email or password is incorrect", the usual practice, so a wrong password is not resubmitted by accident. Neither password is ever sent back by the server.
+- Reason: the play-test feedback named the create-account form only; T75's criteria cover `/signup`.
+- How to change it later: `SignInForm.tsx` could keep its password the way `SignUpForm.tsx` does (the fields' default values come from what was in them at submit).
+- Confirmed by human: pending, at the second play-test.

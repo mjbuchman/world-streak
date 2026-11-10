@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
+import { PageShell } from "@/components/ui/PageShell";
+import { Surface } from "@/components/ui/Surface";
 import { GAME_NAME } from "@/config/game";
-import styles from "../page.module.css";
 
 export const metadata: Metadata = { title: `Official rules | ${GAME_NAME}` };
 
 // Placeholder until the draft official rules are written (backlog T38).
 export default function RulesPage() {
   return (
-    <main className={styles.main}>
-      <h1 className={styles.title}>Official rules</h1>
-      <p className={styles.status}>The official rules are being written and will appear here before launch.</p>
-    </main>
+    <PageShell title="Official rules" backHref="/">
+      <Surface>
+        <p>The official rules are being written and will appear here before launch.</p>
+      </Surface>
+    </PageShell>
   );
 }

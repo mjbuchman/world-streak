@@ -3,6 +3,7 @@ import { GAME_NAME } from "@/config/game";
 import { eligibilitySummary } from "@/lib/eligibility";
 import { type EligibilityField, validateEligibilityFields } from "@/lib/eligibilityFields";
 import { collectFieldErrors, GENERIC_ERROR, textValue } from "@/lib/forms";
+import { PASSWORD_MISMATCH } from "@/lib/passwords";
 
 const accountSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address.")),
@@ -10,7 +11,7 @@ const accountSchema = z.object({
   password: z.string().min(8, "Use at least 8 characters.").max(72, "Use at most 72 characters."),
 });
 
-type Field = keyof z.infer<typeof accountSchema> | EligibilityField;
+type Field = keyof z.infer<typeof accountSchema> | "confirmPassword" | EligibilityField;
 
 export type SignUpValues = { email: string; birthDate: string; country: string };
 
@@ -36,6 +37,7 @@ function readForm(formData: FormData): Record<Field, unknown> {
   return {
     email: get("email"),
     password: get("password"),
+    confirmPassword: get("confirmPassword"),
     birthDate: get("birthDate"),
     country: get("country"),
     agree: get("agree"),
@@ -55,12 +57,15 @@ export async function signUp(formData: FormData, deps: SignUpDeps): Promise<Sign
   const values = echoValues(raw);
   const account = accountSchema.safeParse(raw);
   const eligibility = validateEligibilityFields(raw, deps.today);
+  // The form checks this before sending; checking again here keeps the rule in one trusted place.
+  const mismatch = textValue(raw.password) !== textValue(raw.confirmPassword);
   const fieldErrors: Partial<Record<Field, string>> = {
     ...collectFieldErrors<Field>(account.error?.issues ?? []),
+    ...(mismatch ? { confirmPassword: PASSWORD_MISMATCH } : {}),
     ...(eligibility.status === "invalid" ? eligibility.fieldErrors : {}),
   };
 
-  if (!account.success || eligibility.status === "invalid") return { ok: false, fieldErrors, values };
+  if (!account.success || mismatch || eligibility.status === "invalid") return { ok: false, fieldErrors, values };
   if (eligibility.status === "refused") return { ok: false, message: refusalMessage(), values };
 
   const { email, password } = account.data;
