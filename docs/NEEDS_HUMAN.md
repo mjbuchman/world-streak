@@ -18,6 +18,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: from T17 a started attempt counts, so the old "Not counted" was wrong. Details in `docs/DECISIONS.md` (T17).
 - Agent's recommendation: keep the text above.
 
+### Please confirm: hide the meter for the final 3 hours (blocks nothing)
+- What is needed: a yes, or a different number of hours. From 9 pm UTC (3 hours before the midnight UTC deadline), the meter stops showing the pass rate and attempt count; it shows only the threshold and a countdown until the result is revealed.
+- Where to put it: reply in chat. It is one constant, `METER_HIDE_HOURS` in `src/config/meter.ts`.
+- Why: the design leaves "last-minute sniping" Open and recommends hiding the meter for the final hours, so a group cannot time a late wave of attempts to tip the day.
+- Agent's recommendation: keep 3 hours.
+
 ### Accessibility pass (blocks nothing; before launch)
 - What is needed: one session testing the app with a screen reader and keyboard only (and reduced motion on), all at once, once the main screens exist.
 - Where to put it: reply in chat with anything that is hard to use.

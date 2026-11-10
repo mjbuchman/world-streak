@@ -17,6 +17,7 @@ vi.mock("@supabase/supabase-js", () => ({ createClient: mocks.createClient }));
 
 import { createSupabaseAdminClient } from "./admin";
 import { createSupabaseBrowserClient } from "./client";
+import { createSupabasePublicClient } from "./public";
 import { createSupabaseServerClient } from "./server";
 
 type CookieMethods = {
@@ -63,6 +64,16 @@ describe("createSupabaseServerClient", () => {
       throw new Error("Cookies can only be modified in a Server Action or Route Handler");
     });
     expect(() => methods.setAll([{ name: "sb", value: "3", options: {} }])).not.toThrow();
+  });
+});
+
+describe("createSupabasePublicClient", () => {
+  it("uses the anon key with no session and no cookies, so its answers are safe to cache publicly", () => {
+    createSupabasePublicClient();
+    expect(mocks.createClient).toHaveBeenCalledWith("http://127.0.0.1:54321", "anon-key", {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    expect(mocks.cookieStore.getAll).not.toHaveBeenCalled();
   });
 });
 

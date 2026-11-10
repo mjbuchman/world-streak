@@ -188,6 +188,18 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - How to change it later: `SUBMIT_REFUSED`, `REFUSED_HEADING` and `SUBMIT_FAILED` in `src/app/play/PlayToday.tsx`.
 - Confirmed by human: follows the human's Nov 9 decision that leaving early is a loss; the exact text is new.
 
+### 2026-11-10 — Hide the meter for the final 3 hours (T18)
+- Choice: from 3 hours before the deadline until the deadline, `GET /api/meter` answers `status: "hidden"` with the threshold and closing time only, and no pass rate or attempt count at all. `METER_HIDE_HOURS = 3` in `src/config/meter.ts`.
+- Reason: the design's Open item "How to handle last-minute sniping" recommends hiding the meter for the final hours; the backlog sets 3 as the configurable placeholder. Leaving the fields out, not nulling them, means a client cannot show them by accident.
+- How to change it later: edit `METER_HIDE_HOURS` (the meter UI, T19, reads the same constant).
+- Confirmed by human: pending (NEEDS_HUMAN).
+
+### 2026-11-10 — The meter before today's game day exists (T18)
+- Choice: if nobody has started today and the day's row does not exist yet, the meter answers `threshold: null`, `attempts: 0`, `passRate: null`, instead of reading the default threshold from `game_settings`.
+- Reason: the endpoint must read only `game_days` and `game_day_counters` in one query (T18). Once the close job (T21) prepares each next day, the row always exists, so this is a short-lived early state.
+- How to change it later: `readMeter` in `src/lib/meter.ts`.
+- Confirmed by human: not needed (implementation detail); recorded for reviewers.
+
 ### 2026-11-10 — Wording for a started, unsubmitted attempt (T91)
 - Choice: "You started today's attempt but haven't finished it here. If it's still open in another tab, finish it there before the day ends. Otherwise it counts as not passed. Come back tomorrow."
 - Reason: since T87 a run has no time limit, so a run still open in another tab can be submitted; the old "You left today's attempt before finishing, so it counted as not passed" could be wrong.

@@ -322,7 +322,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T17 Running counters per game day
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T13, T16
 - Acceptance criteria:
   - [ ] A migration creates `game_day_counters` (`game_date pk references game_days`, `attempts int`, `passes int`, `weighted_attempts numeric`, `weighted_passes numeric`, `updated_at`).
@@ -334,7 +334,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T18 Cached meter endpoint
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T17
 - Acceptance criteria:
   - [ ] `src/config/meter.ts` exports `METER_HIDE_HOURS = 3` and `METER_CACHE_SECONDS = 30`.
