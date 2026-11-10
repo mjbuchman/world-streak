@@ -310,7 +310,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T16 Game settings table
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T11
 - Acceptance criteria:
   - [ ] A migration creates a single-row `game_settings` table (a check constraint enforces a single row) with `default_survival_threshold 0.60`, `pass_target_percentile 0.80`, `pass_target_streak_step 0`, `threshold_streak_step 0`, `percentile_lookback_days 14`, `percentile_min_sample 50`, `default_pass_targets jsonb` (`{"stacking": 10}` placeholder), `new_account_weight 1.0` and `full_weight_after_days 0`.
@@ -939,7 +939,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T79 One shared result-hero style for play and practice
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T74
 - Acceptance criteria:
   - [ ] The result layout, verdict heading (display face, reveal animation, no focus ring), the big score (`.score`, added in T81; placed as in practice, above the heading, on both screens: the human's choice, Nov 10), actions column and `@keyframes reveal` live once (a `ResultHero` component or shared classes in `src/components/ui/`) and are used by both `/play` and `/practice/stacking`.

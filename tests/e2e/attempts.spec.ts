@@ -71,7 +71,7 @@ test("the server scores a submission itself and accepts it only once", async ({ 
     data: { attemptId, inputs: { tapsMs }, score: 99, passed: true },
   });
   expect(submitted.status()).toBe(200);
-  // 10 is the placeholder target ensure_game_day gives a new day (see DECISIONS, T11); a
+  // 10 is the placeholder target a new day takes from game_settings (see DECISIONS, T11, T16); a
   // deliberate miss stacks far fewer rows.
   expect(await submitted.json()).toEqual({ score, passed: false, passTarget: 10 });
 
