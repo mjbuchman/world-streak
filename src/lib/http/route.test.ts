@@ -71,8 +71,20 @@ describe("readJsonBody", () => {
     const result = await readJsonBody(req, 100);
     if (!("response" in result)) throw new Error("expected a response");
     expect(result.response.status).toBe(413);
+    expect(result.response.headers.get("cache-control")).toBe("no-store");
     expect(await result.response.json()).toEqual({ error: "too-large" });
     expect(text).not.toHaveBeenCalled();
+  });
+
+  it("accepts a declared length of exactly the limit", async () => {
+    expect(await readJsonBody(request("{}", { "content-length": "100" }), 100)).toEqual({ body: {} });
+  });
+
+  it("ignores a malformed declared length and still checks the actual size", async () => {
+    expect(await readJsonBody(request("{}", { "content-length": "abc" }), 100)).toEqual({ body: {} });
+    const result = await readJsonBody(request(JSON.stringify("x".repeat(200)), { "content-length": "abc" }), 100);
+    if (!("response" in result)) throw new Error("expected a response");
+    expect(result.response.status).toBe(413);
   });
 
   it("refuses with 413 when the actual size is over the limit, counting bytes not characters", async () => {
@@ -80,6 +92,7 @@ describe("readJsonBody", () => {
     const result = await readJsonBody(request(JSON.stringify("€".repeat(40))), 100);
     if (!("response" in result)) throw new Error("expected a response");
     expect(result.response.status).toBe(413);
+    expect(result.response.headers.get("cache-control")).toBe("no-store");
     expect(await result.response.json()).toEqual({ error: "too-large" });
   });
 
