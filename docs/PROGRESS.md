@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T68 One attempt store and one challenge lookup
-- Blocked tasks: none (T91 waits on wording from the human)
-- Waiting on the human: Docker Desktop stopped starting (Nov 10) after a local `supabase db reset`, so database and e2e work waits; confirm the game_settings values; T91 wording; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T68, then M2 from T17 (needs Docker for the database work).
+- Active task: T17 Running counters per game day
+- Blocked tasks: none
+- Waiting on the human: later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
+- Next: M2 in order after T17 (T18 meter endpoint, T19 meter UI, T20 fake players, T21 daily close). T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-10 — T68 One attempt store and one challenge lookup (PR #39)
+- `supabaseAttemptStore` serves start, submit and `/play`: one `gameDay`, `findAttemptForDay` (with the stored result) and `findAttemptById`; `challengeForGameDay` in the registry; shared types in `src/lib/attempts/types.ts`. T17 and T21 extend this store.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the maintainer check after T16: 3.
+- Notes: the human approved the game_settings values and the T91 wording, restarted Docker and restored `.env.example` (Nov 10).
 
 ### 2026-11-10 — T67 Coverage thresholds for scoring and game-day logic (PR #38)
 - `passes` lives in `src/lib/scoring/pass.ts`; 90% lines and branches for `src/lib/attempts/**`, `gameDay.ts`, `settings.ts`, `PlayToday.tsx` and `StackingPractice.tsx` (all at 100%). The empty `src/lib/streak/**` glob names T21, T34 and T24.

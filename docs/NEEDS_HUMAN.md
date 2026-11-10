@@ -12,18 +12,6 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
-### Wording for an unfinished attempt on /play (blocks T91)
-- What is needed: approve or rewrite this message, shown on `/play` when today's attempt was started but not submitted: "You started today's attempt but haven't finished it here. If it's still open in another tab, finish it there before the day ends. Otherwise it counts as not passed. Come back tomorrow."
-- Where to put it: reply in chat.
-- Why: since runs have no time limit (T87), a run left open in another tab can still be submitted, so today's "You left today's attempt before finishing, so it counted as not passed" can be wrong.
-- Agent's recommendation: the text above.
-
-### Please confirm: launch values in game_settings (blocks nothing)
-- What is needed: a yes, or new values, for: survival threshold 60%; pass target at the 80th percentile of recent scores; no rise in target or threshold as the streak grows (step 0); new accounts count fully from day one; the percentile looks back 14 days and needs at least 50 scores; until then, a Teetering Tower day defaults to a target of row 10 (the T11 placeholder you kept).
-- Where to put it: reply in chat. The values live in one database row an admin can edit, so changing them later needs no code.
-- Why: the design leaves these Open; T16 uses its suggestions, and placeholders where it has none (14 days, 50 scores). Details in `docs/DECISIONS.md` (T16).
-- Agent's recommendation: keep them for M2 testing with fake players and revisit before launch.
-
 ### Accessibility pass (blocks nothing; before launch)
 - What is needed: one session testing the app with a screen reader and keyboard only (and reduced motion on), all at once, once the main screens exist.
 - Where to put it: reply in chat with anything that is hard to use.
@@ -49,6 +37,10 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: do it before the public launch. T52 works without the keys locally (it skips the CAPTCHA and logs a warning).
 
 ## Resolved
+
+- **Launch values in game_settings** (Nov 10, 2026): approved as built in T16 (60% threshold, 80th percentile, step 0, full weight from day one, 14 days / 50 scores, Tower target row 10).
+- **Wording for an unfinished attempt on /play** (Nov 10, 2026): approved as proposed; T91 may proceed.
+- **Docker Desktop and `.env.example`** (Nov 10, 2026): the human restarted Docker (local Supabase is back) and restored `.env.example` after the shutdown.
 
 - **Google OAuth client** (Nov 10, 2026): set up locally; a real Google login reached profile completion and home (T15 done). The setup is in the README. Production needs a second redirect URI for the hosted Supabase project at deployment time (T50).
 

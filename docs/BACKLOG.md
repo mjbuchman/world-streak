@@ -322,7 +322,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T17 Running counters per game day
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T13, T16
 - Acceptance criteria:
   - [ ] A migration creates `game_day_counters` (`game_date pk references game_days`, `attempts int`, `passes int`, `weighted_attempts numeric`, `weighted_passes numeric`, `updated_at`).
@@ -989,7 +989,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] The `PlayStatus` "abandoned" comment in `src/lib/attempts/today.ts` says the same.
   - [ ] `PlayToday.test.tsx` and `tests/e2e/play.spec.ts` check the new text.
   - [ ] `npm run verify` and `npm run test:e2e` pass; the only behavior change is this message.
-- Notes: From the maintainer check after T16 (about 20 lines). When this task touches `today.ts`, also consider a read-only player store for `findAttemptForDay` (taking only `from`), so the player's client cannot reach the service-role methods by type rather than by comment (T68 quality review). Since T87 the server accepts a run until the day's deadline, so a player who opens `/play` in a second tab mid-run is told "You left today's attempt before finishing, so it counted as not passed", yet the first tab can still submit a pass. Scoring and counters are correct; only the message is wrong. needs-human: wording.
+- Notes: From the maintainer check after T16 (about 20 lines). When this task touches `today.ts`, also consider a read-only player store for `findAttemptForDay` (taking only `from`), so the player's client cannot reach the service-role methods by type rather than by comment (T68 quality review). Since T87 the server accepts a run until the day's deadline, so a player who opens `/play` in a second tab mid-run is told "You left today's attempt before finishing, so it counted as not passed", yet the first tab can still submit a pass. Scoring and counters are correct; only the message is wrong. Wording approved by the human (Nov 10; see DECISIONS).
 
 ### T66 Shared route-handler helpers for API endpoints
 - Type: maintenance
@@ -1016,7 +1016,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T68 One attempt store and one challenge lookup for start and submit
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T13 (coordinate with T65, which also edits `src/lib/attempts/store.ts`)
 - Acceptance criteria:
   - [ ] One helper (for example `challengeForGameDay(gameDate, challengeType)` in `src/challenges/registry.ts`) returns the module or throws the unknown-type error, replacing the duplicate checks in `start.ts` and `submit.ts`.
