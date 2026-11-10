@@ -957,6 +957,17 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] The `plain` tone's class names have no trailing space (a small `cx()` helper or similar).
 - Notes: From the T79 round-2 reviews (non-blocking).
 
+### T89 game_settings: tighter checks and a drift guard
+- Type: maintenance
+- Status: todo
+- Depends on: T16
+- Acceptance criteria:
+  - [ ] The two streak-step checks also refuse `'NaN'` and `'Infinity'` (Postgres `numeric` lets them through `>= 0`), with pgTAP cases.
+  - [ ] pgTAP: a signed-in user with no profile row gets `is_admin() = false` and their update affects 0 rows.
+  - [ ] `loadGameSettings` selects its columns by name instead of `*`.
+  - [ ] One shared fixture of boundary rows (accepted and refused) is checked both by pgTAP against the table and by Vitest against `parseGameSettings`, so the zod ranges cannot drift from the check constraints (the pattern of `src/lib/gameDay.fixture.json`).
+- Notes: From the T16 round-2 reviews (non-blocking). Later tasks (T18, T22, T24) should read settings through `loadGameSettings`.
+
 ### T66 Shared route-handler helpers for API endpoints
 - Type: maintenance
 - Status: todo
