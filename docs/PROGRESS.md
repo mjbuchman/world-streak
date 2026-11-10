@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T17 Running counters per game day
+- Active task: T18 Cached meter endpoint
 - Blocked tasks: none
 - Waiting on the human: later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: M2 in order after T17 (T18 meter endpoint, T19 meter UI, T20 fake players, T21 daily close). T91 (approved wording) fits in when convenient.
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-10 — T17 Running counters per game day (PR #40)
+- `game_day_counters` per day; an attempt counts when it starts (after-insert trigger, with the weight stamped on the row as `counted_weight`), a recorded pass adds the same weight in `record_attempt_result`. `/play` now says "Counted as not passed" for a refused result and "Result not sent" when it never arrived (please-confirm in NEEDS_HUMAN).
+- Review rounds: spec 1, quality 1, tests 1. A before-insert counting trigger ran ahead of RLS (caught by the existing pgTAP); split into before (stamp) and after (count). Follow-ups for T21 in its notes (refuse starts on a closed day).
+- Notes: re-applying the edited migration needed a local `supabase db reset` (the human agreed; Docker stayed up). Merges since the maintainer check after T16: 4.
 
 ### 2026-11-10 — T68 One attempt store and one challenge lookup (PR #39)
 - `supabaseAttemptStore` serves start, submit and `/play`: one `gameDay`, `findAttemptForDay` (with the stored result) and `findAttemptById`; `challengeForGameDay` in the registry; shared types in `src/lib/attempts/types.ts`. T17 and T21 extend this store.

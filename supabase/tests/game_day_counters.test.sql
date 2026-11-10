@@ -1,5 +1,5 @@
 begin;
-select plan(30);
+select plan(31);
 
 -- Structure, row-level security and policies.
 select has_table('public', 'game_day_counters', 'game_day_counters table exists');
@@ -9,11 +9,11 @@ select col_type_is('public', 'game_day_counters', 'attempts', 'integer', 'attemp
 select col_type_is('public', 'game_day_counters', 'weighted_passes', 'numeric', 'weighted_passes is numeric');
 select col_type_is('public', 'attempts', 'counted_weight', 'numeric', 'each attempt keeps the weight it was counted with');
 select ok((select relrowsecurity from pg_class where oid = 'public.game_day_counters'::regclass), 'RLS is enabled on game_day_counters');
-select policies_are('public', 'game_day_counters', array['game_day_counters_select_all'], 'counters have only a read policy');
-select policy_roles_are(
-  'public', 'game_day_counters', 'game_day_counters_select_all', array['anon', 'authenticated'],
-  'everyone may read the counters'
-);
+-- Server only (T18): the meter hides the live numbers in the final hours, which only works if
+-- nobody can read the counters directly with the public anon key.
+select policies_are('public', 'game_day_counters', array[]::name[], 'counters have no policies: only the server reads them');
+select table_privs_are('public', 'game_day_counters', 'anon', array[]::text[], 'anonymous visitors have no privileges on the counters');
+select table_privs_are('public', 'game_day_counters', 'authenticated', array[]::text[], 'signed-in players have no privileges on the counters');
 
 -- Fixtures. Results are only accepted for today's game date. The local database may hold real
 -- attempts for today from e2e runs, so they are cleared inside this (rolled back) transaction.
@@ -138,10 +138,9 @@ select throws_ok(
 -- directly: the temporary view would run with its owner's rights and skip row-level security.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
 set local role authenticated;
-select results_eq(
-  $$select attempts from public.game_day_counters where game_date = public.game_date_at(now())$$,
-  $$values (6)$$,
-  'a signed-in player can read the counters'
+select throws_ok(
+  $$select attempts from public.game_day_counters$$,
+  '42501', null, 'a signed-in player cannot read the counters directly'
 );
 select throws_ok(
   $$insert into public.game_day_counters (game_date) values ('2000-01-01')$$,
@@ -153,28 +152,27 @@ select throws_ok(
     values ('00000000-0000-0000-0000-00000000000a', public.game_date_at(now()), 7)$$,
   '42501', null, 'a signed-in player cannot insert an attempt, and the refusal comes from RLS first'
 );
-select lives_ok(
+select throws_ok(
   $$update public.game_day_counters set passes = 0, weighted_passes = 0$$,
-  'setup: a signed-in player tries to reset the passes'
-);
-select results_eq(
-  $$select passes from public.game_day_counters where game_date = public.game_date_at(now())$$,
-  $$values (4)$$,
-  'the player''s update affected 0 rows'
+  '42501', null, 'a signed-in player cannot reset the passes'
 );
 reset role;
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
 set local role anon;
-select results_eq(
-  $$select attempts from public.game_day_counters where game_date = public.game_date_at(now())$$,
-  $$values (6)$$,
-  'an anonymous visitor can read the counters'
+select throws_ok(
+  $$select attempts from public.game_day_counters$$,
+  '42501', null, 'an anonymous visitor cannot read the counters directly'
 );
 select throws_ok(
   $$insert into public.game_day_counters (game_date) values ('2000-01-01')$$,
   '42501', null, 'an anonymous visitor cannot insert counters'
 );
 reset role;
+select results_eq(
+  'select * from counters',
+  $$values (6, 4, 5.5::numeric, 3.5::numeric)$$,
+  'the refused writes changed nothing'
+);
 
 select * from finish();
 rollback;

@@ -322,19 +322,19 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T17 Running counters per game day
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T13, T16
 - Acceptance criteria:
   - [ ] A migration creates `game_day_counters` (`game_date pk references game_days`, `attempts int`, `passes int`, `weighted_attempts numeric`, `weighted_passes numeric`, `updated_at`).
   - [ ] `record_attempt_result` increments the counters in the same transaction, using the submitting user's `profiles.weight` (an upsert, safe under concurrent submits).
-  - [ ] RLS: counters are readable by everyone, with no write policies.
+  - [ ] RLS: counters are readable by everyone, with no write policies. (Reversed in T18: the counters are server-only so the meter's hidden window holds; see DECISIONS, "Hide the meter for the final 3 hours".)
   - [ ] pgTAP: after recording 3 attempts (2 passed) for one date with weights 1, counters read `attempts 3, passes 2, weighted_attempts 3, weighted_passes 2`; a user with weight 0.5 who passes adds 0.5 to both weighted columns; an abandoned (started, never submitted) attempt counts as an attempt that did not pass.
   - [ ] An attempt is counted in `attempts`/`weighted_attempts` when it starts (in the start endpoint's insert, same transaction), and in `passes`/`weighted_passes` when a passing result is recorded, so abandoning cannot hide a fail.
 - Notes: The design requires running counters rather than counting rows on request. Pass rate = `weighted_passes / weighted_attempts` among counted accounts. Human decision (Nov 9, 2026): leaving early is a loss, so started attempts count; this overrides the design doc's "abandoning records nothing" (see DECISIONS). The live meter briefly counts in-flight runs as not passed, which is acceptable. From the T74 spec review: `/play` still calls a refused submission "Not counted" ("…so it was not counted"); once started attempts count, reword it (for example "Counted as not passed").
 
 ### T18 Cached meter endpoint
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T17
 - Acceptance criteria:
   - [ ] `src/config/meter.ts` exports `METER_HIDE_HOURS = 3` and `METER_CACHE_SECONDS = 30`.
@@ -354,6 +354,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
   - [ ] It polls `/api/meter` every 60 s only while `document.visibilityState === "visible"`. When the tab is hidden, it stops polling, and when it becomes visible, it fetches immediately and resumes (tested with fake timers and a mocked `visibilitychange`).
   - [ ] Shown on `/` and below the result on `/play`.
   - [ ] e2e: `/` shows the meter label or the hidden message.
+- Notes: From the T18 spec review: the endpoint's cache (`s-maxage=30, stale-while-revalidate=30`) can serve a reading taken just before the hidden window for up to about 60 s after it starts. That only shows pre-window data, but the UI should switch to hidden by its own clock at `closesAt - METER_HIDE_HOURS`, not only when a reply says `hidden`.
 
 ### T20 Local fake-player seeding script
 - Type: infra
