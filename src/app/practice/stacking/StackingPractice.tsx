@@ -18,9 +18,14 @@ function randomSeed(): number {
 
 export function StackingPractice() {
   const [phase, setPhase] = useState<Phase>({ name: "ready" });
+  // The best row reached on this visit; shown in the HUD of later runs.
+  const [best, setBest] = useState(0);
   const resultRef = useRef<HTMLHeadingElement>(null);
   const play = () => setPhase({ name: "playing", params: paramsFromSeed(randomSeed()) });
-  const finish = ({ result }: FinishedRun) => setPhase({ name: "done", score: result.score });
+  const finish = ({ result }: FinishedRun) => {
+    setBest((previous) => Math.max(previous, result.score));
+    setPhase({ name: "done", score: result.score });
+  };
 
   // The game (which had focus) is gone, so move focus to the result: screen readers announce it,
   // and a Space still held from the last drop lands on the heading rather than on "Play again".
@@ -28,7 +33,7 @@ export function StackingPractice() {
     if (phase.name === "done") resultRef.current?.focus();
   }, [phase.name]);
 
-  if (phase.name === "playing") return <StackingGame params={phase.params} onFinish={finish} />;
+  if (phase.name === "playing") return <StackingGame params={phase.params} best={best} onFinish={finish} />;
 
   if (phase.name === "done") {
     return (

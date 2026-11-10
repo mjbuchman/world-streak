@@ -3,19 +3,33 @@
 import { useEffect, useRef, useState } from "react";
 import { MAX_TAPS, type StackingParams, type StackingResult } from "@/challenges/stacking/engine";
 import { drawStacking, type StackingColors } from "@/challenges/stacking/render";
+import { usePrefersReducedMotion } from "@/components/ui/useReducedMotion";
 import { CHALLENGE_NAMES } from "@/config/challenges";
 import styles from "./StackingGame.module.css";
 import { frameAt } from "./stackingLoop";
 
 export type FinishedRun = { taps: number[]; result: StackingResult };
 
-type Props = { params: StackingParams; onFinish: (run: FinishedRun) => void };
+type Props = {
+  params: StackingParams;
+  onFinish: (run: FinishedRun) => void;
+  /** Today's pass row on /play: shown in the HUD and drawn as a line. */
+  passTarget?: number;
+  /** The best row reached earlier in this visit, shown in practice. */
+  best?: number;
+};
 
 /** Reads the Fresh Sport colour tokens, so the canvas matches the rest of the page. */
 function themeColors(element: HTMLElement): StackingColors {
   const style = getComputedStyle(element);
   const token = (name: string) => style.getPropertyValue(`--fs-color-${name}`).trim();
-  return { empty: token("surface-strong"), tower: token("mint"), moving: token("tangerine") };
+  return {
+    empty: token("surface-strong"),
+    tower: token("mint"),
+    moving: token("tangerine"),
+    falling: token("mint-dark"),
+    target: token("mint-light"),
+  };
 }
 
 /**
@@ -23,14 +37,17 @@ function themeColors(element: HTMLElement): StackingColors {
  * Space) are stamped with the elapsed ms of the input event; every animation frame replays
  * them through the engine and draws the result.
  */
-export function StackingGame({ params, onFinish }: Props) {
+export function StackingGame({ params, onFinish, passTarget: target, best = 0 }: Props) {
+  // pass_target is numeric; a fractional target (say 10.5) means reaching row 11.
+  const passTarget = target === undefined ? undefined : Math.ceil(target);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [blocks, setBlocks] = useState(0);
-  // The latest callback, so a parent re-render never restarts the run.
-  const onFinishRef = useRef(onFinish);
+  const [row, setRow] = useState(1);
+  const reducedMotion = usePrefersReducedMotion();
+  // The latest values, read by the frame loop, so a parent re-render never restarts the run.
+  const latest = useRef({ onFinish, passTarget, reducedMotion });
   useEffect(() => {
-    onFinishRef.current = onFinish;
-  }, [onFinish]);
+    latest.current = { onFinish, passTarget, reducedMotion };
+  }, [onFinish, passTarget, reducedMotion]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -76,11 +93,12 @@ export function StackingGame({ params, onFinish }: Props) {
       const pixelHeight = Math.round(height * devicePixelRatio);
       if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
       if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
-      drawStacking(ctx, { params, result, elapsedMs, width, height, devicePixelRatio, colors });
-      setBlocks(result.score);
+      const { passTarget, reducedMotion } = latest.current;
+      drawStacking(ctx, { params, result, elapsedMs, width, height, devicePixelRatio, colors, passTarget, reducedMotion });
+      setRow(result.moving?.row ?? result.score);
       if (done) {
         finished = true;
-        onFinishRef.current({ taps: [...taps], result });
+        latest.current.onFinish({ taps: [...taps], result });
         return;
       }
       frameId = requestAnimationFrame(frame);
@@ -100,9 +118,16 @@ export function StackingGame({ params, onFinish }: Props) {
   return (
     // data-game-running lets the page shell hide its back button while the run is on.
     <div className={styles.game} data-game-running="">
-      <p role="status" className={styles.count}>
-        Blocks: {blocks}
-      </p>
+      <div className={styles.hud}>
+        <p role="status" className={styles.count}>
+          {`Row ${row}`}
+        </p>
+        {passTarget !== undefined ? (
+          <p className={styles.goal}>{`Row ${passTarget} to pass`}</p>
+        ) : (
+          best > 0 && <p className={styles.goal}>{`Best: row ${best}`}</p>
+        )}
+      </div>
       <canvas
         ref={canvasRef}
         tabIndex={-1}

@@ -53,14 +53,73 @@ describe("StackingGame", () => {
     expect(result).toEqual(simulate(params, taps));
   });
 
-  it("shows the block count live", () => {
+  it("shows the row in play live", () => {
     render(<StackingGame params={params} onFinish={vi.fn()} />);
-    expect(screen.getByRole("status").textContent).toBe("Blocks: 0");
+    expect(screen.getByRole("status").textContent).toBe("Row 1");
     advance(900);
     pressSpace();
     advance(20);
     // Row 1 rests on the floor, so the first tap always counts.
-    expect(screen.getByRole("status").textContent).toBe("Blocks: 1");
+    expect(screen.getByRole("status").textContent).toBe("Row 2");
+  });
+
+  it("shows today's target on /play, and draws its line", () => {
+    render(<StackingGame params={params} onFinish={vi.fn()} passTarget={10} />);
+    expect(screen.getByText("Row 10 to pass")).toBeTruthy();
+    advance(20);
+    expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ passTarget: 10 });
+  });
+
+  it("rounds a fractional target up, for the HUD and the line", () => {
+    // 10.2 rounds to 10 but up to 11: reaching row 10 would not be enough.
+    render(<StackingGame params={params} onFinish={vi.fn()} passTarget={10.2} />);
+    expect(screen.getByText("Row 11 to pass")).toBeTruthy();
+    advance(20);
+    expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ passTarget: 11 });
+  });
+
+  it("gives each part of the board its Fresh Sport colour token", () => {
+    const tokens: Record<string, string> = {
+      "--fs-color-surface-strong": "surface-strong",
+      "--fs-color-mint": "mint",
+      "--fs-color-tangerine": "tangerine",
+      "--fs-color-mint-dark": "mint-dark",
+      "--fs-color-mint-light": "mint-light",
+    };
+    vi.spyOn(window, "getComputedStyle").mockReturnValue({
+      getPropertyValue: (name: string) => ` ${tokens[name] ?? ""} `,
+    } as CSSStyleDeclaration);
+    render(<StackingGame params={params} onFinish={vi.fn()} />);
+    advance(20);
+    expect(drawStacking.mock.calls.at(-1)![1].colors).toEqual({
+      empty: "surface-strong",
+      tower: "mint",
+      moving: "tangerine",
+      falling: "mint-dark",
+      target: "mint-light",
+    });
+  });
+
+  it("shows the best row of this visit in practice, once there is one", () => {
+    const { rerender } = render(<StackingGame params={params} onFinish={vi.fn()} best={0} />);
+    expect(screen.queryByText(/Best/)).toBeNull();
+    rerender(<StackingGame params={params} onFinish={vi.fn()} best={7} />);
+    expect(screen.getByText("Best: row 7")).toBeTruthy();
+    expect(screen.queryByText(/to pass/)).toBeNull();
+  });
+
+  it("tells the renderer to skip the falling and bounce animations under reduced motion", () => {
+    for (const reduced of [false, true]) {
+      vi.stubGlobal("matchMedia", (query: string) => ({
+        matches: query === "(prefers-reduced-motion: reduce)" ? reduced : false,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }));
+      render(<StackingGame params={params} onFinish={vi.fn()} />);
+      advance(20);
+      expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ reducedMotion: reduced });
+      cleanup();
+    }
   });
 
   it("finishes as soon as a row misses", () => {
@@ -77,6 +136,8 @@ describe("StackingGame", () => {
     advance(20);
     expect(onFinish).toHaveBeenCalledTimes(1);
     expect(onFinish.mock.calls[0][0].result).toMatchObject({ score: 2, endReason: "miss" });
+    // With no row in play, the HUD settles on the rows stacked.
+    expect(screen.getByRole("status").textContent).toBe("Row 2");
   });
 
   it("draws every frame with the engine state for that moment", () => {

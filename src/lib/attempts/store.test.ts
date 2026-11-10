@@ -52,12 +52,12 @@ describe("supabaseAttemptStore", () => {
     expect(calls).toEqual([["rpc", "ensure_game_day", { d: "2026-11-08" }]]);
   });
 
-  it("challengeTypeFor reads the day's challenge type", async () => {
-    const { store, calls } = fakeDb({ data: { challenge_type: "stacking" }, error: null });
-    expect(await store.challengeTypeFor("2026-11-08")).toBe("stacking");
+  it("gameDayFor reads the day's challenge type and pass target (numeric arrives as a string)", async () => {
+    const { store, calls } = fakeDb({ data: { challenge_type: "stacking", pass_target: "10" }, error: null });
+    expect(await store.gameDayFor("2026-11-08")).toEqual({ challengeType: "stacking", passTarget: 10 });
     expect(calls).toEqual([
       ["from", "game_days"],
-      ["select", "challenge_type"],
+      ["select", "challenge_type, pass_target"],
       ["eq", "game_date", "2026-11-08"],
       ["single"],
     ]);
@@ -99,7 +99,7 @@ describe("supabaseAttemptStore", () => {
     const { store } = fakeDb(failure);
     await expect(store.hasProfile("u1")).rejects.toThrow(/connection refused/);
     await expect(store.ensureGameDay("2026-11-08")).rejects.toThrow(/connection refused/);
-    await expect(store.challengeTypeFor("2026-11-08")).rejects.toThrow(/connection refused/);
+    await expect(store.gameDayFor("2026-11-08")).rejects.toThrow(/connection refused/);
     await expect(store.findAttempt("u1", "2026-11-08")).rejects.toThrow(/connection refused/);
     await expect(store.insertAttempt({ userId: "u1", gameDate: "2026-11-08", seed: 1 })).rejects.toThrow(/connection refused/);
   });

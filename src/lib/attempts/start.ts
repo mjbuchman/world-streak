@@ -6,7 +6,8 @@ export type AttemptStore = {
   hasProfile: (userId: string) => Promise<boolean>;
   /** Creates the game day with the launch defaults if it does not exist yet. */
   ensureGameDay: (gameDate: string) => Promise<void>;
-  challengeTypeFor: (gameDate: string) => Promise<string>;
+  /** The day's challenge and pass target (a game day exists once ensureGameDay has run). */
+  gameDayFor: (gameDate: string) => Promise<{ challengeType: string; passTarget: number }>;
   findAttempt: (userId: string, gameDate: string) => Promise<{ submitted: boolean } | null>;
   /** "duplicate" when the player already has an attempt that day (the unique constraint). */
   insertAttempt: (attempt: { userId: string; gameDate: string; seed: number }) => Promise<{ id: string } | "duplicate">;
@@ -15,7 +16,7 @@ export type AttemptStore = {
 export type StartResult =
   | {
       status: 200;
-      body: { attemptId: string; gameDate: string; challengeType: string; seed: number; params: unknown };
+      body: { attemptId: string; gameDate: string; challengeType: string; seed: number; params: unknown; passTarget: number };
     }
   | { status: 403; body: { error: "profile-required" } }
   | { status: 409; body: { error: "already-started"; submitted: boolean } };
@@ -43,7 +44,7 @@ export async function startAttempt({ userId, now, store, randomSeed }: StartInpu
 
   const gameDate = gameDateAt(now);
   await store.ensureGameDay(gameDate);
-  const challengeType = await store.challengeTypeFor(gameDate);
+  const { challengeType, passTarget } = await store.gameDayFor(gameDate);
   if (!isChallengeType(challengeType)) throw new Error(`Game day ${gameDate} has unknown challenge type "${challengeType}"`);
 
   const existing = await store.findAttempt(userId, gameDate);
@@ -59,6 +60,14 @@ export async function startAttempt({ userId, now, store, randomSeed }: StartInpu
   }
   return {
     status: 200,
-    body: { attemptId: inserted.id, gameDate, challengeType, seed, params: CHALLENGES[challengeType].paramsFromSeed(seed) },
+    body: {
+      attemptId: inserted.id,
+      gameDate,
+      challengeType,
+      seed,
+      params: CHALLENGES[challengeType].paramsFromSeed(seed),
+      // Shown during the run (the target line); the server still decides pass or fail on submit.
+      passTarget,
+    },
   };
 }

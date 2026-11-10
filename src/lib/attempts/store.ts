@@ -25,10 +25,11 @@ export function supabaseAttemptStore(db: SupabaseClient): AttemptStore {
       if (error) fail("ensure_game_day", error);
     },
 
-    async challengeTypeFor(gameDate) {
-      const { data, error } = await db.from("game_days").select("challenge_type").eq("game_date", gameDate).single();
+    async gameDayFor(gameDate) {
+      const { data, error } = await db.from("game_days").select("challenge_type, pass_target").eq("game_date", gameDate).single();
       if (error) fail("Game day lookup", error);
-      return (data as { challenge_type: string }).challenge_type;
+      const row = data as { challenge_type: string; pass_target: number | string };
+      return { challengeType: row.challenge_type, passTarget: Number(row.pass_target) };
     },
 
     async findAttempt(userId, gameDate) {

@@ -4,7 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { paramsFromSeed, type StackingParams, type StackingResult } from "@/challenges/stacking/engine";
 
-type GameProps = { params: StackingParams; onFinish: (run: { taps: number[]; result: StackingResult }) => void };
+type GameProps = {
+  params: StackingParams;
+  onFinish: (run: { taps: number[]; result: StackingResult }) => void;
+  best?: number;
+};
 const games = vi.hoisted(() => [] as GameProps[]);
 vi.mock("@/components/stacking/StackingGame", () => ({
   StackingGame: (props: GameProps) => {
@@ -66,6 +70,19 @@ describe("StackingPractice", () => {
     expect(screen.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/");
     await userEvent.click(screen.getByRole("button", { name: "Play again" }));
     expect(games.at(-1)!.params).toEqual(paramsFromSeed(22));
+  });
+
+  it("carries the best row of this visit into each new run", async () => {
+    render(<StackingPractice />);
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    expect(games.at(-1)!.best).toBe(0);
+    finish(7);
+    await userEvent.click(screen.getByRole("button", { name: "Play again" }));
+    expect(games.at(-1)!.best).toBe(7);
+    // A worse run keeps the best.
+    finish(3);
+    await userEvent.click(screen.getByRole("button", { name: "Play again" }));
+    expect(games.at(-1)!.best).toBe(7);
   });
 
   it("moves focus to the result when a run ends, so it is announced and Space cannot restart", async () => {
