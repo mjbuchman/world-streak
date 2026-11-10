@@ -5,9 +5,10 @@
 }
 
 .count {
-  font-family: var(--md-sys-typescale-title-large-font);
-  font-size: var(--md-sys-typescale-title-large-size);
-  line-height: var(--md-sys-typescale-title-large-line-height);
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-title);
+  color: var(--fs-color-mint);
   font-variant-numeric: tabular-nums;
 }
 
@@ -17,7 +18,7 @@
   width: min(100%, calc(70dvh * 7 / 15));
   margin-inline: auto;
   aspect-ratio: 7 / 15;
-  border-radius: var(--md-sys-shape-corner-medium);
+  border-radius: var(--fs-radius-cell);
   touch-action: none;
   user-select: none;
   cursor: pointer;

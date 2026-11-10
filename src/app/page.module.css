@@ -1,54 +1,47 @@
-.main {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: var(--space-8) var(--space-4);
+.intro {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
+  padding-top: var(--space-6);
 }
 
 .title {
-  font-family: var(--md-sys-typescale-headline-large-font);
-  font-size: var(--md-sys-typescale-headline-large-size);
-  line-height: var(--md-sys-typescale-headline-large-line-height);
-  font-weight: var(--md-sys-typescale-headline-large-weight);
-  color: var(--md-sys-color-primary);
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: clamp(40px, 11vw, var(--fs-text-display));
+  line-height: 1;
+  color: var(--fs-color-mint);
 }
 
 .pitch {
-  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--fs-text-title);
+  line-height: 1.4;
+  color: var(--fs-color-text-muted);
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-4);
+.eyebrow {
+  font-size: var(--fs-text-label);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fs-color-text-muted);
 }
 
-/* The main action: a Material 3 filled button, as a link. */
-.play {
+.challenge {
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-headline);
+  line-height: 1.05;
+}
+
+.challengeText {
+  color: var(--fs-color-text);
+}
+
+.practice {
+  align-self: center;
+  min-height: 48px;
   display: inline-flex;
   align-items: center;
-  min-height: 48px;
-  padding: 0 var(--space-6);
-  border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-  font-size: var(--md-sys-typescale-label-large-size);
-  font-weight: var(--md-sys-typescale-label-large-weight);
-  text-decoration: none;
-}
-
-.play:hover {
-  background: color-mix(in srgb, var(--md-sys-color-primary), var(--md-sys-color-on-primary) 8%);
-}
-
-.play:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: 2px;
-}
-
-.link {
-  color: var(--md-sys-color-primary);
+  font-weight: 700;
 }

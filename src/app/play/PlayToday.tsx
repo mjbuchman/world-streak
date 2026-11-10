@@ -5,6 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import type { StackingParams } from "@/challenges/stacking/engine";
 import { blocks } from "@/components/stacking/blocks";
 import { type FinishedRun, StackingGame } from "@/components/stacking/StackingGame";
+import { Button } from "@/components/ui/Button";
+import { Confetti } from "@/components/ui/Confetti";
+import { LinkButton } from "@/components/ui/LinkButton";
+import { Spinner } from "@/components/ui/Spinner";
+import { Surface } from "@/components/ui/Surface";
 import type { PlayStatus } from "@/lib/attempts/today";
 import styles from "./play.module.css";
 
@@ -19,7 +24,8 @@ type Phase =
   | { name: "starting" }
   | { name: "playing"; attemptId: string; params: StackingParams }
   | { name: "checking" }
-  | { name: "result"; verdict: Verdict }
+  // fresh: the verdict arrived in this visit (celebrated), not loaded on a later visit (not replayed).
+  | { name: "result"; verdict: Verdict; fresh: boolean }
   | { name: "abandoned" }
   | { name: "failed"; message: string };
 
@@ -36,7 +42,7 @@ const SUBMIT_REFUSED: Record<string, string> = {
 };
 
 function initialPhase(status: PlayStatus): Phase {
-  if (status.kind === "submitted") return { name: "result", verdict: status };
+  if (status.kind === "submitted") return { name: "result", verdict: status, fresh: false };
   if (status.kind === "abandoned") return { name: "abandoned" };
   return { name: "ready" };
 }
@@ -83,7 +89,7 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
         body: JSON.stringify({ attemptId, inputs: { tapsMs: taps } }),
       });
       const body: SubmitBody = await response.json();
-      if (!("error" in body)) return setPhase({ name: "result", verdict: body });
+      if (!("error" in body)) return setPhase({ name: "result", verdict: body, fresh: true });
       // Already recorded (perhaps from another tab): the refreshed page shows the stored result.
       if (body.error === "already-submitted") return router.refresh();
       return setPhase({ name: "failed", message: SUBMIT_REFUSED[body.error] ?? SUBMIT_FAILED });
@@ -98,57 +104,75 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
 
     case "checking":
       return (
-        <p role="status" className={styles.note}>
-          Checking your result
-        </p>
+        <div className={styles.checking}>
+          <Spinner label="Checking your result" visibleLabel />
+        </div>
       );
 
     case "result": {
       const { score, passed, passTarget } = phase.verdict;
       return (
-        <section className={styles.panel}>
-          <h2 ref={headingRef} tabIndex={-1} className={styles.outcome}>
+        <section className={styles.result}>
+          {passed && phase.fresh && <Confetti />}
+          <h2 ref={headingRef} tabIndex={-1} className={`${styles.verdict} ${passed ? styles.passed : styles.notPassed}`}>
             {passed ? "Passed" : "Not this time"}
           </h2>
-          <p>
+          <p className={styles.summary}>
             You stacked {blocks(score)}. Today&apos;s target was {blocks(passTarget)}.
           </p>
-          <p className={styles.note}>Come back tomorrow for the next challenge.</p>
+          <p className={styles.note}>
+            {passed ? "You helped keep the streak alive. " : ""}Come back tomorrow for the next challenge.
+          </p>
+          <div className={styles.resultActions}>
+            <LinkButton href="/" variant="secondary">
+              Back to home
+            </LinkButton>
+          </div>
         </section>
       );
     }
 
     case "abandoned":
       return (
-        <p className={styles.note}>You left today&apos;s attempt before finishing. It was not counted. Come back tomorrow.</p>
+        <Surface>
+          <p>You left today&apos;s attempt before finishing, so it counted as not passed. Come back tomorrow.</p>
+          <LinkButton href="/" variant="secondary">
+            Back to home
+          </LinkButton>
+        </Surface>
       );
 
     case "failed":
       return (
-        <section className={styles.panel}>
-          <h2 ref={headingRef} tabIndex={-1} className={styles.outcome}>
+        <section className={styles.result}>
+          <h2 ref={headingRef} tabIndex={-1} className={`${styles.verdict} ${styles.notPassed}`}>
             Not counted
           </h2>
           <p role="alert">{phase.message}</p>
+          <div className={styles.resultActions}>
+            <LinkButton href="/" variant="secondary">
+              Back to home
+            </LinkButton>
+          </div>
         </section>
       );
 
     default:
       return (
-        <section className={styles.panel}>
+        <Surface>
           <p>
-            You get one scored attempt today. Pressing Start uses it: if you leave before you finish, it is not counted
-            and you cannot try again until tomorrow.
+            You get one scored attempt today. Pressing Start uses it: if you leave before you finish, it counts as not
+            passed and you cannot try again until tomorrow.
           </p>
           {phase.name === "ready" && phase.error && (
             <p role="alert" className={styles.error}>
               {phase.error}
             </p>
           )}
-          <button type="button" className={styles.button} onClick={start} disabled={phase.name === "starting"}>
-            {phase.name === "starting" ? "Starting" : "Start"}
-          </button>
-        </section>
+          <Button onClick={start} loading={phase.name === "starting"}>
+            Start
+          </Button>
+        </Surface>
       );
   }
 }

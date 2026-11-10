@@ -5,5 +5,5 @@ import type { ChallengeType } from "@/challenges/shared/types";
  * (DESIGN.md); see docs/DECISIONS.md.
  */
 export const CHALLENGE_NAMES: Record<ChallengeType, string> = {
-  stacking: "Tower",
+  stacking: "Teetering Tower",
 };

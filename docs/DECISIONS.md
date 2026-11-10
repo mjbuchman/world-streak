@@ -91,7 +91,7 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Choice: "Tower", defined once in `CHALLENGE_NAMES` in `src/config/challenges.ts`.
 - Reason: the design asks for an original name and art, not those of existing stacking games; the backlog suggested "Tower". The art is plain flat blocks in the Material color roles.
 - How to change it later: edit `CHALLENGE_NAMES.stacking`; the practice page, home link and canvas label follow it.
-- Confirmed by human: pending; judge it at the M1 play-test.
+- Confirmed by human: changed (Nov 9): the name is "Teetering Tower" and the look is Fresh Sport; see "Human decisions at the M1 play-test" below.
 
 ### 2026-11-09 — Deadline and survival threshold in code (T11)
 - Choice: midnight UTC as `DEADLINE_UTC_HOUR = 0` in `src/config/schedule.ts`, repeated as `public.deadline_utc_hour()` in the game-days migration because the close job runs in Postgres; a 60% survival threshold set by `ensure_game_day`.

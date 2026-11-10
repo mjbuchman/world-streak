@@ -1,95 +1,71 @@
-.main {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: var(--space-6) var(--space-4);
+.actions {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.title {
-  font-family: var(--md-sys-typescale-headline-medium-font);
-  font-size: var(--md-sys-typescale-headline-medium-size);
-  line-height: var(--md-sys-typescale-headline-medium-line-height);
-  font-weight: var(--md-sys-typescale-headline-medium-weight);
-}
-
-.panel {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
 .note {
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--fs-color-text-muted);
 }
 
 .error {
-  color: var(--md-sys-color-error);
+  color: var(--fs-color-error);
 }
 
-.outcome {
-  font-family: var(--md-sys-typescale-headline-small-font);
-  font-size: var(--md-sys-typescale-headline-small-size);
-  line-height: var(--md-sys-typescale-headline-small-line-height);
-  font-weight: var(--md-sys-typescale-headline-small-weight);
+.checking {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-12) 0;
+}
+
+/* The result: a big verdict that pops in, with confetti behind it on a pass. */
+.result {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-4) var(--space-6);
+  text-align: center;
+}
+
+.verdict {
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: clamp(44px, 14vw, var(--fs-text-display));
+  line-height: 1;
+  animation: reveal var(--fs-duration-slow) var(--fs-ease-spring);
+}
+
+.passed {
+  color: var(--fs-color-mint);
+  text-shadow: 0 0 28px color-mix(in srgb, var(--fs-color-mint) 45%, transparent);
+}
+
+.notPassed {
+  color: var(--fs-color-text);
 }
 
 /* Focus is moved here in code when a run ends; it cannot be reached with Tab, so no ring. */
-.outcome:focus {
+.verdict:focus {
   outline: none;
   box-shadow: none;
 }
 
-.links {
+.summary {
+  font-size: var(--fs-text-title);
+}
+
+.resultActions {
   display: flex;
-  gap: var(--space-4);
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
 }
 
-.link {
-  color: var(--md-sys-color-primary);
-}
-
-/* Material 3 filled button with a state layer. */
-.button {
-  min-height: 48px;
-  padding: 0 var(--space-6);
-  border: none;
-  border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-  font: inherit;
-  font-size: var(--md-sys-typescale-label-large-size);
-  font-weight: var(--md-sys-typescale-label-large-weight);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.button::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--md-sys-color-on-primary);
-  opacity: 0;
-  transition: opacity var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
-}
-
-.button:hover::after {
-  opacity: 0.08;
-}
-
-.button:active::after {
-  opacity: 0.1;
-}
-
-.button:disabled {
-  cursor: default;
-  opacity: 0.38;
-}
-
-.button:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: 2px;
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
 }

@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BackButton } from "./BackButton";
 import { Button } from "./Button";
+import { Confetti } from "./Confetti";
 import { LinkButton } from "./LinkButton";
 import { PageShell } from "./PageShell";
 import { Spinner } from "./Spinner";
@@ -158,6 +159,32 @@ describe("Spinner", () => {
     render(<Spinner />);
     expect(screen.getByRole("status").querySelector("[data-spinner]")!.getAttribute("data-motion")).toBe("still");
     expect(screen.getByRole("status").textContent).toBe("Loading");
+  });
+});
+
+describe("Spinner with a visible label", () => {
+  it("shows the label next to the ring, announced once", () => {
+    stubReducedMotion(false);
+    render(<Spinner label="Checking your result" visibleLabel />);
+    const status = screen.getByRole("status");
+    expect(status.textContent).toBe("Checking your result");
+    expect(status.querySelector(".visually-hidden")).toBeNull();
+  });
+});
+
+describe("Confetti", () => {
+  it("drops a burst of falling blocks, hidden from screen readers", () => {
+    stubReducedMotion(false);
+    const { container } = render(<Confetti />);
+    const burst = container.firstElementChild!;
+    expect(burst.getAttribute("aria-hidden")).toBe("true");
+    expect(burst.children.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it("draws nothing when the player prefers reduced motion", () => {
+    stubReducedMotion(true);
+    const { container } = render(<Confetti />);
+    expect(container.firstElementChild).toBeNull();
   });
 });
 

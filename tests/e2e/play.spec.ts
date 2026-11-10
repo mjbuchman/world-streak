@@ -16,6 +16,7 @@ test("a signed-out visitor is asked to sign in, or to practice", async ({ page }
   await expect(main.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/signin");
   await expect(main.getByRole("link", { name: "Practice" })).toHaveAttribute("href", "/practice/stacking");
   await expect(main.getByRole("button", { name: "Start" })).toHaveCount(0);
+  await expect(main.getByRole("link", { name: "Back", exact: true })).toHaveAttribute("href", "/");
 });
 
 test("a signed-in player without a profile is sent to complete it", async ({ page, accounts }) => {
@@ -40,9 +41,13 @@ test("a player plays today's attempt once and sees the server's result, also aft
   await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
   await page.goto("/play");
   await expect(page.getByText(/one scored attempt today/)).toBeVisible();
+  // A way back before the run, none during it (leaving mid-run would lose the attempt).
+  const back = page.getByRole("main").getByRole("link", { name: "Back", exact: true });
+  await expect(back).toHaveAttribute("href", "/");
   await page.clock.pauseAt(new Date("2026-01-01T00:00:30Z"));
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByRole("status")).toHaveText("Blocks: 0");
+  await expect(back).toBeHidden();
 
   // The seed is random, so the taps cannot be aimed. Two quick drops, then nothing: either
   // the second row misses, or the third row drops off after the idle limit (8 s). Either way
@@ -79,6 +84,8 @@ test("a player who left an attempt unfinished cannot start again", async ({ page
   expect((await page.request.post("/api/attempts/start")).status()).toBe(200);
 
   await page.goto("/play");
-  await expect(page.getByText("You left today's attempt before finishing. It was not counted. Come back tomorrow.")).toBeVisible();
+  await expect(
+    page.getByText("You left today's attempt before finishing, so it counted as not passed. Come back tomorrow."),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Start" })).toHaveCount(0);
 });

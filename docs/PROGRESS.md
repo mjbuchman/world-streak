@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1b Look, feel and Tower rework (M1 done apart from T15; play-tested Nov 9, 2026)
-- Active task: T76 Teetering Tower grid engine
+- Active task: T74 Restyle home, play and practice in Fresh Sport
 - Blocked tasks: T15 (needs the human's Google OAuth client)
 - Waiting on the human: the Google OAuth client; the second play-test after M1b; see docs/NEEDS_HUMAN.md
 - Next: M1b in order T73, T76, T74, T75, T77 (T76 has no UI dependency and can go early); then the second play-test, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds) and T66 (shared route helpers, before T18).
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-09 — T76 Teetering Tower grid engine (PR #26)
+- Column-grid stacker in `src/challenges/stacking/engine.ts` (7 x 15, forced narrowing at rows 6 and 11, top row wins, no time limit, an untapped row drops off after 8 s); tuned with `player.ts` (decent ±80 ms reaches about 10); plain grid renderer and loop.
+- Review rounds: spec 1, quality 1, tests 1.
+- Notes: replay with `simulate(params, taps)` (nowMs defaults to Infinity, always ends); the live game passes its clock. The idle-drop rule and the speed await the human's second play-test.
 
 ### 2026-11-09 — T73 Fresh Sport design system and app shell (PR #25)
 - Hand-written Fresh Sport tokens (`src/app/tokens.css`, palette mirrored in `src/lib/theme/palette.ts` with contrast and drift tests); Unbounded and Manrope; shared components in `src/components/ui/`; the wordmark header. Legacy `--md-*` names are aliased until T74/T75.
