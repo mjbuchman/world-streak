@@ -24,7 +24,8 @@ type Phase =
   | { name: "starting" }
   | { name: "playing"; attemptId: string; params: StackingParams }
   | { name: "checking" }
-  | { name: "result"; verdict: Verdict }
+  // fresh: the verdict arrived in this visit (celebrated), not loaded on a later visit (not replayed).
+  | { name: "result"; verdict: Verdict; fresh: boolean }
   | { name: "abandoned" }
   | { name: "failed"; message: string };
 
@@ -41,7 +42,7 @@ const SUBMIT_REFUSED: Record<string, string> = {
 };
 
 function initialPhase(status: PlayStatus): Phase {
-  if (status.kind === "submitted") return { name: "result", verdict: status };
+  if (status.kind === "submitted") return { name: "result", verdict: status, fresh: false };
   if (status.kind === "abandoned") return { name: "abandoned" };
   return { name: "ready" };
 }
@@ -88,7 +89,7 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
         body: JSON.stringify({ attemptId, inputs: { tapsMs: taps } }),
       });
       const body: SubmitBody = await response.json();
-      if (!("error" in body)) return setPhase({ name: "result", verdict: body });
+      if (!("error" in body)) return setPhase({ name: "result", verdict: body, fresh: true });
       // Already recorded (perhaps from another tab): the refreshed page shows the stored result.
       if (body.error === "already-submitted") return router.refresh();
       return setPhase({ name: "failed", message: SUBMIT_REFUSED[body.error] ?? SUBMIT_FAILED });
@@ -112,7 +113,7 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
       const { score, passed, passTarget } = phase.verdict;
       return (
         <section className={styles.result}>
-          {passed && <Confetti />}
+          {passed && phase.fresh && <Confetti />}
           <h2 ref={headingRef} tabIndex={-1} className={`${styles.verdict} ${passed ? styles.passed : styles.notPassed}`}>
             {passed ? "Passed" : "Not this time"}
           </h2>

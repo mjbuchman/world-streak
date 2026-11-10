@@ -163,6 +163,11 @@ describe("StackingGame", () => {
     expect(second.mock.calls[0][0].taps).toEqual([930]);
   });
 
+  it("marks itself as a running game, so the page can hide its back button", () => {
+    const { container } = render(<StackingGame params={params} onFinish={vi.fn()} />);
+    expect(container.querySelector("[data-game-running]")).not.toBeNull();
+  });
+
   it("takes keyboard focus when it starts, so focus is not lost when the Start button goes", () => {
     render(<StackingGame params={params} onFinish={vi.fn()} />);
     expect(document.activeElement).toBe(screen.getByRole("img", { name: /tower/i }));

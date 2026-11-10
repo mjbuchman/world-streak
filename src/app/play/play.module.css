@@ -39,7 +39,7 @@
 
 .passed {
   color: var(--fs-color-mint);
-  text-shadow: 0 0 28px rgba(52, 245, 181, 0.45);
+  text-shadow: 0 0 28px color-mix(in srgb, var(--fs-color-mint) 45%, transparent);
 }
 
 .notPassed {

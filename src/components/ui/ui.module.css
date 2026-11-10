@@ -206,6 +206,14 @@
   gap: var(--space-4);
 }
 
+/*
+ * No way back during a running game (UI_GUIDELINES rule 8): on /play leaving early is a loss,
+ * so a back button beside the board would invite a costly mis-tap. It returns with the result.
+ */
+.shell:has([data-game-running]) .back {
+  display: none;
+}
+
 .shellTitle {
   font-family: var(--fs-font-display);
   font-weight: 800;

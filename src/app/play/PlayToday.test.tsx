@@ -174,14 +174,27 @@ describe("PlayToday", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("celebrates a pass with confetti, but not a fail", () => {
-    const passed = render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
-    expect(passed.container.querySelector('[aria-hidden="true"] > span')).not.toBeNull();
+  it("celebrates a pass that just arrived with confetti, but not a fail", async () => {
+    respond(json(200, started), json(200, { score: 12, passed: true, passTarget: 10 }));
+    await startRun();
+    await finish([900, 1700], 2);
+    await screen.findByRole("heading", { name: "Passed" });
+    expect(document.querySelector("[data-confetti]")).not.toBeNull();
     expect(screen.getByText(/You helped keep the streak alive/)).toBeTruthy();
     cleanup();
-    const failed = render(<PlayToday initial={{ kind: "submitted", score: 3, passed: false, passTarget: 10 }} />);
-    expect(failed.container.querySelector('[aria-hidden="true"] > span')).toBeNull();
+
+    respond(json(200, started), json(200, { score: 1, passed: false, passTarget: 10 }));
+    await startRun();
+    await finish([900], 1);
+    await screen.findByRole("heading", { name: "Not this time" });
+    expect(document.querySelector("[data-confetti]")).toBeNull();
     expect(screen.queryByText(/You helped keep the streak alive/)).toBeNull();
+  });
+
+  it("does not replay the confetti when today's pass is shown on a later visit", () => {
+    const { container } = render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
+    expect(screen.getByRole("heading", { name: "Passed" })).toBeTruthy();
+    expect(container.querySelector("[data-confetti]")).toBeNull();
   });
 
   it("offers a way back home from every finished state", () => {

@@ -24,7 +24,7 @@ const PIECES = [
 export function Confetti() {
   if (usePrefersReducedMotion()) return null;
   return (
-    <div aria-hidden="true" className={styles.confetti}>
+    <div aria-hidden="true" data-confetti="" className={styles.confetti}>
       {PIECES.map((piece, i) => (
         <span
           key={i}

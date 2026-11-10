@@ -852,7 +852,17 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Acceptance criteria:
   - [ ] The sign-in helper in `tests/e2e/profile.spec.ts` (and any shared sign-in, sign-up or Google helper) waits until the page has hydrated before typing or clicking (for example wait for a hydration marker or for the submit button to be enabled by client code), so typed values are not wiped and clicks are not lost on a cold dev-server compile. No timeouts are simply raised.
   - [ ] `npm run test:e2e:local` passes 3 full runs in a row from a cold `.next-e2e` folder.
-- Notes: From the T73 test review: on cold compiles, "Continue with Google goes to Google…" lost its click and "an underage player completing their profile…" had its typed fields cleared; a third run passed 30/30. Fits with T62 (shared e2e helpers).
+- Notes: From the T73 test review: on cold compiles, "Continue with Google goes to Google…" lost its click and "an underage player completing their profile…" had its typed fields cleared; a third run passed 30/30. Fits with T62 (shared e2e helpers). The T74 test review saw the same on a cold compile in `practice.spec.ts` "the home page links to practice" (the click on "Practice first" was lost); include it.
+
+### T79 One shared result-hero style for play and practice
+- Type: maintenance
+- Status: todo
+- Depends on: T74
+- Acceptance criteria:
+  - [ ] The result layout, verdict heading (display face, reveal animation, no focus ring), actions column and `@keyframes reveal` live once (a `ResultHero` component or shared classes in `src/components/ui/`) and are used by both `/play` and `/practice/stacking`.
+  - [ ] The raw pixel sizes inside the verdict and title `clamp()` calls become `--fs-text-*` tokens or carry a comment saying why.
+  - [ ] No visual change; existing unit and e2e tests pass unchanged.
+- Notes: From the T74 quality review (non-blocking).
 
 ### T66 Shared route-handler helpers for API endpoints
 - Type: maintenance

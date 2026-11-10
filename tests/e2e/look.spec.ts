@@ -42,12 +42,27 @@ test("a busy Start keeps its name and its focus while the request is in flight",
 
 test("the back button is at least 44 by 44 px and goes home", async ({ page }) => {
   await page.goto("/practice/stacking");
-  const back = page.getByRole("main").getByRole("link", { name: "Back" });
+  const back = page.getByRole("main").getByRole("link", { name: "Back", exact: true });
   const box = await back.boundingBox();
   expect(box!.width).toBeGreaterThanOrEqual(44);
   expect(box!.height).toBeGreaterThanOrEqual(44);
   await back.click();
   await expect(page).toHaveURL("/");
+});
+
+test("the back button hides during a run and returns with the result", async ({ page }) => {
+  await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+  await page.goto("/practice/stacking");
+  const back = page.getByRole("main").getByRole("link", { name: "Back", exact: true });
+  await expect(back).toBeVisible();
+  await page.clock.pauseAt(new Date("2026-01-01T00:00:30Z"));
+  await page.getByRole("button", { name: "Start" }).click();
+  await expect(page.getByRole("img", { name: /game area/ })).toBeVisible();
+  await expect(back).toBeHidden();
+  // Let the untapped first row drop off (8 s), which ends the run.
+  await page.clock.runFor(9_000);
+  await expect(page.getByRole("heading", { name: /^You stacked/ })).toBeVisible();
+  await expect(back).toBeVisible();
 });
 
 test("the game canvas finds its colour tokens", async ({ page }) => {

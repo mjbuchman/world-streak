@@ -63,6 +63,7 @@ describe("StackingPractice", () => {
 
     expect(screen.getByRole("heading", { name: "You stacked 7 blocks" })).toBeTruthy();
     expect(screen.queryByTestId("game")).toBeNull();
+    expect(screen.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/");
     await userEvent.click(screen.getByRole("button", { name: "Play again" }));
     expect(games.at(-1)!.params).toEqual(paramsFromSeed(22));
   });
