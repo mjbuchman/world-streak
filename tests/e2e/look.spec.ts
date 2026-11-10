@@ -1,0 +1,63 @@
+import { expect, test } from "./support/fixtures";
+import { signUpViaForm } from "./support/pages";
+
+// Checks only a real browser can make (jsdom has no layout, CSS or canvas): focus visibility,
+// busy buttons, touch-target size and the game's colour tokens.
+
+test("the main button shows the mint focus ring when reached with the keyboard", async ({ page }) => {
+  await page.goto("/practice/stacking");
+  const start = page.getByRole("button", { name: "Start" });
+  // Tab until Start has focus (the header and back button come first).
+  for (let i = 0; i < 10 && !(await start.evaluate((el) => el === document.activeElement)); i++) {
+    await page.keyboard.press("Tab");
+  }
+  await expect(start).toBeFocused();
+  // The ring is mint (52, 245, 181), drawn over the tangerine glow; wait out the shadow's
+  // short transition before reading it.
+  await expect.poll(() => start.evaluate((el) => getComputedStyle(el).boxShadow)).toContain("rgb(52, 245, 181)");
+});
+
+test("a busy Start keeps its name and its focus while the request is in flight", async ({ page, accounts }) => {
+  await signUpViaForm(page, { email: accounts.uniqueEmail() });
+  await expect(page).toHaveURL("/");
+  // Hold the start request so the busy state can be inspected.
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/api/attempts/start", async (route) => {
+    await held;
+    await route.continue();
+  });
+
+  await page.goto("/play");
+  const start = page.getByRole("button", { name: "Start" });
+  await start.focus();
+  await page.keyboard.press("Enter");
+  await expect(start).toHaveAttribute("aria-busy", "true");
+  await expect(start).toBeFocused();
+  await expect(page.getByRole("button", { name: "Start" })).toHaveCount(1);
+  // Let the request finish, so the test ends cleanly with the game running.
+  release();
+  await expect(page.getByRole("img", { name: /game area/ })).toBeVisible();
+});
+
+test("the back button is at least 44 by 44 px and goes home", async ({ page }) => {
+  await page.goto("/practice/stacking");
+  const back = page.getByRole("main").getByRole("link", { name: "Back" });
+  const box = await back.boundingBox();
+  expect(box!.width).toBeGreaterThanOrEqual(44);
+  expect(box!.height).toBeGreaterThanOrEqual(44);
+  await back.click();
+  await expect(page).toHaveURL("/");
+});
+
+test("the game canvas finds its colour tokens", async ({ page }) => {
+  await page.goto("/practice/stacking");
+  await page.getByRole("button", { name: "Start" }).click();
+  const canvas = page.getByRole("img", { name: /Teetering Tower game area/ });
+  await expect(canvas).toBeVisible();
+  const tokens = await canvas.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return ["surface-strong", "mint", "tangerine"].map((name) => style.getPropertyValue(`--fs-color-${name}`).trim());
+  });
+  for (const value of tokens) expect(value).not.toBe("");
+});

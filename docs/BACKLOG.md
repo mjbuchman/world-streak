@@ -230,7 +230,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
 
 ### T74 Restyle home, play and practice in Fresh Sport
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T73
 - Acceptance criteria:
   - [ ] Home, `/play` (every state: ready, starting, playing, checking, result, abandoned, refused) and `/practice/stacking` use the shared components and match the mockup's direction: big Unbounded headings and numbers, translucent surfaces, tangerine primary action, mint for good news.
@@ -256,7 +256,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
 
 ### T76 Teetering Tower grid engine
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/stacking/engine.ts` is replaced by a column-grid stacker: a board 7 columns wide and 15 rows tall; each row's block is a run of cells that moves one column at a time, bouncing between the walls; a tap locks it; cells not resting on a cell of the row below fall off, so the next row starts at the surviving width; when no cells survive the run ends (a miss).

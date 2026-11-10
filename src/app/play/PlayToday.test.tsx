@@ -61,7 +61,7 @@ describe("PlayToday", () => {
   it("explains the one-attempt rule, including leaving early, before Start", () => {
     render(<PlayToday initial={{ kind: "ready" }} />);
     expect(screen.getByText(/one scored attempt/i)).toBeTruthy();
-    expect(screen.getByText(/leave before you finish, it is not counted/i)).toBeTruthy();
+    expect(screen.getByText(/leave before you finish, it counts as not\s+passed/i)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Start" })).toBeTruthy();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
@@ -119,7 +119,7 @@ describe("PlayToday", () => {
   it("explains an abandoned attempt, with no Start", () => {
     render(<PlayToday initial={{ kind: "abandoned" }} />);
     expect(
-      screen.getByText("You left today's attempt before finishing. It was not counted. Come back tomorrow."),
+      screen.getByText("You left today's attempt before finishing, so it counted as not passed. Come back tomorrow."),
     ).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   });
@@ -164,11 +164,35 @@ describe("PlayToday", () => {
     }
   });
 
-  it("disables Start while the request is in flight, so it cannot be sent twice", async () => {
+  it("shows Start as busy while the request is in flight, so it cannot be sent twice", async () => {
     fetchSpy.mockReturnValueOnce(new Promise(() => undefined));
     render(<PlayToday initial={{ kind: "ready" }} />);
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
-    expect(screen.getByRole("button", { name: "Starting" })).toHaveProperty("disabled", true);
+    const busy = screen.getByRole("button", { name: "Start" });
+    expect(busy.getAttribute("aria-busy")).toBe("true");
+    await userEvent.click(busy);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("celebrates a pass with confetti, but not a fail", () => {
+    const passed = render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
+    expect(passed.container.querySelector('[aria-hidden="true"] > span')).not.toBeNull();
+    expect(screen.getByText(/You helped keep the streak alive/)).toBeTruthy();
+    cleanup();
+    const failed = render(<PlayToday initial={{ kind: "submitted", score: 3, passed: false, passTarget: 10 }} />);
+    expect(failed.container.querySelector('[aria-hidden="true"] > span')).toBeNull();
+    expect(screen.queryByText(/You helped keep the streak alive/)).toBeNull();
+  });
+
+  it("offers a way back home from every finished state", () => {
+    for (const initial of [
+      { kind: "submitted", score: 11, passed: true, passTarget: 10 },
+      { kind: "abandoned" },
+    ] as const) {
+      render(<PlayToday initial={initial} />);
+      expect(screen.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/");
+      cleanup();
+    }
   });
 
   it("shows the stored result if this attempt was already submitted (for example from another tab)", async () => {

@@ -79,6 +79,8 @@ test("a player who left an attempt unfinished cannot start again", async ({ page
   expect((await page.request.post("/api/attempts/start")).status()).toBe(200);
 
   await page.goto("/play");
-  await expect(page.getByText("You left today's attempt before finishing. It was not counted. Come back tomorrow.")).toBeVisible();
+  await expect(
+    page.getByText("You left today's attempt before finishing, so it counted as not passed. Come back tomorrow."),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Start" })).toHaveCount(0);
 });

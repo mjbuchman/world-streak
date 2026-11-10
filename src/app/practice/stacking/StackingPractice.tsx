@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { paramsFromSeed, type StackingParams } from "@/challenges/stacking/engine";
 import { blocks } from "@/components/stacking/blocks";
 import { type FinishedRun, StackingGame } from "@/components/stacking/StackingGame";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/LinkButton";
+import { Surface } from "@/components/ui/Surface";
 import styles from "./practice.module.css";
 
 type Phase = { name: "ready" } | { name: "playing"; params: StackingParams } | { name: "done"; score: number };
@@ -27,21 +30,30 @@ export function StackingPractice() {
 
   if (phase.name === "playing") return <StackingGame params={phase.params} onFinish={finish} />;
 
-  return (
-    <section className={styles.panel}>
-      {phase.name === "done" ? (
-        <h2 ref={resultRef} tabIndex={-1} className={styles.result}>
+  if (phase.name === "done") {
+    return (
+      <section className={styles.result}>
+        <h2 ref={resultRef} tabIndex={-1} className={styles.verdict}>
           You stacked {blocks(phase.score)}
         </h2>
-      ) : (
-        <p className={styles.howTo}>
-          A block slides across the top of the tower. Tap, click or press Space to drop it. Any part that
-          hangs over the edge is cut off, so the tower gets narrower. Practice never counts.
-        </p>
-      )}
-      <button type="button" className={styles.button} onClick={play}>
-        {phase.name === "done" ? "Play again" : "Start"}
-      </button>
-    </section>
+        <p className={styles.note}>Practice never counts. Play as often as you like.</p>
+        <div className={styles.actions}>
+          <Button onClick={play}>Play again</Button>
+          <LinkButton href="/" variant="secondary">
+            Back to home
+          </LinkButton>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <Surface>
+      <p>
+        A row of blocks slides across the board. Tap, click or press Space to lock it over the row below. Blocks that hang
+        over the edge fall off, so the tower gets narrower. Practice never counts.
+      </p>
+      <Button onClick={play}>Start</Button>
+    </Surface>
   );
 }

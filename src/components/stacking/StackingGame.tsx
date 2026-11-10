@@ -107,7 +107,7 @@ export function StackingGame({ params, onFinish }: Props) {
         tabIndex={-1}
         className={styles.canvas}
         role="img"
-        aria-label={`${CHALLENGE_NAMES.stacking} game area. Tap, click or press Space to drop the block.`}
+        aria-label={`${CHALLENGE_NAMES.stacking} game area. Tap, click or press Space to lock the moving row.`}
       />
     </div>
   );

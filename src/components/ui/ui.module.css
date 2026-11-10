@@ -111,6 +111,43 @@
   }
 }
 
+.spinnerLabel {
+  color: var(--fs-color-text-muted);
+  font-weight: 700;
+}
+
+/* Confetti: blocks that fall once past a result, then stay out of the way. */
+.confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.piece {
+  position: absolute;
+  top: -24px;
+  border-radius: 4px;
+  background: var(--fs-gradient-mint);
+  opacity: 0;
+  animation: fall 1600ms var(--fs-ease-out) forwards;
+}
+
+.pieceTangerine {
+  background: var(--fs-gradient-action);
+}
+
+@keyframes fall {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(420px) rotate(var(--spin, 20deg));
+  }
+}
+
 /* Round back button. */
 .back {
   display: inline-flex;
