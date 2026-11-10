@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { paramsFromSeed, type StackingParams } from "@/challenges/stacking/engine";
-import { blocks } from "@/components/stacking/blocks";
+import { reachedRow } from "@/components/stacking/rows";
 import { type FinishedRun, StackingGame } from "@/components/stacking/StackingGame";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
@@ -44,7 +44,7 @@ export function StackingPractice() {
           {phase.score}
         </p>
         <h2 ref={resultRef} tabIndex={-1} className={styles.verdict}>
-          You stacked {blocks(phase.score)}
+          {reachedRow(phase.score)}
         </h2>
         <p className={styles.note}>Practice never counts. Play as often as you like.</p>
         <div className={styles.actions}>

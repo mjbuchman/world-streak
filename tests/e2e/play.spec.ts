@@ -2,7 +2,7 @@ import { simulate, type StackingParams } from "../../src/challenges/stacking/eng
 import { FALL_MS } from "../../src/challenges/stacking/render";
 import { expect, test } from "./support/fixtures";
 import { signUpViaForm } from "./support/pages";
-import { blocks } from "../../src/components/stacking/blocks";
+import { reachedRow, targetRow } from "../../src/components/stacking/rows";
 import { playTaps, tapsForAMiss } from "./support/tower";
 import { adminClient, findUserByEmail } from "./support/supabase";
 
@@ -73,7 +73,7 @@ test("a player plays today's attempt once and sees the server's result, also aft
   const verdict = page.getByRole("heading", { name: "Not this time" });
   await expect(verdict).toBeVisible();
   await expect(verdict).toBeFocused();
-  const summary = page.getByText(`You stacked ${blocks(score)}. Today's target was ${blocks(passTarget)}.`);
+  const summary = page.getByText(`${reachedRow(score)}. Today's target was ${targetRow(passTarget)}.`);
   await expect(summary).toBeVisible();
   await expect(page.locator("[data-big-score]")).toHaveText(String(score));
   await expect(page.getByRole("banner").getByRole("button", { name: "Sign out" })).toBeVisible();

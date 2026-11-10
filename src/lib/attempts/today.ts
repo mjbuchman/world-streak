@@ -5,7 +5,7 @@ import { gameDateAt } from "@/lib/gameDay";
 export type PlayStatus =
   | { kind: "ready" }
   | { kind: "submitted"; score: number; passed: boolean; passTarget: number }
-  /** Started but never submitted: it does not count, and it cannot be restarted. */
+  /** Started but never submitted: it counts as not passed, and it cannot be restarted. */
   | { kind: "abandoned" };
 
 type Row = {

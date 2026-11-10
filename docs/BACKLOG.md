@@ -202,7 +202,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T15 Confirm Google sign-in with real credentials
 - Type: infra
-- Status: in-progress
+- Status: done
 - Depends on: T07
 - Acceptance criteria:
   - [ ] With the human's Google OAuth credentials set in the shell that runs `npm run db:start` (the Supabase CLI reads `env(...)` values from the shell, not from `.env.local`), then `npm run dev`. "Continue with Google" completes a real Google login locally and lands on `/complete-profile` for a new account.
@@ -911,7 +911,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T85 Tower wording: rows, not blocks; stale "does not count" comments
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T81
 - Acceptance criteria:
   - [ ] The result text on `/play` and practice uses the HUD's unit: "You reached row 7. Today's target was row 10." (confirmed by the human, Nov 10), with `blocks.ts` and the e2e text checks following.

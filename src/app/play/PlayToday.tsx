@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { StackingParams } from "@/challenges/stacking/engine";
-import { blocks } from "@/components/stacking/blocks";
+import { reachedRow, targetRow } from "@/components/stacking/rows";
 import { type FinishedRun, StackingGame } from "@/components/stacking/StackingGame";
 import { Button } from "@/components/ui/Button";
 import { Confetti } from "@/components/ui/Confetti";
@@ -133,7 +133,7 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
             {score}
           </p>
           <p className={styles.summary}>
-            You stacked {blocks(score)}. Today&apos;s target was {blocks(passTarget)}.
+            {`${reachedRow(score)}. Today's target was ${targetRow(passTarget)}.`}
           </p>
           <p className={styles.note}>
             {passed ? "You helped keep the streak alive. " : ""}Come back tomorrow for the next challenge.

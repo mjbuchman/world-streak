@@ -124,7 +124,7 @@ describe("PlayToday", () => {
     expect(request).toMatchObject({ method: "POST", headers: { "content-type": "application/json" } });
     expect(JSON.parse(request!.body as string)).toEqual({ attemptId, inputs: { tapsMs: [900, 1700] } });
     // The server's score is shown, not the client's own count.
-    expect(screen.getByText("You stacked 12 blocks. Today's target was 10 blocks.")).toBeTruthy();
+    expect(screen.getByText("You reached row 12. Today's target was row 10.")).toBeTruthy();
     // Focus moves to the result, as in practice (T60).
     expect(document.activeElement).toBe(heading);
     expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
@@ -135,7 +135,7 @@ describe("PlayToday", () => {
     await startRun();
     await finish([900], 1);
     expect(await screen.findByRole("heading", { name: "Not this time" })).toBeTruthy();
-    expect(screen.getByText("You stacked 1 block. Today's target was 10 blocks.")).toBeTruthy();
+    expect(screen.getByText("You reached row 1. Today's target was row 10.")).toBeTruthy();
   });
 
   it("shows that the result is being checked while the submission is in flight", async () => {
@@ -152,7 +152,7 @@ describe("PlayToday", () => {
   it("shows today's result, with no Start, once the attempt was submitted", () => {
     render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
     expect(screen.getByRole("heading", { name: "Passed" })).toBeTruthy();
-    expect(screen.getByText("You stacked 11 blocks. Today's target was 10 blocks.")).toBeTruthy();
+    expect(screen.getByText("You reached row 11. Today's target was row 10.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   });
 
