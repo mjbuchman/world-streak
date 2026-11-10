@@ -947,6 +947,16 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] No visual change; existing unit and e2e tests pass unchanged.
 - Notes: From the T74 quality review (non-blocking).
 
+### T88 Sturdier ResultHero test hooks
+- Type: maintenance
+- Status: todo
+- Depends on: T79
+- Acceptance criteria:
+  - [ ] `ResultHero` exposes its tone as a `data-tone` attribute, and the tone tests (`ui.test.tsx`, `PlayToday.test.tsx`, `StackingPractice.test.tsx`) check that attribute instead of matching CSS-module class names with a regex.
+  - [ ] The score-above-verdict check in `tests/e2e/play.spec.ts` asserts that both elements are visible before it reads `boundingBox()`, with no non-null assertions.
+  - [ ] The `plain` tone's class names have no trailing space (a small `cx()` helper or similar).
+- Notes: From the T79 round-2 reviews (non-blocking).
+
 ### T66 Shared route-handler helpers for API endpoints
 - Type: maintenance
 - Status: todo
