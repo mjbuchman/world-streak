@@ -334,7 +334,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T18 Cached meter endpoint
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T17
 - Acceptance criteria:
   - [ ] `src/config/meter.ts` exports `METER_HIDE_HOURS = 3` and `METER_CACHE_SECONDS = 30`.
@@ -354,7 +354,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
   - [ ] It polls `/api/meter` every 60 s only while `document.visibilityState === "visible"`. When the tab is hidden, it stops polling, and when it becomes visible, it fetches immediately and resumes (tested with fake timers and a mocked `visibilitychange`).
   - [ ] Shown on `/` and below the result on `/play`.
   - [ ] e2e: `/` shows the meter label or the hidden message.
-- Notes: From the T18 spec review: the endpoint's cache (`s-maxage=30, stale-while-revalidate=30`) can serve a reading taken just before the hidden window for up to about 60 s after it starts. That only shows pre-window data, but the UI should switch to hidden by its own clock at `closesAt - METER_HIDE_HOURS`, not only when a reply says `hidden`.
+- Notes: From the T18 spec review: the endpoint's cache (`s-maxage=30, stale-while-revalidate=30`) can serve a reading taken just before the hidden window for up to about 60 s after it starts. That only shows pre-window data, but the UI should switch to hidden by its own clock at `closesAt - METER_HIDE_HOURS`, not only when a reply says `hidden` (use T94's helper). From the maintainer check after T18: render the `threshold: null` state (before today's game day exists).
 
 ### T20 Local fake-player seeding script
 - Type: infra
@@ -376,7 +376,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
   - [ ] pgTAP: 10 attempts with 6 passes at threshold 0.60 is survived (the boundary counts); 5 of 10 is broken; 3 consecutive survived days give current streak 3, and a broken fourth day gives 0 with best 3; an idempotent re-run changes nothing.
   - [ ] A day with 0 attempts closes as `broken` with `final_pass_rate null` (judgment call, record it and flag it).
   - [ ] SQL view or function `world_streak()` returns `{ current, best, current_start_date }`, readable by everyone. `/api/meter` now fills `streak`.
-- Notes: Pass rate is weighted per the definition "among counted accounts" (weights from T17). The cycle-aware streak reset comes later (T34). From the T11 quality review: add a `game_days` check that `outcome` and `closed_at` are both set or both null, so a half-closed day cannot be stored (`final_pass_rate` is already checked to be between 0 and 1). From the T81 quality review: the game reports a finished run from its animation loop, which browsers pause in a hidden tab, so a run that ends while the tab is hidden is submitted only when the player returns. Near the deadline that can turn into "day closed"; if it matters, finish the run with a timer when `document.hidden` (the server scores the taps either way). From the T17 quality review: (1) `startAttempt` never checks `closed_at`, so a start that computes its game date just before the deadline and inserts after the close job ran would raise that day's counters past its frozen `final_pass_rate`; refuse starts on a closed day (in `startAttempt` and, safest, in the count trigger or an insert check). (2) In `record_attempt_result`, raise if the pass's counter update finds no row (it currently changes 0 rows silently). (3) Counter updates serialize on one row per day; fine for the MVP, note it as a scaling limit. (4) `stamp_attempt_weight` could be `security invoker`.
+- Notes: Pass rate is weighted per the definition "among counted accounts" (weights from T17). The cycle-aware streak reset comes later (T34). From the T11 quality review: add a `game_days` check that `outcome` and `closed_at` are both set or both null, so a half-closed day cannot be stored (`final_pass_rate` is already checked to be between 0 and 1). From the T81 quality review: the game reports a finished run from its animation loop, which browsers pause in a hidden tab, so a run that ends while the tab is hidden is submitted only when the player returns. Near the deadline that can turn into "day closed"; if it matters, finish the run with a timer when `document.hidden` (the server scores the taps either way). From the T17 quality review: counter updates serialize on one row per day; fine for the MVP, note it as a scaling limit. (The other T17 follow-ups, refusing starts on a closed day and raising on a missing counter row, moved to T93.)
 
 ### T22 Prepare next day: pass target and threshold
 - Type: feature
@@ -968,6 +968,41 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `loadGameSettings` selects its columns by name instead of `*`.
   - [ ] One shared fixture of boundary rows (accepted and refused) is checked both by pgTAP against the table and by Vitest against `parseGameSettings`, so the zod ranges cannot drift from the check constraints (the pattern of `src/lib/gameDay.fixture.json`).
 - Notes: From the T16 round-2 reviews (non-blocking). Later tasks (T18, T22, T24) should read settings through `loadGameSettings`.
+
+### T92 One strict parser for numeric database values
+- Type: maintenance
+- Status: todo
+- Depends on: none (coordinate with T65, which also edits `src/lib/attempts/store.ts`)
+- Acceptance criteria:
+  - [ ] The strict `numeric` zod schema in `src/lib/settings.ts` moves to one shared module (for example `src/lib/db/numeric.ts`): a JSON number or a plain decimal string, and a throw on anything else (null, `""`, `"NaN"`, non-numbers).
+  - [ ] `src/lib/attempts/store.ts` (`passTarget` in `gameDay` and `findAttemptForDay`, `score`, `seed`) and `src/lib/meter.ts` (`survival_threshold`, `weighted_attempts`, `weighted_passes`) use it instead of bare `Number(...)`; the "numbers or strings" comment lives once, in the shared module.
+  - [ ] Unit tests: a game day with `pass_target: null` or `"abc"` makes the store throw (the endpoint answers 500) instead of returning NaN or 0; the meter likewise for a malformed threshold; `settings.test.ts` passes unchanged.
+  - [ ] `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T18 (about 60-80 lines). `Number(null)` is 0 and `Number("abc")` is NaN; a NaN `passTarget` makes `passes()` false for every score, so every player would fail without an error. Land before T21, T22 and T24 add more numeric reads.
+
+### T93 Day counter integrity
+- Type: maintenance
+- Status: todo
+- Depends on: T17
+- Acceptance criteria:
+  - [ ] A migration makes `attempts.counted_weight` not null for new rows (backfill or exclude old rows without a profile, said in the migration comment).
+  - [ ] `record_attempt_result` raises when a pass's counter update changes 0 rows, instead of recording a pass that was never counted.
+  - [ ] An attempt insert for a game day with `closed_at` set is refused in the database, and `startAttempt` maps the refusal to a clearly named 409 (for example `day-closed`).
+  - [ ] `stamp_attempt_weight` becomes `security invoker` if pgTAP shows the service-role insert still works.
+  - [ ] pgTAP: a null weight fails; a pass with no counters row raises; a start on a closed day is refused and leaves the counters unchanged. A unit test covers the start mapping.
+  - [ ] `npm run verify` passes; no behavior change beyond refusing starts on closed days (a bug fix).
+- Notes: From the maintainer check after T18 (about 100-150 lines), taking the T17 quality-review follow-ups out of T21. With a null `counted_weight`, `weighted_passes + v_weight` is null and the submit fails with an unexplained 500.
+
+### T94 One meter-window helper for the endpoint and the meter UI
+- Type: maintenance
+- Status: in-progress
+- Depends on: T18
+- Acceptance criteria:
+  - [ ] One pure function holds the only copy of `closes - METER_HIDE_HOURS * HOUR_MS` (for example `meterHiddenFrom(closesAt)`), used by `meterBody` and `meterCacheSeconds`.
+  - [ ] `MeterBody` and the pure meter logic live in a module client code can import without the Supabase client, so T19's `Meter.tsx` can import the type and the helper to switch to hidden by its own clock.
+  - [ ] The existing meter and route tests pass unchanged; a new test covers the helper at 20:59:59.999Z and 21:00:00.000Z.
+  - [ ] `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T18 (about 40-60 lines). Do before T19.
 
 ### T90 ResultHero owns the result focus and the shared result bits
 - Type: maintenance
