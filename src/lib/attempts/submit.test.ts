@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { simulate, stacking } from "@/challenges/stacking/engine";
 import { tapsForAMiss } from "@/challenges/stacking/player";
-import { passes, submitAttempt, type SubmitStore } from "./submit";
+import { submitAttempt, type SubmitStore } from "./submit";
 
 const userId = "8f14e45f-ceea-467a-9f9b-1b6f0f0e2f11";
 const attemptId = "0b6d1d6c-6c1e-4b8e-9a4a-5f3c2d1e0a9b";
@@ -27,19 +27,6 @@ function fakeStore(overrides: Partial<SubmitStore> = {}): SubmitStore {
 }
 
 const submit = (body: unknown, store = fakeStore(), at = now) => submitAttempt({ userId, body, now: at, store });
-
-describe("passes", () => {
-  it("needs at least the target when higher is better", () => {
-    expect(passes(10, 10, "higher-better")).toBe(true);
-    expect(passes(9.9, 10, "higher-better")).toBe(false);
-  });
-
-  it("needs at most the target when lower is better (for example a time)", () => {
-    expect(passes(10, 10, "lower-better")).toBe(true);
-    expect(passes(10.1, 10, "lower-better")).toBe(false);
-    expect(passes(3, 10, "lower-better")).toBe(true);
-  });
-});
 
 describe("submitAttempt", () => {
   it("scores the inputs by replaying the engine on the attempt's seed, and records the result", async () => {

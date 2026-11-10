@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T66 Shared route-handler helpers
+- Active task: T67 Coverage thresholds where scoring and game-day logic live
 - Blocked tasks: none (T91 waits on wording from the human)
 - Waiting on the human: Docker Desktop stopped starting (Nov 10) after a local `supabase db reset`, so database and e2e work waits; confirm the game_settings values; T91 wording; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T66, T67 and T68 before T17 and T18 (the maintainer's advice after T16), then M2 from T17.
+- Next: T67, then T68, before T17 and T18 (the maintainer's advice after T16), then M2 from T17.
 
 ## Log
 
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-10 — T66 Shared route-handler helpers (PR #37)
+- `src/lib/http/route.ts` (`jsonNoStore`, `errorResponse`, `requireUser`, `readJsonBody`, `withServerErrors`) used by the start, submit and health routes; `secureRandomSeed` in `src/lib/random.ts` (also used by practice). The route helpers are server-only through `@/lib/supabase/server`, because Vitest resolves `server-only` to its throwing entry.
+- Review rounds: spec 1, quality 1, tests 1. New routes (T18 onward) should start from these helpers.
+- Notes: e2e could not run locally (Docker Desktop down); CI ran it. Merges since the maintainer check after T16: 1.
 
 ### 2026-11-10 — Maintainer check after T16
 - Health good (566 tests, 99% lines). New tasks T90 (ResultHero owns focus and notes) and T91 (unfinished-attempt wording, needs the human's wording); notes added to T67 (settings.ts at 90%), T86 (e2e imports through support) and T80 (overlaps T63). Advice: land T66, T67 and T68 before T17 and T18. Merges since this check: 0.
