@@ -1,46 +1,69 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
-import type { AttemptStore } from "./start";
+import type { AttemptStore, DayAttempt, GameDay } from "./start";
 import { RECORD_STATUSES, type RecordStatus, type SubmitStore } from "./submit";
 
 const UNIQUE_VIOLATION = "23505";
 
-function fail(operation: string, error: PostgrestError): never {
+function throwDbError(operation: string, error: PostgrestError): never {
   throw new Error(`${operation} failed: ${error.message}`);
 }
 
+type GameDayRow = { challenge_type: string; pass_target: number | string; closed_at: string | null };
+type DayAttemptRow = {
+  score: number | string | null;
+  passed: boolean | null;
+  submitted_at: string | null;
+  game_days: { pass_target: number | string };
+};
+type AttemptRow = { user_id: string; game_date: string; seed: number; started_at: string; submitted_at: string | null };
+
 /**
- * The attempt store over Supabase. Pass the service-role client: players have no write access
- * to attempts or game days under row-level security, by design.
+ * The attempt store over Supabase, for starting and submitting attempts. Pass the service-role
+ * client: players have no write access to attempts or game days under row-level security, by
+ * design. `findAttemptForDay` alone also works with a player's own client (see `todaysAttempt`).
  */
-export function supabaseAttemptStore(db: SupabaseClient): AttemptStore {
+export function supabaseAttemptStore(db: Pick<SupabaseClient, "from" | "rpc">): AttemptStore & SubmitStore {
   return {
     async hasProfile(userId) {
       const { data, error } = await db.from("profiles").select("id").eq("id", userId).maybeSingle();
-      if (error) fail("Profile lookup", error);
+      if (error) throwDbError("Profile lookup", error);
       return data !== null;
     },
 
     async ensureGameDay(gameDate) {
       const { error } = await db.rpc("ensure_game_day", { d: gameDate });
-      if (error) fail("ensure_game_day", error);
+      if (error) throwDbError("ensure_game_day", error);
     },
 
-    async gameDayFor(gameDate) {
-      const { data, error } = await db.from("game_days").select("challenge_type, pass_target").eq("game_date", gameDate).single();
-      if (error) fail("Game day lookup", error);
-      const row = data as { challenge_type: string; pass_target: number | string };
-      return { challengeType: row.challenge_type, passTarget: Number(row.pass_target) };
+    async gameDay(gameDate): Promise<GameDay> {
+      const { data, error } = await db
+        .from("game_days")
+        .select("challenge_type, pass_target, closed_at")
+        .eq("game_date", gameDate)
+        .single();
+      if (error) throwDbError("Game day lookup", error);
+      const row = data as GameDayRow;
+      // PostgREST returns numeric columns as JSON numbers or strings depending on size.
+      return { challengeType: row.challenge_type, passTarget: Number(row.pass_target), closed: row.closed_at !== null };
     },
 
-    async findAttempt(userId, gameDate) {
+    async findAttemptForDay(userId, gameDate): Promise<DayAttempt | null> {
       const { data, error } = await db
         .from("attempts")
-        .select("submitted_at")
+        .select("score, passed, submitted_at, game_days(pass_target)")
         .eq("user_id", userId)
         .eq("game_date", gameDate)
         .maybeSingle();
-      if (error) fail("Attempt lookup", error);
-      return data ? { submitted: (data as { submitted_at: string | null }).submitted_at !== null } : null;
+      if (error) throwDbError("Attempt lookup", error);
+      if (!data) return null;
+      const row = data as unknown as DayAttemptRow;
+      if (row.submitted_at === null) return { submitted: false };
+      return {
+        submitted: true,
+        score: Number(row.score),
+        passed: row.passed === true,
+        passTarget: Number(row.game_days.pass_target),
+      };
     },
 
     async insertAttempt({ userId, gameDate, seed }) {
@@ -50,25 +73,17 @@ export function supabaseAttemptStore(db: SupabaseClient): AttemptStore {
         .select("id")
         .single();
       if (error?.code === UNIQUE_VIOLATION) return "duplicate";
-      if (error) fail("Attempt insert", error);
+      if (error) throwDbError("Attempt insert", error);
       return { id: (data as { id: string }).id };
     },
-  };
-}
 
-type AttemptRow = { user_id: string; game_date: string; seed: number; started_at: string; submitted_at: string | null };
-type GameDayRow = { challenge_type: string; pass_target: number | string; closed_at: string | null };
-
-/** The submit store over Supabase. Pass the service-role client, as for `supabaseAttemptStore`. */
-export function supabaseSubmitStore(db: SupabaseClient): SubmitStore {
-  return {
-    async findAttempt(attemptId) {
+    async findAttemptById(attemptId) {
       const { data, error } = await db
         .from("attempts")
         .select("user_id, game_date, seed, started_at, submitted_at")
         .eq("id", attemptId)
         .maybeSingle();
-      if (error) fail("Attempt lookup", error);
+      if (error) throwDbError("Attempt lookup", error);
       if (!data) return null;
       const row = data as AttemptRow;
       return {
@@ -80,17 +95,6 @@ export function supabaseSubmitStore(db: SupabaseClient): SubmitStore {
       };
     },
 
-    async gameDay(gameDate) {
-      const { data, error } = await db
-        .from("game_days")
-        .select("challenge_type, pass_target, closed_at")
-        .eq("game_date", gameDate)
-        .single();
-      if (error) fail("Game day lookup", error);
-      const row = data as GameDayRow;
-      return { challengeType: row.challenge_type, passTarget: Number(row.pass_target), closed: row.closed_at !== null };
-    },
-
     async recordResult({ attemptId, inputs, score, passed }) {
       const { data, error } = await db.rpc("record_attempt_result", {
         p_attempt_id: attemptId,
@@ -98,7 +102,7 @@ export function supabaseSubmitStore(db: SupabaseClient): SubmitStore {
         p_score: score,
         p_passed: passed,
       });
-      if (error) fail("record_attempt_result", error);
+      if (error) throwDbError("record_attempt_result", error);
       if (!RECORD_STATUSES.includes(data as RecordStatus)) throw new Error(`record_attempt_result returned "${String(data)}"`);
       return data as RecordStatus;
     },

@@ -1,20 +1,21 @@
 import { z } from "zod";
-import { CHALLENGES, isChallengeType } from "@/challenges/registry";
+import { challengeForGameDay } from "@/challenges/registry";
 import type { ChallengeModule } from "@/challenges/shared/types";
 import { INPUT_TIMING_SLACK_MS } from "@/config/attempts";
 import { gameDateAt } from "@/lib/gameDay";
 import { passes } from "@/lib/scoring/pass";
+import type { GameDay } from "./start";
 
 /** What `record_attempt_result` can answer. */
 export const RECORD_STATUSES = ["recorded", "already-submitted", "day-closed", "not-found"] as const;
 export type RecordStatus = (typeof RECORD_STATUSES)[number];
 
-/** The database operations submitting an attempt needs (see `supabaseSubmitStore`). */
+/** The database operations submitting an attempt needs (see `supabaseAttemptStore`). */
 export type SubmitStore = {
-  findAttempt: (
+  findAttemptById: (
     attemptId: string,
   ) => Promise<{ userId: string; gameDate: string; seed: number; startedAt: Date; submitted: boolean } | null>;
-  gameDay: (gameDate: string) => Promise<{ challengeType: string; passTarget: number; closed: boolean }>;
+  gameDay: (gameDate: string) => Promise<GameDay>;
   /** Writes the result atomically and only once; reports why not if it cannot. */
   recordResult: (result: { attemptId: string; inputs: unknown; score: number; passed: boolean }) => Promise<RecordStatus>;
 };
@@ -69,17 +70,14 @@ export async function submitAttempt({
   const { attemptId } = request.data;
 
   // Someone else's attempt looks the same as a missing one, so ids cannot be probed.
-  const attempt = await store.findAttempt(attemptId);
+  const attempt = await store.findAttemptById(attemptId);
   if (!attempt || attempt.userId !== userId) return fail(404, "not-found");
   if (attempt.submitted) return fail(409, "already-submitted");
 
   // Submissions after the deadline record nothing, even for an attempt started before it.
   const day = await store.gameDay(attempt.gameDate);
   if (day.closed || attempt.gameDate !== gameDateAt(now)) return fail(409, "day-closed");
-  if (!isChallengeType(day.challengeType)) {
-    throw new Error(`Game day ${attempt.gameDate} has unknown challenge type "${day.challengeType}"`);
-  }
-  const challenge = CHALLENGES[day.challengeType];
+  const challenge = challengeForGameDay(attempt.gameDate, day.challengeType);
 
   const replayed = replay(challenge, attempt.seed, request.data.inputs);
   if (!replayed) return fail(400, "invalid-inputs");

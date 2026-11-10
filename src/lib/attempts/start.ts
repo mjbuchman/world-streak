@@ -1,14 +1,20 @@
-import { CHALLENGES, isChallengeType } from "@/challenges/registry";
+import { challengeForGameDay } from "@/challenges/registry";
 import { gameDateAt } from "@/lib/gameDay";
+
+/** A game day as both flows read it. */
+export type GameDay = { challengeType: string; passTarget: number; closed: boolean };
+
+/** A player's attempt for one game date: still open, or submitted with its stored result. */
+export type DayAttempt = { submitted: false } | { submitted: true; score: number; passed: boolean; passTarget: number };
 
 /** The database operations starting an attempt needs (see `supabaseAttemptStore`). */
 export type AttemptStore = {
   hasProfile: (userId: string) => Promise<boolean>;
   /** Creates the game day with the launch defaults if it does not exist yet. */
   ensureGameDay: (gameDate: string) => Promise<void>;
-  /** The day's challenge and pass target (a game day exists once ensureGameDay has run). */
-  gameDayFor: (gameDate: string) => Promise<{ challengeType: string; passTarget: number }>;
-  findAttempt: (userId: string, gameDate: string) => Promise<{ submitted: boolean } | null>;
+  /** The day's challenge, target and state (a game day exists once ensureGameDay has run). */
+  gameDay: (gameDate: string) => Promise<GameDay>;
+  findAttemptForDay: (userId: string, gameDate: string) => Promise<DayAttempt | null>;
   /** "duplicate" when the player already has an attempt that day (the unique constraint). */
   insertAttempt: (attempt: { userId: string; gameDate: string; seed: number }) => Promise<{ id: string } | "duplicate">;
 };
@@ -44,10 +50,10 @@ export async function startAttempt({ userId, now, store, randomSeed }: StartInpu
 
   const gameDate = gameDateAt(now);
   await store.ensureGameDay(gameDate);
-  const { challengeType, passTarget } = await store.gameDayFor(gameDate);
-  if (!isChallengeType(challengeType)) throw new Error(`Game day ${gameDate} has unknown challenge type "${challengeType}"`);
+  const { challengeType, passTarget } = await store.gameDay(gameDate);
+  const challenge = challengeForGameDay(gameDate, challengeType);
 
-  const existing = await store.findAttempt(userId, gameDate);
+  const existing = await store.findAttemptForDay(userId, gameDate);
   if (existing) return alreadyStarted(existing.submitted);
 
   const seed = randomSeed();
@@ -56,7 +62,7 @@ export async function startAttempt({ userId, now, store, randomSeed }: StartInpu
   const inserted = await store.insertAttempt({ userId, gameDate, seed });
   if (inserted === "duplicate") {
     // A simultaneous request won the race; report what it created.
-    return alreadyStarted((await store.findAttempt(userId, gameDate))?.submitted ?? false);
+    return alreadyStarted((await store.findAttemptForDay(userId, gameDate))?.submitted ?? false);
   }
   return {
     status: 200,
@@ -65,7 +71,7 @@ export async function startAttempt({ userId, now, store, randomSeed }: StartInpu
       gameDate,
       challengeType,
       seed,
-      params: CHALLENGES[challengeType].paramsFromSeed(seed),
+      params: challenge.paramsFromSeed(seed),
       // Shown during the run (the target line); the server still decides pass or fail on submit.
       passTarget,
     },

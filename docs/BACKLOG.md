@@ -1005,7 +1005,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T67 Coverage thresholds where scoring and game-day logic live
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T13
 - Acceptance criteria:
   - [ ] `passes(score, target, direction)` moves from `src/lib/attempts/submit.ts` to `src/lib/scoring/` (for example `pass.ts`) with its tests; callers import it from there (the T21 close job will reuse it).
@@ -1016,7 +1016,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T68 One attempt store and one challenge lookup for start and submit
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T13 (coordinate with T65, which also edits `src/lib/attempts/store.ts`)
 - Acceptance criteria:
   - [ ] One helper (for example `challengeForGameDay(gameDate, challengeType)` in `src/challenges/registry.ts`) returns the module or throws the unknown-type error, replacing the duplicate checks in `start.ts` and `submit.ts`.

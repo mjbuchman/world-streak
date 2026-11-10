@@ -19,7 +19,7 @@ const shortRun = tapsForAMiss(params);
 
 function fakeStore(overrides: Partial<SubmitStore> = {}): SubmitStore {
   return {
-    findAttempt: vi.fn(async () => ({ userId, gameDate: "2026-11-08", seed, startedAt, submitted: false })),
+    findAttemptById: vi.fn(async () => ({ userId, gameDate: "2026-11-08", seed, startedAt, submitted: false })),
     gameDay: vi.fn(async () => ({ challengeType: "stacking", passTarget: 2, closed: false })),
     recordResult: vi.fn(async () => "recorded" as const),
     ...overrides,
@@ -38,7 +38,7 @@ describe("submitAttempt", () => {
     const result = await submit({ attemptId, inputs: { tapsMs: goodTaps } }, store);
 
     expect(result).toEqual({ status: 200, body: { score, passed: score >= 2, passTarget: 2 } });
-    expect(store.findAttempt).toHaveBeenCalledWith(attemptId);
+    expect(store.findAttemptById).toHaveBeenCalledWith(attemptId);
     expect(store.gameDay).toHaveBeenCalledWith("2026-11-08");
     expect(store.recordResult).toHaveBeenCalledWith({ attemptId, inputs: { tapsMs: goodTaps }, score, passed: score >= 2 });
   });
@@ -72,7 +72,7 @@ describe("submitAttempt", () => {
     for (const body of [null, "x", {}, { attemptId: "not-a-uuid", inputs: {} }, { inputs: { tapsMs: shortRun } }]) {
       const store = fakeStore();
       expect(await submit(body, store)).toEqual({ status: 400, body: { error: "invalid-body" } });
-      expect(store.findAttempt).not.toHaveBeenCalled();
+      expect(store.findAttemptById).not.toHaveBeenCalled();
     }
   });
 
@@ -85,11 +85,11 @@ describe("submitAttempt", () => {
   });
 
   it("returns 404 for an unknown attempt or someone else's", async () => {
-    const missing = fakeStore({ findAttempt: vi.fn(async () => null) });
+    const missing = fakeStore({ findAttemptById: vi.fn(async () => null) });
     expect(await submit({ attemptId, inputs: { tapsMs: shortRun } }, missing)).toEqual({ status: 404, body: { error: "not-found" } });
 
     const theirs = fakeStore({
-      findAttempt: vi.fn(async () => ({ userId: "someone-else", gameDate: "2026-11-08", seed, startedAt, submitted: false })),
+      findAttemptById: vi.fn(async () => ({ userId: "someone-else", gameDate: "2026-11-08", seed, startedAt, submitted: false })),
     });
     expect(await submit({ attemptId, inputs: { tapsMs: shortRun } }, theirs)).toEqual({ status: 404, body: { error: "not-found" } });
     expect(theirs.recordResult).not.toHaveBeenCalled();
@@ -97,7 +97,7 @@ describe("submitAttempt", () => {
 
   it("returns 409 already-submitted for a submitted attempt", async () => {
     const store = fakeStore({
-      findAttempt: vi.fn(async () => ({ userId, gameDate: "2026-11-08", seed, startedAt, submitted: true })),
+      findAttemptById: vi.fn(async () => ({ userId, gameDate: "2026-11-08", seed, startedAt, submitted: true })),
     });
     expect(await submit({ attemptId, inputs: { tapsMs: shortRun } }, store)).toEqual({ status: 409, body: { error: "already-submitted" } });
     expect(store.recordResult).not.toHaveBeenCalled();
@@ -107,7 +107,7 @@ describe("submitAttempt", () => {
     // Started at 23:59:30 on Nov 8, submitted after the midnight deadline.
     const lateStart = new Date("2026-11-08T23:59:30Z");
     const late = fakeStore({
-      findAttempt: vi.fn(async () => ({ userId, gameDate: "2026-11-08", seed, startedAt: lateStart, submitted: false })),
+      findAttemptById: vi.fn(async () => ({ userId, gameDate: "2026-11-08", seed, startedAt: lateStart, submitted: false })),
     });
     const afterDeadline = new Date("2026-11-09T00:00:10Z");
     expect(await submit({ attemptId, inputs: { tapsMs: [900] } }, late, afterDeadline)).toEqual({

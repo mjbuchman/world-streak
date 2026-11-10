@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CHALLENGES, isChallengeType } from "./registry";
+import { CHALLENGES, challengeForGameDay, isChallengeType } from "./registry";
 import { CHALLENGE_TYPES } from "./shared/types";
 import { stacking } from "./stacking/engine";
 
@@ -13,5 +13,14 @@ describe("challenge registry", () => {
     expect(isChallengeType("stacking")).toBe(true);
     expect(isChallengeType("chess")).toBe(false);
     expect(isChallengeType("toString")).toBe(false);
+  });
+
+  it("gives a game day's challenge module", () => {
+    expect(challengeForGameDay("2026-11-08", "stacking")).toBe(stacking);
+  });
+
+  it("fails loudly, naming the day and type, on a challenge type the server does not know", () => {
+    expect(() => challengeForGameDay("2026-11-08", "chess")).toThrow('Game day 2026-11-08 has unknown challenge type "chess"');
+    expect(() => challengeForGameDay("2026-11-08", "toString")).toThrow(/toString/);
   });
 });
