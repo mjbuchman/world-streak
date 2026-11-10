@@ -2,7 +2,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_TAPS, simulate, type StackingParams } from "@/challenges/stacking/engine";
-import { tapsForAMiss } from "@/challenges/stacking/player";
+import { simulatedTaps, tapsForAMiss } from "@/challenges/stacking/player";
 import { FALL_MS } from "@/challenges/stacking/render";
 
 const drawStacking = vi.hoisted(() => vi.fn());
@@ -254,6 +254,25 @@ describe("StackingGame", () => {
     expect(onFinish.mock.calls[0]).toBeUndefined();
     const expected = missAndFinish([400]);
     expect(onFinish.mock.calls[0][0].taps).toEqual(expected);
+  });
+
+  it("drops a tap at 0 ms, as the engine does, so it cannot use up a later row's tap", () => {
+    // A press in the same tick the run starts (or on a browser with a coarse clock) stamps 0 ms,
+    // which the engine ignores (row 1 appears at 0). Counting it would leave row 15 without a tap
+    // once MAX_TAPS is reached, and with no time limit the run would never end.
+    const perfect = simulatedTaps(params, 0, 1);
+    expect(simulate(params, perfect).endReason).toBe("top");
+    const onFinish = vi.fn();
+    render(<StackingGame params={params} onFinish={onFinish} />);
+    pressSpace(); // at 0 ms
+    for (const tap of perfect) {
+      advance(tap - elapsed);
+      pressSpace();
+    }
+    advance(FALL_MS + 50);
+    expect(onFinish).toHaveBeenCalledTimes(1);
+    expect(onFinish.mock.calls[0][0].taps).toEqual(perfect);
+    expect(onFinish.mock.calls[0][0].result).toMatchObject({ endReason: "top", score: MAX_TAPS });
   });
 
   it("records one tap when two inputs land at the same moment", () => {

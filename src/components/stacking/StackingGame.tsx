@@ -64,14 +64,16 @@ export function StackingGame({ params, onFinish, passTarget: target, best = 0 }:
     let ended: { run: FinishedRun; atMs: number } | null = null;
     let frameId = 0;
 
-    // The engine (and the server, for scored runs) only accepts strictly increasing taps, at
-    // most MAX_TAPS of them. Browsers round performance.now() to about 1 ms, so two inputs in
-    // the same moment (a two-finger touch, a click plus Space) would otherwise stamp twice.
+    // Record exactly the taps the engine counts: each must come after the row in play appeared
+    // (row 1 at 0 ms, then each row at the previous tap), at most MAX_TAPS of them. A tap the
+    // engine would ignore must not be recorded, or it would use up the last row's tap and, with
+    // no time limit, the run could never end. Browsers round performance.now() (to 1 ms, or far
+    // coarser with fingerprinting protection), so two inputs in one moment, or a press as the
+    // run starts, stamp the same time.
     const tap = () => {
       const at = performance.now() - start;
-      const last = taps.at(-1);
       if (finished || taps.length >= MAX_TAPS) return;
-      if (last !== undefined && at <= last) return;
+      if (at <= (taps.at(-1) ?? 0)) return;
       taps.push(at);
     };
     const onKeyDown = (event: KeyboardEvent) => {

@@ -145,9 +145,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
   - **Board:** 7 columns by 15 rows, starting 3 wide; capped at 2 from row 6 and at 1 from row 11. Row 1 rests on the floor. Each new row appears at a wall, alternating direction.
   - **Speed:** row r steps every `startStepMs - stepDecayMs × (r − 1)` ms, never under 45 ms. Per seed: `startStepMs` 150 to 170 and `stepDecayMs` 6 to 8 (whole ms), plus the starting column and direction. Row 15 steps every 52 to 80 ms.
   - **Tuning check** (`tuning.test.ts`, a simulated player tapping with an even timing error, averaged over 200 seeds): perfect reaches 15, decent (±80 ms) about 9.7, careless (±250 ms) about 4.
-  - **Idle drop** (judgment call): a row nobody taps for 8 s drops off and ends the run like a miss. Without a time limit, this keeps every run finite, so the server can always replay a submission, and nobody scores without tapping.
+  - **Idle drop** (judgment call; removed by T87, the human's decision): a row nobody tapped for 8 s dropped off and ended the run like a miss. Now a row waits for its tap indefinitely, and the server refuses a submission whose taps do not finish the run.
 - Reason: the human's M1 play-test requirements (arcade-style grid, forced narrowing, end only on a miss, a winning top row, a decent player reaches 10). Supersedes the T09 speed-range entry.
-- How to change it later: `PARAM_RANGES`, `MIN_STEP_MS`, `WIDTH_CAPS` and `IDLE_LOCK_MS` in `src/challenges/stacking/engine.ts`; the tuning and golden tests pin them, so a change is deliberate.
+- How to change it later: `PARAM_RANGES`, `MIN_STEP_MS` and `WIDTH_CAPS` in `src/challenges/stacking/engine.ts`; the tuning and golden tests pin them, so a change is deliberate.
 - Confirmed by human: speed yes, for now (Nov 10; more testers later). Idle drop: changed, removed so slow players are never timed out (T87; see "Human decisions at the second play-test").
 
 ### 2026-11-10 — The header hides during a running game (T81)

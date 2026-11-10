@@ -182,7 +182,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 - Acceptance criteria:
   - [ ] `POST /api/attempts/submit` with `{ attemptId, inputs }` returns 401 when signed out, 400 when the body or `inputs` fail the challenge's `inputsSchema`, and 404 when the attempt is not the caller's.
   - [ ] It returns 409 `already-submitted` if `submitted_at` is set, and 409 `day-closed` if the attempt's game date is no longer the current game date or the day has `closed_at`.
-  - [ ] It returns 422 `implausible-timing` if the last input timestamp exceeds `(now - started_at) + 2000 ms` or the attempt is older than `ATTEMPT_MAX_AGE_MS` (config, default 180,000).
+  - [ ] It returns 422 `implausible-timing` if the last input timestamp exceeds `(now - started_at) + 2000 ms` or the attempt is older than `ATTEMPT_MAX_AGE_MS` (config, default 180,000). (The age limit was removed in T87: runs have no time limit.)
   - [ ] Otherwise the server replays the engine (`score(paramsFromSeed(seed), inputs)`) and computes `passed` from the day's `pass_target` and the module's `direction` (higher-better: `score >= target`; lower-better: `score <= target`). It stores inputs, score, passed and `submitted_at` atomically through a `security definer` SQL function `record_attempt_result` that only `service_role` may execute. It returns `{ score, passed, passTarget }`.
   - [ ] Any `score` or `passed` field in the request body is ignored (test: a body claiming `passed: true` with inputs that score 0 is stored as failed).
   - [ ] Unit tests cover every status code. A pgTAP test shows that `authenticated` cannot execute `record_attempt_result`.

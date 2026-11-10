@@ -5,7 +5,9 @@ import { simulatedTaps } from "./player";
 // Human requirement (M1 play-test, DECISIONS): a decent player reaches about row 10. The
 // simulated player taps with a timing error spread evenly up to the given amount either way:
 // perfect 0 ms, decent ±80 ms, careless ±250 ms. These pin the tuning, so a change to the speed
-// ranges is a deliberate decision (record it in docs/DECISIONS.md).
+// ranges is a deliberate decision (record it in docs/DECISIONS.md). Since T87 there is no idle
+// drop: a simulated player who cannot line a row up within two bounces stops, and the rows it
+// locked are its score.
 function averageScore(errorMs: number): number {
   let total = 0;
   for (let seed = 0; seed < 200; seed++) {
