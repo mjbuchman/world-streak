@@ -217,8 +217,66 @@
 .shellTitle {
   font-family: var(--fs-font-display);
   font-weight: 800;
-  font-size: 26px;
+  font-size: var(--fs-text-page-title);
   line-height: 1.15;
+}
+
+/* Result hero: the end of a run on /play and in practice. */
+.result {
+  position: relative; /* the confetti fills it */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-4) var(--space-6);
+  text-align: center;
+}
+
+/* The score, scoreboard style (UI_GUIDELINES rule 5: big numbers are big). */
+.resultScore {
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-score);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  animation: reveal var(--fs-duration-slow) var(--fs-ease-spring);
+}
+
+.resultHeading {
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-result-heading);
+  line-height: 1.1;
+  animation: reveal var(--fs-duration-slow) var(--fs-ease-spring);
+}
+
+/* Focus is moved here in code when a run ends; it cannot be reached with Tab, so no ring. */
+.resultHeading:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.resultMint {
+  color: var(--fs-color-mint);
+}
+
+/* Only a pass on /play glows. */
+.resultGlow {
+  text-shadow: 0 0 28px color-mix(in srgb, var(--fs-color-mint) 45%, transparent);
+}
+
+.resultActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
 }
 
 @keyframes enter {

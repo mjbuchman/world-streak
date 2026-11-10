@@ -78,6 +78,9 @@ test("a player plays today's attempt once and sees the server's result, also aft
   // The wording itself, independent of rows.ts.
   await expect(summary).toHaveText(/^You reached row \d+\. Today's target was row \d+\.$/);
   await expect(page.locator("[data-big-score]")).toHaveText(String(score));
+  // The human's layout (second play-test): the big score above the verdict.
+  const scoreTop = (await page.locator("[data-big-score]").boundingBox())!.y;
+  expect(scoreTop).toBeLessThan((await verdict.boundingBox())!.y);
   await expect(page.getByRole("banner").getByRole("button", { name: "Sign out" })).toBeVisible();
   // What was shown is what the server stored: the engine's score for exactly those taps.
   const { data: stored } = await adminClient().from("attempts").select("score, passed").eq("id", instance.attemptId).single();

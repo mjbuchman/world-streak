@@ -911,7 +911,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T85 Tower wording: rows, not blocks; stale "does not count" comments
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T81
 - Acceptance criteria:
   - [ ] The result text on `/play` and practice uses the HUD's unit: "You reached row 7. Today's target was row 10." (confirmed by the human, Nov 10), with `blocks.ts` and the e2e text checks following.
@@ -939,13 +939,23 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T79 One shared result-hero style for play and practice
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T74
 - Acceptance criteria:
   - [ ] The result layout, verdict heading (display face, reveal animation, no focus ring), the big score (`.score`, added in T81; placed as in practice, above the heading, on both screens: the human's choice, Nov 10), actions column and `@keyframes reveal` live once (a `ResultHero` component or shared classes in `src/components/ui/`) and are used by both `/play` and `/practice/stacking`.
   - [ ] The raw pixel sizes inside the verdict and title `clamp()` calls, and `.shellTitle`'s 26px in `ui.module.css`, become `--fs-text-*` tokens or carry a comment saying why.
   - [ ] No visual change; existing unit and e2e tests pass unchanged.
 - Notes: From the T74 quality review (non-blocking).
+
+### T88 Sturdier ResultHero test hooks
+- Type: maintenance
+- Status: todo
+- Depends on: T79
+- Acceptance criteria:
+  - [ ] `ResultHero` exposes its tone as a `data-tone` attribute, and the tone tests (`ui.test.tsx`, `PlayToday.test.tsx`, `StackingPractice.test.tsx`) check that attribute instead of matching CSS-module class names with a regex.
+  - [ ] The score-above-verdict check in `tests/e2e/play.spec.ts` asserts that both elements are visible before it reads `boundingBox()`, with no non-null assertions.
+  - [ ] The `plain` tone's class names have no trailing space (a small `cx()` helper or similar).
+- Notes: From the T79 round-2 reviews (non-blocking).
 
 ### T66 Shared route-handler helpers for API endpoints
 - Type: maintenance

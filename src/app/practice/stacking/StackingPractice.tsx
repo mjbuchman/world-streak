@@ -6,6 +6,7 @@ import { reachedRow } from "@/components/stacking/rows";
 import { type FinishedRun, StackingGame } from "@/components/stacking/StackingGame";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
+import { ResultHero } from "@/components/ui/ResultHero";
 import { Surface } from "@/components/ui/Surface";
 import { STACKING_HOW_TO } from "@/config/challenges";
 import styles from "./practice.module.css";
@@ -38,22 +39,22 @@ export function StackingPractice() {
 
   if (phase.name === "done") {
     return (
-      <section className={styles.result}>
-        {/* The big number repeats the heading for the eye; screen readers get the heading. */}
-        <p data-big-score aria-hidden="true" className={styles.score}>
-          {phase.score}
-        </p>
-        <h2 ref={resultRef} tabIndex={-1} className={styles.verdict}>
-          {reachedRow(phase.score)}
-        </h2>
+      <ResultHero
+        score={phase.score}
+        heading={reachedRow(phase.score)}
+        headingRef={resultRef}
+        tone="practice"
+        actions={
+          <>
+            <Button onClick={play}>Play again</Button>
+            <LinkButton href="/" variant="secondary">
+              Back to home
+            </LinkButton>
+          </>
+        }
+      >
         <p className={styles.note}>Practice never counts. Play as often as you like.</p>
-        <div className={styles.actions}>
-          <Button onClick={play}>Play again</Button>
-          <LinkButton href="/" variant="secondary">
-            Back to home
-          </LinkButton>
-        </div>
-      </section>
+      </ResultHero>
     );
   }
 

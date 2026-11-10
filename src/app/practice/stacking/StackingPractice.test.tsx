@@ -44,11 +44,14 @@ const finish = (score: number) =>
   );
 
 describe("StackingPractice", () => {
-  it("shows the score as the result's big number", async () => {
+  it("shows the score as the result's big number, in plain mint (no pass glow: practice never counts)", async () => {
     const { container } = render(<StackingPractice />);
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
     finish(7);
     expect(container.querySelector("[data-big-score]")?.textContent).toBe("7");
+    const heading = screen.getByRole("heading", { name: "You reached row 7" });
+    expect(heading.className).toMatch(/resultMint/);
+    expect(heading.className).not.toMatch(/resultGlow/);
   });
 
   it("explains the game and waits for Start", () => {
