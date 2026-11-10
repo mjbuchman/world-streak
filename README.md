@@ -170,7 +170,27 @@ cp .env.example .env.local       # then fill in the values, see below
 
 Fill in `.env.local` from the output of `npx supabase status`: copy **API URL** to `NEXT_PUBLIC_SUPABASE_URL`, the **anon key** to `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and the **service_role key** to `SUPABASE_SERVICE_ROLE_KEY`. These are local-only development keys.
 
-**Google sign-in:** local Supabase reads `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` from your shell when it starts (not from `.env.local`). Without them it still starts and everything else works; "Continue with Google" only completes once a real Google OAuth client is set (backlog task T15).
+**Windows PowerShell:** if `npm` or `npx` fails with "running scripts is disabled on this system", use `npm.cmd` and `npx.cmd` instead (for example `npm.cmd run dev`). They are the same tools, and no security setting needs changing.
+
+**Google sign-in (optional):** without it everything else works; only "Continue with Google" needs it.
+
+1. In [Google Cloud Console](https://console.cloud.google.com) (free), create a project, then an **OAuth consent screen** (audience **External**, left in **Testing**, with your own Gmail added as a **test user**).
+2. Create an **OAuth client** of type **Web application** with the authorised redirect URI `http://127.0.0.1:54321/auth/v1/callback`. Copy its client ID and client secret. Never commit them.
+3. Local Supabase reads them from the shell it starts in (not from `.env.local`), and only when it starts. In PowerShell:
+
+   ```powershell
+   $env:SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID = "<client id>"
+   $env:SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET = "<client secret>"
+   npx.cmd supabase stop
+   npm.cmd run db:start
+   ```
+
+   On macOS or Linux (bash): `export SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=<client id>` and `export SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=<client secret>`, then `npx supabase stop` and `npm run db:start`.
+
+   To keep them for every new PowerShell window, run `setx SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID "<client id>"` and `setx SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET "<client secret>"` once, then open a new window (`setx` does not change the window it runs in). This stores the secret for your Windows user account, where every program you start can read it; that is fine for a local test client. Remove it with `setx SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET ""` or under System Properties > Environment Variables.
+4. Check: on `/signin`, "Continue with Google" leads to Google, then (for a new account) to "Finish setting up your account", then home, signed in. If Google says "The OAuth client was not found", Supabase started without the keys: set the two variables, then stop and start Supabase again, all in that same window.
+
+Deployment will need a second redirect URI for the hosted Supabase project.
 
 **Every time:**
 

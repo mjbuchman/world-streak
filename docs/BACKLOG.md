@@ -202,13 +202,13 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 
 ### T15 Confirm Google sign-in with real credentials
 - Type: infra
-- Status: blocked
+- Status: in-progress
 - Depends on: T07
 - Acceptance criteria:
   - [ ] With the human's Google OAuth credentials set in the shell that runs `npm run db:start` (the Supabase CLI reads `env(...)` values from the shell, not from `.env.local`), then `npm run dev`. "Continue with Google" completes a real Google login locally and lands on `/complete-profile` for a new account.
   - [ ] README "Running the app" documents the Google setup: the authorised redirect URI `http://127.0.0.1:54321/auth/v1/callback` for local Supabase, and where the two env values go.
 - Notes: Code changes should be limited to documentation and any small fixes found during the manual check.
-- needs-human: A Google OAuth client (Google Cloud Console, type "Web application") with the authorised redirect URI `http://127.0.0.1:54321/auth/v1/callback`; set `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` in the shell before `npm run db:start`, then perform the Google login once to confirm (see NEEDS_HUMAN).
+- Resolved (Nov 10, 2026): the human set up the OAuth client and confirmed a real Google login reached "Finish setting up your account" and then home, signed in.
 
 ## M1b Look, feel and Tower rework
 
@@ -294,7 +294,7 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
 
 ### T87 No idle drop: a row waits for its tap
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T81
 - Acceptance criteria:
   - [ ] The engine has no idle limit: a row moves until it is tapped, however long that takes. `IDLE_LOCK_MS` is gone; `simulate` with no further taps leaves the run "running" (also with `nowMs = Infinity`), and the golden fixtures and tuning test are updated (a deliberate change, recorded in the fixtures' history).

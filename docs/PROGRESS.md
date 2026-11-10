@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1b complete and play-tested (Nov 10, 2026); its follow-ups T87, T85 and T79 come before M2
-- Active task: T87 No idle drop
-- Blocked tasks: T15 (needs the human's Google OAuth client; setup steps given in chat Nov 10)
-- Waiting on the human: the Google OAuth client; later, an accessibility pass and more Tower testers; see docs/NEEDS_HUMAN.md
-- Next: T87, T85, T79, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds), T66 (shared route helpers, before T18), T68 and T86 (the attempts flow), T78 (local parallel e2e).
+- Active task: T15 Confirm Google sign-in (README docs; the human confirmed a real login)
+- Blocked tasks: none
+- Waiting on the human: later, an accessibility pass and more Tower testers; see docs/NEEDS_HUMAN.md
+- Next: T85, T79, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds), T66 (shared route helpers, before T18), T68 and T86 (the attempts flow), T78 (local parallel e2e).
 
 ## Log
 
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-10 — T87 No idle drop: a row waits for its tap (PR #32)
+- The human's second play-test decision: no time limit. The engine has no idle drop (the T76 entry's 8 s drop no longer applies); the server refuses unfinished runs (`finished`) and has no submission age limit; the game records only taps the engine counts (a 0 ms tap could otherwise leave a run unable to end).
+- Review rounds: spec 2, quality 2, tests 2 (round 1: the 0 ms tap).
+- Notes: tests end runs with `tapsForAMiss` (in `src/challenges/stacking/player.ts`, test support). GitHub was slow to start CI for this PR; an empty commit retriggered it. Merges since the M1b check: 1.
 
 ### 2026-11-10 — M1b complete
 - The Fresh Sport look (T73), the grid Teetering Tower (T76), restyled home, play and practice (T74), account screens with confirm password (T75), the Tower's renderer and HUD (T77) and the screens around it (T81) are merged. The maintainer check after T77 (one merge before the end) serves as the end-of-milestone check: T82 to T86 added.

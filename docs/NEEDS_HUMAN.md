@@ -12,13 +12,6 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
-### Google OAuth client for sign-in (blocks T15, the last M1 task)
-- What is needed: in Google Cloud Console (free), create a project, an OAuth consent screen (External, in Testing, with your Gmail as a test user) and an OAuth client of type "Web application" with the authorised redirect URI `http://127.0.0.1:54321/auth/v1/callback`. You get a client ID and a client secret. Step-by-step instructions were given in chat on Nov 10, 2026. `setx` makes the two variables below permanent for your user.
-- Where to put it: set them in the shell that starts local Supabase, then restart it. In PowerShell: `$env:SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID = "<client id>"`, `$env:SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET = "<secret>"`, then `npx supabase stop` and `npm run db:start`. (The Supabase CLI reads these from the shell; putting them in `.env.local` does not work.) Then sign in once with "Continue with Google" on `/signin` and tell the agent whether it reached `/complete-profile`.
-- Why: Google sign-in is built and tested up to Google's door (T07), but a real login needs your own OAuth client; agents cannot create accounts.
-- What was tried: everything else for Google sign-in, including an e2e test that checks the hand-off to Google with the configured client ID.
-- Agent's recommendation: do it when convenient; nothing else in M1 or M2 depends on it. Production needs a second redirect URI for the hosted Supabase project at deployment time.
-
 ### Accessibility pass (blocks nothing; before launch)
 - What is needed: one session testing the app with a screen reader and keyboard only (and reduced motion on), all at once, once the main screens exist.
 - Where to put it: reply in chat with anything that is hard to use.
@@ -44,6 +37,8 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: do it before the public launch. T52 works without the keys locally (it skips the CAPTCHA and logs a warning).
 
 ## Resolved
+
+- **Google OAuth client** (Nov 10, 2026): set up locally; a real Google login reached profile completion and home (T15 done). The setup is in the README. Production needs a second redirect URI for the hosted Supabase project at deployment time (T50).
 
 - **Second play-test after M1b** (Nov 10, 2026): done. Speed kept for now (more testers later); remove the idle drop (T87); sign-up and sign-in as built; the header hides during runs; result wording in rows (T85); results laid out like practice (T79); accessibility tested later in one batch. M2 may start after these follow-ups.
 
