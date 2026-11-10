@@ -2,6 +2,25 @@ import { expect, test } from "./support/fixtures";
 import { hasSessionCookie, oneDayShortOf18, signUpViaForm } from "./support/pages";
 import { adminClient, findUserByEmail } from "./support/supabase";
 
+for (const path of ["/signin", "/signup", "/complete-profile", "/rules"]) {
+  test(`${path} has a back button home and its page title`, async ({ page, accounts }) => {
+    // Profile completion is only for a signed-in player without a profile.
+    if (path === "/complete-profile") {
+      const email = accounts.uniqueEmail();
+      await signUpViaForm(page, { email });
+      await expect(page).toHaveURL("/");
+      const user = await findUserByEmail(email);
+      const { error } = await adminClient().from("profiles").delete().eq("id", user!.id);
+      if (error) throw error;
+    }
+    await page.goto(path);
+    await expect(page).toHaveURL(path);
+    const main = page.getByRole("main");
+    await expect(main.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(main.getByRole("link", { name: "Back", exact: true })).toHaveAttribute("href", "/");
+  });
+}
+
 test("the rules checkbox links to the official rules page", async ({ page }) => {
   await page.goto("/signup");
   await expect(page.getByRole("link", { name: "official rules" })).toHaveAttribute("href", "/rules");
@@ -16,6 +35,31 @@ test("a field error is shown next to the field and the form keeps what was typed
   await expect(page.getByLabel("Email")).toHaveValue(email);
   await expect(page.getByLabel("Date of birth")).toHaveValue("1990-06-15");
   await expect(page.getByLabel("Country of residence")).toHaveValue("US");
+  // The passwords survive the server's reply too (React resets uncontrolled fields after an action).
+  await expect(page.getByLabel("Password (at least 8 characters)")).toHaveValue("short");
+  await expect(page.getByLabel("Confirm password")).toHaveValue("short");
+});
+
+test("a mismatched confirmation is caught before anything is sent", async ({ page, accounts }) => {
+  const email = accounts.uniqueEmail();
+  let posted = false;
+  page.on("request", (request) => {
+    if (request.method() === "POST" && request.url().includes("/signup")) posted = true;
+  });
+  // Everything else is valid, so only the mismatch can stop this account being created.
+  await page.goto("/signup");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password (at least 8 characters)").fill("e2e-password-123");
+  await page.getByLabel("Confirm password").fill("e2e-password-124");
+  await page.getByLabel("Date of birth").fill("1990-06-15");
+  await page.getByLabel("Country of residence").selectOption("US");
+  await page.getByRole("checkbox", { name: /I agree to the official rules/ }).check();
+  await page.getByRole("button", { name: "Create account" }).click();
+
+  await expect(page.getByText("The passwords don't match.")).toBeVisible();
+  await expect(page.getByLabel("Confirm password")).toBeFocused();
+  expect(posted).toBe(false);
+  expect(await findUserByEmail(email)).toBeUndefined();
 });
 
 test("an eligible adult signs up, gets a profile and lands on the home page signed in", async ({

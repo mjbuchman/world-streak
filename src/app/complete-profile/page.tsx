@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { PageShell } from "@/components/ui/PageShell";
+import { Surface } from "@/components/ui/Surface";
 import { GAME_NAME } from "@/config/game";
 import { eligibilitySummary } from "@/lib/eligibility";
 import { landingPath } from "@/lib/profiles";
@@ -18,12 +20,13 @@ export default async function CompleteProfilePage() {
   if ((await landingPath(supabase, userId)) === "/") redirect("/");
 
   return (
-    <main className={styles.main}>
-      <h1 className={styles.title}>Finish setting up your account</h1>
+    <PageShell title="Finish setting up your account" backHref="/">
       <p className={styles.intro}>
         We need a few details before your daily attempt can count. Open to {eligibilitySummary()}.
       </p>
-      <CompleteProfileForm />
-    </main>
+      <Surface>
+        <CompleteProfileForm />
+      </Surface>
+    </PageShell>
   );
 }

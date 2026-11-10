@@ -21,7 +21,7 @@ export function CompleteProfileForm() {
       <BirthDateInput error={errors.birthDate} defaultValue={failed?.values.birthDate} />
       <CountrySelect error={errors.country} defaultValue={failed?.values.country} />
       <RulesAgreement error={errors.agree} />
-      <SubmitButton pending={pending} label="Save and continue" pendingLabel="Saving" />
+      <SubmitButton pending={pending} label="Save and continue" />
     </form>
   );
 }

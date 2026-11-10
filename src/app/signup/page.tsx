@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { PageShell } from "@/components/ui/PageShell";
+import { Surface } from "@/components/ui/Surface";
 import { GAME_NAME } from "@/config/game";
 import { eligibilitySummary } from "@/lib/eligibility";
 import { SignUpForm } from "./SignUpForm";
@@ -10,17 +12,18 @@ export const metadata: Metadata = { title: `Create account | ${GAME_NAME}` };
 
 export default function SignUpPage() {
   return (
-    <main className={styles.main}>
-      <h1 className={styles.title}>Create account</h1>
+    <PageShell title="Create account" backHref="/">
       <p className={styles.intro}>
         An account lets your daily attempt count toward the world streak. Open to {eligibilitySummary()}.
       </p>
-      <GoogleSignInButton />
-      <p className={styles.divider}>or create an account with your email</p>
-      <SignUpForm />
+      <Surface>
+        <GoogleSignInButton />
+        <p className={styles.divider}>or use your email</p>
+        <SignUpForm />
+      </Surface>
       <p className={styles.switch}>
         Already have an account? <Link href="/signin">Sign in</Link>
       </p>
-    </main>
+    </PageShell>
   );
 }

@@ -25,6 +25,7 @@ export async function signUpViaForm(page: Page, details: SignUpDetails): Promise
   await page.goto("/signup");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password (at least 8 characters)").fill(password);
+  await page.getByLabel("Confirm password").fill(password);
   await page.getByLabel("Date of birth").fill(birthDate);
   await page.getByLabel("Country of residence").selectOption(country);
   await page.getByRole("checkbox", { name: /I agree to the official rules/ }).check();

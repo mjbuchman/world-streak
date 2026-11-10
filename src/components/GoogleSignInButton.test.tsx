@@ -40,23 +40,26 @@ describe("GoogleSignInButton", () => {
     expect(screen.getByRole("button", { name: "Continue with Google" }).getAttribute("type")).toBe("button");
   });
 
-  it("disables itself while Google sign-in starts, so it cannot be started twice", async () => {
+  it("shows a spinner while Google sign-in starts, and cannot be started twice", async () => {
     signInWithOAuth.mockReturnValue(new Promise(() => {}));
     await clickContinue();
-    expect(screen.getByRole("button", { name: "Continue with Google" }).hasAttribute("disabled")).toBe(true);
+    const button = screen.getByRole("button", { name: "Continue with Google" });
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    await userEvent.click(button);
+    expect(signInWithOAuth).toHaveBeenCalledTimes(1);
   });
 
   it("recovers the same way when starting Google sign-in throws", async () => {
     signInWithOAuth.mockRejectedValue(new Error("network down"));
     await clickContinue();
     expect((await screen.findByRole("alert")).textContent).toBe("Google sign-in didn't start. Please try again.");
-    expect(screen.getByRole("button", { name: "Continue with Google" }).hasAttribute("disabled")).toBe(false);
+    expect(screen.getByRole("button", { name: "Continue with Google" }).hasAttribute("aria-busy")).toBe(false);
   });
 
   it("shows an error and lets the player try again when Google sign-in cannot start", async () => {
     signInWithOAuth.mockResolvedValue({ data: { url: null }, error: { message: "provider disabled" } });
     await clickContinue();
     expect((await screen.findByRole("alert")).textContent).toBe("Google sign-in didn't start. Please try again.");
-    expect(screen.getByRole("button", { name: "Continue with Google" }).hasAttribute("disabled")).toBe(false);
+    expect(screen.getByRole("button", { name: "Continue with Google" }).hasAttribute("aria-busy")).toBe(false);
   });
 });

@@ -58,4 +58,12 @@ describe("CompleteProfileForm", () => {
     await fillAndSubmit();
     expect(await screen.findByText("You need to agree to the official rules.")).toBeTruthy();
   });
+
+  it("shows the button as busy, keeping its name, while saving", async () => {
+    completeProfileAction.mockReturnValue(new Promise(() => {}));
+    await fillAndSubmit();
+    await vi.waitFor(() =>
+      expect(screen.getByRole("button", { name: "Save and continue" }).getAttribute("aria-busy")).toBe("true"),
+    );
+  });
 });

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { CountrySelect, RulesAgreement } from "./EligibilityFields";
 import { Field, TextInput } from "./Field";
 import { FormAlert, SubmitButton } from "./FormParts";
@@ -65,13 +65,25 @@ describe("FormAlert", () => {
 });
 
 describe("SubmitButton", () => {
-  it("shows its label and is enabled when idle", () => {
-    render(<SubmitButton pending={false} label="Sign in" pendingLabel="Signing in" />);
-    expect(screen.getByRole("button", { name: "Sign in" })).toHaveProperty("disabled", false);
+  it("is the form's submit button, idle and enabled", () => {
+    render(<SubmitButton pending={false} label="Sign in" />);
+    const button = screen.getByRole("button", { name: "Sign in" });
+    expect(button.getAttribute("type")).toBe("submit");
+    expect(button.hasAttribute("aria-busy")).toBe(false);
   });
 
-  it("shows the pending label and is disabled while submitting", () => {
-    render(<SubmitButton pending label="Sign in" pendingLabel="Signing in" />);
-    expect(screen.getByRole("button", { name: "Signing in" })).toHaveProperty("disabled", true);
+  it("shows a spinner and blocks a second submit while pending, keeping its name and focus", () => {
+    const onSubmit = vi.fn((event: { preventDefault(): void }) => event.preventDefault());
+    render(
+      <form onSubmit={onSubmit}>
+        <SubmitButton pending label="Sign in" />
+      </form>,
+    );
+    const button = screen.getByRole("button", { name: "Sign in" });
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    // aria-disabled rather than disabled, so a focused button keeps focus.
+    expect(button).toHaveProperty("disabled", false);
+    fireEvent.click(button);
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

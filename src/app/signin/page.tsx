@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FormAlert } from "@/components/form/FormParts";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { PageShell } from "@/components/ui/PageShell";
+import { Surface } from "@/components/ui/Surface";
 import { GAME_NAME } from "@/config/game";
 import styles from "@/app/auth/authPage.module.css";
 import { SignInForm } from "./SignInForm";
@@ -17,19 +19,16 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const { error } = await searchParams;
 
   return (
-    <main className={styles.main}>
-      <h1 className={styles.title}>Sign in</h1>
-      {error === "oauth" && (
-        <div className={styles.alert}>
-          <FormAlert message={OAUTH_FAILED} />
-        </div>
-      )}
-      <GoogleSignInButton />
-      <p className={styles.divider}>or sign in with your email</p>
-      <SignInForm />
+    <PageShell title="Sign in" backHref="/">
+      {error === "oauth" && <FormAlert message={OAUTH_FAILED} />}
+      <Surface>
+        <GoogleSignInButton />
+        <p className={styles.divider}>or use your email</p>
+        <SignInForm />
+      </Surface>
       <p className={styles.switch}>
         New here? <Link href="/signup">Create an account</Link>
       </p>
-    </main>
+    </PageShell>
   );
 }

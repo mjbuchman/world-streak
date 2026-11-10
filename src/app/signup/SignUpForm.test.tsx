@@ -16,11 +16,15 @@ afterEach(() => {
 
 const values = { email: "player@example.com", birthDate: "1990-06-15", country: "US" };
 
-async function fillAndSubmit() {
+const passwordInput = () => screen.getByLabelText<HTMLInputElement>("Password (at least 8 characters)");
+const confirmInput = () => screen.getByLabelText<HTMLInputElement>("Confirm password");
+
+async function fillAndSubmit({ confirm = "secret-password" } = {}) {
   const user = userEvent.setup();
   render(<SignUpForm />);
   await user.type(screen.getByLabelText("Email"), values.email);
-  await user.type(screen.getByLabelText("Password (at least 8 characters)"), "secret-password");
+  await user.type(passwordInput(), "secret-password");
+  await user.type(confirmInput(), confirm);
   await user.type(screen.getByLabelText("Date of birth"), values.birthDate);
   await user.selectOptions(screen.getByLabelText("Country of residence"), "US");
   await user.click(screen.getByRole("checkbox", { name: /I agree to the official rules/ }));
@@ -44,6 +48,7 @@ describe("SignUpForm", () => {
     expect(Object.fromEntries(form)).toEqual({
       email: values.email,
       password: "secret-password",
+      confirmPassword: "secret-password",
       birthDate: values.birthDate,
       country: "US",
       agree: "on",
@@ -57,6 +62,7 @@ describe("SignUpForm", () => {
       fieldErrors: {
         email: "Enter a valid email address.",
         password: "Use at least 8 characters.",
+        confirmPassword: "The passwords don't match.",
         birthDate: "Enter a valid date of birth.",
         country: "Select your country of residence.",
         agree: "You need to agree to the official rules.",
@@ -68,7 +74,8 @@ describe("SignUpForm", () => {
 
     const cases: [HTMLElement, string][] = [
       [screen.getByLabelText("Email"), "Enter a valid email address."],
-      [screen.getByLabelText("Password (at least 8 characters)"), "Use at least 8 characters."],
+      [passwordInput(), "Use at least 8 characters."],
+      [confirmInput(), "The passwords don't match."],
       [screen.getByLabelText("Date of birth"), "Enter a valid date of birth."],
       [screen.getByLabelText("Country of residence"), "Select your country of residence."],
       [screen.getByRole("checkbox"), "You need to agree to the official rules."],
@@ -95,7 +102,7 @@ describe("SignUpForm", () => {
     expect((await screen.findByRole("alert")).textContent).toBe("Sorry, not eligible.");
   });
 
-  it("refills the email, birth date and country from the server's reply, but never the password", async () => {
+  it("refills the email, birth date and country from the server's reply", async () => {
     // Different from what was typed, so the refill provably comes from the returned state,
     // and the lower-case country exercises the select's normalising remount.
     const returned = { email: "server@example.com", birthDate: "1985-01-02", country: "us" };
@@ -105,18 +112,55 @@ describe("SignUpForm", () => {
     expect(screen.getByLabelText<HTMLInputElement>("Email").value).toBe(returned.email);
     expect(screen.getByLabelText<HTMLInputElement>("Date of birth").value).toBe(returned.birthDate);
     expect(screen.getByLabelText<HTMLSelectElement>("Country of residence").value).toBe("US");
-    expect(screen.getByLabelText<HTMLInputElement>("Password (at least 8 characters)").value).toBe("");
   });
 
-  it("disables the button and says it is working while the action runs", async () => {
+  it("keeps the typed password and confirmation after a failed submit (held in the browser only)", async () => {
+    // The server's reply carries no password, so these values can only come from client state.
+    signUpAction.mockResolvedValue({ ok: false, values, fieldErrors: { email: "taken" } });
+    await fillAndSubmit();
+    await screen.findByText("taken");
+    expect(passwordInput().value).toBe("secret-password");
+    expect(confirmInput().value).toBe("secret-password");
+    // Restored as live values only: the password never appears in the page's HTML.
+    expect(document.body.innerHTML).not.toContain("secret-password");
+  });
+
+  it("stops a mismatched confirmation before sending anything, with the error next to it", async () => {
+    await fillAndSubmit({ confirm: "secret-passwort" });
+    const message = await screen.findByText("The passwords don't match.");
+    expect(signUpAction).not.toHaveBeenCalled();
+    expect(confirmInput().getAttribute("aria-invalid")).toBe("true");
+    expect(confirmInput().getAttribute("aria-describedby")).toBe(message.id);
+    expect(document.activeElement).toBe(confirmInput());
+    // Nothing typed is lost, and fixing the confirmation clears the error.
+    expect(passwordInput().value).toBe("secret-password");
+    await userEvent.clear(confirmInput());
+    // Still different, so the error stays until the two agree.
+    expect(screen.getByText("The passwords don't match.")).toBeTruthy();
+    await userEvent.type(confirmInput(), "secret-password");
+    expect(screen.queryByText("The passwords don't match.")).toBeNull();
+  });
+
+  it("clears the mismatch error when the password is changed to match the confirmation", async () => {
+    await fillAndSubmit({ confirm: "secret-passwort" });
+    await screen.findByText("The passwords don't match.");
+    await userEvent.clear(passwordInput());
+    await userEvent.type(passwordInput(), "secret-passwort");
+    expect(screen.queryByText("The passwords don't match.")).toBeNull();
+  });
+
+  it("shows the button as busy, keeping its name, while the action runs", async () => {
     let finish!: (state: SignUpState) => void;
     signUpAction.mockReturnValue(new Promise((resolve) => (finish = resolve)));
     await fillAndSubmit();
 
-    const button = await screen.findByRole("button", { name: "Creating account" });
-    expect(button).toHaveProperty("disabled", true);
+    await vi.waitFor(() =>
+      expect(screen.getByRole("button", { name: "Create account" }).getAttribute("aria-busy")).toBe("true"),
+    );
 
     finish({ ok: false, values });
-    expect(await screen.findByRole("button", { name: "Create account" })).toHaveProperty("disabled", false);
+    await vi.waitFor(() =>
+      expect(screen.getByRole("button", { name: "Create account" }).getAttribute("aria-busy")).toBeNull(),
+    );
   });
 });

@@ -59,9 +59,11 @@ describe("SignInForm", () => {
     );
   });
 
-  it("disables the button while signing in", async () => {
+  it("shows the button as busy while signing in", async () => {
     signInAction.mockReturnValue(new Promise(() => {}));
     await submit("a@example.com", "secret-pass");
-    expect(await screen.findByRole("button", { name: "Signing in" })).toHaveProperty("disabled", true);
+    await vi.waitFor(() =>
+      expect(screen.getByRole("button", { name: "Sign in" }).getAttribute("aria-busy")).toBe("true"),
+    );
   });
 });
