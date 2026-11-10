@@ -4,11 +4,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M1b Look, feel and Tower rework is complete (Nov 10, 2026); waiting for the human's second play-test before M2
-- Active task: none
-- Blocked tasks: T15 (needs the human's Google OAuth client)
-- Waiting on the human: the second play-test (M2 waits for it), the Google OAuth client; see docs/NEEDS_HUMAN.md
-- Next: after the play-test, act on its feedback, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds), T66 (shared route helpers, before T18), T68 and T86 (the attempts flow), T78 (local parallel e2e).
+- Milestone: M1b complete and play-tested (Nov 10, 2026); its follow-ups T87, T85 and T79 come before M2
+- Active task: T87 No idle drop
+- Blocked tasks: T15 (needs the human's Google OAuth client; setup steps given in chat Nov 10)
+- Waiting on the human: the Google OAuth client; later, an accessibility pass and more Tower testers; see docs/NEEDS_HUMAN.md
+- Next: T87, T85, T79, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds), T66 (shared route helpers, before T18), T68 and T86 (the attempts flow), T78 (local parallel e2e).
 
 ## Log
 

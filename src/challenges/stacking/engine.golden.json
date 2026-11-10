@@ -28,70 +28,59 @@
         {
           "left": 4,
           "width": 3,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 4,
           "width": 3,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 4,
           "width": 3,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 4,
           "width": 3,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 4,
           "width": 3,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 5,
           "width": 2,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 5,
           "width": 2,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 5,
           "width": 2,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 5,
           "width": 2,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 5,
           "width": 2,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 4,
           "width": 0,
           "lostColumns": [
             4
-          ],
-          "byTap": true
+          ]
         }
       ]
     }
@@ -129,92 +118,77 @@
         {
           "left": 2,
           "width": 3,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 2,
           "width": 3,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 2,
           "width": 3,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 2,
           "width": 3,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 2,
           "width": 3,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 3,
           "width": 2,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 3,
           "width": 2,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 3,
           "width": 2,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 3,
           "width": 2,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 3,
           "width": 2,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 3,
           "width": 1,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 3,
           "width": 1,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 3,
           "width": 1,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 3,
           "width": 1,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 3,
           "width": 1,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         }
       ]
     }
@@ -234,36 +208,23 @@
     ],
     "result": {
       "score": 3,
-      "endReason": "miss",
-      "endedAtMs": 10181,
+      "endReason": "running",
+      "endedAtMs": 2181,
       "rows": [
         {
           "left": 3,
           "width": 3,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 3,
           "width": 3,
-          "lostColumns": [],
-          "byTap": true
+          "lostColumns": []
         },
         {
           "left": 3,
           "width": 3,
-          "lostColumns": [],
-          "byTap": true
-        },
-        {
-          "left": 1,
-          "width": 0,
-          "lostColumns": [
-            1,
-            2,
-            3
-          ],
-          "byTap": false
+          "lostColumns": []
         }
       ]
     }

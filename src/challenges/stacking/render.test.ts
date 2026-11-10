@@ -214,14 +214,12 @@ describe("landingLift", () => {
     expect(mid.lift).toBeGreaterThan(liftAt(350 + BOUNCE_MS / 4)!.lift);
   });
 
-  it("is null once settled, for a miss, and for a row that dropped by itself", () => {
+  it("is null once settled, before anything has landed, and for a miss", () => {
     expect(liftAt(350 + BOUNCE_MS)).toBeNull();
-    // A tapped miss locks a row of width 0: nothing landed, so nothing bounces.
+    expect(landingLift(simulate(params, [], 100), 100)).toBeNull();
+    // A miss locks a row of width 0: nothing landed, so nothing bounces.
     const missed = simulate(params, [250, 350, 351]);
-    expect(missed.rows.at(-1)).toMatchObject({ width: 0, byTap: true });
+    expect(missed.rows.at(-1)).toMatchObject({ width: 0 });
     expect(landingLift(missed, 351 + BOUNCE_MS / 2)).toBeNull();
-    const idle = simulate(params, [250], 250 + 9_000);
-    expect(idle.rows.at(-1)!.byTap).toBe(false);
-    expect(landingLift(idle, idle.rows.at(-1)!.lockedAtMs + 10)).toBeNull();
   });
 });

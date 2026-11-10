@@ -182,7 +182,7 @@ Goal: run the app locally against local Supabase, sign up with email and passwor
 - Acceptance criteria:
   - [ ] `POST /api/attempts/submit` with `{ attemptId, inputs }` returns 401 when signed out, 400 when the body or `inputs` fail the challenge's `inputsSchema`, and 404 when the attempt is not the caller's.
   - [ ] It returns 409 `already-submitted` if `submitted_at` is set, and 409 `day-closed` if the attempt's game date is no longer the current game date or the day has `closed_at`.
-  - [ ] It returns 422 `implausible-timing` if the last input timestamp exceeds `(now - started_at) + 2000 ms` or the attempt is older than `ATTEMPT_MAX_AGE_MS` (config, default 180,000).
+  - [ ] It returns 422 `implausible-timing` if the last input timestamp exceeds `(now - started_at) + 2000 ms` or the attempt is older than `ATTEMPT_MAX_AGE_MS` (config, default 180,000). (The age limit was removed in T87: runs have no time limit.)
   - [ ] Otherwise the server replays the engine (`score(paramsFromSeed(seed), inputs)`) and computes `passed` from the day's `pass_target` and the module's `direction` (higher-better: `score >= target`; lower-better: `score <= target`). It stores inputs, score, passed and `submitted_at` atomically through a `security definer` SQL function `record_attempt_result` that only `service_role` may execute. It returns `{ score, passed, passTarget }`.
   - [ ] Any `score` or `passed` field in the request body is ignored (test: a body claiming `passed: true` with inputs that score 0 is stored as failed).
   - [ ] Unit tests cover every status code. A pgTAP test shows that `authenticated` cannot execute `record_attempt_result`.
@@ -291,6 +291,18 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
   - [ ] e2e: practice and play runs end on a deliberate miss with a paused clock, and the stored result matches what was shown; `npm run verify` and `npm run test:e2e` pass.
   - [ ] The last fall plays out: when a run ends, the game keeps drawing for `FALL_MS` (input already blocked, taps fixed) before calling `onFinish`, so a missed row is seen falling away; a component test covers the delay.
 - Notes: Split from T77 (Nov 9, 2026); the follow-ups come from the T74 and T77 reviews. In `tests/e2e/play.spec.ts`, read the game date from the start response rather than the test's own clock (as `attempts.spec.ts` does). Last task of M1b: then the maintainer check and the second play-test.
+
+### T87 No idle drop: a row waits for its tap
+- Type: feature
+- Status: in-progress
+- Depends on: T81
+- Acceptance criteria:
+  - [ ] The engine has no idle limit: a row moves until it is tapped, however long that takes. `IDLE_LOCK_MS` is gone; `simulate` with no further taps leaves the run "running" (also with `nowMs = Infinity`), and the golden fixtures and tuning test are updated (a deliberate change, recorded in the fixtures' history).
+  - [ ] The server scores the rows locked by the submitted taps; a submission whose taps do not end the run (no miss and not the top row) is refused as `invalid-inputs`, since the game only submits finished runs.
+  - [ ] The 3-minute submission age limit (`ATTEMPT_MAX_AGE_MS`) is removed; the day's deadline and the "last tap later than real elapsed time" check stay. Unit tests: a slow, valid run submitted after 10 minutes is accepted; taps claiming the future are still refused.
+  - [ ] The simulated player and every e2e test that relied on runs ending by themselves end them with taps instead (deliberate misses via `tests/e2e/support/tower.ts`).
+  - [ ] `npm run verify` and `npm run test:e2e` pass.
+- Notes: The human's decision at the second play-test (Nov 10, 2026): "we don't want to time out slow players". A player who walks away never submits, which counts as an attempt that did not pass (T17). Replay cost stays bounded by `MAX_TAPS`.
 
 ## M2 The world streak
 
@@ -902,8 +914,8 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Status: todo
 - Depends on: T81
 - Acceptance criteria:
-  - [ ] The result text on `/play` and practice uses the HUD's unit (for example "You reached row 7. Today's target was row 10."), with `blocks.ts` and the e2e text checks following; wording confirmed by the human first (NEEDS_HUMAN, second play-test).
-  - [ ] The `PlayStatus` comment in `src/lib/attempts/today.ts` says leaving early counts as not passed; the DECISIONS entry "Submissions after the deadline record nothing (T13)" says a run lasts up to about two minutes (15 rows with the 8 s idle drop), not a minute.
+  - [ ] The result text on `/play` and practice uses the HUD's unit: "You reached row 7. Today's target was row 10." (confirmed by the human, Nov 10), with `blocks.ts` and the e2e text checks following.
+  - [ ] The `PlayStatus` comment in `src/lib/attempts/today.ts` says leaving early counts as not passed.
   - [ ] `npm run verify` passes; the only behavior change is the result wording.
 - Notes: From the maintainer check after T77 (about 60 lines). Since T76 the score is rows locked, and a 3-cell row is 3 blocks, so "target was 10 blocks" contradicts "Row 10 to pass".
 
@@ -930,7 +942,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Status: todo
 - Depends on: T74
 - Acceptance criteria:
-  - [ ] The result layout, verdict heading (display face, reveal animation, no focus ring), the big score (`.score`, added in T81; also place it the same way on both screens), actions column and `@keyframes reveal` live once (a `ResultHero` component or shared classes in `src/components/ui/`) and are used by both `/play` and `/practice/stacking`.
+  - [ ] The result layout, verdict heading (display face, reveal animation, no focus ring), the big score (`.score`, added in T81; placed as in practice, above the heading, on both screens: the human's choice, Nov 10), actions column and `@keyframes reveal` live once (a `ResultHero` component or shared classes in `src/components/ui/`) and are used by both `/play` and `/practice/stacking`.
   - [ ] The raw pixel sizes inside the verdict and title `clamp()` calls, and `.shellTitle`'s 26px in `ui.module.css`, become `--fs-text-*` tokens or carry a comment saying why.
   - [ ] No visual change; existing unit and e2e tests pass unchanged.
 - Notes: From the T74 quality review (non-blocking).

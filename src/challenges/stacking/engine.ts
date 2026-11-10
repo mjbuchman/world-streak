@@ -7,7 +7,8 @@ import type { ChallengeModule } from "../shared/types";
  * A run of cells slides along one row, one column at a time, bouncing between the walls; a tap
  * locks it. Cells that do not rest on a cell of the row below fall off, so the next row starts
  * narrower. The width is also capped at set heights. Score = rows locked (0 to ROWS); locking
- * the top row is the win. No cells left is a miss. There is no time limit.
+ * the top row is the win. No cells left is a miss. There is no time limit: a row moves until it
+ * is tapped, however long that takes (DECISIONS, "Human decisions at the second play-test").
  *
  * Driven only by elapsed milliseconds since the run started, so the server can replay a run
  * from its taps alone.
@@ -23,15 +24,8 @@ export const WIDTH_CAPS: readonly { fromRow: number; max: number }[] = [
   { fromRow: 11, max: 1 },
 ];
 
-/** At most one counted tap per row. */
+/** At most one counted tap per row, which also bounds the cost of a replay. */
 export const MAX_TAPS = ROWS;
-
-/**
- * A row nobody taps for this long drops off the board, which ends the run like a miss
- * (judgment call, see DECISIONS). It keeps every run finite without a time limit, so it can
- * always be replayed and submitted, and nobody scores rows without tapping.
- */
-export const IDLE_LOCK_MS = 8_000;
 
 /**
  * Per-player randomization. Row r steps every `startStepMs - stepDecayMs * (r - 1)` ms (never
@@ -59,7 +53,7 @@ export type StackingParams = {
 export type StackingInputs = { tapsMs: number[] };
 
 /** A locked row: the cells that stayed (columns `left` to `left + width - 1`) and the ones lost. */
-export type PlacedRow = { left: number; width: number; lostColumns: number[]; lockedAtMs: number; byTap: boolean };
+export type PlacedRow = { left: number; width: number; lostColumns: number[]; lockedAtMs: number };
 
 /** The row in play: row `row` (1-based), `width` cells, appearing at `startMs`. */
 export type MovingRow = { row: number; width: number; startMs: number; startColumn: number; direction: Direction };
@@ -71,7 +65,8 @@ export type StackingResult = {
   endedAtMs: number;
   /**
    * "miss": no cells were left. "top": the top row was locked (the win). "running": the run
-   * is still going at the time asked about; only the live game asks before the end.
+   * is still going at the time asked about, or the taps stop before it ended (the game never
+   * submits such a run, so the server refuses one).
    */
   endReason: "miss" | "top" | "running";
   /** The row in play; null once the run has ended. */
@@ -107,23 +102,23 @@ function nextRow(params: StackingParams, locked: PlacedRow, row: number, startMs
   return { row, width, startMs, startColumn: direction === "right" ? 0 : COLUMNS - width, direction };
 }
 
-function lock(moving: MovingRow, below: PlacedRow | null, column: number, atMs: number, byTap: boolean): PlacedRow {
+function lock(moving: MovingRow, below: PlacedRow | null, column: number, atMs: number): PlacedRow {
   const cells = Array.from({ length: moving.width }, (_, i) => column + i);
-  // An untapped row drops off entirely; a tapped one keeps the cells resting on the row below.
-  const supported = !byTap ? [] : below ? cells.filter((c) => c >= below.left && c < below.left + below.width) : cells;
+  // Only the cells resting on the row below stay (row 1 rests on the floor).
+  const supported = below ? cells.filter((c) => c >= below.left && c < below.left + below.width) : cells;
   return {
     left: supported[0] ?? column,
     width: supported.length,
     lostColumns: cells.filter((c) => !supported.includes(c)),
     lockedAtMs: atMs,
-    byTap,
   };
 }
 
 /**
- * Replays a run: the taps (ms since the start, strictly increasing) up to `nowMs`; a row left
- * untapped for IDLE_LOCK_MS drops off and ends the run. The server replays a finished run with
- * `nowMs = Infinity`, which always ends in a miss or the top; the live game passes its clock.
+ * Replays a run: the taps (ms since the start, strictly increasing) up to `nowMs`. Each tap locks
+ * the row in play; with no tap (yet) the row keeps moving. The server replays a submitted run
+ * with `nowMs = Infinity`; a finished run ends in a miss or the top, and taps that stop short
+ * leave it "running". The live game passes its clock.
  */
 export function simulate(params: StackingParams, tapsMs: readonly number[], nowMs = Number.POSITIVE_INFINITY): StackingResult {
   const rows: PlacedRow[] = [];
@@ -139,16 +134,13 @@ export function simulate(params: StackingParams, tapsMs: readonly number[], nowM
   let tapIndex = 0;
 
   while (moving) {
-    const idleAt = moving.startMs + IDLE_LOCK_MS;
     // Taps at or before the row appeared belong to nothing (they cannot happen in a real run).
     while (tapIndex < tapsMs.length && tapsMs[tapIndex] <= moving.startMs) tapIndex++;
-    const tap = tapsMs[tapIndex];
-    const byTap = tap !== undefined && tap < idleAt && tap <= nowMs;
-    const at = byTap ? tap : idleAt;
-    if (!byTap && idleAt > nowMs) break; // still waiting for this row's tap
-    if (byTap) tapIndex++;
+    const at = tapsMs[tapIndex];
+    if (at === undefined || at > nowMs) break; // still waiting for this row's tap
+    tapIndex++;
 
-    const locked = lock(moving, rows.at(-1) ?? null, columnAt(params, moving, at), at, byTap);
+    const locked = lock(moving, rows.at(-1) ?? null, columnAt(params, moving, at), at);
     rows.push(locked);
     endedAtMs = at;
     if (locked.width === 0) {
@@ -190,6 +182,7 @@ const inputsSchema: z.ZodType<StackingInputs> = z.object({
 export const stacking: ChallengeModule<StackingParams, StackingInputs> = {
   paramsFromSeed,
   score: (params, inputs) => simulate(params, inputs.tapsMs).score,
+  finished: (params, inputs) => simulate(params, inputs.tapsMs).endReason !== "running",
   inputsSchema,
   direction: "higher-better",
   lastInputMs: (inputs) => inputs.tapsMs.at(-1) ?? 0,

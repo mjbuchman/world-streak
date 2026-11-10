@@ -21,6 +21,11 @@ export interface ChallengeModule<Params, Inputs> {
   paramsFromSeed: (seed: number) => Params;
   /** The official score for these inputs on this instance. */
   score: (params: Params, inputs: Inputs) => number;
+  /**
+   * Whether these inputs end the run. The game submits only finished runs, so the server
+   * refuses unfinished ones rather than scoring a run part-way.
+   */
+  finished: (params: Params, inputs: Inputs) => boolean;
   /** Validates inputs submitted by the client before they are scored. */
   inputsSchema: z.ZodType<Inputs>;
   direction: ScoreDirection;

@@ -59,8 +59,8 @@ export function fallingCells(result: StackingResult, elapsedMs: number): Falling
 /** The row that just landed and how far it is lifted (a half sine), or null once it has settled. */
 export function landingLift(result: StackingResult, elapsedMs: number): { row: number; lift: number } | null {
   const last = result.rows.at(-1);
-  // A row that dropped by itself, or a miss, has nothing to bounce.
-  if (!last || !last.byTap || last.width === 0) return null;
+  // A miss has nothing left to bounce.
+  if (!last || last.width === 0) return null;
   const t = elapsedMs - last.lockedAtMs;
   if (t < 0 || t >= BOUNCE_MS) return null;
   return { row: result.rows.length, lift: BOUNCE_CELLS * Math.sin((Math.PI * t) / BOUNCE_MS) };
