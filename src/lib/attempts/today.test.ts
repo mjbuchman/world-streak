@@ -24,6 +24,10 @@ function fakeDb(result: Result) {
       calls.push(["from", table]);
       return query;
     },
+    // The player's own client must only read; no database function runs on it.
+    rpc: () => {
+      throw new Error("todaysAttempt must not call an rpc");
+    },
   };
   return { db: db as unknown as SupabaseClient, calls };
 }

@@ -1,6 +1,7 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
-import type { AttemptStore, DayAttempt, GameDay } from "./start";
+import type { AttemptStore } from "./start";
 import { RECORD_STATUSES, type RecordStatus, type SubmitStore } from "./submit";
+import type { DayAttempt, GameDay } from "./types";
 
 const UNIQUE_VIOLATION = "23505";
 
@@ -54,7 +55,7 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient, "from" | "rpc">): 
         .eq("user_id", userId)
         .eq("game_date", gameDate)
         .maybeSingle();
-      if (error) throwDbError("Attempt lookup", error);
+      if (error) throwDbError("Day attempt lookup", error);
       if (!data) return null;
       const row = data as unknown as DayAttemptRow;
       if (row.submitted_at === null) return { submitted: false };
@@ -83,7 +84,7 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient, "from" | "rpc">): 
         .select("user_id, game_date, seed, started_at, submitted_at")
         .eq("id", attemptId)
         .maybeSingle();
-      if (error) throwDbError("Attempt lookup", error);
+      if (error) throwDbError("Attempt lookup by id", error);
       if (!data) return null;
       const row = data as AttemptRow;
       return {

@@ -1,11 +1,6 @@
 import { challengeForGameDay } from "@/challenges/registry";
 import { gameDateAt } from "@/lib/gameDay";
-
-/** A game day as both flows read it. */
-export type GameDay = { challengeType: string; passTarget: number; closed: boolean };
-
-/** A player's attempt for one game date: still open, or submitted with its stored result. */
-export type DayAttempt = { submitted: false } | { submitted: true; score: number; passed: boolean; passTarget: number };
+import type { DayAttempt, GameDay } from "./types";
 
 /** The database operations starting an attempt needs (see `supabaseAttemptStore`). */
 export type AttemptStore = {

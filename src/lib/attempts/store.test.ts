@@ -84,7 +84,12 @@ describe("supabaseAttemptStore", () => {
       passTarget: 10,
     });
     const pass = { score: 12, passed: true, submitted_at: "2026-11-08T10:00:00Z", game_days: { pass_target: 10 } };
-    expect(await fakeDb({ data: pass, error: null }).store.findAttemptForDay("u1", "2026-11-08")).toMatchObject({ passed: true });
+    expect(await fakeDb({ data: pass, error: null }).store.findAttemptForDay("u1", "2026-11-08")).toEqual({
+      submitted: true,
+      score: 12,
+      passed: true,
+      passTarget: 10,
+    });
     expect(await fakeDb({ data: null, error: null }).store.findAttemptForDay("u1", "2026-11-08")).toBeNull();
   });
 
@@ -145,11 +150,11 @@ describe("supabaseAttemptStore", () => {
     await expect(store.hasProfile("u1")).rejects.toThrow("Profile lookup failed: connection refused");
     await expect(store.ensureGameDay("2026-11-08")).rejects.toThrow("ensure_game_day failed: connection refused");
     await expect(store.gameDay("2026-11-08")).rejects.toThrow("Game day lookup failed: connection refused");
-    await expect(store.findAttemptForDay("u1", "2026-11-08")).rejects.toThrow("Attempt lookup failed: connection refused");
+    await expect(store.findAttemptForDay("u1", "2026-11-08")).rejects.toThrow("Day attempt lookup failed: connection refused");
     await expect(store.insertAttempt({ userId: "u1", gameDate: "2026-11-08", seed: 1 })).rejects.toThrow(
       "Attempt insert failed: connection refused",
     );
-    await expect(store.findAttemptById("a1")).rejects.toThrow("Attempt lookup failed: connection refused");
+    await expect(store.findAttemptById("a1")).rejects.toThrow("Attempt lookup by id failed: connection refused");
     await expect(store.recordResult({ attemptId: "a1", inputs: {}, score: 0, passed: false })).rejects.toThrow(
       "record_attempt_result failed: connection refused",
     );

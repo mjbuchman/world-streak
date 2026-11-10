@@ -4,7 +4,7 @@ import type { ChallengeModule } from "@/challenges/shared/types";
 import { INPUT_TIMING_SLACK_MS } from "@/config/attempts";
 import { gameDateAt } from "@/lib/gameDay";
 import { passes } from "@/lib/scoring/pass";
-import type { GameDay } from "./start";
+import type { GameDay } from "./types";
 
 /** What `record_attempt_result` can answer. */
 export const RECORD_STATUSES = ["recorded", "already-submitted", "day-closed", "not-found"] as const;

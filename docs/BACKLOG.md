@@ -989,7 +989,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] The `PlayStatus` "abandoned" comment in `src/lib/attempts/today.ts` says the same.
   - [ ] `PlayToday.test.tsx` and `tests/e2e/play.spec.ts` check the new text.
   - [ ] `npm run verify` and `npm run test:e2e` pass; the only behavior change is this message.
-- Notes: From the maintainer check after T16 (about 20 lines). Since T87 the server accepts a run until the day's deadline, so a player who opens `/play` in a second tab mid-run is told "You left today's attempt before finishing, so it counted as not passed", yet the first tab can still submit a pass. Scoring and counters are correct; only the message is wrong. needs-human: wording.
+- Notes: From the maintainer check after T16 (about 20 lines). When this task touches `today.ts`, also consider a read-only player store for `findAttemptForDay` (taking only `from`), so the player's client cannot reach the service-role methods by type rather than by comment (T68 quality review). Since T87 the server accepts a run until the day's deadline, so a player who opens `/play` in a second tab mid-run is told "You left today's attempt before finishing, so it counted as not passed", yet the first tab can still submit a pass. Scoring and counters are correct; only the message is wrong. needs-human: wording.
 
 ### T66 Shared route-handler helpers for API endpoints
 - Type: maintenance
