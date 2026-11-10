@@ -61,8 +61,8 @@ type DayRow = {
  * stale copy for as long again while it refreshes, so both periods must fit before that moment.
  */
 export function meterCacheSeconds(body: MeterBody, now: Date): number {
-  const outOfDateAt = (body.status === "open" ? meterHiddenFrom(body.closesAt) : new Date(body.closesAt)).getTime();
-  const secondsLeft = Math.floor((outOfDateAt - now.getTime()) / 1000);
+  const outOfDateAt = body.status === "open" ? meterHiddenFrom(body.closesAt) : new Date(body.closesAt);
+  const secondsLeft = Math.floor((outOfDateAt.getTime() - now.getTime()) / 1000);
   return Math.max(0, Math.min(METER_CACHE_SECONDS, Math.floor(secondsLeft / 2)));
 }
 

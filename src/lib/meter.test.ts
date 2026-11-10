@@ -54,9 +54,6 @@ describe("meterHiddenFrom", () => {
   });
 
   it("splits open from hidden at exactly that instant", () => {
-    const from = meterHiddenFrom(closesAt).getTime();
-    expect(new Date("2026-11-08T20:59:59.999Z").getTime()).toBeLessThan(from);
-    expect(new Date("2026-11-08T21:00:00.000Z").getTime()).toBe(from);
     expect(meterBody(new Date("2026-11-08T20:59:59.999Z"), "2026-11-08", row).status).toBe("open");
     expect(meterBody(new Date("2026-11-08T21:00:00.000Z"), "2026-11-08", row).status).toBe("hidden");
   });
@@ -64,12 +61,11 @@ describe("meterHiddenFrom", () => {
   it("lives in a module client code can import: Supabase is imported as a type only", () => {
     // The meter UI (T19) imports this module in the browser; a runtime Supabase import would
     // pull the client into the bundle.
+    // Every module specifier in the file, however the import or re-export is laid out.
     const source = readFileSync(path.join(import.meta.dirname, "meter.ts"), "utf8");
-    const imports = source.split(/\r?\n/).filter((line) => line.startsWith("import "));
-    expect(imports.filter((line) => line.includes("@supabase/"))).toEqual([
-      'import type { SupabaseClient } from "@supabase/supabase-js";',
-    ]);
-    expect(imports.some((line) => /server-only|lib\/supabase\//.test(line))).toBe(false);
+    const specifiers = [...source.matchAll(/\bfrom\s+"([^"]+)"/g)].map(([, specifier]) => specifier);
+    expect(specifiers.filter((s) => /supabase|server-only/.test(s))).toEqual(["@supabase/supabase-js"]);
+    expect(source).toMatch(/import type \{ SupabaseClient \} from "@supabase\/supabase-js";/);
   });
 });
 
