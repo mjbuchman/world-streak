@@ -5,6 +5,7 @@ describe("passes", () => {
   it("needs at least the target when higher is better", () => {
     expect(passes(10, 10, "higher-better")).toBe(true);
     expect(passes(9.9, 10, "higher-better")).toBe(false);
+    expect(passes(15, 10, "higher-better")).toBe(true);
   });
 
   it("needs at most the target when lower is better (for example a time)", () => {
