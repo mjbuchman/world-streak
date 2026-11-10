@@ -8,7 +8,7 @@
 .title {
   font-family: var(--fs-font-display);
   font-weight: 800;
-  font-size: clamp(40px, 11vw, var(--fs-text-display));
+  font-size: var(--fs-text-home-title);
   line-height: 1;
   color: var(--fs-color-mint);
 }

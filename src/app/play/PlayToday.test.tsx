@@ -96,9 +96,12 @@ describe("PlayToday", () => {
     expect(screen.getByText("You didn't stack a row. Today's target was row 11.")).toBeTruthy();
   });
 
-  it("shows the score as the result's big number", () => {
+  it("shows the score as the result's big number, above the verdict as in practice", () => {
     const { container } = render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
-    expect(container.querySelector("[data-big-score]")?.textContent).toBe("11");
+    const score = container.querySelector("[data-big-score]")!;
+    expect(score.textContent).toBe("11");
+    const verdict = screen.getByRole("heading", { name: "Passed" });
+    expect(score.compareDocumentPosition(verdict) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("explains the one-attempt rule, including leaving early, before Start", () => {

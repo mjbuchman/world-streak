@@ -45,6 +45,11 @@
   --fs-font-body: var(--fs-typeface-body), system-ui, sans-serif;
   --fs-text-hero: 128px;
   --fs-text-display: 64px;
+  /* Fluid sizes: shrink with the screen width on phones, capped at the sizes above. */
+  --fs-text-score: clamp(72px, 28vw, var(--fs-text-hero));
+  --fs-text-home-title: clamp(40px, 11vw, var(--fs-text-display));
+  --fs-text-result-heading: clamp(32px, 9vw, 44px);
+  --fs-text-page-title: 26px;
   --fs-text-headline: 30px;
   --fs-text-title: 20px;
   --fs-text-body: 16px;

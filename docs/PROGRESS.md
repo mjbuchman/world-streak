@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M1b complete and play-tested (Nov 10, 2026); its follow-ups T87, T85 and T79 come before M2
-- Active task: T85 Tower wording in rows
+- Active task: T79 One shared result layout (practice style on both screens)
 - Blocked tasks: none
 - Waiting on the human: later, an accessibility pass and more Tower testers; see docs/NEEDS_HUMAN.md
-- Next: T85, T79, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds), T66 (shared route helpers, before T18), T68 and T86 (the attempts flow), T78 (local parallel e2e).
+- Next: T79, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds), T66 (shared route helpers, before T18), T68 and T86 (the attempts flow), T78 (local parallel e2e).
 
 ## Log
 
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-10 — T85 Tower wording in rows (PR #34)
+- Results say "You reached row 7. Today's target was row 10." (`src/components/stacking/rows.ts`, replacing `blocks.ts`); the HUD and the result share `targetRowNumber` for rounding a fractional target up.
+- Review rounds: spec 1, quality 1, tests 1.
+- Notes: CI is now awaited with `node test-results/wait-ci.mjs <pr>` in the background (the human asked for a slow poll instead of "check"). Merges since the M1b check: 3 (T87, T15, T85).
 
 ### 2026-11-10 — T15 Confirm Google sign-in with real credentials (PR #33)
 - The human set up a Google OAuth client and confirmed a real login reaches profile completion and home. The README has the setup (PowerShell and bash), the `npm.cmd`/`npx.cmd` workaround for PowerShell's script policy, and the "OAuth client was not found" symptom. M1 is now fully complete.

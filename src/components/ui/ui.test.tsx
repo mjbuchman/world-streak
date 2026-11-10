@@ -7,6 +7,7 @@ import { Button } from "./Button";
 import { Confetti } from "./Confetti";
 import { LinkButton } from "./LinkButton";
 import { PageShell } from "./PageShell";
+import { ResultHero } from "./ResultHero";
 import { Spinner } from "./Spinner";
 import { Surface } from "./Surface";
 import { usePrefersReducedMotion } from "./useReducedMotion";
@@ -185,6 +186,40 @@ describe("Confetti", () => {
     stubReducedMotion(true);
     const { container } = render(<Confetti />);
     expect(container.firstElementChild).toBeNull();
+  });
+});
+
+describe("ResultHero", () => {
+  it("shows the big score first (for the eye only), then the heading, the text and the actions", () => {
+    stubReducedMotion(false);
+    const { container } = render(
+      <ResultHero score={7} heading="You reached row 7" actions={<LinkButton href="/">Back to home</LinkButton>}>
+        <p>Practice never counts.</p>
+      </ResultHero>,
+    );
+    const score = container.querySelector("[data-big-score]")!;
+    expect(score.textContent).toBe("7");
+    expect(score.getAttribute("aria-hidden")).toBe("true");
+    const heading = screen.getByRole("heading", { level: 2, name: "You reached row 7" });
+    // The human's choice (second play-test): the score above the heading.
+    expect(score.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(heading.getAttribute("tabindex")).toBe("-1");
+    expect(screen.getByText("Practice never counts.")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Back to home" })).toBeTruthy();
+    expect(container.querySelector("[data-confetti]")).toBeNull();
+  });
+
+  it("forwards a ref to the heading, so the page can move focus to it when a run ends", () => {
+    const ref = { current: null as HTMLHeadingElement | null };
+    render(<ResultHero heading="Passed" headingRef={ref} actions={null} />);
+    expect(ref.current).toBe(screen.getByRole("heading", { name: "Passed" }));
+  });
+
+  it("can celebrate with confetti, and can leave the score out (a refused submission has none)", () => {
+    stubReducedMotion(false);
+    const { container } = render(<ResultHero heading="Not counted" confetti actions={null} />);
+    expect(container.querySelector("[data-confetti]")).not.toBeNull();
+    expect(container.querySelector("[data-big-score]")).toBeNull();
   });
 });
 
