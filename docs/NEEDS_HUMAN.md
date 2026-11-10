@@ -12,6 +12,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Please confirm: wording when a result is refused or not sent (blocks nothing)
+- What is needed: a yes, or new text. On `/play`, a result the server refused (the day closed first, or the timing could not be checked) now shows the heading "Counted as not passed" with "...so it counted as not passed."; a result that never reached the server shows "Result not sent" with "Your result could not be sent. Reload the page to see whether it counted."
+- Where to put it: reply in chat.
+- Why: from T17 a started attempt counts, so the old "Not counted" was wrong. Details in `docs/DECISIONS.md` (T17).
+- Agent's recommendation: keep the text above.
+
 ### Accessibility pass (blocks nothing; before launch)
 - What is needed: one session testing the app with a screen reader and keyboard only (and reduced motion on), all at once, once the main screens exist.
 - Where to put it: reply in chat with anything that is hard to use.

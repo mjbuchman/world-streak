@@ -1,5 +1,5 @@
 begin;
-select plan(27);
+select plan(30);
 
 -- Structure, row-level security and policies.
 select has_table('public', 'game_day_counters', 'game_day_counters table exists');
@@ -116,6 +116,14 @@ select is(
 select results_eq('select * from counters', $$values (6, 4, 5.5::numeric, 3.5::numeric)$$, 'a refused late pass adds nothing');
 update public.game_days set closed_at = null where game_date = (select d from today);
 
+-- A refused second start (the unique constraint the start endpoint relies on) counts nothing.
+select throws_ok(
+  $$insert into public.attempts (user_id, game_date, seed)
+    values ('00000000-0000-0000-0000-00000000000a', (select d from today), 8)$$,
+  '23505', null, 'setup: a second start for the same player and day is a unique violation'
+);
+select results_eq('select * from counters', $$values (6, 4, 5.5::numeric, 3.5::numeric)$$, 'a refused second start adds no attempt');
+
 -- The counts can never claim more passes than attempts.
 select throws_ok(
   $$update public.game_day_counters set passes = attempts + 1 where game_date = (select d from today)$$,
@@ -161,6 +169,10 @@ select results_eq(
   $$select attempts from public.game_day_counters where game_date = public.game_date_at(now())$$,
   $$values (6)$$,
   'an anonymous visitor can read the counters'
+);
+select throws_ok(
+  $$insert into public.game_day_counters (game_date) values ('2000-01-01')$$,
+  '42501', null, 'an anonymous visitor cannot insert counters'
 );
 reset role;
 

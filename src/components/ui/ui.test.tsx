@@ -216,7 +216,7 @@ describe("ResultHero", () => {
   });
 
   it("can leave the score out (a refused submission has none)", () => {
-    const { container } = render(<ResultHero heading="Not counted" actions={null} />);
+    const { container } = render(<ResultHero heading="Counted as not passed" actions={null} />);
     expect(container.querySelector("[data-big-score]")).toBeNull();
   });
 
