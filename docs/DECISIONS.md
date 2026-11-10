@@ -169,3 +169,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - **Result layout:** the practice layout (big score above the heading) for both result screens (T79).
 - **Accessibility:** keep building it in; the human tests it later in one pass (NEEDS_HUMAN).
 - Confirmed by human: yes (these are the human's decisions).
+
+### 2026-11-10 — Launch values in game_settings (T16)
+- Choice: one admin-editable `game_settings` row holds: survival threshold 60%; pass target at the 80th percentile (the score 80% of recent players reach); pass-target and threshold steps per streak day of 0 (flat for now); new accounts count fully from day one (weight 1.0, full weight after 0 days); a percentile over the last 14 days needing at least 50 scores; a stacking default pass target of 10 rows. `ensure_game_day` now reads its defaults from this row.
+- Reason: the design's Open items "survival threshold and pass-target percentile", "how pass targets and threshold rise as the streak grows" and "how much new accounts count" come with suggestions for the first two (60% when about 80% pass; a rise that is configurable, here flat at 0). The design gives no recommendation for new accounts; full weight from day one comes from the backlog's T16 notes as the simplest start. The lookback of 14 days and minimum sample of 50 have no recommendation either, so they are placeholders.
+- How to change it later: an admin updates the row (the admin page in a later M2 task, or SQL as an admin); no migration needed. Only users with `profiles.is_admin = true` can update it.
+- Confirmed by human: pending (NEEDS_HUMAN).

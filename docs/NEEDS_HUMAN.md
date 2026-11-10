@@ -12,6 +12,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Please confirm: launch values in game_settings (blocks nothing)
+- What is needed: a yes, or new values, for: survival threshold 60%; pass target at the 80th percentile of recent scores; no rise in target or threshold as the streak grows (step 0); new accounts count fully from day one; the percentile looks back 14 days and needs at least 50 scores; until then, a Teetering Tower day defaults to a target of row 10 (the T11 placeholder you kept).
+- Where to put it: reply in chat. The values live in one database row an admin can edit, so changing them later needs no code.
+- Why: the design leaves these Open; T16 uses its suggestions, and placeholders where it has none (14 days, 50 scores). Details in `docs/DECISIONS.md` (T16).
+- Agent's recommendation: keep them for M2 testing with fake players and revisit before launch.
+
 ### Accessibility pass (blocks nothing; before launch)
 - What is needed: one session testing the app with a screen reader and keyboard only (and reduced motion on), all at once, once the main screens exist.
 - Where to put it: reply in chat with anything that is hard to use.

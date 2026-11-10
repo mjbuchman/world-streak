@@ -4,11 +4,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M1b complete and play-tested (Nov 10, 2026); its follow-ups T87, T85 and T79 come before M2
-- Active task: T79 One shared result layout (practice style on both screens)
+- Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
+- Active task: T16 Game settings table
 - Blocked tasks: none
 - Waiting on the human: later, an accessibility pass and more Tower testers; see docs/NEEDS_HUMAN.md
-- Next: T79, then M2 from T16. Worth doing early in M2: T67 (90% coverage thresholds), T66 (shared route helpers, before T18), T68 and T86 (the attempts flow), T78 (local parallel e2e).
+- Next: M2 after T16. Worth doing early in M2: T67 (90% coverage thresholds), T66 (shared route helpers, before T18), T68 and T86 (the attempts flow), T78 (local parallel e2e).
 
 ## Log
 
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-10 — T79 One shared result layout for play and practice (PR #35)
+- `ResultHero` (`src/components/ui/ResultHero.tsx`) renders the score above the verdict on both screens; a pass on `/play` glows mint, practice stays plain mint; the `/play` verdict now uses the practice size. Font sizes in `clamp()` calls are `--fs-text-*` tokens.
+- Review rounds: spec 2, quality 2, tests 2 (round 1: the tones). Small test-hook suggestions became T88.
+- Notes: a sudden shutdown interrupted round 2; on resuming, the reviewers were launched without the command rules and prompted the human. Always paste the rules into reviewer prompts. `.env.example` was found deleted in the working tree after the shutdown (not committed; the human was asked to restore it). Merges since the M1b check: 4 (T87, T15, T85, T79).
 
 ### 2026-11-10 — T85 Tower wording in rows (PR #34)
 - Results say "You reached row 7. Today's target was row 10." (`src/components/stacking/rows.ts`, replacing `blocks.ts`); the HUD and the result share `targetRowNumber` for rounding a fractional target up.

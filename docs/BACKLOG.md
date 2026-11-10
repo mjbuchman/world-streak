@@ -310,7 +310,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T16 Game settings table
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T11
 - Acceptance criteria:
   - [ ] A migration creates a single-row `game_settings` table (a check constraint enforces a single row) with `default_survival_threshold 0.60`, `pass_target_percentile 0.80`, `pass_target_streak_step 0`, `threshold_streak_step 0`, `percentile_lookback_days 14`, `percentile_min_sample 50`, `default_pass_targets jsonb` (`{"stacking": 10}` placeholder), `new_account_weight 1.0` and `full_weight_after_days 0`.
@@ -939,7 +939,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T79 One shared result-hero style for play and practice
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T74
 - Acceptance criteria:
   - [ ] The result layout, verdict heading (display face, reveal animation, no focus ring), the big score (`.score`, added in T81; placed as in practice, above the heading, on both screens: the human's choice, Nov 10), actions column and `@keyframes reveal` live once (a `ResultHero` component or shared classes in `src/components/ui/`) and are used by both `/play` and `/practice/stacking`.
@@ -956,6 +956,17 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] The score-above-verdict check in `tests/e2e/play.spec.ts` asserts that both elements are visible before it reads `boundingBox()`, with no non-null assertions.
   - [ ] The `plain` tone's class names have no trailing space (a small `cx()` helper or similar).
 - Notes: From the T79 round-2 reviews (non-blocking).
+
+### T89 game_settings: tighter checks and a drift guard
+- Type: maintenance
+- Status: todo
+- Depends on: T16
+- Acceptance criteria:
+  - [ ] The two streak-step checks also refuse `'NaN'` and `'Infinity'` (Postgres `numeric` lets them through `>= 0`), with pgTAP cases.
+  - [ ] pgTAP: a signed-in user with no profile row gets `is_admin() = false` and their update affects 0 rows.
+  - [ ] `loadGameSettings` selects its columns by name instead of `*`.
+  - [ ] One shared fixture of boundary rows (accepted and refused) is checked both by pgTAP against the table and by Vitest against `parseGameSettings`, so the zod ranges cannot drift from the check constraints (the pattern of `src/lib/gameDay.fixture.json`).
+- Notes: From the T16 round-2 reviews (non-blocking). Later tasks (T18, T22, T24) should read settings through `loadGameSettings`.
 
 ### T66 Shared route-handler helpers for API endpoints
 - Type: maintenance
