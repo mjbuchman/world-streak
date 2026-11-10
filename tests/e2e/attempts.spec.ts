@@ -46,7 +46,9 @@ test("the server scores a submission itself and accepts it only once", async ({ 
   await signUpViaForm(page, { email });
   await expect(page).toHaveURL("/");
   const { attemptId, params } = await (await page.request.post("/api/attempts/start")).json();
-  // A short finished run on the issued instance; wait until its last tap is not in the future.
+  // A short finished run on the issued instance. The server refuses taps later than the attempt
+  // has really been running (its own clock, plus 2 s), so this test waits in real time until
+  // the last tap is no longer in the future; a fake browser clock cannot help here.
   const tapsMs = tapsForAMiss(params);
   const score = simulate(params, tapsMs).score;
   await page.waitForTimeout(Math.max(0, tapsMs.at(-1)! - 1_000));
@@ -57,6 +59,7 @@ test("the server scores a submission itself and accepts it only once", async ({ 
   // Taps that stop before the run ended are not a real submission either.
   const unfinished = await page.request.post("/api/attempts/submit", { data: { attemptId, inputs: { tapsMs: [] } } });
   expect(unfinished.status()).toBe(400);
+  expect(await unfinished.json()).toEqual({ error: "invalid-inputs" });
 
   const unknown = await page.request.post("/api/attempts/submit", {
     data: { attemptId: "6f1c7d0e-2b9a-4c3e-8d5f-1a2b3c4d5e6f", inputs: { tapsMs } },
