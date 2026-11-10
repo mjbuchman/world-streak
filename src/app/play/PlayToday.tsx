@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { StackingParams } from "@/challenges/stacking/engine";
@@ -10,6 +11,7 @@ import { Confetti } from "@/components/ui/Confetti";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { Spinner } from "@/components/ui/Spinner";
 import { Surface } from "@/components/ui/Surface";
+import { STACKING_HOW_TO } from "@/config/challenges";
 import type { PlayStatus } from "@/lib/attempts/today";
 import styles from "./play.module.css";
 
@@ -126,6 +128,10 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
           <h2 ref={headingRef} tabIndex={-1} className={`${styles.verdict} ${passed ? styles.passed : styles.notPassed}`}>
             {passed ? "Passed" : "Not this time"}
           </h2>
+          {/* The big number repeats the sentence below for the eye; screen readers get the sentence. */}
+          <p data-big-score aria-hidden="true" className={`${styles.score} ${passed ? styles.passed : ""}`}>
+            {score}
+          </p>
           <p className={styles.summary}>
             You stacked {blocks(score)}. Today&apos;s target was {blocks(passTarget)}.
           </p>
@@ -169,6 +175,7 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
     default:
       return (
         <Surface>
+          <p>{STACKING_HOW_TO}</p>
           <p>
             You get one scored attempt today. Pressing Start uses it: if you leave before you finish, it counts as not
             passed and you cannot try again until tomorrow.
@@ -181,6 +188,12 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
           <Button onClick={start} loading={phase.name === "starting"}>
             Start
           </Button>
+          {/* Gone once Start is pressed: leaving after the server creates the attempt would lose it. */}
+          {phase.name === "ready" && (
+            <Link href="/practice/stacking" className={styles.practice}>
+              Practice first
+            </Link>
+          )}
         </Surface>
       );
   }

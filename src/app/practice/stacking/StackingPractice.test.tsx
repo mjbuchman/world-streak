@@ -44,8 +44,21 @@ const finish = (score: number) =>
   );
 
 describe("StackingPractice", () => {
+  it("shows the score as the result's big number", async () => {
+    const { container } = render(<StackingPractice />);
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    finish(7);
+    expect(container.querySelector("[data-big-score]")?.textContent).toBe("7");
+  });
+
   it("explains the game and waits for Start", () => {
     render(<StackingPractice />);
+    // The same wording as before the how-to moved to config (T71).
+    expect(
+      screen.getByText(
+        "A row of blocks slides across the board. Tap, click or press Space to lock it over the row below. Blocks that hang over the edge fall off, so the tower gets narrower. Practice never counts.",
+      ),
+    ).toBeTruthy();
     expect(screen.getByText(/never counts/)).toBeTruthy();
     expect(screen.queryByTestId("game")).toBeNull();
     expect(screen.getByRole("button", { name: "Start" })).toBeTruthy();

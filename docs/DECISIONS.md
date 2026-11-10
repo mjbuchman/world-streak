@@ -150,6 +150,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - How to change it later: `PARAM_RANGES`, `MIN_STEP_MS`, `WIDTH_CAPS` and `IDLE_LOCK_MS` in `src/challenges/stacking/engine.ts`; the tuning and golden tests pin them, so a change is deliberate.
 - Confirmed by human: pending, at the second play-test (see NEEDS_HUMAN).
 
+### 2026-11-10 — The header hides during a running game (T81)
+- Choice: while a game runs (practice or `/play`), the top bar (wordmark, Sign in or Sign out) is hidden like the back button, keeping its space so the board does not move; it returns with the result.
+- Reason: UI rule 8 removes the way back during a running game. On `/play` a stray tap on a header link mid-run would forfeit the day's only attempt (leaving early counts as not passed), and treating practice the same keeps the game screen consistent and focused.
+- How to change it later: the `:global(body):has([data-game-running]) .bar` rule in `src/components/AccountHeader.module.css` (narrow it to `/play` by adding a marker only PlayToday sets).
+- Confirmed by human: pending, at the second play-test.
+
 ### 2026-11-09 — Which forms keep a typed password after an error (T75)
 - Choice: sign-up keeps both the password and its confirmation after a failed submit (the human's play-test request); sign-in still clears the password after "Email or password is incorrect", the usual practice, so a wrong password is not resubmitted by accident. Neither password is ever sent back by the server.
 - Reason: the play-test feedback named the create-account form only; T75's criteria cover `/signup`.

@@ -52,6 +52,24 @@
   box-shadow: none;
 }
 
+/* The score, scoreboard style (UI_GUIDELINES rule 5: big numbers are big). */
+.score {
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: clamp(72px, 28vw, var(--fs-text-hero));
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  animation: reveal var(--fs-duration-slow) var(--fs-ease-spring);
+}
+
+.practice {
+  align-self: center;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+}
+
 .summary {
   font-size: var(--fs-text-title);
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MAX_TAPS, type StackingParams, type StackingResult } from "@/challenges/stacking/engine";
-import { drawStacking, type StackingColors } from "@/challenges/stacking/render";
+import { drawStacking, FALL_MS, type StackingColors } from "@/challenges/stacking/render";
 import { usePrefersReducedMotion } from "@/components/ui/useReducedMotion";
 import { CHALLENGE_NAMES } from "@/config/challenges";
 import styles from "./StackingGame.module.css";
@@ -60,6 +60,8 @@ export function StackingGame({ params, onFinish, passTarget: target, best = 0 }:
     const taps: number[] = [];
     const colors = themeColors(canvas);
     let finished = false;
+    // Set when the run ends: the run as it ended, and when, so the last fall can play out.
+    let ended: { run: FinishedRun; atMs: number } | null = null;
     let frameId = 0;
 
     // The engine (and the server, for scored runs) only accepts strictly increasing taps, at
@@ -96,9 +98,15 @@ export function StackingGame({ params, onFinish, passTarget: target, best = 0 }:
       const { passTarget, reducedMotion } = latest.current;
       drawStacking(ctx, { params, result, elapsedMs, width, height, devicePixelRatio, colors, passTarget, reducedMotion });
       setRow(result.moving?.row ?? result.score);
-      if (done) {
+      if (done && !ended) {
+        // Taps stop counting now; the result is fixed.
         finished = true;
-        latest.current.onFinish({ taps: [...taps], result });
+        ended = { run: { taps: [...taps], result }, atMs: elapsedMs };
+      }
+      // Keep drawing until the missed cells have fallen away (nothing to watch under reduced
+      // motion), then hand over the run as it ended.
+      if (ended && (reducedMotion || elapsedMs - ended.atMs >= FALL_MS)) {
+        latest.current.onFinish(ended.run);
         return;
       }
       frameId = requestAnimationFrame(frame);
@@ -116,7 +124,7 @@ export function StackingGame({ params, onFinish, passTarget: target, best = 0 }:
   }, [params]);
 
   return (
-    // data-game-running lets the page shell hide its back button while the run is on.
+    // data-game-running lets the page hide its back button and the header while the run is on.
     <div className={styles.game} data-game-running="">
       <div className={styles.hud}>
         <p role="status" className={styles.count}>

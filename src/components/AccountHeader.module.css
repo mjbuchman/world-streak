@@ -10,6 +10,15 @@
   padding: 0 var(--space-4);
 }
 
+/*
+ * Hidden during a running game, like the back button (UI_GUIDELINES rule 8): on /play leaving
+ * mid-run loses the day's attempt, so no link sits one stray tap away. It keeps its space, so
+ * the board does not jump, and returns with the result. See DECISIONS (T81).
+ */
+:global(body):has([data-game-running]) .bar {
+  visibility: hidden;
+}
+
 .name {
   display: inline-flex;
   align-items: center;

@@ -2,9 +2,14 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IDLE_LOCK_MS, MAX_TAPS, ROWS, simulate, type StackingParams } from "@/challenges/stacking/engine";
+import { FALL_MS } from "@/challenges/stacking/render";
 
 const drawStacking = vi.hoisted(() => vi.fn());
-vi.mock("@/challenges/stacking/render", () => ({ drawStacking }));
+// Only the drawing is replaced; the real constants (FALL_MS) stay.
+vi.mock("@/challenges/stacking/render", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/challenges/stacking/render")>()),
+  drawStacking,
+}));
 
 import { StackingGame } from "./StackingGame";
 
@@ -134,10 +139,76 @@ describe("StackingGame", () => {
     advance(1);
     pressSpace();
     advance(20);
+    // The missed row falls away first (FALL_MS), then the run is reported.
+    expect(onFinish).not.toHaveBeenCalled();
+    advance(FALL_MS);
     expect(onFinish).toHaveBeenCalledTimes(1);
     expect(onFinish.mock.calls[0][0].result).toMatchObject({ score: 2, endReason: "miss" });
     // With no row in play, the HUD settles on the rows stacked.
     expect(screen.getByRole("status").textContent).toBe("Row 2");
+  });
+
+  it("keeps drawing the ended run for the whole fall, then reports it once", () => {
+    const onFinish = vi.fn();
+    render(<StackingGame params={params} onFinish={onFinish} />);
+    advance(1);
+    pressSpace();
+    advance(169);
+    pressSpace();
+    advance(1);
+    pressSpace(); // the miss, at 171 ms
+    advance(20);
+    // The frame that saw the end: drawing carries on from there with the fixed result.
+    const endFrame = drawStacking.mock.calls.findIndex(([, frame]) => frame.result.endReason === "miss");
+    const endMs = drawStacking.mock.calls[endFrame][1].elapsedMs;
+
+    advance(FALL_MS - 40);
+    expect(onFinish).not.toHaveBeenCalled();
+    advance(40);
+    expect(onFinish).toHaveBeenCalledTimes(1);
+
+    const reported = onFinish.mock.calls[0][0].result;
+    const fallFrames = drawStacking.mock.calls.slice(endFrame).map(([, frame]) => frame);
+    for (const frame of fallFrames) expect(frame.result).toEqual(reported);
+    expect(fallFrames.at(-1)!.elapsedMs - endMs).toBeGreaterThanOrEqual(FALL_MS);
+    // ...and stops once it has reported.
+    const drawn = drawStacking.mock.calls.length;
+    advance(200);
+    expect(drawStacking.mock.calls.length).toBe(drawn);
+  });
+
+  it("ignores taps while the last row falls, and reports the run as it ended", () => {
+    const onFinish = vi.fn();
+    render(<StackingGame params={params} onFinish={onFinish} />);
+    advance(1);
+    pressSpace();
+    advance(169);
+    pressSpace();
+    advance(1);
+    pressSpace(); // the miss
+    advance(50);
+    pressSpace(); // too late: the run is over
+    advance(FALL_MS);
+    expect(onFinish).toHaveBeenCalledTimes(1);
+    expect(onFinish.mock.calls[0][0].taps).toHaveLength(3);
+  });
+
+  it("reports the end at once under reduced motion, as there is no fall to watch", () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query === "(prefers-reduced-motion: reduce)",
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    const onFinish = vi.fn();
+    render(<StackingGame params={params} onFinish={onFinish} />);
+    advance(1);
+    pressSpace();
+    advance(169);
+    pressSpace();
+    advance(1);
+    pressSpace();
+    advance(20);
+    expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
   it("draws every frame with the engine state for that moment", () => {

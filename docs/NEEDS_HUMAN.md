@@ -24,7 +24,7 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Where to put it: reply in chat.
 - Why: the M1 play-test asked for a big rework of the look and the Tower; M2 builds the streak and meter on top of it.
 - Agent's recommendation: same steps as the M1 play-test; the agent will list them.
-- Also judge at that play-test: the new Tower's speed (a decent player should reach about row 10) and two judgment calls: a row left untapped for 8 seconds drops off and ends the run (DECISIONS, T76); sign-up now keeps your passwords after an error, but sign-in still clears the password after a wrong one, as most sites do (DECISIONS, T75). If you can, try a run with a screen reader on: the "Row N" counter is announced as it changes, which may be too chatty during fast play (T77 review).
+- Also judge at that play-test: the new Tower's speed (a decent player should reach about row 10) and two judgment calls: a row left untapped for 8 seconds drops off and ends the run (DECISIONS, T76); sign-up now keeps your passwords after an error, but sign-in still clears the password after a wrong one, as most sites do (DECISIONS, T75). Also say how the result should read: the HUD counts rows ("Row 10 to pass") but the result says "You stacked 7 blocks. Today's target was 10 blocks", and a row can hold up to 3 blocks; the agent suggests "You reached row 7. Today's target was row 10." (T85). If you can, try a run with a screen reader on: the "Row N" counter is announced as it changes, which may be too chatty during fast play (T77 review).
 
 ### Revisit: location is self-declared, no IP check (blocks nothing; before launch)
 - What is needed: after you research contest rules, say whether self-declared US residence is enough or a check is needed.

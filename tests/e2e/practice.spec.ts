@@ -1,4 +1,8 @@
+import { paramsFromSeed, simulate } from "../../src/challenges/stacking/engine";
+import { FALL_MS } from "../../src/challenges/stacking/render";
 import { expect, test } from "./support/fixtures";
+import { blocks } from "../../src/components/stacking/blocks";
+import { playTaps, tapsForAMiss } from "./support/tower";
 
 test("practice tower works signed out, ends with a score and offers another go", async ({ page }) => {
   const attemptRequests: string[] = [];
@@ -38,6 +42,42 @@ test("practice tower works signed out, ends with a score and offers another go",
   await expect(page.getByRole("status")).toHaveText("Row 1");
   await expect(page.getByRole("img", { name: /game area/ })).toBeFocused();
   expect(attemptRequests).toEqual([]);
+});
+
+test("a deliberate miss in practice ends the run with the score the engine gives, and a best row", async ({ page }) => {
+  // Pin the browser's random seed, so the test knows the run's params and can aim its taps.
+  const seed = 12345;
+  await page.addInitScript((value) => {
+    crypto.getRandomValues = (<T extends ArrayBufferView | null>(array: T): T => {
+      if (array instanceof Uint32Array) array.fill(value);
+      return array;
+    }) as Crypto["getRandomValues"];
+  }, seed);
+  await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+  await page.goto("/practice/stacking");
+  await page.clock.pauseAt(new Date("2026-01-01T00:00:30Z"));
+  await page.getByRole("button", { name: "Start" }).click();
+  await expect(page.getByRole("status")).toHaveText("Row 1");
+  // The header hides during practice runs too (DECISIONS, T81).
+  await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeHidden();
+
+  const params = paramsFromSeed(seed);
+  const taps = tapsForAMiss(params);
+  const { score, endReason } = simulate(params, taps);
+  expect(endReason).toBe("miss");
+  await playTaps(page, taps);
+  await page.clock.runFor(FALL_MS + 50);
+
+  await expect(page.getByRole("heading", { name: `You stacked ${blocks(score)}` })).toBeVisible();
+  const bigScore = page.locator("[data-big-score]");
+  await expect(bigScore).toHaveText(String(score));
+  // Scoreboard style: the display face.
+  expect(await bigScore.evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(/Unbounded/i);
+  await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
+
+  // The next run shows this visit's best.
+  await page.getByRole("button", { name: "Play again" }).click();
+  await expect(page.getByText(`Best: row ${score}`)).toBeVisible();
 });
 
 test("the home page links to practice", async ({ page }) => {

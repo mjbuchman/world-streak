@@ -1,6 +1,9 @@
-import { gameDateAt } from "../../src/lib/gameDay";
+import { simulate, type StackingParams } from "../../src/challenges/stacking/engine";
+import { FALL_MS } from "../../src/challenges/stacking/render";
 import { expect, test } from "./support/fixtures";
 import { signUpViaForm } from "./support/pages";
+import { blocks } from "../../src/components/stacking/blocks";
+import { playTaps, tapsForAMiss } from "./support/tower";
 import { adminClient, findUserByEmail } from "./support/supabase";
 
 test("the home page offers today's challenge and practice", async ({ page }) => {
@@ -46,27 +49,37 @@ test("a player plays today's attempt once and sees the server's result, also aft
   const back = page.getByRole("main").getByRole("link", { name: "Back", exact: true });
   await expect(back).toHaveAttribute("href", "/");
   await page.clock.pauseAt(new Date("2026-01-01T00:00:30Z"));
+  const started = page.waitForResponse("**/api/attempts/start");
   await page.getByRole("button", { name: "Start" }).click();
+  const instance = (await (await started).json()) as { attemptId: string; gameDate: string; params: StackingParams };
   await expect(page.getByRole("status")).toHaveText("Row 1");
   // Today's target, as stored on the game day the start created.
-  const { data: day } = await adminClient().from("game_days").select("pass_target").eq("game_date", gameDateAt(new Date())).single();
-  await expect(page.getByText(`Row ${Number(day!.pass_target)} to pass`)).toBeVisible();
+  const { data: day } = await adminClient().from("game_days").select("pass_target").eq("game_date", instance.gameDate).single();
+  const passTarget = Number(day!.pass_target);
+  await expect(page.getByText(`Row ${passTarget} to pass`)).toBeVisible();
   await expect(back).toBeHidden();
+  // No header link one stray tap away either (UI rule 8; leaving would lose the attempt).
+  await expect(page.getByRole("banner").getByRole("button", { name: "Sign out" })).toBeHidden();
 
-  // The seed is random, so the taps cannot be aimed. Two quick drops, then nothing: either
-  // the second row misses, or the third row drops off after the idle limit (8 s). Either way
-  // the run ends on its own.
-  await page.clock.runFor(50);
-  await page.keyboard.press("Space");
-  await page.clock.runFor(50);
-  await page.keyboard.press("Space");
-  await page.clock.runFor(9_000);
+  // A run that ends on a deliberate miss, worked out from the instance the server issued.
+  const taps = tapsForAMiss(instance.params);
+  const expected = simulate(instance.params, taps);
+  expect(expected.endReason).toBe("miss");
+  const score = expected.score;
+  await playTaps(page, taps);
+  // The missed row falls away before the result appears.
+  await page.clock.runFor(FALL_MS + 50);
 
-  const verdict = page.getByRole("heading", { name: /^(Passed|Not this time)$/ });
+  const verdict = page.getByRole("heading", { name: "Not this time" });
   await expect(verdict).toBeVisible();
   await expect(verdict).toBeFocused();
-  const summary = page.getByText(/^You stacked \d+ blocks?\. Today's target was \d+ blocks?\.$/);
+  const summary = page.getByText(`You stacked ${blocks(score)}. Today's target was ${blocks(passTarget)}.`);
   await expect(summary).toBeVisible();
+  await expect(page.locator("[data-big-score]")).toHaveText(String(score));
+  await expect(page.getByRole("banner").getByRole("button", { name: "Sign out" })).toBeVisible();
+  // What was shown is what the server stored: the engine's score for exactly those taps.
+  const { data: stored } = await adminClient().from("attempts").select("score, passed").eq("id", instance.attemptId).single();
+  expect(stored).toEqual({ score, passed: false });
   const shownVerdict = await verdict.textContent();
   const shownSummary = await summary.textContent();
 
