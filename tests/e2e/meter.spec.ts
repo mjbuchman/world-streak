@@ -1,7 +1,8 @@
 import { expect, test } from "./support/fixtures";
 import { signUpViaForm } from "./support/pages";
 
-const PUBLIC_CACHE = /^public, s-maxage=(\d+), stale-while-revalidate=\1$/;
+// A short public cache, or no-store in the final second before the reading goes out of date.
+const PUBLIC_CACHE = /^(?:public, s-maxage=(\d+), stale-while-revalidate=\1|no-store)$/;
 
 // The meter is public and its status depends on the hour (hidden in the final 3 hours before
 // midnight UTC), so these check whichever applies against the real database.

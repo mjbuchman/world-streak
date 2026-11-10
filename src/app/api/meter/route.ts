@@ -14,7 +14,7 @@ export const GET = withServerErrors("Reading the meter failed", async () => {
   const now = new Date();
   const body = await readMeter(createSupabaseAdminClient(), now);
   const seconds = meterCacheSeconds(body, now);
-  return NextResponse.json(body, {
-    headers: { "cache-control": `public, s-maxage=${seconds}, stale-while-revalidate=${seconds}` },
-  });
+  // In the last moments before a window change, nothing may be cached at all.
+  const cacheControl = seconds > 0 ? `public, s-maxage=${seconds}, stale-while-revalidate=${seconds}` : "no-store";
+  return NextResponse.json(body, { headers: { "cache-control": cacheControl } });
 });

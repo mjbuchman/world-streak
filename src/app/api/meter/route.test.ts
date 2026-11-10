@@ -49,7 +49,14 @@ describe("GET /api/meter", () => {
     expect((await GET()).headers.get("cache-control")).toBe("public, s-maxage=10, stale-while-revalidate=10");
   });
 
+  it("is not cached at all in the final second before the reading goes out of date", async () => {
+    vi.setSystemTime(new Date("2026-11-08T23:59:59.500Z"));
+    readMeter.mockResolvedValue(hiddenBody);
+    expect((await GET()).headers.get("cache-control")).toBe("no-store");
+  });
+
   it("answers 500 without details, and uncached, when the read fails", async () => {
+    vi.setSystemTime(new Date("2026-11-08T12:00:00Z"));
     readMeter.mockRejectedValue(new Error("connection refused"));
     const response = await GET();
     expect(response.status).toBe(500);

@@ -7,7 +7,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const NO_STORE = { "cache-control": "no-store" };
 
-/** A JSON response no cache may keep: every API answer is per-player or live. */
+/**
+ * A JSON response no cache may keep: API answers are per-player or live. The one exception is
+ * the public meter (`/api/meter`), which sets its own short public cache.
+ */
 export function jsonNoStore(body: unknown, status = 200): NextResponse {
   return NextResponse.json(body, { status, headers: NO_STORE });
 }
