@@ -310,7 +310,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T16 Game settings table
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T11
 - Acceptance criteria:
   - [ ] A migration creates a single-row `game_settings` table (a check constraint enforces a single row) with `default_survival_threshold 0.60`, `pass_target_percentile 0.80`, `pass_target_streak_step 0`, `threshold_streak_step 0`, `percentile_lookback_days 14`, `percentile_min_sample 50`, `default_pass_targets jsonb` (`{"stacking": 10}` placeholder), `new_account_weight 1.0` and `full_weight_after_days 0`.
@@ -927,7 +927,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `src/lib/attempts/start.ts` and `submit.ts` export their response body types, and `PlayToday.tsx` builds its `StartBody` and `SubmitBody` from them with type-only imports (narrowing `params` to `StackingParams` until T30).
   - [ ] An ESLint `no-restricted-imports` rule bans `@/challenges/stacking/player` outside `*.test.ts` (and test support), proven by a lint-rule test like `src/challenges/shared/lintRules.test.ts`.
   - [ ] `npm run verify` passes; no behavior change.
-- Notes: From the maintainer check after T77 (about 60 lines). T77's `passTarget` had to be added by hand in two places; T30 adds two challenge types to this contract.
+- Notes: From the maintainer check after T77 (about 60 lines). T77's `passTarget` had to be added by hand in two places; T30 adds two challenge types to this contract. From the check after T16: `tests/e2e/attempts.spec.ts` imports `tapsForAMiss` straight from `src/challenges/stacking/player`; route it through `tests/e2e/support/tower.ts` so the rule has one allowed path.
 
 ### T80 Fix the missing-key warning in form fields
 - Type: maintenance
@@ -935,7 +935,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Depends on: T75
 - Acceptance criteria:
   - [ ] The React warning "Each child in a list should have a unique key prop. Check the render method of `Field`" no longer appears on `/signup`, `/signin` or `/complete-profile` (a component test fails on that console error).
-- Notes: Seen in every e2e run's server log since T55. In dev it also opens Next's error overlay, whose stack-frame lookups slow the dev server under parallel e2e (see T78).
+- Notes: Seen in every e2e run's server log since T55. In dev it also opens Next's error overlay, whose stack-frame lookups slow the dev server under parallel e2e (see T78). Overlaps T63's third criterion (maintainer check after T16): whichever lands first does the fix, and the other drops that criterion.
 
 ### T79 One shared result-hero style for play and practice
 - Type: maintenance
@@ -968,9 +968,32 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] One shared fixture of boundary rows (accepted and refused) is checked both by pgTAP against the table and by Vitest against `parseGameSettings`, so the zod ranges cannot drift from the check constraints (the pattern of `src/lib/gameDay.fixture.json`).
 - Notes: From the T16 round-2 reviews (non-blocking). Later tasks (T18, T22, T24) should read settings through `loadGameSettings`.
 
-### T66 Shared route-handler helpers for API endpoints
+### T90 ResultHero owns the result focus and the shared result bits
 - Type: maintenance
 - Status: todo
+- Depends on: T79
+- Acceptance criteria:
+  - [ ] `ResultHero` focuses its own heading when it mounts; the `headingRef` prop and the focus `useRef`/`useEffect` in `PlayToday.tsx` and `StackingPractice.tsx` go. Focus behaviour is unchanged: `/play` focuses the result and "Not counted" views (including a stored result on a later visit), practice focuses the result after every run.
+  - [ ] The muted `.note` style is defined once (a `ResultHero` note slot or a shared class in `ui.module.css`), not in both `play.module.css` and `practice.module.css`.
+  - [ ] `PlayToday`'s "abandoned" view reuses the existing `backHome` element instead of a second "Back to home" `LinkButton`.
+  - [ ] The focus tests pass unchanged (or move into `ui.test.tsx` with the same assertions), and a new `ui.test.tsx` case shows a mounted `ResultHero` focuses its heading.
+  - [ ] `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T16 (about 60-80 lines). T30 adds two more result screens that would otherwise copy the focus pattern. Can be done with T88.
+
+### T91 An unfinished attempt is not necessarily abandoned (wording after T87)
+- Type: maintenance
+- Status: todo
+- Depends on: T87
+- Acceptance criteria:
+  - [ ] When today's attempt has started but not been submitted, `/play` shows wording that stays true now that runs have no time limit (the human approves the exact text; see NEEDS_HUMAN).
+  - [ ] The `PlayStatus` "abandoned" comment in `src/lib/attempts/today.ts` says the same.
+  - [ ] `PlayToday.test.tsx` and `tests/e2e/play.spec.ts` check the new text.
+  - [ ] `npm run verify` and `npm run test:e2e` pass; the only behavior change is this message.
+- Notes: From the maintainer check after T16 (about 20 lines). Since T87 the server accepts a run until the day's deadline, so a player who opens `/play` in a second tab mid-run is told "You left today's attempt before finishing, so it counted as not passed", yet the first tab can still submit a pass. Scoring and counters are correct; only the message is wrong. needs-human: wording.
+
+### T66 Shared route-handler helpers for API endpoints
+- Type: maintenance
+- Status: in-progress
 - Depends on: T13
 - Acceptance criteria:
   - [ ] One server-only module (for example `src/lib/http/route.ts`) provides `jsonNoStore(body, status)` (always `cache-control: no-store`), `requireUser()` (the verified user, or a ready 401 `{ error: "unauthenticated" }`), `readJsonBody(request, maxBytes)` (the parsed body, 413 `too-large` by declared or actual size, or 400 `invalid-body`), and a wrapper that logs a thrown error and answers 500 `{ error: "server-error" }`.
@@ -989,7 +1012,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `vitest.config.mts` sets 90% lines and branches for `src/lib/attempts/**` and `src/lib/gameDay.ts` (both at 100% today, so this only raises thresholds).
   - [ ] Every threshold glob matches at least one file, or carries a comment naming the task that will fill it (`src/lib/streak/**` matches nothing yet).
   - [ ] `npm run verify` passes; no product behavior changes.
-- Notes: From the maintainer check after T60. CLAUDE.md asks for 90% on scoring and streak logic, but the pass/fail, result storage and game-date code currently falls only under the 70% overall threshold. Do this soon. From the check after T77: also give `src/app/play/PlayToday.tsx` and `src/app/practice/stacking/StackingPractice.tsx` per-file thresholds (at or below what they measure now); they sit outside `src/components/**`.
+- Notes: From the maintainer check after T60. CLAUDE.md asks for 90% on scoring and streak logic, but the pass/fail, result storage and game-date code currently falls only under the 70% overall threshold. Do this soon. From the check after T77: also give `src/app/play/PlayToday.tsx` and `src/app/practice/stacking/StackingPractice.tsx` per-file thresholds (at or below what they measure now); they sit outside `src/components/**`. From the check after T16: also give `src/lib/settings.ts` 90% lines and branches (it parses the threshold and targets that pass/fail and the streak use).
 
 ### T68 One attempt store and one challenge lookup for start and submit
 - Type: maintenance

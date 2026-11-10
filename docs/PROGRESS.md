@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T16 Game settings table
-- Blocked tasks: none
-- Waiting on the human: later, an accessibility pass and more Tower testers; see docs/NEEDS_HUMAN.md
-- Next: M2 after T16. Worth doing early in M2: T67 (90% coverage thresholds), T66 (shared route helpers, before T18), T68 and T86 (the attempts flow), T78 (local parallel e2e).
+- Active task: T66 Shared route-handler helpers
+- Blocked tasks: none (T91 waits on wording from the human)
+- Waiting on the human: Docker Desktop stopped starting (Nov 10) after a local `supabase db reset`, so database and e2e work waits; confirm the game_settings values; T91 wording; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
+- Next: T66, T67 and T68 before T17 and T18 (the maintainer's advice after T16), then M2 from T17.
 
 ## Log
 
@@ -18,6 +18,14 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-10 — Maintainer check after T16
+- Health good (566 tests, 99% lines). New tasks T90 (ResultHero owns focus and notes) and T91 (unfinished-attempt wording, needs the human's wording); notes added to T67 (settings.ts at 90%), T86 (e2e imports through support) and T80 (overlaps T63). Advice: land T66, T67 and T68 before T17 and T18. Merges since this check: 0.
+
+### 2026-11-10 — T16 Game settings table (PR #36)
+- One admin-editable `game_settings` row (single-row by a boolean key) with the launch values; `ensure_game_day` reads it and raises if it is missing; everyone reads, only `is_admin()` users update, nobody inserts or deletes; the database refuses bad default pass targets. `src/lib/settings.ts` parses it with zod.
+- Review rounds: spec 2, quality 2, tests 2 (round 1: unchecked pass-target values could stop new days; the player-update check was masked by the admin's later update).
+- Notes: changing an already-applied migration needed `npx supabase db reset`, which wiped local accounts; after it, Docker Desktop would not start. Follow-ups in T89.
 
 ### 2026-11-10 — T79 One shared result layout for play and practice (PR #35)
 - `ResultHero` (`src/components/ui/ResultHero.tsx`) renders the score above the verdict on both screens; a pass on `/play` glows mint, practice stays plain mint; the `/play` verdict now uses the practice size. Font sizes in `clamp()` calls are `--fs-text-*` tokens.

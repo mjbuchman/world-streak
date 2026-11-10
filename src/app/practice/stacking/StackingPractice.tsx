@@ -9,21 +9,18 @@ import { LinkButton } from "@/components/ui/LinkButton";
 import { ResultHero } from "@/components/ui/ResultHero";
 import { Surface } from "@/components/ui/Surface";
 import { STACKING_HOW_TO } from "@/config/challenges";
+import { secureRandomSeed } from "@/lib/random";
 import styles from "./practice.module.css";
 
 type Phase = { name: "ready" } | { name: "playing"; params: StackingParams } | { name: "done"; score: number };
-
-/** Practice never counts, so a fresh seed from the browser is fine (scored seeds come from the server). */
-function randomSeed(): number {
-  return crypto.getRandomValues(new Uint32Array(1))[0];
-}
 
 export function StackingPractice() {
   const [phase, setPhase] = useState<Phase>({ name: "ready" });
   // The best row reached on this visit; shown in the HUD of later runs.
   const [best, setBest] = useState(0);
   const resultRef = useRef<HTMLHeadingElement>(null);
-  const play = () => setPhase({ name: "playing", params: paramsFromSeed(randomSeed()) });
+  // Practice never counts, so a seed from the browser is fine (scored seeds come from the server).
+  const play = () => setPhase({ name: "playing", params: paramsFromSeed(secureRandomSeed()) });
   const finish = ({ result }: FinishedRun) => {
     setBest((previous) => Math.max(previous, result.score));
     setPhase({ name: "done", score: result.score });
