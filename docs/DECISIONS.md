@@ -153,5 +153,5 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 ### 2026-11-09 — Which forms keep a typed password after an error (T75)
 - Choice: sign-up keeps both the password and its confirmation after a failed submit (the human's play-test request); sign-in still clears the password after "Email or password is incorrect", the usual practice, so a wrong password is not resubmitted by accident. Neither password is ever sent back by the server.
 - Reason: the play-test feedback named the create-account form only; T75's criteria cover `/signup`.
-- How to change it later: `SignInForm.tsx` could keep its password the way `SignUpForm.tsx` does (the fields' default values come from what was in them at submit).
+- How to change it later: `SignInForm.tsx` could keep its password the way `SignUpForm.tsx` does: save the values in a ref at submit and write them back to the inputs in a layout effect after React's form reset. Never use `defaultValue` for a password, which puts it in the page's HTML as a `value` attribute.
 - Confirmed by human: pending, at the second play-test.

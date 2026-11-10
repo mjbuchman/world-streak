@@ -135,6 +135,8 @@ describe("SignUpForm", () => {
     // Nothing typed is lost, and fixing the confirmation clears the error.
     expect(passwordInput().value).toBe("secret-password");
     await userEvent.clear(confirmInput());
+    // Still different, so the error stays until the two agree.
+    expect(screen.getByText("The passwords don't match.")).toBeTruthy();
     await userEvent.type(confirmInput(), "secret-password");
     expect(screen.queryByText("The passwords don't match.")).toBeNull();
   });

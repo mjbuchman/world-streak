@@ -868,7 +868,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Depends on: T74
 - Acceptance criteria:
   - [ ] The result layout, verdict heading (display face, reveal animation, no focus ring), actions column and `@keyframes reveal` live once (a `ResultHero` component or shared classes in `src/components/ui/`) and are used by both `/play` and `/practice/stacking`.
-  - [ ] The raw pixel sizes inside the verdict and title `clamp()` calls become `--fs-text-*` tokens or carry a comment saying why.
+  - [ ] The raw pixel sizes inside the verdict and title `clamp()` calls, and `.shellTitle`'s 26px in `ui.module.css`, become `--fs-text-*` tokens or carry a comment saying why.
   - [ ] No visual change; existing unit and e2e tests pass unchanged.
 - Notes: From the T74 quality review (non-blocking).
 
