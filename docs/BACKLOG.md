@@ -289,7 +289,8 @@ Goal: after the M1 play-test (Nov 9, 2026), every existing screen has the Fresh 
   - [ ] Decide whether UI rule 8 covers the account header links during a run on `/play`: either hide them like the back button, or record why not in DECISIONS.
   - [ ] Tests: the refused-submission ("failed") state is in the "Back to home" unit test, and the home page's Teetering Tower card (heading, Play and Practice first links) is checked.
   - [ ] e2e: practice and play runs end on a deliberate miss with a paused clock, and the stored result matches what was shown; `npm run verify` and `npm run test:e2e` pass.
-- Notes: Split from T77 (Nov 9, 2026); the follow-ups come from the T74 reviews. Last task of M1b: then the maintainer check and the second play-test.
+  - [ ] The last fall plays out: when a run ends, the game keeps drawing for `FALL_MS` (input already blocked, taps fixed) before calling `onFinish`, so a missed row is seen falling away; a component test covers the delay.
+- Notes: Split from T77 (Nov 9, 2026); the follow-ups come from the T74 and T77 reviews. In `tests/e2e/play.spec.ts`, read the game date from the start response rather than the test's own clock (as `attempts.spec.ts` does). Last task of M1b: then the maintainer check and the second play-test.
 
 ## M2 The world streak
 

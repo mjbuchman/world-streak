@@ -3,6 +3,7 @@ import { COLUMNS, ROWS, columnAt, simulate, type StackingParams } from "./engine
 import {
   BOUNCE_MS,
   CELL_GAP,
+  CELL_RADIUS_PX,
   drawStacking,
   FALL_MS,
   fallingCells,
@@ -14,13 +15,15 @@ import {
 const params: StackingParams = { startStepMs: 100, stepDecayMs: 0, startColumn: 0, direction: "right" };
 const colors: StackingColors = { empty: "empty", tower: "tower", moving: "moving", falling: "falling", target: "target" };
 
-type Rect = { fill: string; alpha: number; x: number; y: number; w: number; h: number };
+/** A drawn shape: `radius` is set for the rounded cells, absent for the plain target line. */
+type Rect = { fill: string; alpha: number; x: number; y: number; w: number; h: number; radius?: number };
 
 /** A stand-in for CanvasRenderingContext2D that records what is drawn. */
 function fakeContext() {
   const rects: Rect[] = [];
   const transforms: number[][] = [];
   const calls: string[] = [];
+  let path: Omit<Rect, "fill" | "alpha"> | null = null;
   const ctx = {
     fillStyle: "",
     globalAlpha: 1,
@@ -29,6 +32,12 @@ function fakeContext() {
     fillRect: (x: number, y: number, w: number, h: number) => {
       calls.push(`fill ${ctx.fillStyle}`);
       rects.push({ fill: ctx.fillStyle, alpha: ctx.globalAlpha, x, y, w, h });
+    },
+    beginPath: () => (path = null),
+    roundRect: (x: number, y: number, w: number, h: number, radius: number) => (path = { x, y, w, h, radius }),
+    fill: () => {
+      calls.push(`fill ${ctx.fillStyle}`);
+      rects.push({ fill: ctx.fillStyle, alpha: ctx.globalAlpha, ...path! });
     },
   };
   return { ctx: ctx as unknown as CanvasRenderingContext2D, rects, transforms, calls };
@@ -68,7 +77,23 @@ describe("drawStacking", () => {
     const { calls, rects } = draw([], 0);
     expect(calls[0]).toBe(`clear 0,0,${COLUMNS},${ROWS}`);
     expect(cellsOf(rects, "empty")).toHaveLength(COLUMNS * ROWS);
-    expect(rects[0]).toEqual({ fill: "empty", alpha: 1, x: CELL_GAP / 2, y: ROWS - 1 + CELL_GAP / 2, w: 1 - CELL_GAP, h: 1 - CELL_GAP });
+    expect(rects[0]).toEqual({
+      fill: "empty",
+      alpha: 1,
+      x: CELL_GAP / 2,
+      y: ROWS - 1 + CELL_GAP / 2,
+      w: 1 - CELL_GAP,
+      h: 1 - CELL_GAP,
+      radius: CELL_RADIUS_PX / 20, // cells are 20 CSS px here
+    });
+  });
+
+  it("rounds every cell by 8 CSS px, at most half a cell on a tiny board", () => {
+    expect(new Set(draw([250, 350], 360).rects.filter((rect) => rect.fill !== "target").map((rect) => rect.radius))).toEqual(
+      new Set([CELL_RADIUS_PX / 20]),
+    );
+    // 7 px wide: a cell is 1 px, so the radius stops at half the drawn cell.
+    expect(draw([], 0, { width: 7, height: 15 }).rects[0].radius).toBeCloseTo((1 - CELL_GAP) / 2);
   });
 
   it("draws the moving row where the engine says, in row 1 at the start", () => {
@@ -124,6 +149,9 @@ describe("drawStacking", () => {
       draw([250, 350], elapsedMs, { reducedMotion }).rects.filter((rect) => rect.fill === "tower").at(-1)!;
     const resting = ROWS - 2 + CELL_GAP / 2;
     expect(rowTwo(350 + BOUNCE_MS / 2).y).toBeLessThan(resting);
+    // Only the row that landed lifts; row 1 stays put.
+    const rowOne = draw([250, 350], 350 + BOUNCE_MS / 2).rects.filter((rect) => rect.fill === "tower").slice(0, 3);
+    for (const rect of rowOne) expect(rect.y).toBeCloseTo(ROWS - 1 + CELL_GAP / 2);
     expect(rowTwo(350 + BOUNCE_MS).y).toBeCloseTo(resting);
     expect(rowTwo(350 + BOUNCE_MS / 2, true).y).toBeCloseTo(resting);
   });

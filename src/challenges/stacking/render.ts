@@ -3,8 +3,11 @@ import { COLUMNS, ROWS, columnAt, type StackingParams, type StackingResult } fro
 /** The gap between cells, as a fraction of a cell. */
 export const CELL_GAP = 0.12;
 
+/** Corner radius of a game cell in CSS px (matches `--fs-radius-cell`, UI_GUIDELINES rule 6). */
+export const CELL_RADIUS_PX = 8;
+
 /** How long a cell that hangs over the edge takes to fall away, in ms. */
-export const FALL_MS = 450;
+export const FALL_MS = 400;
 /** How far it falls in that time, in cells. */
 const FALL_CELLS = 3;
 
@@ -76,10 +79,15 @@ export function drawStacking(ctx: CanvasRenderingContext2D, frame: StackingFrame
   // Clear first: the cells are translucent, and the page shows through the gaps.
   ctx.clearRect(0, 0, COLUMNS, fieldHeight);
 
+  // Drawing is in cells, so convert the radius from CSS px; never more than half a cell.
+  const size = 1 - CELL_GAP;
+  const radius = Math.min(CELL_RADIUS_PX / (width / COLUMNS), size / 2);
   // `row` may be fractional while a cell moves (falling, or lifted on landing).
   const cell = (column: number, row: number, color: string) => {
     ctx.fillStyle = color;
-    ctx.fillRect(column + CELL_GAP / 2, fieldHeight - row + CELL_GAP / 2, 1 - CELL_GAP, 1 - CELL_GAP);
+    ctx.beginPath();
+    ctx.roundRect(column + CELL_GAP / 2, fieldHeight - row + CELL_GAP / 2, size, size, radius);
+    ctx.fill();
   };
 
   for (let row = 1; row <= ROWS; row++) {

@@ -37,7 +37,9 @@ function themeColors(element: HTMLElement): StackingColors {
  * Space) are stamped with the elapsed ms of the input event; every animation frame replays
  * them through the engine and draws the result.
  */
-export function StackingGame({ params, onFinish, passTarget, best = 0 }: Props) {
+export function StackingGame({ params, onFinish, passTarget: target, best = 0 }: Props) {
+  // pass_target is numeric; a fractional target (say 10.5) means reaching row 11.
+  const passTarget = target === undefined ? undefined : Math.ceil(target);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [row, setRow] = useState(1);
   const reducedMotion = usePrefersReducedMotion();

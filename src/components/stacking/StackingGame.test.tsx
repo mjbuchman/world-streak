@@ -70,6 +70,35 @@ describe("StackingGame", () => {
     expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ passTarget: 10 });
   });
 
+  it("rounds a fractional target up, for the HUD and the line", () => {
+    render(<StackingGame params={params} onFinish={vi.fn()} passTarget={10.5} />);
+    expect(screen.getByText("Row 11 to pass")).toBeTruthy();
+    advance(20);
+    expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ passTarget: 11 });
+  });
+
+  it("gives each part of the board its Fresh Sport colour token", () => {
+    const tokens: Record<string, string> = {
+      "--fs-color-surface-strong": "surface-strong",
+      "--fs-color-mint": "mint",
+      "--fs-color-tangerine": "tangerine",
+      "--fs-color-mint-dark": "mint-dark",
+      "--fs-color-mint-light": "mint-light",
+    };
+    vi.spyOn(window, "getComputedStyle").mockReturnValue({
+      getPropertyValue: (name: string) => ` ${tokens[name] ?? ""} `,
+    } as CSSStyleDeclaration);
+    render(<StackingGame params={params} onFinish={vi.fn()} />);
+    advance(20);
+    expect(drawStacking.mock.calls.at(-1)![1].colors).toEqual({
+      empty: "surface-strong",
+      tower: "mint",
+      moving: "tangerine",
+      falling: "mint-dark",
+      target: "mint-light",
+    });
+  });
+
   it("shows the best row of this visit in practice, once there is one", () => {
     const { rerender } = render(<StackingGame params={params} onFinish={vi.fn()} best={0} />);
     expect(screen.queryByText(/Best/)).toBeNull();
@@ -106,6 +135,8 @@ describe("StackingGame", () => {
     advance(20);
     expect(onFinish).toHaveBeenCalledTimes(1);
     expect(onFinish.mock.calls[0][0].result).toMatchObject({ score: 2, endReason: "miss" });
+    // With no row in play, the HUD settles on the rows stacked.
+    expect(screen.getByRole("status").textContent).toBe("Row 2");
   });
 
   it("draws every frame with the engine state for that moment", () => {
