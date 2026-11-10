@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { CHALLENGES, isChallengeType } from "@/challenges/registry";
-import type { ChallengeModule, ScoreDirection } from "@/challenges/shared/types";
+import type { ChallengeModule } from "@/challenges/shared/types";
 import { INPUT_TIMING_SLACK_MS } from "@/config/attempts";
 import { gameDateAt } from "@/lib/gameDay";
+import { passes } from "@/lib/scoring/pass";
 
 /** What `record_attempt_result` can answer. */
 export const RECORD_STATUSES = ["recorded", "already-submitted", "day-closed", "not-found"] as const;
@@ -45,11 +46,6 @@ function replay<Params, Inputs>(module: ChallengeModule<Params, Inputs>, seed: n
   // The game submits only finished runs; anything else is not a real submission.
   if (!module.finished(params, inputs)) return null;
   return { inputs, score: module.score(params, inputs), lastInputMs: module.lastInputMs(inputs) };
-}
-
-/** Whether a score meets the day's target: at least it when higher is better, at most it otherwise. */
-export function passes(score: number, target: number, direction: ScoreDirection): boolean {
-  return direction === "higher-better" ? score >= target : score <= target;
 }
 
 /**

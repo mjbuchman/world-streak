@@ -24,7 +24,15 @@ export default defineConfig({
         branches: 70,
         "src/challenges/**": { lines: 90, branches: 90 },
         "src/lib/scoring/**": { lines: 90, branches: 90 },
+        // Matches nothing yet: the streak is computed in SQL (T21, T34). TypeScript streak logic,
+        // for example the streak and history display in T24, belongs here.
         "src/lib/streak/**": { lines: 90, branches: 90 },
+        // Start, submit and store scored attempts: who may play and what counts.
+        "src/lib/attempts/**": { lines: 90, branches: 90 },
+        // Which game date a moment belongs to, and its deadline.
+        "src/lib/gameDay.ts": { lines: 90, branches: 90 },
+        // The survival threshold and pass targets that pass/fail and the streak use.
+        "src/lib/settings.ts": { lines: 90, branches: 90 },
         // Decides who may enter the prize draw.
         "src/lib/eligibility.ts": { lines: 90, branches: 90 },
         "src/lib/eligibilityFields.ts": { lines: 90, branches: 90 },
@@ -34,6 +42,9 @@ export default defineConfig({
         // Client components get component tests (Testing Library, jsdom per file).
         "src/app/signup/SignUpForm.tsx": { lines: 80, branches: 80 },
         "src/app/signin/SignInForm.tsx": { lines: 80, branches: 80 },
+        // The scored and practice screens sit outside src/components/**.
+        "src/app/play/PlayToday.tsx": { lines: 90, branches: 90 },
+        "src/app/practice/stacking/StackingPractice.tsx": { lines: 90, branches: 90 },
         "src/components/**": { lines: 80, branches: 80 },
       },
     },

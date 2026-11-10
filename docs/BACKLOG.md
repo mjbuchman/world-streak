@@ -993,7 +993,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T66 Shared route-handler helpers for API endpoints
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T13
 - Acceptance criteria:
   - [ ] One server-only module (for example `src/lib/http/route.ts`) provides `jsonNoStore(body, status)` (always `cache-control: no-store`), `requireUser()` (the verified user, or a ready 401 `{ error: "unauthenticated" }`), `readJsonBody(request, maxBytes)` (the parsed body, 413 `too-large` by declared or actual size, or 400 `invalid-body`), and a wrapper that logs a thrown error and answers 500 `{ error: "server-error" }`.
@@ -1005,7 +1005,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T67 Coverage thresholds where scoring and game-day logic live
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T13
 - Acceptance criteria:
   - [ ] `passes(score, target, direction)` moves from `src/lib/attempts/submit.ts` to `src/lib/scoring/` (for example `pass.ts`) with its tests; callers import it from there (the T21 close job will reuse it).
