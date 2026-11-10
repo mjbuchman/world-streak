@@ -75,6 +75,8 @@ test("a player plays today's attempt once and sees the server's result, also aft
   await expect(verdict).toBeFocused();
   const summary = page.getByText(`${reachedRow(score)}. Today's target was ${targetRow(passTarget)}.`);
   await expect(summary).toBeVisible();
+  // The wording itself, independent of rows.ts.
+  await expect(summary).toHaveText(/^You reached row \d+\. Today's target was row \d+\.$/);
   await expect(page.locator("[data-big-score]")).toHaveText(String(score));
   await expect(page.getByRole("banner").getByRole("button", { name: "Sign out" })).toBeVisible();
   // What was shown is what the server stored: the engine's score for exactly those taps.
