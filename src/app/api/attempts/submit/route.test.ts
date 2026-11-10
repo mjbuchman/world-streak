@@ -4,12 +4,12 @@ const getUser = vi.hoisted(() => vi.fn());
 const submitAttempt = vi.hoisted(() => vi.fn());
 const adminClient = vi.hoisted(() => ({ admin: true }));
 const store = vi.hoisted(() => ({ store: true }));
-const supabaseSubmitStore = vi.hoisted(() => vi.fn(() => store));
+const supabaseAttemptStore = vi.hoisted(() => vi.fn(() => store));
 
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: async () => ({ auth: { getUser } }) }));
 vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: () => adminClient }));
 vi.mock("@/lib/attempts/submit", () => ({ submitAttempt }));
-vi.mock("@/lib/attempts/store", () => ({ supabaseSubmitStore }));
+vi.mock("@/lib/attempts/store", () => ({ supabaseAttemptStore }));
 
 import { POST } from "./route";
 
@@ -74,7 +74,7 @@ describe("POST /api/attempts/submit", () => {
     expect(response.status).toBe(422);
     expect(await response.json()).toEqual({ error: "implausible-timing" });
 
-    expect(supabaseSubmitStore).toHaveBeenCalledWith(adminClient);
+    expect(supabaseAttemptStore).toHaveBeenCalledWith(adminClient);
     const [{ userId, body, now, store: usedStore }] = submitAttempt.mock.calls[0];
     expect(userId).toBe("u1");
     expect(body).toEqual({ attemptId: "a1", inputs: { tapsMs: [900] } });

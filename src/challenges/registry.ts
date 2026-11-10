@@ -8,3 +8,12 @@ export const CHALLENGES = { stacking } satisfies Record<ChallengeType, unknown>;
 export function isChallengeType(value: string): value is ChallengeType {
   return (CHALLENGE_TYPES as readonly string[]).includes(value);
 }
+
+/**
+ * The engine for a game day's stored challenge type. An unknown type means the database and the
+ * code disagree, so it throws (the endpoint answers 500) rather than guessing.
+ */
+export function challengeForGameDay(gameDate: string, challengeType: string) {
+  if (!isChallengeType(challengeType)) throw new Error(`Game day ${gameDate} has unknown challenge type "${challengeType}"`);
+  return CHALLENGES[challengeType];
+}

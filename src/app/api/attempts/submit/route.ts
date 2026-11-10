@@ -1,4 +1,4 @@
-import { supabaseSubmitStore } from "@/lib/attempts/store";
+import { supabaseAttemptStore } from "@/lib/attempts/store";
 import { submitAttempt } from "@/lib/attempts/submit";
 import { jsonNoStore, readJsonBody, requireUser, withServerErrors } from "@/lib/http/route";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -22,7 +22,7 @@ export const POST = withServerErrors("Submitting an attempt failed", async (requ
     userId: auth.user.id,
     body: read.body,
     now: new Date(),
-    store: supabaseSubmitStore(createSupabaseAdminClient()),
+    store: supabaseAttemptStore(createSupabaseAdminClient()),
   });
   return jsonNoStore(body, status);
 });

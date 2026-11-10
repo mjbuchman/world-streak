@@ -6,12 +6,14 @@ const userId = "00000000-0000-0000-0000-00000000000a";
 // 23:30 UTC on Nov 8 is still game date Nov 8 (midnight UTC deadline).
 const now = new Date("2026-11-08T23:30:00Z");
 
+const storedResult = { submitted: true, score: 7, passed: false, passTarget: 10 } as const;
+
 function fakeStore(overrides: Partial<AttemptStore> = {}): AttemptStore {
   return {
     hasProfile: vi.fn(async () => true),
     ensureGameDay: vi.fn(async () => undefined),
-    gameDayFor: vi.fn(async () => ({ challengeType: "stacking", passTarget: 10 })),
-    findAttempt: vi.fn(async () => null),
+    gameDay: vi.fn(async () => ({ challengeType: "stacking", passTarget: 10, closed: false })),
+    findAttemptForDay: vi.fn(async () => null),
     insertAttempt: vi.fn(async () => ({ id: "attempt-1" })),
     ...overrides,
   };
@@ -29,7 +31,7 @@ describe("startAttempt", () => {
   });
 
   it("creates today's game day, then an attempt with a server seed, and returns the instance and target", async () => {
-    const store = fakeStore({ gameDayFor: vi.fn(async () => ({ challengeType: "stacking", passTarget: 12 })) });
+    const store = fakeStore({ gameDay: vi.fn(async () => ({ challengeType: "stacking", passTarget: 12, closed: false })) });
     expect(await start(store, 4294967295)).toEqual({
       status: 200,
       body: {
@@ -42,28 +44,31 @@ describe("startAttempt", () => {
       },
     });
     expect(store.ensureGameDay).toHaveBeenCalledWith("2026-11-08");
-    expect(store.gameDayFor).toHaveBeenCalledWith("2026-11-08");
+    expect(store.gameDay).toHaveBeenCalledWith("2026-11-08");
     // On a fresh day the row only exists once ensureGameDay has run.
     const order = (fn: unknown) => (fn as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0];
-    expect(order(store.ensureGameDay)).toBeLessThan(order(store.gameDayFor));
+    expect(order(store.ensureGameDay)).toBeLessThan(order(store.gameDay));
     expect(store.insertAttempt).toHaveBeenCalledWith({ userId, gameDate: "2026-11-08", seed: 4294967295 });
   });
 
   it("refuses a second start the same day, saying whether the first was submitted, and inserts nothing", async () => {
-    for (const submitted of [false, true]) {
-      const store = fakeStore({ findAttempt: vi.fn(async () => ({ submitted })) });
-      expect(await start(store)).toEqual({ status: 409, body: { error: "already-started", submitted } });
-      expect(store.findAttempt).toHaveBeenCalledWith(userId, "2026-11-08");
+    for (const existing of [{ submitted: false } as const, storedResult]) {
+      const store = fakeStore({ findAttemptForDay: vi.fn(async () => existing) });
+      expect(await start(store)).toEqual({ status: 409, body: { error: "already-started", submitted: existing.submitted } });
+      expect(store.findAttemptForDay).toHaveBeenCalledWith(userId, "2026-11-08");
       expect(store.insertAttempt).not.toHaveBeenCalled();
     }
   });
 
   it("maps losing a race to a simultaneous request (the unique constraint) to 409", async () => {
     // The winner already submitted, so the answer must come from re-reading its row.
-    const findAttempt = vi.fn<AttemptStore["findAttempt"]>().mockResolvedValueOnce(null).mockResolvedValueOnce({ submitted: true });
-    const store = fakeStore({ findAttempt, insertAttempt: vi.fn(async () => "duplicate" as const) });
+    const findAttemptForDay = vi
+      .fn<AttemptStore["findAttemptForDay"]>()
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(storedResult);
+    const store = fakeStore({ findAttemptForDay, insertAttempt: vi.fn(async () => "duplicate" as const) });
     expect(await start(store)).toEqual({ status: 409, body: { error: "already-started", submitted: true } });
-    expect(findAttempt).toHaveBeenCalledTimes(2);
+    expect(findAttemptForDay).toHaveBeenCalledTimes(2);
   });
 
   it("still answers 409, as not submitted, if the winning row cannot be read back", async () => {
@@ -72,7 +77,7 @@ describe("startAttempt", () => {
   });
 
   it("fails loudly on a game day whose challenge type the server does not know", async () => {
-    const store = fakeStore({ gameDayFor: vi.fn(async () => ({ challengeType: "chess", passTarget: 10 })) });
+    const store = fakeStore({ gameDay: vi.fn(async () => ({ challengeType: "chess", passTarget: 10, closed: false })) });
     await expect(start(store)).rejects.toThrow(/chess/);
     expect(store.insertAttempt).not.toHaveBeenCalled();
   });

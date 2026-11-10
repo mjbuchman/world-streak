@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T67 Coverage thresholds where scoring and game-day logic live
+- Active task: T68 One attempt store and one challenge lookup
 - Blocked tasks: none (T91 waits on wording from the human)
 - Waiting on the human: Docker Desktop stopped starting (Nov 10) after a local `supabase db reset`, so database and e2e work waits; confirm the game_settings values; T91 wording; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T67, then T68, before T17 and T18 (the maintainer's advice after T16), then M2 from T17.
+- Next: T68, then M2 from T17 (needs Docker for the database work).
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-10 — T67 Coverage thresholds for scoring and game-day logic (PR #38)
+- `passes` lives in `src/lib/scoring/pass.ts`; 90% lines and branches for `src/lib/attempts/**`, `gameDay.ts`, `settings.ts`, `PlayToday.tsx` and `StackingPractice.tsx` (all at 100%). The empty `src/lib/streak/**` glob names T21, T34 and T24.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the maintainer check after T16: 2.
 
 ### 2026-11-10 — T66 Shared route-handler helpers (PR #37)
 - `src/lib/http/route.ts` (`jsonNoStore`, `errorResponse`, `requireUser`, `readJsonBody`, `withServerErrors`) used by the start, submit and health routes; `secureRandomSeed` in `src/lib/random.ts` (also used by practice). The route helpers are server-only through `@/lib/supabase/server`, because Vitest resolves `server-only` to its throwing entry.
