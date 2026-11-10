@@ -1,6 +1,6 @@
 import { paramsFromSeed, simulate } from "../../src/challenges/stacking/engine";
 import { FALL_MS } from "../../src/challenges/stacking/render";
-import { blocks } from "../../src/components/stacking/blocks";
+import { reachedRow } from "../../src/components/stacking/rows";
 import { expect, test } from "./support/fixtures";
 import { pinSeed, playTaps, tapsForAMiss } from "./support/tower";
 
@@ -27,7 +27,7 @@ test("practice tower works signed out, ends with a score and offers another go",
   await page.keyboard.down("Space");
   await page.clock.runFor(FALL_MS + 50);
 
-  const result = page.getByRole("heading", { name: /^You stacked \d+ blocks?$/ });
+  const result = page.getByRole("heading", { name: /^You reached row \d+$/ });
   await expect(result).toBeVisible();
   await expect(result).toBeFocused();
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
@@ -64,7 +64,7 @@ test("a deliberate miss in practice ends the run with the score the engine gives
   await playTaps(page, taps);
   await page.clock.runFor(FALL_MS + 50);
 
-  await expect(page.getByRole("heading", { name: `You stacked ${blocks(score)}` })).toBeVisible();
+  await expect(page.getByRole("heading", { name: reachedRow(score) })).toBeVisible();
   const bigScore = page.locator("[data-big-score]");
   await expect(bigScore).toHaveText(String(score));
   // Scoreboard style: the display face.

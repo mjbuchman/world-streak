@@ -5,6 +5,7 @@ import { MAX_TAPS, type StackingParams, type StackingResult } from "@/challenges
 import { drawStacking, FALL_MS, type StackingColors } from "@/challenges/stacking/render";
 import { usePrefersReducedMotion } from "@/components/ui/useReducedMotion";
 import { CHALLENGE_NAMES } from "@/config/challenges";
+import { targetRowNumber } from "./rows";
 import styles from "./StackingGame.module.css";
 import { frameAt } from "./stackingLoop";
 
@@ -38,8 +39,7 @@ function themeColors(element: HTMLElement): StackingColors {
  * them through the engine and draws the result.
  */
 export function StackingGame({ params, onFinish, passTarget: target, best = 0 }: Props) {
-  // pass_target is numeric; a fractional target (say 10.5) means reaching row 11.
-  const passTarget = target === undefined ? undefined : Math.ceil(target);
+  const passTarget = target === undefined ? undefined : targetRowNumber(target);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [row, setRow] = useState(1);
   const reducedMotion = usePrefersReducedMotion();

@@ -72,7 +72,7 @@ test("the back button hides during a run and returns with the result", async ({ 
   await page.keyboard.press("Space");
   await playTaps(page, taps.map((tap) => tap - taps[0]).slice(1));
   await page.clock.runFor(FALL_MS + 50);
-  await expect(page.getByRole("heading", { name: /^You stacked/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^You reached row/ })).toBeVisible();
   await expect(back).toBeVisible();
 });
 

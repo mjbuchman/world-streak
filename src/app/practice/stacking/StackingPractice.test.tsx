@@ -78,7 +78,7 @@ describe("StackingPractice", () => {
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
     finish(7);
 
-    expect(screen.getByRole("heading", { name: "You stacked 7 blocks" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "You reached row 7" })).toBeTruthy();
     expect(screen.queryByTestId("game")).toBeNull();
     expect(screen.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/");
     await userEvent.click(screen.getByRole("button", { name: "Play again" }));
@@ -103,7 +103,7 @@ describe("StackingPractice", () => {
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
     finish(4);
 
-    const heading = screen.getByRole("heading", { name: "You stacked 4 blocks" });
+    const heading = screen.getByRole("heading", { name: "You reached row 4" });
     expect(document.activeElement).toBe(heading);
 
     // A Space still held from the last drop, or pressed again, lands on the heading: no new run.
@@ -127,14 +127,7 @@ describe("StackingPractice", () => {
     expect(document.activeElement).toBe(screen.getByTestId("game"));
 
     finish(6);
-    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "You stacked 6 blocks" }));
-  });
-
-  it("says block, not blocks, for a score of 1", async () => {
-    render(<StackingPractice />);
-    await userEvent.click(screen.getByRole("button", { name: "Start" }));
-    finish(1);
-    expect(screen.getByRole("heading", { name: "You stacked 1 block" })).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "You reached row 6" }));
   });
 
   it("does not fetch anything itself (the e2e test guards the real game)", async () => {
