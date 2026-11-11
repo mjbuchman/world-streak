@@ -35,6 +35,7 @@ export default defineConfig({
         "src/lib/settings.ts": { lines: 90, branches: 90 },
         // The live pass rate players see, and when it hides.
         "src/lib/meter.ts": { lines: 90, branches: 90 },
+        "src/lib/meterRead.ts": { lines: 90, branches: 90 },
         // Reads the numbers that pass/fail, the meter and the streak are computed from.
         "src/lib/db/**": { lines: 90, branches: 90 },
         // Decides who may enter the prize draw.

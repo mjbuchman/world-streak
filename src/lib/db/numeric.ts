@@ -12,16 +12,23 @@ export const numericSchema = z
 
 const integerSchema = z.number().int();
 
+/** The value as it appears in an error message (undefined has no JSON form). */
+const shown = (value: unknown) => JSON.stringify(value) ?? String(value);
+
 /** Reads a numeric column; throws naming `field` when the value is not a finite number. */
 export function dbNumber(value: unknown, field: string): number {
   const parsed = numericSchema.safeParse(value);
-  if (!parsed.success) throw new Error(`Expected a number for ${field}, got ${JSON.stringify(value) ?? String(value)}`);
+  if (!parsed.success) throw new Error(`Expected a number for ${field}, got ${shown(value)}`);
   return parsed.data;
 }
 
-/** Reads an integer column (always a JSON number); throws naming `field` otherwise. */
+/**
+ * Reads an integer column; throws naming `field` otherwise. PostgREST sends `integer` and
+ * `bigint` as JSON numbers, so an integer *string* is refused on purpose. A `bigint` beyond 2^53
+ * (no column today: seeds stop at 2^32 - 1) would lose precision and needs a different reader.
+ */
 export function dbInteger(value: unknown, field: string): number {
   const parsed = integerSchema.safeParse(value);
-  if (!parsed.success) throw new Error(`Expected a whole number for ${field}, got ${JSON.stringify(value) ?? String(value)}`);
+  if (!parsed.success) throw new Error(`Expected a whole number for ${field}, got ${shown(value)}`);
   return parsed.data;
 }
