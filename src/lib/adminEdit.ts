@@ -43,6 +43,8 @@ export async function saveGameDayEdit(db: Pick<SupabaseClient, "from" | "rpc">, 
   if (!parsed.success) return refuse(parsed.error.issues[0].message);
   const { gameDate, passTarget, thresholdPercent } = parsed.data;
 
+  // Read first only for clear messages (closed, or the Tower's range); the update's own
+  // `closed_at is null` filter and row-level security are what actually guard the write.
   const day = await db.from("game_days").select("challenge_type, closed_at").eq("game_date", gameDate).maybeSingle();
   if (day.error) throw new Error(`Game day lookup failed: ${day.error.message}`);
   if (!day.data) return refuse("Unknown game day.");

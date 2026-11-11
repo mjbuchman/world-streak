@@ -17,6 +17,7 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Where to put it: reply in chat.
 - Why: opening `/admin` creates the next 7 days early. As built (T99), a day you have not edited and nobody has started keeps following the settings, the streak and recent scores, and is refreshed at the close before it. Saving a day on `/admin`, or the first player starting it, freezes its values. Details in `docs/DECISIONS.md` (T25, with the T99 update).
 - Agent's recommendation: keep it as built.
+- Also: as built, you can still change today's pass target after players have started, and later results are then judged by the new target. Should the pass target lock once anyone has started the day? (The threshold stays editable either way, as the backlog asks.) Recommendation: lock it. It is a small follow-up task.
 
 ### Please confirm: a day nobody played breaks the streak (blocks nothing)
 - What is needed: a yes, or "it survives" / "it is skipped".

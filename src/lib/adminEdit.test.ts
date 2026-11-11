@@ -93,12 +93,24 @@ describe("saveGameDayEdit", () => {
     expect(await saveGameDayEdit(db, edit())).toEqual({ ok: false, message: "Unknown game day." });
   });
 
-  it.each(["0", "16", "15.5"])("keeps a Tower target on the board's 15 rows (refuses %s)", async (passTarget) => {
-    const { db } = fakeDb([ADMIN, OPEN_STACKING]);
+  it.each(["0", "16", "15.5"])("keeps a Tower target on the board's 15 rows (refuses %s, writing nothing)", async (passTarget) => {
+    const { db, calls } = fakeDb([ADMIN, OPEN_STACKING]);
     expect(await saveGameDayEdit(db, edit({ passTarget }))).toEqual({
       ok: false,
       message: "The Teetering Tower's pass target must be a row from 1 to 15.",
     });
+    expect(calls).toHaveLength(2);
+  });
+
+  it.each([
+    ["the lowest Tower target", { passTarget: "1" }, { pass_target: 1, survival_threshold: 0.55 }],
+    ["the highest Tower target", { passTarget: "15" }, { pass_target: 15, survival_threshold: 0.55 }],
+    ["a threshold of 0%", { thresholdPercent: "0" }, { pass_target: 9, survival_threshold: 0 }],
+    ["a threshold of 100%", { thresholdPercent: "100" }, { pass_target: 9, survival_threshold: 1 }],
+  ])("accepts %s", async (_name, over, values) => {
+    const { db, calls } = fakeDb([ADMIN, OPEN_STACKING, { data: [{}], error: null }]);
+    expect(await saveGameDayEdit(db, edit(over))).toMatchObject({ ok: true });
+    expect(calls[2]).toContainEqual(["update", { ...values, edited: true }]);
   });
 
   it("allows a fractional Tower target on the board, and any non-negative target for other challenges", async () => {
