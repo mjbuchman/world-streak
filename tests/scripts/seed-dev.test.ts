@@ -271,12 +271,15 @@ describe("supabaseSeedDeps", () => {
     );
   });
 
-  it("refuses a malformed weight instead of adding NaN to the counters", async () => {
+  it.each([
+    ["counted_weight", { counted_weight: null }, { passes: 4, weighted_passes: "4" }],
+    ["weighted_passes", { counted_weight: "1" }, { passes: 4, weighted_passes: "x" }],
+  ])("refuses a malformed %s instead of adding NaN to the counters", async (field, attempt, counters) => {
     const { deps } = fakeClient([
-      { data: { counted_weight: null }, error: null },
-      { data: { passes: 4, weighted_passes: "4" }, error: null },
+      { data: attempt, error: null },
+      { data: counters, error: null },
     ]);
-    await expect(deps.addPastPass("2026-11-07", "a1")).rejects.toThrow(/counted_weight/);
+    await expect(deps.addPastPass("2026-11-07", "a1")).rejects.toThrow(new RegExp(field));
   });
 
   it("reports whether a day is closed", async () => {

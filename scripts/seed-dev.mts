@@ -110,7 +110,6 @@ export async function runSeed(args: SeedArgs, runId: string, deps: SeedDeps): Pr
   deps.log(`Seeded ${args.players} players for ${date}: ${passing.size} passed, ${args.players - passing.size} did not.`);
 }
 
-
 const randomSeed = () => crypto.getRandomValues(new Uint32Array(1))[0];
 
 /** The seed steps over a service-role client to the local database. */
