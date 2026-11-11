@@ -3,10 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Surface } from "@/components/ui/Surface";
 import { METER_HIDE_HOURS, METER_POLL_SECONDS } from "@/config/meter";
-import { isMeterBody, meterHiddenFrom, type MeterBody } from "@/lib/meter";
+import { isMeterBody, meterHiddenFrom, meterHiddenMessage, type MeterBody } from "@/lib/meter";
 import styles from "./Meter.module.css";
 
-const HIDDEN_MESSAGE = `The meter is hidden for the final ${METER_HIDE_HOURS} hours. The result is revealed at the deadline.`;
 const UNAVAILABLE = "The meter is unavailable right now.";
 
 const percent = (fraction: number) => Math.round(fraction * 100);
@@ -100,8 +99,9 @@ function useNow(): number {
 
 /**
  * The live meter: today's pass rate against the survival threshold, with a countdown to the
- * deadline. In the final hours it shows only the hidden message, switching by its own clock so a
- * cached reading from just before the window is never shown inside it.
+ * deadline. With a hidden window (METER_HIDE_HOURS > 0) it shows only the hidden message in the
+ * final hours, switching by its own clock so a cached reading from just before the window is never
+ * shown inside it.
  */
 export function Meter() {
   const { body, failed, reload } = useMeterReading();
@@ -135,11 +135,13 @@ export function Meter() {
   );
 
   // The status check is repeated so TypeScript knows the body below is an open reading.
-  const hidden = body.status !== "open" || now >= meterHiddenFrom(body.closesAt).getTime();
+  // With no window, the moment of the deadline is not "hidden": the reload above takes over.
+  const hiddenByClock = METER_HIDE_HOURS > 0 && now >= meterHiddenFrom(body.closesAt).getTime();
+  const hidden = body.status !== "open" || hiddenByClock;
   if (hidden || body.status !== "open") {
     return (
       <Surface as="section" aria-label="Today's meter">
-        <p className={styles.hidden}>{HIDDEN_MESSAGE}</p>
+        <p className={styles.hidden}>{meterHiddenMessage(METER_HIDE_HOURS)}</p>
         {timer}
       </Surface>
     );

@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak is COMPLETE and play-tested (Nov 11). Feedback tasks T102 (lock a started day's pass target), T103 (show the meter until the deadline), T104 (gauge meter) and T105 (streak bar chart) come before M3.
-- Active task: T102 (PR #58, approved, auto-merge on). CI's browser install failed 4 times on a runner DNS problem; the human approved dropping `--with-deps` in CI. The branch also carries T99's doc updates, the play-test decisions and the end-of-M2 maintainer check. If PR #58 has merged, set T102 to done and go on with T103.
+- Active task: T103 Show the meter until the deadline.
 - Blocked tasks: none
 - Waiting on the human: nothing now; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: T102, T103, T104, T105, then M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T102 Lock a started day's pass target (PR #58)
+- Migration `20261112040000_lock_started_pass_target`: a security-definer trigger refuses a pass-target change once the day has an attempt (`WS002`, every role); threshold stays editable. `/admin` shows a started target as text ("Locked: players have started this day.") and reports a refused save. `streak.spec.ts` no longer rewrites existing days' targets.
+- Review rounds: spec 1, quality 1, tests 1. CI: the e2e browser install failed 4 times (runner could not resolve `azure.archive.ubuntu.com`); the human approved dropping `--with-deps` from `ci.yml`, then it passed. Merges since the end-of-M2 maintainer check: 1.
 
 ### 2026-11-11 — Maintainer check at the end of M2
 - Health good (npm audit clean, no TODOs or `any`). New task T106 (patch dependency bump); its flaky 6-worker e2e point is T78 already. Merges since this check: 0.

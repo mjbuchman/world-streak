@@ -208,7 +208,7 @@ npm run seed:dev -- --players 200 --pass-rate 0.7                    # today: 20
 npm run seed:dev -- --players 50 --pass-rate 0.4 --date 2026-11-01   # another (open) day
 ```
 
-It creates fresh fake accounts (`seed-…@example.test`, with profiles) and submitted attempts, so the day's counters and the meter on http://localhost:3000 change at once. Run it again to add another batch. It refuses a day that is already closed. It reads `.env.local` and refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` is localhost, so it can never touch a real project. The meter hides its numbers from 21:00 to midnight UTC, so seed and look before then. `npm run db:reset` removes every fake player. Each player takes a moment to create, so 200 take about a minute.
+It creates fresh fake accounts (`seed-…@example.test`, with profiles) and submitted attempts, so the day's counters and the meter on http://localhost:3000 change at once. Run it again to add another batch. It refuses a day that is already closed. It reads `.env.local` and refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` is localhost, so it can never touch a real project. The meter shows its numbers right up to the deadline (to hide them in the final hours again, set `METER_HIDE_HOURS` in `src/config/meter.ts`). `npm run db:reset` removes every fake player. Each player takes a moment to create, so 200 take about a minute.
 
 **The daily close:** the database closes each game day itself at the midnight UTC deadline (a `pg_cron` job, with a catch-up run every 5 minutes), recording the outcome, updating the world streak and preparing the next day. Locally this means past days close on their own within 5 minutes of `npx supabase start`. To close one by hand and see the result:
 

@@ -1184,7 +1184,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T102 Today's pass target locks once the day has started
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T99
 - Acceptance criteria:
   - [ ] A migration makes the database refuse a change to a game day's pass target once that day has any attempt (admins included); the threshold stays editable on any open day. pgTAP covers: target edit before any start allowed, refused after a start, threshold edit after a start allowed.
@@ -1194,7 +1194,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T103 Show the meter until the deadline
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T19
 - Acceptance criteria:
   - [ ] `METER_HIDE_HOURS` becomes 0, and with 0 the meter and `/api/meter` never answer `hidden` before the deadline (unit tests at 0, plus the hidden path still tested with a non-zero value so it can be switched back on).

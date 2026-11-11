@@ -9,6 +9,13 @@ export function meterHiddenFrom(closesAt: Date | string): Date {
   return new Date(new Date(closesAt).getTime() - METER_HIDE_HOURS * HOUR_MS);
 }
 
+/** What the meter says while hidden, for a window of `hours` (0 only if a stale hidden reply arrives). */
+export function meterHiddenMessage(hours: number): string {
+  if (hours <= 0) return "The meter is hidden until the deadline, when the result is revealed.";
+  const window = hours === 1 ? "hour" : `${hours} hours`;
+  return `The meter is hidden for the final ${window}. The result is revealed at the deadline.`;
+}
+
 /** The world streak: the current run (0 after a broken day) and the best run ever. */
 export type MeterStreak = { current: number; best: number };
 
