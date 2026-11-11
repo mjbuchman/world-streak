@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Surface } from "@/components/ui/Surface";
 import { METER_HIDE_HOURS, METER_POLL_SECONDS } from "@/config/meter";
-import { meterHiddenFrom, type MeterBody } from "@/lib/meter";
+import { isMeterBody, meterHiddenFrom, type MeterBody } from "@/lib/meter";
 import styles from "./Meter.module.css";
 
 const HIDDEN_MESSAGE = `The meter is hidden for the final ${METER_HIDE_HOURS} hours. The result is revealed at the deadline.`;
@@ -28,24 +28,6 @@ function countdown(msLeft: number): string {
   const minutes = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
   const seconds = String(total % 60).padStart(2, "0");
   return `${hours}:${minutes}:${seconds}`;
-}
-
-const isNumberOrNull = (value: unknown) => value === null || (typeof value === "number" && Number.isFinite(value));
-
-/** Whether a reply has the shape the meter draws, so a malformed one reads as unavailable, not NaN. */
-function isMeterBody(value: unknown): value is MeterBody {
-  if (typeof value !== "object" || value === null) return false;
-  const body = value as Record<string, unknown>;
-  if (typeof body.closesAt !== "string" || Number.isNaN(Date.parse(body.closesAt))) return false;
-  if (!isNumberOrNull(body.threshold)) return false;
-  if (body.status === "hidden") return true;
-  return (
-    body.status === "open" &&
-    isNumberOrNull(body.passRate) &&
-    typeof body.attempts === "number" &&
-    Number.isInteger(body.attempts) &&
-    body.attempts >= 0
-  );
 }
 
 /**

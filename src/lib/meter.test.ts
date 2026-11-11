@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { meterBody, meterCacheSeconds, meterHiddenFrom, type MeterRow } from "./meter";
+import { isMeterBody, meterBody, meterCacheSeconds, meterHiddenFrom, type MeterRow } from "./meter";
 
 // Game date 2026-11-08 closes at midnight UTC on Nov 9; the meter hides from 21:00 UTC.
 const open = new Date("2026-11-08T20:59:59Z");
@@ -43,6 +43,41 @@ describe("meterBody", () => {
   it("gives a null pass rate when every attempt so far has zero weight", () => {
     const body = meterBody(open, "2026-11-08", { threshold: 0.6, attempts: 3, weightedAttempts: 0, weightedPasses: 0 });
     expect(body).toMatchObject({ passRate: null, attempts: 3 });
+  });
+});
+
+describe("isMeterBody", () => {
+  // Every kind of body the endpoint can send. If meterBody changes shape (T21 fills in `streak`)
+  // without the check following, the UI would show "unavailable"; this fails first.
+  const bodies = [
+    ["open with a rate", meterBody(open, "2026-11-08", row)],
+    ["open with no rate yet", meterBody(open, "2026-11-08", { ...row, weightedAttempts: 0, weightedPasses: 0 })],
+    ["open before the day's row exists", meterBody(open, "2026-11-08", { ...row, threshold: null })],
+    ["hidden", meterBody(hidden, "2026-11-08", row)],
+    ["hidden before the day's row exists", meterBody(hidden, "2026-11-08", { ...row, threshold: null })],
+  ] as const;
+
+  it.each(bodies)("accepts every body meterBody produces: %s", (_name, body) => {
+    // Through JSON, as the browser receives it.
+    expect(isMeterBody(JSON.parse(JSON.stringify(body)))).toBe(true);
+  });
+
+  it("rejects an open body whose streak is not the null it is today", () => {
+    expect(isMeterBody({ ...meterBody(open, "2026-11-08", row), streak: 3 })).toBe(false);
+  });
+
+  const openBody = meterBody(open, "2026-11-08", row);
+  it.each([
+    ["not an object", "open"],
+    ["null", null],
+    ["an unparseable deadline", { ...openBody, closesAt: "soon" }],
+    ["a text threshold", { ...openBody, threshold: "0.6" }],
+    ["an infinite rate", { ...openBody, passRate: Infinity }],
+    ["a fractional attempt count", { ...openBody, attempts: 1.5 }],
+    ["a negative attempt count", { ...openBody, attempts: -1 }],
+    ["an unknown status", { ...openBody, status: "closed" }],
+  ])("rejects a reply with %s", (_name, reply) => {
+    expect(isMeterBody(reply)).toBe(false);
   });
 });
 

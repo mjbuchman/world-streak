@@ -31,6 +31,30 @@ export type MeterBody =
     }
   | { gameDate: string; status: "hidden"; threshold: number | null; closesAt: string };
 
+const isNumberOrNull = (value: unknown) => value === null || (typeof value === "number" && Number.isFinite(value));
+
+/**
+ * Whether a reply has the shape the meter draws, so a malformed one reads as unavailable, not NaN.
+ * Hand-written rather than zod, which would ship to the browser. Kept next to meterBody so a test
+ * can check every body it produces passes.
+ */
+export function isMeterBody(value: unknown): value is MeterBody {
+  if (typeof value !== "object" || value === null) return false;
+  const body = value as Record<string, unknown>;
+  if (typeof body.closesAt !== "string" || Number.isNaN(Date.parse(body.closesAt))) return false;
+  if (!isNumberOrNull(body.threshold)) return false;
+  if (body.status === "hidden") return true;
+  return (
+    body.status === "open" &&
+    isNumberOrNull(body.passRate) &&
+    typeof body.attempts === "number" &&
+    Number.isInteger(body.attempts) &&
+    body.attempts >= 0 &&
+    // Null until T21 fills it in; T21 must check its real shape here.
+    body.streak === null
+  );
+}
+
 /**
  * The meter at `now`. In the final METER_HIDE_HOURS before the deadline the response carries no
  * pass rate or attempt count at all; the counters themselves are server-only, so this answer is
