@@ -7,7 +7,8 @@ export const VISITOR_PATHS = ["/", "/signin", "/signup", "/rules", "/practice/st
 /** Pages a signed-in player opens. */
 export const PLAYER_PATHS = ["/", "/play", "/complete-profile", "/history"] as const;
 
-// The local-only admin from supabase/seed.sql (as in admin.spec.ts).
+// The local-only admin from supabase/seed.sql (as in admin.spec.ts). Without the seed, the
+// warm-up fails at this sign-in; apply it with `npx supabase db query -f supabase/seed.sql`.
 const ADMIN = { email: "admin@local.test", password: "admin-local-only" };
 
 /** Opens each path in turn and waits for it to hydrate (so its server and client code are compiled). */

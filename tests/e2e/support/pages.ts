@@ -16,7 +16,8 @@ export async function gotoReady(page: Page, path: string): Promise<void> {
  * Clicks a form's submit button and waits for its server action to answer (Next.js marks every
  * server action request with a `Next-Action` header). Under parallel load the dev server can take
  * longer than an assertion's few seconds to answer; waiting on the real reply, not a guess, keeps
- * the checks after it short (T78).
+ * the checks after it short (T78). Only for a submit that reaches the server: one the browser
+ * blocks (a mismatch, a missing field) would leave it waiting until the test times out.
  */
 export async function submitAndWait(page: Page, button: Locator): Promise<void> {
   const reply = page.waitForResponse((response) => response.request().headers()["next-action"] !== undefined);
