@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak is COMPLETE and play-tested (Nov 11); its follow-ups T102-T105 are done (new home page: gauge meter and streak bars).
-- Active task: T106 Patch-level dependency bump.
+- Active task: T78 e2e waits for hydration and for server actions (with T107).
 - Blocked tasks: none
 - Waiting on the human: nothing now; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T106, T78, then M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
+- Next: T78, then M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T106 Patch-level dependency bump (PR #62)
+- Next 16.4.6, React 19.3.1, Supabase CLI 3.1.0, eslint-config-next 16.4.6, user-event 14.6.9; `npm audit fix` in range. One dev-only moderate advisory remains (minimatch in typescript-eslint, pinned by eslint-config-next); production audit clean. New task T107.
+- Review: light review, 1 round. Merges since the end-of-M2 maintainer check: 5.
 
 ### 2026-11-11 — T105 Streak card with a 14-day bar chart (PR #61); play-test follow-ups done
 - `readStreakSummary` also reads the last 15 closed days (public, caller's client); pure `shapeRecentDays` gives 14 slots (streak / broke = broken after a survived day / closed / empty). Bars hidden from screen readers, a visually hidden list instead. A running streak without `current_start_date` now throws.

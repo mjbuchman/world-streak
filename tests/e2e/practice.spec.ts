@@ -2,6 +2,7 @@ import { paramsFromSeed, simulate } from "../../src/challenges/stacking/engine";
 import { FALL_MS } from "../../src/challenges/stacking/render";
 import { reachedRow } from "../../src/components/stacking/rows";
 import { expect, test } from "./support/fixtures";
+import { gotoReady } from "./support/pages";
 import { pinSeed, playTaps, tapsForAMiss } from "./support/tower";
 
 test("practice tower works signed out, ends with a score and offers another go", async ({ page }) => {
@@ -77,7 +78,7 @@ test("a deliberate miss in practice ends the run with the score the engine gives
 });
 
 test("the home page links to practice", async ({ page }) => {
-  await page.goto("/");
+  await gotoReady(page, "/");
   await page.getByRole("link", { name: "Practice first" }).click();
   await expect(page).toHaveURL("/practice/stacking");
 });
