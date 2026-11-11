@@ -470,7 +470,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T28 Flash Count (Swift Sum) engine
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/flash-count/engine.ts` implements `ChallengeModule` with `direction "lower-better"`. `paramsFromSeed(seed)` returns `{ dotCount, flashMs: 1000, dots: { x, y, r }[] }`, with `dotCount` within a documented range (default 15 to 45) and positions in a unit square, no two dots closer than the documented minimum spacing, and none clipped by the edges.
@@ -481,7 +481,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T29 Flash Count (Swift Sum) renderer and practice page
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T28
 - Acceptance criteria:
   - [ ] `/practice/flash-count` shows a Start control, then draws the dots on canvas for `flashMs`, clears them, and shows a numeric input (mobile `inputmode="numeric"`) with Submit. The answer reveals the true count and the error %.

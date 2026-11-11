@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak is COMPLETE and play-tested (Nov 11); its follow-ups T102-T105 are done (new home page: gauge meter and streak bars).
-- Active task: T28 Flash Count (Swift Sum) engine.
+- Active task: T29 Swift Sum renderer and practice page.
 - Blocked tasks: none
 - Waiting on the human: nothing now; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T28 Flash Count (Swift Sum) engine (PR #66)
+- `src/challenges/flash-count/engine.ts`: 15-45 dots in whole thousandths, radii 0.018-0.028, centres >= 0.08 apart; 200 tries per dot, else a fixed grid. Score = error % (2 decimals), lower-better. Migration `20261112060000_flash_count` (15% placeholder).
+- Review rounds: spec 1, quality 1, tests 1. Auto-merge stalled once (toggled). Merges since the end-of-M2 maintainer check: 9.
 
 ### 2026-11-11 — T27 Second Sense tap area and practice page (PR #65)
 - `InnerClockGame` (DOM button, clock starts on the first frame after mount, primary pointer/Space/Enter, timeout gives null) and `/practice/inner-clock` (no home link yet: T30). `useIsClient` (useSyncExternalStore) shows the random target only in the browser.
