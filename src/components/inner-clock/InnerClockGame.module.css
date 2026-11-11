@@ -1,0 +1,37 @@
+/* One big tap target, the whole width; no clock, no progress (T27). */
+.area {
+  width: 100%;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--fs-color-surface-border);
+  border-radius: var(--fs-radius-surface);
+  background: var(--fs-color-meter-surface);
+  color: var(--fs-color-text);
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.area:focus-visible {
+  outline: none;
+  box-shadow: var(--fs-focus-ring);
+}
+
+.prompt {
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-headline);
+  line-height: 1.15;
+  text-align: center;
+}
+
+.hint {
+  font-size: var(--fs-text-small);
+  color: var(--fs-color-text-muted);
+}

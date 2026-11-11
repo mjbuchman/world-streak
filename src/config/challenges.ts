@@ -9,6 +9,10 @@ export const CHALLENGE_NAMES: Record<ChallengeType, string> = {
   "inner-clock": "Second Sense",
 };
 
+/** How to play Second Sense: shown before a practice run (and later before a scored attempt). */
+export const INNER_CLOCK_HOW_TO =
+  "Press Start, then tap when you think the target time has passed. There is no clock to watch: count in your head. The closer you are, the better.";
+
 /** How to play the Tower: shown before a practice run and before today's scored attempt. */
 export const STACKING_HOW_TO =
   "A row of blocks slides across the board. Tap, click or press Space to lock it over the row below. Blocks that hang over the edge fall off, so the tower gets narrower.";
