@@ -12,11 +12,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
-### Please confirm: should /admin create the coming days early? (blocks nothing; decide before T99)
-- What is needed: a choice. (a) Keep it: opening `/admin` creates the next 7 days at once, with today's values, and they keep those values unless you edit them. (b) Have T99 recompute unedited future days at each close, so they still pick up the streak and new scores.
+### Please confirm: coming days follow the settings until edited or started (blocks nothing)
+- What is needed: a yes, or "keep a day's values fixed once created".
 - Where to put it: reply in chat.
-- Why: the backlog asked for (a), but it means a day created early skips the streak-based rise. Details in `docs/DECISIONS.md` (T25).
-- Agent's recommendation: (b), done in T99. It is a small change, and edited days stay as you set them.
+- Why: opening `/admin` creates the next 7 days early. As built (T99), a day you have not edited and nobody has started keeps following the settings, the streak and recent scores, and is refreshed at the close before it. Saving a day on `/admin`, or the first player starting it, freezes its values. Details in `docs/DECISIONS.md` (T25, with the T99 update).
+- Agent's recommendation: keep it as built.
+- Also: as built, you can still change today's pass target after players have started, and later results are then judged by the new target. Should the pass target lock once anyone has started the day? (The threshold stays editable either way, as the backlog asks.) Recommendation: lock it. It is a small follow-up task.
 
 ### Please confirm: a day nobody played breaks the streak (blocks nothing)
 - What is needed: a yes, or "it survives" / "it is skipped".

@@ -423,7 +423,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T25 Admin access and the game-day list
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T16, T24
 - Acceptance criteria:
   - [ ] `/admin` returns 404 for signed-out and non-admin users (checked server-side, not by hiding links).
@@ -434,13 +434,13 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T99 Admin game-day editor
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T25
 - Acceptance criteria:
   - [ ] On `/admin`, each open day's pass target and survival threshold (0 to 1, entered as %) are editable. Saving calls a server action that re-checks `is_admin` and validates with zod. Closed days are read-only, in the database too (row-level security: admins may update only the two fields, only on open days).
   - [ ] Changing today's survival threshold is reflected in `/api/meter` on the next cache refresh.
   - [ ] Unit tests for the server action (non-admin is rejected, invalid threshold 1.5 is rejected, closed day is rejected); pgTAP for the policy. e2e: an admin changes tomorrow's threshold to 55% and sees it persisted.
-- Notes: Split from T25. Ask the human first about the "create the coming days early" item in NEEDS_HUMAN (DECISIONS, T25): recomputing unedited future days at the close may join this task. From the T77 review: the Tower's pass target must stay within the board (1 to 15 rows; the HUD rounds a fractional target up), or the target line is drawn off the grid; validate that range for stacking days.
+- Notes: Split from T25. Also recomputes unedited, unstarted future days (DECISIONS, T25 and its T99 update; please-confirm in NEEDS_HUMAN), and folds in T101 (shared table styles). From the T77 review: the Tower's pass target must stay within the board (1 to 15 rows; the HUD rounds a fractional target up), or the target line is drawn off the grid; validate that range for stacking days.
 
 ## M3 More challenges and sharing
 
@@ -896,6 +896,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Acceptance criteria:
   - [ ] The sign-in helper in `tests/e2e/profile.spec.ts` (and any shared sign-in, sign-up or Google helper) waits until the page has hydrated before typing or clicking (for example wait for a hydration marker or for the submit button to be enabled by client code), so typed values are not wiped and clicks are not lost on a cold dev-server compile. No timeouts are simply raised.
   - [ ] `npm run test:e2e:local` passes 3 full runs in a row from a cold `.next-e2e` folder.
+  - [ ] Seen on main on Nov 11, every time (not after T99): with 6 workers, `tests/e2e/attempts.spec.ts` plus `meter.spec.ts` fail in all 5 sign-up tests. "Create account" stays pending past the 5 s `toHaveURL("/")` wait while several sign-ups run at once against the dev server. With `--workers=2` they pass, and CI (production build) passes. Find the slow step (dev compile of the action and `/`, or GoTrue's password hashing under load) and wait on the sign-up's real completion instead.
 - Notes: From the T73 test review: on cold compiles, "Continue with Google goes to Google…" lost its click and "an underage player completing their profile…" had its typed fields cleared; a third run passed 30/30. Fits with T62 (shared e2e helpers). The T74 test review saw the same on a cold compile in `practice.spec.ts` "the home page links to practice" (the click on "Practice first" was lost); include it. Found during T75: with 6 local workers the dev server's Fast Refresh (about 5 s, set off when another worker first opens a page that shares client modules) stalls in-flight sign-up server actions, so the first wave of sign-up tests misses its 5 s URL wait; `--workers=1` passes 36/36 and CI (production build, no Fast Refresh) is unaffected. Consider running `test:e2e:local` against a production build like CI, or warming every route before the tests start.
 
 ### T82 One page-title template in the root layout
@@ -1161,3 +1162,22 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `src/app/play/page.test.tsx`, following `src/app/complete-profile/page.test.tsx` (mocked server client, `landingPath`, `todaysAttempt`, `redirect`, a stub `PlayToday`), covers: signed out (sign-in text and both links, no lookups); no profile (redirect, no `todaysAttempt`); with a profile (`todaysAttempt` called with the user id and a Date, its status passed on); a `todaysAttempt` failure is not swallowed.
   - [ ] `npm run verify` passes; no product behavior changes.
 - Notes: From the end-of-M1 maintainer check. Page files are excluded from coverage, so `/play`'s gates are covered only by e2e today; T69's error page depends on the last case.
+
+### T100 One fake Supabase query builder for unit tests
+- Type: maintenance
+- Status: todo
+- Depends on: T25
+- Acceptance criteria:
+  - [ ] One helper (for example `src/lib/testing/fakeSupabase.ts`) provides the chainable, thenable query-builder Proxy that scripts results per call and records every builder call.
+  - [ ] `src/lib/meterRead.test.ts`, `src/lib/streak/streak.test.ts` and `src/lib/admin.test.ts` use it; `src/lib/settings.test.ts`, `src/lib/attempts/store.test.ts` and `src/lib/attempts/today.test.ts` too if they fit the size limit. No assertion is weakened.
+  - [ ] The helper has its own small test or is excluded from coverage; `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T25 (about 250 lines, mostly deletions). Six test files each hand-roll the same Proxy, so a query-shape change means editing several fakes. Check the copies are close enough to share before migrating all six.
+
+### T101 AdminDayList gets its own table styles
+- Type: maintenance
+- Status: done (folded into T99: `src/components/ui/DataTable.module.css`)
+- Depends on: T25
+- Acceptance criteria:
+  - [ ] `AdminDayList.tsx` and `HistoryTable.tsx` no longer share `HistoryTable.module.css`: the shared table rules move to a neutral module (for example `DataTable.module.css`) both import, or the admin list gets its own.
+  - [ ] Rendered markup is unchanged and the existing component tests pass unmodified; `npm run verify` passes.
+- Notes: From the maintainer check after T25 (about 60 lines). A restyle of the history table would otherwise silently change the admin page. Fold into T99 if T99 restyles the admin table anyway.

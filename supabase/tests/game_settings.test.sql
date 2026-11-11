@@ -143,10 +143,11 @@ select results_eq(
 );
 update public.game_settings set default_survival_threshold = 0.60, default_pass_targets = '{"stacking": 10}';
 select public.ensure_game_day('2001-11-20');
+-- Since T99 a day nobody has edited or started follows the settings until then.
 select results_eq(
   $$select pass_target, survival_threshold from public.game_days where game_date = '2001-11-20'$$,
-  $$values (12::numeric, 0.55::numeric)$$,
-  'changing the settings leaves an existing game day as it was'
+  $$values (10::numeric, 0.60::numeric)$$,
+  'an untouched game day follows a change to the settings'
 );
 
 -- Act as user A, a player.

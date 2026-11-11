@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T25 Admin access and the game-day list
+- Active task: T99 Admin game-day editor (last task of M2)
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T25, then T99 (admin editor, split from T25), which ends M2 (play-test) daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
+- Next: T99 ends M2; then the M2 play-test and the end-of-milestone maintainer check daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,13 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — Maintainer check after T25
+- Health good (837 unit, 315 pgTAP). New tasks T100 (one fake Supabase query builder for unit tests) and T101 (AdminDayList's own table styles). Merges since this check: 0.
+
+### 2026-11-11 — T25 Admin access and the game-day list (PR #56)
+- `/admin`: server-side `is_admin()` gate (404 for everyone else), then today and the next 7 days via the service role. Local seed admin `admin@local.test` / `admin-local-only` (idempotent `supabase/seed.sql`, one `do` block). `addDays` in `gameDay.ts`. The original T25 was split; editing is T99.
+- Review rounds: spec 1, quality 1, tests 1. Notes: `/admin` creates the coming days early with today's values (DECISIONS; please-confirm in NEEDS_HUMAN). Apply the seed locally with `npx supabase db query -f supabase/seed.sql`.
 
 ### 2026-11-11 — T24 World streak display and history (PR #55)
 - `/` streak panel (streak, best, yesterday's line, link) and `/history` (30 a page, newest first, 404 past the end) from `src/lib/streak/streak.ts`. The e2e rewrites the three days before today and the streak runs via the service role.
