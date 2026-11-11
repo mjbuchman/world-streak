@@ -3,7 +3,17 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { DEADLINE_UTC_HOUR } from "@/config/schedule";
 import fixture from "./gameDay.fixture.json";
-import { deadlineFor, gameDateAt } from "./gameDay";
+import { addDays, deadlineFor, gameDateAt } from "./gameDay";
+
+describe("addDays", () => {
+  it("moves a game date by whole days, across months, years and a leap day", () => {
+    expect(addDays("2026-11-11", 1)).toBe("2026-11-12");
+    expect(addDays("2026-11-30", 1)).toBe("2026-12-01");
+    expect(addDays("2027-01-01", -1)).toBe("2026-12-31");
+    expect(addDays("2028-02-28", 1)).toBe("2028-02-29");
+    expect(addDays("2026-11-11", 7)).toBe("2026-11-18");
+  });
+});
 
 describe("gameDateAt", () => {
   it("uses a midnight UTC deadline", () => {

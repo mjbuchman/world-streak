@@ -3,7 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CHALLENGE_NAMES } from "@/config/challenges";
 import { dbInteger, dbNumber } from "@/lib/db/numeric";
-import { gameDateAt } from "@/lib/gameDay";
+import { addDays, gameDateAt } from "@/lib/gameDay";
 
 export const HISTORY_PAGE_SIZE = 30;
 
@@ -49,14 +49,12 @@ const dbRate = (value: unknown, field: string) => (value === null ? null : dbNum
 
 /** The streak, and yesterday's result once yesterday has closed (null just after midnight). */
 export async function readStreakSummary(db: Pick<SupabaseClient, "from" | "rpc">, now: Date): Promise<StreakSummary> {
-  const yesterday = new Date(`${gameDateAt(now)}T00:00:00Z`);
-  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
   const [streakReply, dayReply] = await Promise.all([
     db.rpc("world_streak").single(),
     db
       .from("game_days")
       .select("outcome, final_pass_rate")
-      .eq("game_date", yesterday.toISOString().slice(0, 10))
+      .eq("game_date", addDays(gameDateAt(now), -1))
       .not("closed_at", "is", null)
       .maybeSingle(),
   ]);

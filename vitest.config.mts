@@ -42,6 +42,8 @@ export default defineConfig({
         // Decides who may enter the prize draw.
         "src/lib/eligibility.ts": { lines: 90, branches: 90 },
         "src/lib/eligibilityFields.ts": { lines: 90, branches: 90 },
+        // Decides who sees the admin page.
+        "src/lib/admin.ts": { lines: 90, branches: 90 },
         // Gates account creation.
         "src/lib/signup.ts": { lines: 90, branches: 90 },
         "src/lib/signin.ts": { lines: 90, branches: 90 },
