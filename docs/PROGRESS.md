@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T20 Local fake-player seeding script
+- Active task: T92 One strict parser for numeric database values
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T20, then T92 and T93 before T21 daily close. T91 (approved wording) fits in when convenient.
+- Next: T92, T93, then T21 daily close. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T20 Local fake-player seeding script (PR #44)
+- `npm run seed:dev -- --players N --pass-rate R [--date YYYY-MM-DD]`: fresh fake accounts with profiles and submitted attempts; today through `record_attempt_result`, another day by direct writes plus a pass per passing attempt with its `counted_weight` (DECISIONS); refuses closed days and any non-localhost URL (guard first, exits 1). README "Fake players".
+- Review rounds: spec 2, quality 2, tests 2 (round 1: no test of the refusal and exit code; a past-date test that could not tell passes from players).
+- Notes: printing the counters with an ad hoc script that loads `.env.local` was denied by the permission check; verified through the script's status checks, the T17 pgTAP and the meter e2e instead. Merges since the maintainer check after T18: 3.
 
 ### 2026-11-11 — T19 Meter UI (PR #43)
 - `src/components/Meter.tsx` on `/` and below the result on `/play`: a mint bar with a threshold marker, "72% passing · 60% needed · 1,234 attempts", a countdown; the hidden message in the final 3 hours, switching by its own clock. Polls every 60 s only while visible; newest reply wins; one reload at the deadline; malformed replies read as unavailable.

@@ -2,6 +2,7 @@
 // imported as a type only (a test checks this).
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { METER_CACHE_SECONDS, METER_HIDE_HOURS } from "@/config/meter";
+import { dbInteger, dbNumber } from "@/lib/db/numeric";
 import { deadlineFor, gameDateAt, HOUR_MS } from "@/lib/gameDay";
 
 /** When the meter hides for the day closing at `closesAt`: METER_HIDE_HOURS before it. */
@@ -83,11 +84,11 @@ export async function readMeter(db: Pick<SupabaseClient, "from">, now: Date): Pr
   const day = data as DayRow | null;
   const embedded = day?.game_day_counters ?? null;
   const counters = Array.isArray(embedded) ? (embedded[0] ?? null) : embedded;
-  // PostgREST returns numeric columns as JSON numbers or strings depending on size.
+  // No row yet means nobody has started; a row with a bad value is an error, not a zero.
   return meterBody(now, gameDate, {
-    threshold: day ? Number(day.survival_threshold) : null,
-    attempts: Number(counters?.attempts ?? 0),
-    weightedAttempts: Number(counters?.weighted_attempts ?? 0),
-    weightedPasses: Number(counters?.weighted_passes ?? 0),
+    threshold: day ? dbNumber(day.survival_threshold, "survival_threshold") : null,
+    attempts: counters ? dbInteger(counters.attempts, "attempts") : 0,
+    weightedAttempts: counters ? dbNumber(counters.weighted_attempts, "weighted_attempts") : 0,
+    weightedPasses: counters ? dbNumber(counters.weighted_passes, "weighted_passes") : 0,
   });
 }

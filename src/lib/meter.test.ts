@@ -179,6 +179,24 @@ describe("readMeter", () => {
     expect(await readMeter(db, open)).toMatchObject({ status: "open", passRate: null, attempts: 0, threshold: null });
   });
 
+  it.each([
+    ["threshold", { survival_threshold: null, game_day_counters: null }, /survival_threshold/],
+    ["threshold", { survival_threshold: "x", game_day_counters: null }, /survival_threshold/],
+    [
+      "weighted passes",
+      { survival_threshold: 0.6, game_day_counters: { attempts: 4, weighted_attempts: 4, weighted_passes: null } },
+      /weighted_passes/,
+    ],
+    [
+      "attempt count",
+      { survival_threshold: 0.6, game_day_counters: { attempts: 1.5, weighted_attempts: 4, weighted_passes: 3 } },
+      /attempts/,
+    ],
+  ])("throws on a malformed %s instead of showing NaN or 0", async (_, data, message) => {
+    const { db } = fakeDb({ data, error: null });
+    await expect(readMeter(db, open)).rejects.toThrow(message);
+  });
+
   it("throws on a database error, so the endpoint answers 500", async () => {
     const { db } = fakeDb({ data: null, error: { message: "connection refused" } });
     await expect(readMeter(db, open)).rejects.toThrow("Meter lookup failed: connection refused");

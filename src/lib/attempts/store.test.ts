@@ -65,6 +65,24 @@ describe("supabaseAttemptStore", () => {
     expect(await closed.store.gameDay("2026-11-08")).toEqual({ challengeType: "stacking", passTarget: 7.5, closed: true });
   });
 
+  it.each([null, "abc", ""])("gameDay throws on a malformed pass target (%j) instead of returning NaN or 0", async (passTarget) => {
+    const { store } = fakeDb({ data: { challenge_type: "stacking", pass_target: passTarget, closed_at: null }, error: null });
+    await expect(store.gameDay("2026-11-08")).rejects.toThrow(/pass_target/);
+  });
+
+  it("findAttemptForDay throws on a malformed stored score or target", async () => {
+    const submitted = { passed: true, submitted_at: "2026-11-08T10:00:00Z" };
+    const badScore = fakeDb({ data: { ...submitted, score: null, game_days: { pass_target: 10 } }, error: null });
+    await expect(badScore.store.findAttemptForDay("u1", "2026-11-08")).rejects.toThrow(/score/);
+    const badTarget = fakeDb({ data: { ...submitted, score: 7, game_days: { pass_target: "x" } }, error: null });
+    await expect(badTarget.store.findAttemptForDay("u1", "2026-11-08")).rejects.toThrow(/pass_target/);
+  });
+
+  it("findAttemptById throws on a seed that is not a whole number", async () => {
+    const row = { user_id: "u1", game_date: "2026-11-08", seed: "42", started_at: "2026-11-08T12:00:00+00:00", submitted_at: null };
+    await expect(fakeDb({ data: row, error: null }).store.findAttemptById("a1")).rejects.toThrow(/seed/);
+  });
+
   it("findAttemptForDay reads the player's attempt that day, with the stored result once submitted", async () => {
     const open = fakeDb({ data: { score: null, passed: null, submitted_at: null, game_days: { pass_target: 10 } }, error: null });
     expect(await open.store.findAttemptForDay("u1", "2026-11-08")).toEqual({ submitted: false });

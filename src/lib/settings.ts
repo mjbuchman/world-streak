@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { numericSchema } from "@/lib/db/numeric";
 
 /** Game-wide settings from the single `game_settings` row (see its migration for meanings). */
 export type GameSettings = {
@@ -15,11 +16,10 @@ export type GameSettings = {
   fullWeightAfterDays: number;
 };
 
-// Postgres numerics may reach us as JSON numbers or as plain decimal strings, depending on the
-// driver. Integer columns always arrive as JSON numbers, so they take numbers only.
-const numeric = z.union([z.number(), z.string().regex(/^-?\d+(\.\d+)?$/).transform(Number)]).pipe(z.number().finite());
-const fraction = numeric.pipe(z.number().min(0).max(1));
-const nonNegative = numeric.pipe(z.number().min(0));
+// Numeric columns take numbers or decimal strings (see numericSchema); integer columns always
+// arrive as JSON numbers, so they take numbers only.
+const fraction = numericSchema.pipe(z.number().min(0).max(1));
+const nonNegative = numericSchema.pipe(z.number().min(0));
 
 // Ranges mirror the table's check constraints, so a row the database accepts always parses.
 const rowSchema = z.object({
