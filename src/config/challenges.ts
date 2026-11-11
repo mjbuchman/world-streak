@@ -7,6 +7,7 @@ import type { ChallengeType } from "@/challenges/shared/types";
 export const CHALLENGE_NAMES: Record<ChallengeType, string> = {
   stacking: "Teetering Tower",
   "inner-clock": "Second Sense",
+  "flash-count": "Swift Sum",
 };
 
 /** How to play Second Sense: shown before a practice run (and later before a scored attempt). */

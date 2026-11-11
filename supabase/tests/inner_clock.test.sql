@@ -10,9 +10,11 @@ select is(
   (select (default_pass_targets ->> 'inner-clock')::numeric from public.game_settings), 0.5::numeric,
   'its placeholder pass target is half a second'
 );
-select col_default_is(
-  'public', 'game_settings', 'default_pass_targets', '{"stacking": 10, "inner-clock": 0.5}',
-  'a fresh settings row has both placeholders'
+-- The whole default is pinned in game_settings.test.sql; here only Second Sense's part of it.
+select ok(
+  (select column_default from information_schema.columns
+    where table_schema = 'public' and table_name = 'game_settings' and column_name = 'default_pass_targets') like '%"inner-clock": 0.5%',
+  'a fresh settings row has its placeholder'
 );
 
 -- Below the minimum sample the target is the placeholder; a lower-better step makes it smaller.

@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak is COMPLETE and play-tested (Nov 11); its follow-ups T102-T105 are done (new home page: gauge meter and streak bars).
-- Active task: T27 Second Sense renderer and practice page.
+- Active task: T28 Flash Count (Swift Sum) engine.
 - Blocked tasks: none
 - Waiting on the human: nothing now; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T27 Second Sense tap area and practice page (PR #65)
+- `InnerClockGame` (DOM button, clock starts on the first frame after mount, primary pointer/Space/Enter, timeout gives null) and `/practice/inner-clock` (no home link yet: T30). `useIsClient` (useSyncExternalStore) shows the random target only in the browser.
+- Review rounds: spec 1, quality 1, tests 1. Notes: React's scheduler also calls `performance.now()`, so tests mock it with steady values (`mockReturnValue`), not `mockReturnValueOnce`. Merges since the end-of-M2 maintainer check: 8.
 
 ### 2026-11-11 — T26 Inner Clock (Second Sense) engine (PR #64); M3 started
 - `src/challenges/inner-clock/engine.ts` (target 3-9 s on 100 ms steps, timeout 3x, score = error in s, lower-better), registered as `inner-clock`. Migration `20261112050000_inner_clock` (challenge type, 0.5 s placeholder). `challengeForGameDay` returns `ChallengeModule<unknown, unknown>` via one commented cast.
