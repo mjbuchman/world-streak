@@ -40,13 +40,13 @@ select is_empty(
   'the refused start counted nothing'
 );
 -- Closing today stops later starts too; reopening (as the test superuser) lets them through.
-update public.game_days set closed_at = now() where game_date = (select d from today);
+update public.game_days set closed_at = now(), outcome = 'broken' where game_date = (select d from today);
 select throws_ok(
   $$insert into public.attempts (user_id, game_date, seed)
     values ('00000000-0000-0000-0000-00000000000b', (select d from today), 3)$$,
   'WS001', null, 'once today is closed, a start for today is refused'
 );
-update public.game_days set closed_at = null where game_date = (select d from today);
+update public.game_days set closed_at = null, outcome = null where game_date = (select d from today);
 select lives_ok(
   $$insert into public.attempts (id, user_id, game_date, seed)
     values ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-00000000000b', (select d from today), 4)$$,

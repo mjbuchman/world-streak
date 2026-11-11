@@ -12,6 +12,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Please confirm: a day nobody played breaks the streak (blocks nothing)
+- What is needed: a yes, or "it survives" / "it is skipped".
+- Where to put it: reply in chat.
+- Why: with no attempts there is no pass rate. As built (T21), such a day closes as broken and resets the streak to 0. Details in `docs/DECISIONS.md` (T21).
+- Agent's recommendation: keep it broken; once the game has players, an empty day is unlikely.
+
 ### Please confirm: wording when a result is refused or not sent (blocks nothing)
 - What is needed: a yes, or new text. On `/play`, a result the server refused (the day closed first, or the timing could not be checked) now shows the heading "Counted as not passed" with "...so it counted as not passed."; a result that never reached the server shows "Result not sent" with "Your result could not be sent. Reload the page to see whether it counted."
 - Where to put it: reply in chat.
