@@ -1,9 +1,22 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
-import { isMeterBody, meterBody, meterCacheSeconds, meterHiddenFrom, type MeterRow } from "./meter";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { isMeterBody, meterBody, meterCacheSeconds, meterHiddenFrom, meterHiddenMessage, type MeterRow } from "./meter";
 
-// Game date 2026-11-08 closes at midnight UTC on Nov 9; the meter hides from 21:00 UTC.
+// The setting is 0 (shown until the deadline); most tests here switch on a 3-hour window so the
+// hidden path stays tested and can be turned back on.
+const config = vi.hoisted(() => ({ hideHours: 3 }));
+vi.mock("@/config/meter", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/config/meter")>()),
+  get METER_HIDE_HOURS() {
+    return config.hideHours;
+  },
+}));
+beforeEach(() => {
+  config.hideHours = 3;
+});
+
+// Game date 2026-11-08 closes at midnight UTC on Nov 9; with 3 hours the meter hides from 21:00 UTC.
 const open = new Date("2026-11-08T20:59:59Z");
 const hidden = new Date("2026-11-08T21:00:00Z");
 const closesAt = "2026-11-09T00:00:00.000Z";
@@ -119,6 +132,39 @@ describe("meterHiddenFrom", () => {
       ].map(([, from, bare, dynamic]) => from ?? bare ?? dynamic);
     expect(specifiersOf("meter.ts").sort()).toEqual(["@/config/meter", "@/lib/gameDay"]);
     expect(specifiersOf("gameDay.ts")).toEqual(["@/config/schedule"]);
+  });
+});
+
+describe("with METER_HIDE_HOURS at 0: shown until the deadline (T103)", () => {
+  beforeEach(() => {
+    config.hideHours = 0;
+  });
+
+  it.each(["2026-11-08T00:00:00Z", "2026-11-08T21:00:00Z", "2026-11-08T23:59:59.999Z"])("is open at %s", (now) => {
+    const body = meterBody(new Date(now), "2026-11-08", row);
+    expect(body).toMatchObject({ status: "open", passRate: 0.75, attempts: 12 });
+  });
+
+  it("hides from nothing earlier than the deadline itself", () => {
+    expect(meterHiddenFrom(closesAt).toISOString()).toBe(closesAt);
+  });
+
+  it("caches an open reading right up to the deadline, counting the stale grace", () => {
+    const body = meterBody(new Date("2026-11-08T21:00:00Z"), "2026-11-08", row);
+    expect(meterCacheSeconds(body, new Date("2026-11-08T21:00:00Z"))).toBe(30);
+    expect(meterCacheSeconds(body, new Date("2026-11-08T23:59:10Z"))).toBe(25);
+    expect(meterCacheSeconds(body, new Date("2026-11-08T23:59:59Z"))).toBe(0);
+  });
+});
+
+describe("meterHiddenMessage", () => {
+  it.each([
+    [3, "The meter is hidden for the final 3 hours. The result is revealed at the deadline."],
+    [2, "The meter is hidden for the final 2 hours. The result is revealed at the deadline."],
+    [1, "The meter is hidden for the final hour. The result is revealed at the deadline."],
+    [0, "The meter is hidden until the deadline, when the result is revealed."],
+  ])("reads correctly for %i hours", (hours, message) => {
+    expect(meterHiddenMessage(hours)).toBe(message);
   });
 });
 

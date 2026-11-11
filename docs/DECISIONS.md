@@ -194,6 +194,7 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - What makes it real (T18 quality review): the anon key ships to every browser, so T17's "counters readable by everyone" would let anyone read the live numbers straight from Supabase during the window. Migration `20261110020000_private_day_counters` drops that read policy and the table privileges; only the service role reads the counters, and `/api/meter` reads them that way. The proxy skips `/api/meter`, so no session refresh can put a cookie on the shared, cached answer, and the cache time shrinks near 21:00 and midnight so a cached "open" reading is never served into the window.
 - How to change it later: edit `METER_HIDE_HOURS` (the meter UI, T19, reads the same constant).
 - Confirmed by human: no (Nov 11). Show the meter until the deadline; hide it later only if sniping becomes a real problem (T103).
+- Update (T103): `METER_HIDE_HOURS = 0`; the endpoint never answers `hidden` before the deadline and open readings cache up to it. The hidden path stays in place and tested, so setting a non-zero value turns it back on. The private-counters migration is kept.
 
 ### 2026-11-10 — The meter before today's game day exists (T18)
 - Choice: if nobody has started today and the day's row does not exist yet, the meter answers `threshold: null`, `attempts: 0`, `passRate: null`, instead of reading the default threshold from `game_settings`.

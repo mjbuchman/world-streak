@@ -1,8 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { readMeter } from "./meterRead";
 
-// Game date 2026-11-08 closes at midnight UTC on Nov 9; the meter hides from 21:00 UTC.
+// The setting is 0 (shown until the deadline, T103); the hidden-window test switches on 3 hours.
+const config = vi.hoisted(() => ({ hideHours: 0 }));
+vi.mock("@/config/meter", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/config/meter")>()),
+  get METER_HIDE_HOURS() {
+    return config.hideHours;
+  },
+}));
+beforeEach(() => {
+  config.hideHours = 0;
+});
+
+// Game date 2026-11-08 closes at midnight UTC on Nov 9; with a 3-hour window it would hide from 21:00 UTC.
 const open = new Date("2026-11-08T20:59:59Z");
 const closesAt = "2026-11-09T00:00:00.000Z";
 
@@ -79,11 +91,11 @@ describe("readMeter", () => {
   });
 
   it("opens the next day's meter at the deadline", async () => {
-    // A millisecond before midnight UTC is the hidden end of Nov 8; midnight is the open start of Nov 9.
+    // A millisecond before midnight UTC is the still-open end of Nov 8; midnight is the open start of Nov 9.
     const before = fakeDb({ data: null, error: null });
     expect(await readMeter(before.db, new Date("2026-11-08T23:59:59.999Z"))).toMatchObject({
       gameDate: "2026-11-08",
-      status: "hidden",
+      status: "open",
       closesAt: "2026-11-09T00:00:00.000Z",
     });
     expect(before.calls).toContainEqual(["eq", "game_date", "2026-11-08"]);
@@ -150,6 +162,7 @@ describe("readMeter", () => {
   });
 
   it("carries the world streak in the hidden final hours too: it is not secret", async () => {
+    config.hideHours = 3;
     const { db } = fakeDb({ data: null, error: null });
     expect(await readMeter(db, new Date("2026-11-08T22:00:00Z"))).toMatchObject({
       status: "hidden",

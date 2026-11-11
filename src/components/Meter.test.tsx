@@ -3,6 +3,15 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Meter } from "./Meter";
 
+// The setting is 0 (shown until the deadline, T103); the hidden-window tests switch hours on.
+const config = vi.hoisted(() => ({ hideHours: 0 }));
+vi.mock("@/config/meter", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/config/meter")>()),
+  get METER_HIDE_HOURS() {
+    return config.hideHours;
+  },
+}));
+
 const closesAt = "2026-11-09T00:00:00.000Z";
 const open = (over: Record<string, unknown> = {}) => ({
   gameDate: "2026-11-08",
@@ -30,6 +39,7 @@ function setVisibility(state: DocumentVisibilityState) {
 }
 
 beforeEach(() => {
+  config.hideHours = 0;
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-11-08T18:00:00Z"));
   visibility = "visible";
@@ -67,7 +77,30 @@ describe("Meter", () => {
     expect(screen.getByRole("timer").textContent).toBe("Closes in 5:59:59");
   });
 
+  it("keeps showing the live meter right up to the deadline with the setting at 0", async () => {
+    vi.setSystemTime(new Date("2026-11-08T23:59:57Z"));
+    render(<Meter />);
+    await flush();
+    await advance(2_000);
+    expect(screen.getByRole("meter")).toBeTruthy();
+    expect(screen.getByRole("timer").textContent).toBe("Closes in 0:00:01");
+    expect(screen.queryByText(/hidden/)).toBeNull();
+  });
+
+  it("with the setting at 0, shows no hidden message at the deadline while the next day loads", async () => {
+    vi.setSystemTime(new Date("2026-11-08T23:59:59Z"));
+    fetchSpy.mockResolvedValueOnce(json(open()));
+    fetchSpy.mockImplementationOnce(() => new Promise(() => undefined));
+    render(<Meter />);
+    await flush();
+    await advance(1_000);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("meter")).toBeTruthy();
+    expect(screen.queryByText(/hidden/)).toBeNull();
+  });
+
   it("shows the hidden message, with the hours from config, when the endpoint says hidden", async () => {
+    config.hideHours = 3;
     fetchSpy.mockResolvedValue(json(hidden));
     render(<Meter />);
     await flush();
@@ -79,6 +112,7 @@ describe("Meter", () => {
 
   it("hides by its own clock at the window, even before a reply says so", async () => {
     // A cached open reading may still arrive just after 21:00; the meter must not show it.
+    config.hideHours = 3;
     vi.setSystemTime(new Date("2026-11-08T20:59:59Z"));
     render(<Meter />);
     await flush();
@@ -263,23 +297,24 @@ describe("Meter", () => {
 });
 
 describe("Meter hidden window from config", () => {
-  afterEach(() => {
-    vi.doUnmock("@/config/meter");
-    vi.resetModules();
-  });
-
   it("names the hours from METER_HIDE_HOURS and hides at that point", async () => {
-    vi.resetModules();
-    vi.doMock("@/config/meter", () => ({ METER_HIDE_HOURS: 2, METER_CACHE_SECONDS: 30, METER_POLL_SECONDS: 60 }));
-    const { Meter: TwoHourMeter } = await import("./Meter");
+    config.hideHours = 2;
     // 21:30 is inside a 3-hour window but outside a 2-hour one.
     vi.setSystemTime(new Date("2026-11-08T21:30:00Z"));
-    render(<TwoHourMeter />);
+    render(<Meter />);
     await flush();
     expect(screen.getByRole("meter")).toBeTruthy();
 
     fetchSpy.mockResolvedValue(json(hidden));
     await advance(60_000);
     expect(screen.getByText("The meter is hidden for the final 2 hours. The result is revealed at the deadline.")).toBeTruthy();
+  });
+
+  it("says the final hour, not the final 1 hours", async () => {
+    config.hideHours = 1;
+    fetchSpy.mockResolvedValue(json(hidden));
+    render(<Meter />);
+    await flush();
+    expect(screen.getByText("The meter is hidden for the final hour. The result is revealed at the deadline.")).toBeTruthy();
   });
 });
