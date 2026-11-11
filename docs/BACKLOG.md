@@ -1020,7 +1020,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T96 Shared pgTAP fixtures for players, attempts and days
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T17
 - Acceptance criteria:
   - [ ] One helper file under `supabase/tests/` provides, for example, `tests.make_player(id, weight default 1)`, `tests.clear_today()` and `tests.play_day(date, attempts, passes, threshold)`.
@@ -1031,7 +1031,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T97 One meter-reply check, shared and guarded against drift
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T19
 - Acceptance criteria:
   - [ ] `isMeterBody` moves from `src/components/Meter.tsx` to the client-safe `src/lib/meter.ts` (still without zod; the import allowlist test passes) and is exported for the UI.

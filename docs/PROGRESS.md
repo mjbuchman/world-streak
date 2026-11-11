@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: none (T80 merged as PR #48; next is T96; uncommitted doc notes on disk go in T96's branch)
+- Active task: T97 One meter-reply check
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T96 (pgTAP fixtures), T97 (meter-reply check), then T21 daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
+- Next: T97 (meter-reply check), then T21 daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T96 Shared pgTAP fixtures (PR #49)
+- `supabase/tests/fixtures/fixtures.psql` (`tests.make_player`, `clear_today`, `start`, `play_day`), included with `\ir fixtures/fixtures.psql` after `begin;` so it rolls back with each file; the `.psql` extension keeps `supabase test db` from running it. Used by the counters, integrity and record-result tests; `fixtures.test.sql` checks it. 231 pgTAP tests.
+- Review: light review, 1 round. Notes: T21 can build closed or open days with set counts via `tests.play_day`. Merges since the maintainer check after T93: 3.
 
 ### 2026-11-11 — T80 Field key warning and quieter test output (PR #48)
 - The warning came from `key` after `{...control}` in `CountrySelect` (JSX falls back to `createElement`); only Next's canary React warns, so a lint rule (`no-restricted-syntax`, key after spread) guards it. Coverage prints `text-summary`; Playwright writes to `test-results/playwright`.
