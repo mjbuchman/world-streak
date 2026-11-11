@@ -83,10 +83,15 @@ export type SeedDeps = {
   startAttempt: (userId: string, date: string) => Promise<string>;
   /** record_attempt_result, which only accepts today's game date; returns its status word. */
   recordResult: (attemptId: string, score: number, passed: boolean) => Promise<string>;
+  /** Whether the day has been closed (results can no longer change it). */
+  dayClosed: (date: string) => Promise<boolean>;
   /** For another day: write the result directly, since record_attempt_result refuses it. */
   writePastResult: (attemptId: string, score: number, passed: boolean) => Promise<void>;
-  /** For another day: add its passes to the counters, as record_attempt_result would have. */
-  addPastPasses: (date: string, passes: number) => Promise<void>;
+  /**
+   * For another day: add one pass, with the attempt's own counted weight, to the day's counters,
+   * as record_attempt_result would have.
+   */
+  addPastPass: (date: string, attemptId: string) => Promise<void>;
   log: (message: string) => void;
 };
 
@@ -95,6 +100,8 @@ export async function runSeed(args: SeedArgs, runId: string, deps: SeedDeps): Pr
   const today = await deps.todayGameDate();
   const date = args.date ?? today;
   await deps.ensureGameDay(date);
+  // A closed day's outcome is final; seeding it would change its counters after the fact.
+  if (await deps.dayClosed(date)) throw new Error(`Game day ${date} is already closed; seed an open day instead.`);
   const target = await deps.passTarget(date);
   const passing = passingIndices(args.players, args.passRate);
 
@@ -108,10 +115,11 @@ export async function runSeed(args: SeedArgs, runId: string, deps: SeedDeps): Pr
       const status = await deps.recordResult(attemptId, score, passed);
       if (status !== "recorded") throw new Error(`record_attempt_result answered "${status}" for player ${i + 1}.`);
     } else {
+      // Result and pass together, so a run that stops halfway leaves the counters in step.
       await deps.writePastResult(attemptId, score, passed);
+      if (passed) await deps.addPastPass(date, attemptId);
     }
   }
-  if (date !== today) await deps.addPastPasses(date, passing.size);
   deps.log(`Seeded ${args.players} players for ${date}: ${passing.size} passed, ${args.players - passing.size} did not.`);
 }
 
@@ -156,36 +164,59 @@ export function supabaseSeedDeps(db: SupabaseClient): SeedDeps {
         await db.rpc("record_attempt_result", { p_attempt_id: attemptId, p_inputs: inputs, p_score: score, p_passed: passed }),
       ) as string;
     },
+    async dayClosed(date) {
+      const row = check("Game day lookup", await db.from("game_days").select("closed_at").eq("game_date", date).single());
+      return (row as { closed_at: string | null }).closed_at !== null;
+    },
     async writePastResult(attemptId, score, passed) {
       const update = { inputs: { seeded: true }, score, passed, submitted_at: new Date().toISOString() };
       check("Result update", await db.from("attempts").update(update).eq("id", attemptId));
     },
-    async addPastPasses(date, passes) {
-      // New fake profiles have weight 1, so each pass adds 1 to both counts. One script runs at
-      // a time, so the read-then-write here is safe.
+    async addPastPass(date, attemptId) {
+      // The same weight the start was counted with (T17), like record_attempt_result. A dev
+      // script runs one at a time, so this read-then-write cannot race another seed run.
+      const attempt = check(
+        "Attempt weight lookup",
+        await db.from("attempts").select("counted_weight").eq("id", attemptId).single(),
+      ) as { counted_weight: number | string };
       const row = check(
         "Counters lookup",
         await db.from("game_day_counters").select("passes, weighted_passes").eq("game_date", date).single(),
       ) as { passes: number; weighted_passes: number | string };
-      const update = { passes: row.passes + passes, weighted_passes: Number(row.weighted_passes) + passes };
+      const update = {
+        passes: row.passes + 1,
+        weighted_passes: Number(row.weighted_passes) + Number(attempt.counted_weight),
+      };
       check("Counters update", await db.from("game_day_counters").update(update).eq("game_date", date));
     },
     log: (message) => console.log(message),
   };
 }
 
-async function main(): Promise<void> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+type MakeClient = (url: string, serviceRoleKey: string) => SupabaseClient;
+
+const serviceClient: MakeClient = (url, serviceRoleKey) =>
+  createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+
+/**
+ * The whole command. The localhost guard runs first, before the key is read or any client is
+ * made, so the script can never reach a real project.
+ */
+export async function main(
+  env: Record<string, string | undefined>,
+  argv: string[],
+  makeClient: MakeClient = serviceClient,
+): Promise<void> {
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
   assertLocalSupabaseUrl(url);
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY is missing; copy it from `npx supabase status` into .env.local.");
-  const args = parseSeedArgs(process.argv.slice(2));
-  const db = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  await runSeed(args, Date.now().toString(36), supabaseSeedDeps(db));
+  const args = parseSeedArgs(argv);
+  await runSeed(args, Date.now().toString(36), supabaseSeedDeps(makeClient(url, serviceRoleKey)));
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main().catch((error: unknown) => {
+  main(process.env, process.argv.slice(2)).catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
   });
