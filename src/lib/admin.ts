@@ -46,7 +46,8 @@ export async function readAdminDays(db: Pick<SupabaseClient, "from" | "rpc">, no
       .gte("game_date", today)
       .lte("game_date", last)
       .order("game_date", { ascending: true }),
-    // The counters, not the attempts themselves: one row per day rather than one per player.
+    // The counters, not the attempts themselves: one row per day rather than one per player. This
+    // only drives the display; the database's trigger on the attempts decides the lock.
     db.from("game_day_counters").select("game_date").gt("attempts", 0).gte("game_date", today).lte("game_date", last),
   ]);
   if (error) throw new Error(`Game day lookup failed: ${error.message}`);
