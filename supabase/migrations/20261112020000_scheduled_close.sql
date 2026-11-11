@@ -4,7 +4,8 @@
 -- Closes, oldest first, every game day before the one being played at `at`, then makes sure
 -- that day exists. Closing a day prepares the next (T22), so after downtime one call walks
 -- forward day by day until it reaches today. A no-op when nothing is due. Returns how many days
--- it closed. `at` exists for tests; the schedule always uses now().
+-- it closed. `at` exists for tests and must not be in the future (close_game_day still checks
+-- each deadline against now()); the schedule always uses now().
 create or replace function public.close_due_game_days(at timestamptz default now())
 returns integer
 language plpgsql

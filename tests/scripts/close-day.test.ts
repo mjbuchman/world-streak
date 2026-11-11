@@ -75,6 +75,10 @@ describe("main", () => {
     await expect(main({ ...local, NEXT_PUBLIC_SUPABASE_URL: "https://abcdefgh.supabase.co" }, args, makeClient)).rejects.toThrow(
       /Refusing to close a game day/,
     );
+    // With no key either, the URL is still what it refuses first.
+    await expect(main({ NEXT_PUBLIC_SUPABASE_URL: "https://abcdefgh.supabase.co" }, args, makeClient)).rejects.toThrow(
+      /Refusing to close a game day/,
+    );
     expect(makeClient).not.toHaveBeenCalled();
   });
 

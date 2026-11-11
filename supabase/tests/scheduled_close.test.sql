@@ -1,5 +1,5 @@
 begin;
-select plan(10);
+select plan(13);
 
 -- The schedule.
 select results_eq(
@@ -12,6 +12,8 @@ select results_eq(
   $$values ('*/5 * * * *'::text, 'select public.close_due_game_days()'::text)$$,
   'and every 5 minutes as a safety net'
 );
+-- The schedule's '0 0' is that deadline hour; if it ever changes, so must the schedule.
+select is(public.deadline_utc_hour(), 0, 'the deadline is midnight UTC, the hour the close job runs');
 select function_privs_are('public', 'close_due_game_days', array['timestamptz'], 'service_role', array['EXECUTE'], 'the server can run the close job');
 select function_privs_are('public', 'close_due_game_days', array['timestamptz'], 'anon', array[]::text[], 'visitors cannot');
 select function_privs_are('public', 'close_due_game_days', array['timestamptz'], 'authenticated', array[]::text[], 'players cannot');
@@ -27,8 +29,12 @@ select tests.play_day('2026-11-03', 10, 2, 0.60);
 -- The local schedule may already have closed 2026-11-04 for real; here it is the day being played.
 update public.game_days set closed_at = null, outcome = null, final_pass_rate = null where game_date = '2026-11-04';
 
--- 30 seconds after the deadline of 2026-11-03.
-select is(public.close_due_game_days('2026-11-04T00:00:30Z'), 3, 'one call closes the three due days');
+-- A second before the deadline of 2026-11-03, only the two earlier days are due.
+select is(public.close_due_game_days('2026-11-03T23:59:59Z'), 2, 'a day is not due before its deadline');
+select is((select closed_at from public.game_days where game_date = '2026-11-03'), null, 'so 2026-11-03 stays open');
+
+-- 30 seconds after it, the last one is due.
+select is(public.close_due_game_days('2026-11-04T00:00:30Z'), 1, 'and the next call closes it');
 select results_eq(
   $$select game_date, outcome from public.game_days where game_date between '2026-11-01' and '2026-11-03' order by game_date$$,
   $$values ('2026-11-01'::date, 'survived'::text), ('2026-11-02'::date, 'survived'::text), ('2026-11-03'::date, 'broken'::text)$$,
