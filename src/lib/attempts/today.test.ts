@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
-import { todaysAttempt } from "./today";
+import { DEFAULT_CHALLENGE, todaysAttempt, todaysChallenge } from "./today";
 
 type Result = { data: unknown; error: { message: string } | null };
 
@@ -80,5 +80,31 @@ describe("todaysAttempt", () => {
   it("throws on a database error, rather than offering a Start that would fail", async () => {
     const { db } = fakeDb({ data: null, error: { message: "connection refused" } });
     await expect(todaysAttempt(db, userId, now)).rejects.toThrow(/connection refused/);
+  });
+});
+
+describe("todaysChallenge", () => {
+  it("reads today's challenge from the public game day", async () => {
+    const { db, calls } = fakeDb({ data: { challenge_type: "flash-count" }, error: null });
+    expect(await todaysChallenge(db, now)).toBe("flash-count");
+    expect(calls).toEqual([
+      ["from", "game_days"],
+      ["select", "challenge_type"],
+      ["eq", "game_date", "2026-11-08"],
+      ["maybeSingle"],
+    ]);
+  });
+
+  it("is the challenge a new day gets when nobody has created today's yet", async () => {
+    const { db } = fakeDb({ data: null, error: null });
+    expect(DEFAULT_CHALLENGE).toBe("stacking");
+    expect(await todaysChallenge(db, now)).toBe("stacking");
+  });
+
+  it("throws on a database error or a challenge this build does not know", async () => {
+    await expect(todaysChallenge(fakeDb({ data: null, error: { message: "down" } }).db, now)).rejects.toThrow("Game day lookup failed: down");
+    await expect(todaysChallenge(fakeDb({ data: { challenge_type: "chess" }, error: null }).db, now)).rejects.toThrow(
+      'Game day 2026-11-08 has unknown challenge type "chess"',
+    );
   });
 });

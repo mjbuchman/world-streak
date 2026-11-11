@@ -3,29 +3,31 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import type { StackingParams } from "@/challenges/stacking/engine";
+import { isChallengeType } from "@/challenges/registry";
+import type { ChallengeType } from "@/challenges/shared/types";
+import { challengeUi } from "@/components/challenges/challengeUi";
 import { Meter } from "@/components/Meter";
-import { reachedRow, targetRow } from "@/components/stacking/rows";
-import { type FinishedRun, StackingGame } from "@/components/stacking/StackingGame";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { ResultHero } from "@/components/ui/ResultHero";
 import { Spinner } from "@/components/ui/Spinner";
 import { Surface } from "@/components/ui/Surface";
-import { STACKING_HOW_TO } from "@/config/challenges";
 import type { PlayStatus } from "@/lib/attempts/today";
 import styles from "./play.module.css";
 
 type Verdict = { score: number; passed: boolean; passTarget: number };
 
 // The parts of the endpoints' JSON this page reads (see src/lib/attempts/start.ts and submit.ts).
-type StartBody = { attemptId: string; params: StackingParams; passTarget: number } | { error: string; submitted?: boolean };
+type StartBody =
+  | { attemptId: string; challengeType: string; params: unknown; passTarget: number }
+  | { error: string; submitted?: boolean };
 type SubmitBody = Verdict | { error: string };
 
 type Phase =
   | { name: "ready"; error?: string }
   | { name: "starting" }
-  | { name: "playing"; attemptId: string; params: StackingParams; passTarget: number }
+  // The challenge the server started, which decides the game shown.
+  | { name: "playing"; attemptId: string; challengeType: ChallengeType; params: unknown; passTarget: number }
   | { name: "checking" }
   // fresh: the verdict arrived in this visit (celebrated), not loaded on a later visit (not replayed).
   | { name: "result"; verdict: Verdict; fresh: boolean }
@@ -57,9 +59,11 @@ function initialPhase(status: PlayStatus): Phase {
 
 /**
  * Today's scored attempt: the one-attempt rule, Start, the game with the seed the server issued,
- * then the server's verdict. The client only sends its taps; the server scores them.
+ * then the server's verdict. The client only sends its inputs; the server scores them.
+ * `challenge` is today's challenge as the page read it (for the how-to and the result).
  */
-export function PlayToday({ initial }: { initial: PlayStatus }) {
+export function PlayToday({ challenge, initial }: { challenge: ChallengeType; initial: PlayStatus }) {
+  const ui = challengeUi(challenge);
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>(() => initialPhase(initial));
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -76,8 +80,10 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
       const response = await fetch("/api/attempts/start", { method: "POST" });
       const body: StartBody = await response.json();
       if ("attemptId" in body) {
-        const { attemptId, params, passTarget } = body;
-        return setPhase({ name: "playing", attemptId, params, passTarget });
+        const { attemptId, challengeType, params, passTarget } = body;
+        // A challenge this page cannot draw would leave the attempt unplayable: report it.
+        if (!isChallengeType(challengeType)) return setPhase({ name: "ready", error: START_FAILED });
+        return setPhase({ name: "playing", attemptId, challengeType, params, passTarget });
       }
       if (response.status === 409 && body.error === "day-closed") return setPhase({ name: "ready", error: START_DAY_CLOSED });
       if (response.status === 409) {
@@ -92,13 +98,13 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
     }
   }
 
-  async function submit(attemptId: string, { taps }: FinishedRun) {
+  async function submit(attemptId: string, inputs: unknown) {
     setPhase({ name: "checking" });
     try {
       const response = await fetch("/api/attempts/submit", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ attemptId, inputs: { tapsMs: taps } }),
+        body: JSON.stringify({ attemptId, inputs }),
       });
       const body: SubmitBody = await response.json();
       if (!("error" in body)) return setPhase({ name: "result", verdict: body, fresh: true });
@@ -119,13 +125,11 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
 
   switch (phase.name) {
     case "playing":
-      return (
-        <StackingGame
-          params={phase.params}
-          passTarget={phase.passTarget}
-          onFinish={(run) => submit(phase.attemptId, run)}
-        />
-      );
+      return challengeUi(phase.challengeType).play({
+        params: phase.params,
+        passTarget: phase.passTarget,
+        onFinish: (inputs) => submit(phase.attemptId, inputs),
+      });
 
     case "checking":
       return (
@@ -146,7 +150,7 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
             confetti={passed && phase.fresh}
             actions={backHome}
           >
-            <p className={styles.summary}>{`${reachedRow(score)}. Today's target was ${targetRow(passTarget)}.`}</p>
+            <p className={styles.summary}>{ui.summary(score, passTarget)}</p>
             <p className={styles.note}>
               {passed ? "You helped keep the streak alive. " : ""}Come back tomorrow for the next challenge.
             </p>
@@ -177,7 +181,7 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
     default:
       return (
         <Surface>
-          <p>{STACKING_HOW_TO}</p>
+          <p>{ui.howTo}</p>
           <p>
             You get one scored attempt today. Pressing Start uses it: if you leave before you finish, it counts as not
             passed and you cannot try again until tomorrow.
@@ -192,7 +196,7 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
           </Button>
           {/* Gone once Start is pressed: leaving after the server creates the attempt would lose it. */}
           {phase.name === "ready" && (
-            <Link href="/practice/stacking" className={styles.practice}>
+            <Link href={ui.practicePath} className={styles.practice}>
               Practice first
             </Link>
           )}

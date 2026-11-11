@@ -3,7 +3,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { paramsFromSeed, type StackingParams, type StackingResult } from "@/challenges/stacking/engine";
-import { STACKING_HOW_TO } from "@/config/challenges";
+import { INNER_CLOCK_HOW_TO, STACKING_HOW_TO } from "@/config/challenges";
 
 type GameProps = {
   params: StackingParams;
@@ -17,6 +17,14 @@ vi.mock("@/components/stacking/StackingGame", () => ({
     // Like the real game, it takes focus when it mounts.
     return <div data-testid="game" tabIndex={-1} ref={(element) => element?.focus()} />;
   },
+}));
+// The other challenges' games: stand-ins that answer with fixed inputs.
+vi.mock("@/components/flash-count/FlashCountGame", () => ({
+  FlashCountGame: ({ onFinish }: { onFinish: (inputs: { count: number }) => void }) => (
+    <button type="button" onClick={() => onFinish({ count: 20 })}>
+      Answer 20
+    </button>
+  ),
 }));
 // The meter polls on its own (Meter.test.tsx); here it must not take the start and submit replies.
 vi.mock("@/components/Meter", () => ({ Meter: () => <section data-testid="meter" /> }));
@@ -59,14 +67,46 @@ const finish = (taps: number[], score: number) =>
   });
 
 async function startRun() {
-  render(<PlayToday initial={{ kind: "ready" }} />);
+  render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
   await userEvent.click(screen.getByRole("button", { name: "Start" }));
   await screen.findByTestId("game");
 }
 
+describe("PlayToday with another challenge (T30)", () => {
+  it("shows that challenge's how-to and practice page", () => {
+    render(<PlayToday challenge="inner-clock" initial={{ kind: "ready" }} />);
+    expect(screen.getByText(INNER_CLOCK_HOW_TO)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Practice first" }).getAttribute("href")).toBe("/practice/inner-clock");
+  });
+
+  it("plays the challenge the server started, sends its inputs, and sums up the result in its terms", async () => {
+    const flashParams = { dotCount: 25, flashMs: 1000, dots: [] };
+    respond(
+      json(200, { ...started, challengeType: "flash-count", params: flashParams, passTarget: 15 }),
+      json(200, { score: 20, passed: false, passTarget: 15 }),
+    );
+    const user = userEvent.setup();
+    render(<PlayToday challenge="flash-count" initial={{ kind: "ready" }} />);
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    await user.click(await screen.findByRole("button", { name: "Answer 20" }));
+
+    expect(JSON.parse(fetchSpy.mock.calls[1][1]!.body as string)).toEqual({ attemptId, inputs: { count: 20 } });
+    expect(await screen.findByRole("heading", { name: "Not this time" })).toBeTruthy();
+    expect(screen.getByText("You were 20% off. Today's target was within 15%.")).toBeTruthy();
+  });
+
+  it("refuses to play a challenge this build does not know, saying the start failed", async () => {
+    respond(json(200, { ...started, challengeType: "chess" }));
+    const user = userEvent.setup();
+    render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    expect(await screen.findByRole("alert")).toHaveProperty("textContent", "Today's attempt could not be started. Please try again.");
+  });
+});
+
 describe("PlayToday", () => {
   it("shows how to play and offers practice first, before the one scored attempt", () => {
-    render(<PlayToday initial={{ kind: "ready" }} />);
+    render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
     const howTo = screen.getByText(STACKING_HOW_TO);
     const rule = screen.getByText(/one scored attempt/i);
     // The controls come before the rule, so nobody spends the attempt without seeing them.
@@ -76,7 +116,7 @@ describe("PlayToday", () => {
 
   it("shows the how-to only before Start", async () => {
     for (const initial of [{ kind: "submitted", score: 11, passed: true, passTarget: 10 }, { kind: "abandoned" }] as const) {
-      render(<PlayToday initial={initial} />);
+      render(<PlayToday challenge="stacking" initial={initial} />);
       expect(screen.queryByText(STACKING_HOW_TO)).toBeNull();
       cleanup();
     }
@@ -88,24 +128,24 @@ describe("PlayToday", () => {
 
   it("hides Practice first while Start is busy, as leaving then would lose the attempt", async () => {
     fetchSpy.mockReturnValueOnce(new Promise(() => undefined));
-    render(<PlayToday initial={{ kind: "ready" }} />);
+    render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
     expect(screen.queryByRole("link", { name: "Practice first" })).toBeNull();
   });
 
   it("words a score of 0 (attempts stored before T87) and a fractional target in rows", () => {
-    render(<PlayToday initial={{ kind: "submitted", score: 0, passed: false, passTarget: 10.2 }} />);
+    render(<PlayToday challenge="stacking" initial={{ kind: "submitted", score: 0, passed: false, passTarget: 10.2 }} />);
     expect(screen.getByText("You didn't stack a row. Today's target was row 11.")).toBeTruthy();
   });
 
   it("makes a pass glow mint, and leaves a fail or a refused submission plain", async () => {
-    render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
+    render(<PlayToday challenge="stacking" initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
     const passed = screen.getByRole("heading", { name: "Passed" });
     expect(passed.className).toMatch(/resultMint/);
     expect(passed.className).toMatch(/resultGlow/);
     cleanup();
 
-    render(<PlayToday initial={{ kind: "submitted", score: 3, passed: false, passTarget: 10 }} />);
+    render(<PlayToday challenge="stacking" initial={{ kind: "submitted", score: 3, passed: false, passTarget: 10 }} />);
     expect(screen.getByRole("heading", { name: "Not this time" }).className).not.toMatch(/resultMint|resultGlow/);
     cleanup();
 
@@ -116,7 +156,7 @@ describe("PlayToday", () => {
   });
 
   it("shows the live meter below the result, and not before or during the run", async () => {
-    render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
+    render(<PlayToday challenge="stacking" initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
     const verdict = screen.getByRole("heading", { name: "Passed" });
     const meter = screen.getByTestId("meter");
     expect(verdict.compareDocumentPosition(meter) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -128,7 +168,7 @@ describe("PlayToday", () => {
   });
 
   it("shows the score as the result's big number, above the verdict as in practice", () => {
-    const { container } = render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
+    const { container } = render(<PlayToday challenge="stacking" initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
     const score = container.querySelector("[data-big-score]")!;
     expect(score.textContent).toBe("11");
     const verdict = screen.getByRole("heading", { name: "Passed" });
@@ -136,7 +176,7 @@ describe("PlayToday", () => {
   });
 
   it("explains the one-attempt rule, including leaving early, before Start", () => {
-    render(<PlayToday initial={{ kind: "ready" }} />);
+    render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
     expect(screen.getByText(/one scored attempt/i)).toBeTruthy();
     expect(screen.getByText(/leave before you finish, it counts as not\s+passed/i)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Start" })).toBeTruthy();
@@ -189,14 +229,14 @@ describe("PlayToday", () => {
   });
 
   it("shows today's result, with no Start, once the attempt was submitted", () => {
-    render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
+    render(<PlayToday challenge="stacking" initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
     expect(screen.getByRole("heading", { name: "Passed" })).toBeTruthy();
     expect(screen.getByText("You reached row 11. Today's target was row 10.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   });
 
   it("explains an abandoned attempt, with no Start", () => {
-    render(<PlayToday initial={{ kind: "abandoned" }} />);
+    render(<PlayToday challenge="stacking" initial={{ kind: "abandoned" }} />);
     expect(
       screen.getByText("You left today's attempt before finishing, so it counted as not passed. Come back tomorrow."),
     ).toBeTruthy();
@@ -205,21 +245,21 @@ describe("PlayToday", () => {
 
   it("reloads the page's state if the attempt was already submitted elsewhere", async () => {
     respond(json(409, { error: "already-started", submitted: true }));
-    render(<PlayToday initial={{ kind: "ready" }} />);
+    render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
     await vi.waitFor(() => expect(refresh).toHaveBeenCalled());
   });
 
   it("shows the abandoned message if an unfinished attempt already exists", async () => {
     respond(json(409, { error: "already-started", submitted: false }));
-    render(<PlayToday initial={{ kind: "ready" }} />);
+    render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
     expect(await screen.findByText(/You left today's attempt before finishing/)).toBeTruthy();
   });
 
   it("says the day just closed, not that the player left, when a start races the deadline", async () => {
     respond(json(409, { error: "day-closed" }));
-    render(<PlayToday initial={{ kind: "ready" }} />);
+    render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
     expect((await screen.findByRole("alert")).textContent).toBe("Today's challenge just closed. Press Start to play the next one.");
     expect(screen.queryByText(/You left today's attempt/)).toBeNull();
@@ -231,7 +271,7 @@ describe("PlayToday", () => {
   it("lets the player try Start again if starting failed", async () => {
     for (const failure of [json(500, { error: "server-error" }), new Error("offline")]) {
       respond(failure);
-      render(<PlayToday initial={{ kind: "ready" }} />);
+      render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
       await userEvent.click(screen.getByRole("button", { name: "Start" }));
       expect((await screen.findByRole("alert")).textContent).toBe("Today's attempt could not be started. Please try again.");
       expect(screen.getByRole("button", { name: "Start" })).toHaveProperty("disabled", false);
@@ -247,7 +287,7 @@ describe("PlayToday", () => {
     ];
     for (const [status, message] of cases) {
       respond(json(status, { error: "x" }));
-      render(<PlayToday initial={{ kind: "ready" }} />);
+      render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
       await userEvent.click(screen.getByRole("button", { name: "Start" }));
       expect((await screen.findByRole("alert")).textContent).toBe(message);
       cleanup();
@@ -256,7 +296,7 @@ describe("PlayToday", () => {
 
   it("shows Start as busy while the request is in flight, so it cannot be sent twice", async () => {
     fetchSpy.mockReturnValueOnce(new Promise(() => undefined));
-    render(<PlayToday initial={{ kind: "ready" }} />);
+    render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
     const busy = screen.getByRole("button", { name: "Start" });
     expect(busy.getAttribute("aria-busy")).toBe("true");
@@ -282,7 +322,7 @@ describe("PlayToday", () => {
   });
 
   it("does not replay the confetti when today's pass is shown on a later visit", () => {
-    const { container } = render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
+    const { container } = render(<PlayToday challenge="stacking" initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
     expect(screen.getByRole("heading", { name: "Passed" })).toBeTruthy();
     expect(container.querySelector("[data-confetti]")).toBeNull();
   });
@@ -292,7 +332,7 @@ describe("PlayToday", () => {
       { kind: "submitted", score: 11, passed: true, passTarget: 10 },
       { kind: "abandoned" },
     ] as const) {
-      render(<PlayToday initial={initial} />);
+      render(<PlayToday challenge="stacking" initial={initial} />);
       expect(screen.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/");
       cleanup();
     }

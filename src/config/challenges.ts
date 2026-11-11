@@ -10,6 +10,11 @@ export const CHALLENGE_NAMES: Record<ChallengeType, string> = {
   "flash-count": "Swift Sum",
 };
 
+/** Each challenge's practice page (the route folders are named after the types). */
+export function practicePath(type: ChallengeType): string {
+  return `/practice/${type}`;
+}
+
 /** How to play Second Sense: shown before a practice run (and later before a scored attempt). */
 export const INNER_CLOCK_HOW_TO =
   "Press Start, then tap when you think the target time has passed. There is no clock to watch: count in your head. The closer you are, the better.";

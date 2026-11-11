@@ -481,7 +481,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T29 Flash Count (Swift Sum) renderer and practice page
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T28
 - Acceptance criteria:
   - [ ] `/practice/flash-count` shows a Start control, then draws the dots on canvas for `flashMs`, clears them, and shows a numeric input (mobile `inputmode="numeric"`) with Submit. The answer reveals the true count and the error %.
@@ -490,14 +490,32 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T30 All challenges in daily play and practice hub
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T14, T27, T29
 - Acceptance criteria:
   - [ ] `src/challenges/registry.ts` maps `stacking`, `inner-clock` and `flash-count` to their engine module and React component. `ChallengeType` covers all three. The start and submit endpoints work for every type with no type-specific branches.
   - [ ] `/play` renders the component for today's `challenge_type`. Unit tests of the submit handler cover a passing and a failing attempt for each type (for example Inner Clock target 0.5: error 0.32 passes and 0.6 fails).
-  - [ ] `/practice` lists the three challenges with a one-line description each and links to each practice page.
   - [ ] e2e: with today's game day set to `flash-count` via SQL fixture, the scored flow (start, enter count, result) works end to end.
-- Notes: From the T29 quality review: if the tab is hidden during Swift Sum's flash, animation frames pause and the dots may never show; for the scored version, restart or void the flash on `visibilitychange`. Second Sense's clock keeps running while hidden (decide whether that is fair).
+- Notes: Split on Nov 11 (over 400 lines): the practice hub is T108. Keep `src/challenges/` free of React: the component side of the mapping lives under `src/components/`. From the T29 quality review: if the tab is hidden during Swift Sum's flash, animation frames pause and the dots may never show; for the scored version, restart or void the flash on `visibilitychange`. Second Sense's clock keeps running while hidden (decide whether that is fair).
+
+### T108 Practice hub
+- Type: feature
+- Status: todo
+- Depends on: T30
+- Acceptance criteria:
+  - [ ] `/practice` lists the three challenges with a one-line description each and links to each practice page.
+  - [ ] The home page's "Practice first" and `/play`'s practice links go to the right place for today's challenge (or the hub).
+  - [ ] Unit test of the list; e2e: from `/practice` open each practice page.
+- Notes: Split from T30 (Nov 11).
+
+### T109 One practice page shell for every challenge
+- Type: maintenance
+- Status: todo
+- Depends on: T108
+- Acceptance criteria:
+  - [ ] The ready / playing / result / Play again scaffolding and its styles shared by `StackingPractice`, `InnerClockPractice` and `FlashCountPractice` live in one component and CSS module; each page keeps only its challenge-specific parts (how-to, game, result text).
+  - [ ] Rendered markup is unchanged; existing unit and e2e tests pass unmodified; `npm run verify` passes.
+- Notes: From the maintainer check after T29 (about 150-250 lines). Each new challenge would otherwise copy the scaffolding again.
 
 ### T31 Daily challenge rotation
 - Type: feature

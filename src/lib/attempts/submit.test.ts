@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { flashCount } from "@/challenges/flash-count/engine";
 import { innerClock } from "@/challenges/inner-clock/engine";
 import { simulate, stacking } from "@/challenges/stacking/engine";
 import { tapsForAMiss } from "@/challenges/stacking/player";
@@ -77,6 +78,39 @@ describe("submitAttempt", () => {
       fakeStore({ gameDay: vi.fn(async () => ({ challengeType: "inner-clock", passTarget, closed: false })) });
     expect((await submit({ attemptId, inputs }, day(0.3))).body).toEqual({ score: 0.25, passed: true, passTarget: 0.3 });
     expect((await submit({ attemptId, inputs }, day(0.2))).body).toEqual({ score: 0.25, passed: false, passTarget: 0.2 });
+  });
+
+  describe("every challenge type, with no type-specific branches (T30)", () => {
+    const dayOf = (challengeType: string, passTarget: number) =>
+      fakeStore({ gameDay: vi.fn(async () => ({ challengeType, passTarget, closed: false })) });
+
+    it("Second Sense with a target of 0.5 s: 0.32 s off passes, 0.6 s off fails", async () => {
+      const target = innerClock.paramsFromSeed(seed).targetMs;
+      const pass = await submit({ attemptId, inputs: { tapMs: target - 320 } }, dayOf("inner-clock", 0.5));
+      expect(pass.body).toEqual({ score: 0.32, passed: true, passTarget: 0.5 });
+      const fail = await submit({ attemptId, inputs: { tapMs: target + 600 } }, dayOf("inner-clock", 0.5));
+      expect(fail.body).toEqual({ score: 0.6, passed: false, passTarget: 0.5 });
+    });
+
+    it("Swift Sum with a target of 15%: the true count passes, a count 50% off fails", async () => {
+      const { dotCount } = flashCount.paramsFromSeed(seed);
+      const pass = await submit({ attemptId, inputs: { count: dotCount } }, dayOf("flash-count", 15));
+      expect(pass.body).toEqual({ score: 0, passed: true, passTarget: 15 });
+      const store = dayOf("flash-count", 15);
+      const fail = await submit({ attemptId, inputs: { count: dotCount * 2 } }, store);
+      expect(fail.body).toEqual({ score: 100, passed: false, passTarget: 15 });
+      expect(store.recordResult).toHaveBeenCalledWith({ attemptId, inputs: { count: dotCount * 2 }, score: 100, passed: false });
+    });
+
+    it("refuses another challenge's inputs (each type's own schema decides)", async () => {
+      for (const [challengeType, inputs] of [
+        ["inner-clock", { tapsMs: goodTaps }],
+        ["flash-count", { tapMs: 500 }],
+        ["stacking", { count: 3 }],
+      ] as const) {
+        expect(await submit({ attemptId, inputs }, dayOf(challengeType, 1))).toEqual({ status: 400, body: { error: "invalid-inputs" } });
+      }
+    });
   });
 
   it("returns 400 for a malformed body, without touching the database", async () => {
