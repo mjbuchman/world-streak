@@ -20,6 +20,8 @@ type Phase =
 /** Seconds for people: "5.32 s", from ms (rounded to the ms). */
 const seconds = (ms: number) => `${Math.round(ms) / 1000} s`;
 
+// The game never reports a tap after the timeout; the checks below follow the engine's rule anyway.
+
 /** The result's heading: how far off, and which way (as the engine rounds it). */
 function verdict(params: InnerClockParams, tapMs: number | null): string {
   if (tapMs === null || tapMs > params.timeoutMs) return "Time ran out";

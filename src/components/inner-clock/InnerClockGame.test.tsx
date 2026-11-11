@@ -79,6 +79,16 @@ describe("InnerClockGame", () => {
     expect(onFinish).toHaveBeenCalledOnce();
   });
 
+  it("ignores a right-click", () => {
+    const onFinish = vi.fn();
+    render(<InnerClockGame params={params} onFinish={onFinish} />);
+    showStart();
+    fireEvent.pointerDown(tapArea(), { button: 2 });
+    expect(onFinish).not.toHaveBeenCalled();
+    fireEvent.pointerDown(tapArea(), { button: 0 });
+    expect(onFinish).toHaveBeenCalledOnce();
+  });
+
   it("ignores a tap before the start is on screen", () => {
     const onFinish = vi.fn();
     render(<InnerClockGame params={params} onFinish={onFinish} />);

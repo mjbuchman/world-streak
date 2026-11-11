@@ -58,7 +58,14 @@ export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
   };
 
   return (
-    <button ref={areaRef} type="button" className={styles.area} onPointerDown={tap} onKeyDown={onKeyDown}>
+    <button
+      ref={areaRef}
+      type="button"
+      className={styles.area}
+      // The main button or a touch only: a right-click is not a tap.
+      onPointerDown={(event) => event.button === 0 && tap()}
+      onKeyDown={onKeyDown}
+    >
       <span className={styles.prompt}>Tap when you think {targetLabel(params.targetMs)} have passed</span>
       <span className={styles.hint}>Tap, click or press Space</span>
     </button>

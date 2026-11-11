@@ -62,6 +62,11 @@ describe("InnerClockPractice", () => {
     expect(screen.getByText("No tap within 15 s, so it counts as 10 s off.")).toBeTruthy();
   });
 
+  it("treats a tap after the timeout as no tap, as the engine does", async () => {
+    await playWith({ tapMs: 15_001 });
+    expect(screen.getByRole("heading", { name: "Time ran out" })).toBeTruthy();
+  });
+
   it("offers another go, which starts a new run", async () => {
     const user = await playWith({ tapMs: 5320 });
     expect(screen.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/");
