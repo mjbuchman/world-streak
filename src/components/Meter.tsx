@@ -39,14 +39,20 @@ function isMeterBody(value: unknown): value is MeterBody {
   if (typeof body.closesAt !== "string" || Number.isNaN(Date.parse(body.closesAt))) return false;
   if (!isNumberOrNull(body.threshold)) return false;
   if (body.status === "hidden") return true;
-  return body.status === "open" && isNumberOrNull(body.passRate) && typeof body.attempts === "number";
+  return (
+    body.status === "open" &&
+    isNumberOrNull(body.passRate) &&
+    typeof body.attempts === "number" &&
+    Number.isInteger(body.attempts) &&
+    body.attempts >= 0
+  );
 }
 
 /**
  * Fetches /api/meter now and every METER_POLL_SECONDS, but only while the tab is visible.
  * `reload` asks again at once (used when the day closes).
  */
-function useMeterReading(): { body: MeterBody | null; failed: boolean; reload: () => void } {
+function useMeterReading(): { body: MeterBody | null; failed: boolean; reload: () => Promise<void> } {
   const [body, setBody] = useState<MeterBody | null>(null);
   const [failed, setFailed] = useState(false);
   // Only the newest request may update the meter, so a slow older reply cannot overwrite it.
@@ -96,7 +102,8 @@ function useMeterReading(): { body: MeterBody | null; failed: boolean; reload: (
     };
   }, [load]);
 
-  return { body, failed, reload: () => void load() };
+  // `load` is stable (useCallback), so effects that depend on `reload` do not re-run every render.
+  return { body, failed, reload: load };
 }
 
 /** The current time, ticking every second, for the countdown and the hidden window. */
@@ -118,14 +125,16 @@ export function Meter() {
   const { body, failed, reload } = useMeterReading();
   const now = useNow();
 
-  // When the day closes, ask for the next day's reading at once rather than at the next poll.
+  // When the day closes, ask for the next day's reading at once rather than at the next poll:
+  // once per deadline (a cached reply from just before midnight may still carry it), and only
+  // while the tab is visible (coming back to the tab fetches anyway).
   const closesAtMs = body ? Date.parse(body.closesAt) : null;
   const closed = closesAtMs !== null && now >= closesAtMs;
   const reloadedFor = useRef<number | null>(null);
   useEffect(() => {
-    if (closed && reloadedFor.current !== closesAtMs) {
+    if (closed && reloadedFor.current !== closesAtMs && document.visibilityState === "visible") {
       reloadedFor.current = closesAtMs;
-      reload();
+      void reload();
     }
   }, [closed, closesAtMs, reload]);
 

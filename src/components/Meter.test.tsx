@@ -181,7 +181,17 @@ describe("Meter", () => {
     expect(screen.getByText("The meter is unavailable right now.")).toBeTruthy();
     cleanup();
 
-    for (const malformed of [{ status: "open" }, open({ closesAt: "soon" }), open({ attempts: "many" }), null]) {
+    const malformedReplies = [
+      { status: "open" },
+      { status: "closed", closesAt, threshold: 0.6 },
+      open({ closesAt: "soon" }),
+      open({ attempts: "many" }),
+      open({ attempts: -1 }),
+      open({ threshold: "x" }),
+      open({ passRate: "x" }),
+      null,
+    ];
+    for (const malformed of malformedReplies) {
       fetchSpy.mockResolvedValueOnce(json(malformed));
       render(<Meter />);
       await flush();
@@ -221,12 +231,33 @@ describe("Meter", () => {
     expect(screen.getByRole("timer").textContent).toBe("Closes in 24:00:00");
   });
 
-  it("never counts down below zero while the next reading is on its way", async () => {
+  it("reloads once at the deadline while a cached reply still says the past deadline, then polls as usual", async () => {
+    // Just after midnight, a CDN may keep answering yesterday's hidden reading for up to a minute.
     vi.setSystemTime(new Date("2026-11-09T00:00:05Z"));
     fetchSpy.mockResolvedValue(json(hidden));
     render(<Meter />);
     await flush();
     expect(screen.getByRole("timer").textContent).toBe("Closes in 0:00:00");
+    // The first load plus exactly one deadline reload, however many seconds tick by.
+    await advance(5_000);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    await advance(50_000);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    await advance(5_000);
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it("leaves the deadline reload to the tab coming back when the tab is hidden", async () => {
+    vi.setSystemTime(new Date("2026-11-08T23:59:59Z"));
+    fetchSpy.mockResolvedValue(json(hidden));
+    render(<Meter />);
+    await flush();
+    setVisibility("hidden");
+    await advance(10_000);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    setVisibility("visible");
+    await flush();
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 });
 
