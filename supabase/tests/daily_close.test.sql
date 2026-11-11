@@ -55,13 +55,15 @@ select results_eq(
 );
 
 -- Nobody played: no game day row at all, or a row with no counters. Both break, with no rate.
+-- The close of 2000-01-04 prepared 2000-01-05 (T22); remove it to test a day with no row.
+delete from public.game_days where game_date = '2000-01-05';
 select is(public.close_game_day('2000-01-05'), 'broken', 'a day nobody started closes as broken');
 select results_eq(
   $$select final_pass_rate, outcome, closed from day where game_date = '2000-01-05'$$,
   $$values (null::numeric, 'broken'::text, true)$$,
   'and has no final pass rate'
 );
-insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold) values ('2000-01-06', 'stacking', 10, 0.6);
+-- 2000-01-06 exists, prepared by the close of 2000-01-05, with no counters row.
 select is(public.close_game_day('2000-01-06'), 'broken', 'a day with no counters row closes as broken');
 -- Only zero-weight accounts played: attempts but no weighted attempts.
 select tests.play_day('2000-01-07', 3, 3, 0.60);
@@ -94,7 +96,9 @@ select results_eq(
 select results_eq('select * from streak', $$values (1, 3, '2000-01-08'::date)$$, 'and does not count the streak twice');
 
 -- A gap: 2000-01-09 has no row (never prepared, so never closed). A survived 2000-01-10 does not
--- extend the run across it; the run ends on 2000-01-08 and a new one starts.
+-- extend the run across it; the run ends on 2000-01-08 and a new one starts. (The close of
+-- 2000-01-08 prepared 2000-01-09, so it is removed to make the gap.)
+delete from public.game_days where game_date = '2000-01-09';
 select tests.play_day('2000-01-10', 10, 8, 0.60);
 select is(public.close_game_day('2000-01-10'), 'survived', 'a survived day after a gap closes');
 select results_eq('select * from streak', $$values (1, 3, '2000-01-10'::date)$$, 'and starts a new run instead of extending across the gap');

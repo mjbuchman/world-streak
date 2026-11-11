@@ -380,7 +380,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T98 The meter carries the world streak
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T21
 - Acceptance criteria:
   - [ ] `/api/meter` fills `streak` with `{ current, best }` from `world_streak()` in both open and hidden bodies (the streak is not secret in the final hours), read in the same request as the day; malformed numbers fail with a 500 via `dbInteger`.
@@ -390,7 +390,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T22 Prepare next day: pass target and threshold
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T21
 - Acceptance criteria:
   - [ ] `close_game_day(d)` also creates `game_days(d + 1)` if it is missing, with challenge type `stacking` (rotation comes in T31), `survival_threshold = default_survival_threshold + threshold_streak_step × current_streak` (clamped to at most 0.95), and a pass target computed as follows.

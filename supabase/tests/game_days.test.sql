@@ -69,7 +69,9 @@ insert into public.profiles (id, birth_date, country) values
   ('00000000-0000-0000-0000-00000000000a', '1990-01-01', 'US'),
   ('00000000-0000-0000-0000-00000000000b', '1991-02-02', 'US');
 
--- ensure_game_day: inserts the stacking defaults once, then does nothing.
+-- ensure_game_day: inserts the stacking defaults once, then does nothing. Recent scores from
+-- local dev runs must not set the target here (T22 tests that), so none count as enough.
+update public.game_settings set percentile_min_sample = 2147483647;
 select lives_ok($$select public.ensure_game_day('2026-11-08')$$, 'ensure_game_day creates a missing day');
 select results_eq(
   $$select challenge_type, pass_target, survival_threshold, outcome, closed_at
