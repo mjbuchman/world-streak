@@ -65,6 +65,20 @@ describe("isMeterBody", () => {
   it("rejects an open body whose streak is not the null it is today", () => {
     expect(isMeterBody({ ...meterBody(open, "2026-11-08", row), streak: 3 })).toBe(false);
   });
+
+  const openBody = meterBody(open, "2026-11-08", row);
+  it.each([
+    ["not an object", "open"],
+    ["null", null],
+    ["an unparseable deadline", { ...openBody, closesAt: "soon" }],
+    ["a text threshold", { ...openBody, threshold: "0.6" }],
+    ["an infinite rate", { ...openBody, passRate: Infinity }],
+    ["a fractional attempt count", { ...openBody, attempts: 1.5 }],
+    ["a negative attempt count", { ...openBody, attempts: -1 }],
+    ["an unknown status", { ...openBody, status: "closed" }],
+  ])("rejects a reply with %s", (_name, reply) => {
+    expect(isMeterBody(reply)).toBe(false);
+  });
 });
 
 describe("meterHiddenFrom", () => {
