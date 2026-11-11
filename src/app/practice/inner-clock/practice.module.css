@@ -1,0 +1,12 @@
+.note {
+  color: var(--fs-color-text-muted);
+}
+
+/* The target, in display type; its line is kept before it appears (see useIsClient). */
+.target {
+  min-height: 1.3em;
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-title);
+  color: var(--fs-color-mint);
+}

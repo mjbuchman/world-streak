@@ -448,7 +448,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T26 Inner Clock (Second Sense) engine
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/inner-clock/engine.ts` implements `ChallengeModule` with `direction "lower-better"`. `paramsFromSeed(seed)` returns `{ targetMs }`, a multiple of 100 within a documented range (default 3,000 to 9,000), with a timeout of `3 × targetMs`.
@@ -460,7 +460,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T27 Inner Clock (Second Sense) renderer and practice page
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T26
 - Acceptance criteria:
   - [ ] `/practice/inner-clock` shows "Tap when you think N seconds have passed", a Start control, and no visible timer or progress indicator while running. A tap (pointer or Space) ends the run and reveals the actual time and the error.
