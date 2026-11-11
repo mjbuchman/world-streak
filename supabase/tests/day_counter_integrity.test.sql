@@ -8,25 +8,17 @@ select is(
   'stamping the weight runs as the inserting role (security invoker): only the server inserts attempts'
 );
 
--- Fixtures. Results are only accepted for today's game date; the local database may hold real
--- attempts for today from e2e runs, so they are cleared inside this (rolled back) transaction.
-create temporary table today as select public.game_date_at(now()) as d;
-delete from public.game_day_counters where game_date = (select d from today);
-delete from public.attempts where game_date = (select d from today);
-select public.ensure_game_day((select d from today));
+-- Fixtures. Results are only accepted for today's game date, so the attempts are on it.
+\ir fixtures/fixtures.psql
+create temporary table today as select tests.clear_today() as d;
+-- A closed day with no counters row, so a refused start there would show up as a new row.
 insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold, closed_at, outcome)
 values ('2000-01-01', 'stacking', 10, 0.6, '2000-01-02T00:00:05Z', 'survived');
-insert into auth.users (id, email) values
-  ('00000000-0000-0000-0000-00000000000a', 'a@example.test'),
-  ('00000000-0000-0000-0000-00000000000b', 'b@example.test'),
-  ('00000000-0000-0000-0000-00000000000c', 'c@example.test');
-insert into public.profiles (id, birth_date, country, weight) values
-  ('00000000-0000-0000-0000-00000000000a', '1990-01-01', 'US', 1),
-  ('00000000-0000-0000-0000-00000000000b', '1990-01-01', 'US', 1),
-  ('00000000-0000-0000-0000-00000000000c', '1990-01-01', 'US', 0.5);
+select tests.make_player('00000000-0000-0000-0000-00000000000a');
+select tests.make_player('00000000-0000-0000-0000-00000000000b');
+select tests.make_player('00000000-0000-0000-0000-00000000000c', 0.5);
 
-insert into public.attempts (id, user_id, game_date, seed) values
-  ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000000a', (select d from today), 1);
+select tests.start('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000000a', d, 1) from today;
 -- An insert cannot show this (the before-insert trigger always sets the weight), so an update does.
 select throws_ok(
   $$update public.attempts set counted_weight = null where id = '00000000-0000-0000-0000-0000000000a1'$$,

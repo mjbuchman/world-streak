@@ -15,36 +15,24 @@ select policies_are('public', 'game_day_counters', array[]::name[], 'counters ha
 select table_privs_are('public', 'game_day_counters', 'anon', array[]::text[], 'anonymous visitors have no privileges on the counters');
 select table_privs_are('public', 'game_day_counters', 'authenticated', array[]::text[], 'signed-in players have no privileges on the counters');
 
--- Fixtures. Results are only accepted for today's game date. The local database may hold real
--- attempts for today from e2e runs, so they are cleared inside this (rolled back) transaction.
-create temporary table today as select public.game_date_at(now()) as d;
-delete from public.game_day_counters where game_date = (select d from today);
-delete from public.attempts where game_date = (select d from today);
-select public.ensure_game_day((select d from today));
-insert into auth.users (id, email) values
-  ('00000000-0000-0000-0000-00000000000a', 'a@example.test'),
-  ('00000000-0000-0000-0000-00000000000b', 'b@example.test'),
-  ('00000000-0000-0000-0000-00000000000c', 'c@example.test'),
-  ('00000000-0000-0000-0000-00000000000d', 'd@example.test'),
-  ('00000000-0000-0000-0000-00000000000e', 'e@example.test'),
-  ('00000000-0000-0000-0000-00000000000f', 'f@example.test');
-insert into public.profiles (id, birth_date, country, weight) values
-  ('00000000-0000-0000-0000-00000000000a', '1990-01-01', 'US', 1),
-  ('00000000-0000-0000-0000-00000000000b', '1990-01-01', 'US', 1),
-  ('00000000-0000-0000-0000-00000000000c', '1990-01-01', 'US', 1),
-  ('00000000-0000-0000-0000-00000000000d', '1990-01-01', 'US', 0.5),
-  ('00000000-0000-0000-0000-00000000000e', '1990-01-01', 'US', 1),
-  ('00000000-0000-0000-0000-00000000000f', '1990-01-01', 'US', 1);
+-- Fixtures. Results are only accepted for today's game date, so the attempts are on it.
+\ir fixtures/fixtures.psql
+create temporary table today as select tests.clear_today() as d;
+select tests.make_player('00000000-0000-0000-0000-00000000000a');
+select tests.make_player('00000000-0000-0000-0000-00000000000b');
+select tests.make_player('00000000-0000-0000-0000-00000000000c');
+select tests.make_player('00000000-0000-0000-0000-00000000000d', 0.5);
+select tests.make_player('00000000-0000-0000-0000-00000000000e');
+select tests.make_player('00000000-0000-0000-0000-00000000000f');
 
 create temporary view counters as
   select attempts, passes, weighted_attempts, weighted_passes
   from public.game_day_counters where game_date = (select d from today);
 
 -- An attempt counts when it starts (the start endpoint's insert), before any result.
-insert into public.attempts (id, user_id, game_date, seed) values
-  ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000000a', (select d from today), 1),
-  ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-00000000000b', (select d from today), 2),
-  ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-00000000000c', (select d from today), 3);
+select tests.start('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000000a', d, 1) from today;
+select tests.start('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-00000000000b', d, 2) from today;
+select tests.start('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-00000000000c', d, 3) from today;
 select results_eq(
   'select * from counters',
   $$values (3, 0, 3::numeric, 0::numeric)$$,
@@ -62,8 +50,7 @@ select results_eq(
 );
 
 -- A player with weight 0.5 who passes adds 0.5 to both weighted columns.
-insert into public.attempts (id, user_id, game_date, seed) values
-  ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-00000000000d', (select d from today), 4);
+select tests.start('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-00000000000d', d, 4) from today;
 select public.record_attempt_result('00000000-0000-0000-0000-0000000000d1', '{"tapsMs":[900]}', 12, true);
 select results_eq(
   'select * from counters',
@@ -76,8 +63,7 @@ select is(
 );
 
 -- Abandoned: started, never submitted. It stays counted as an attempt that did not pass.
-insert into public.attempts (id, user_id, game_date, seed) values
-  ('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-00000000000e', (select d from today), 5);
+select tests.start('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-00000000000e', d, 5) from today;
 select results_eq(
   'select * from counters',
   $$values (5, 3, 4.5::numeric, 2.5::numeric)$$,
@@ -94,8 +80,7 @@ select results_eq('select * from counters', $$values (5, 3, 4.5::numeric, 2.5::n
 
 -- A weight change after the start does not change what the pass adds: attempts and passes
 -- always use the same weight, so the weighted pass rate stays between 0 and 1.
-insert into public.attempts (id, user_id, game_date, seed) values
-  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-00000000000f', (select d from today), 6);
+select tests.start('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-00000000000f', d, 6) from today;
 update public.profiles set weight = 0 where id = '00000000-0000-0000-0000-00000000000f';
 select public.record_attempt_result('00000000-0000-0000-0000-0000000000f1', '{"tapsMs":[900]}', 12, true);
 select results_eq(

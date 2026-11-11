@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: none (T95 merged as PR #47; next is T80; uncommitted doc notes on disk go in T80's branch)
+- Active task: none (T80 merged as PR #48; next is T96; uncommitted doc notes on disk go in T96's branch)
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T80 (missing-key warning, quieter output, Playwright output in a subfolder), T96 (pgTAP fixtures), T97 (meter-reply check), then T21 daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
+- Next: T96 (pgTAP fixtures), T97 (meter-reply check), then T21 daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T80 Field key warning and quieter test output (PR #48)
+- The warning came from `key` after `{...control}` in `CountrySelect` (JSX falls back to `createElement`); only Next's canary React warns, so a lint rule (`no-restricted-syntax`, key after spread) guards it. Coverage prints `text-summary`; Playwright writes to `test-results/playwright`.
+- Review: light review, 1 round. Notes: `test-results/wait-ci.mjs` recreated (exits 3 if green but not merged). Merges since the maintainer check after T93: 2.
 
 ### 2026-11-11 — T95 One local-only toolkit for the dev scripts (PR #47)
 - `scripts/lib/localSupabase.mts`: the one localhost guard, service-role client and `check()`, used by `seed-dev` and `e2e-local`; `seed-dev` reads numerics with the app's `dbNumber`. `"type": "module"` in package.json and `allowImportingTsExtensions` in tsconfig so Node scripts can import app `.ts` files.
