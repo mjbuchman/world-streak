@@ -60,9 +60,14 @@ describe("meterHiddenFrom", () => {
   it("lives in a module the browser loads cheaply: it imports only config and the game-day arithmetic", () => {
     // The meter UI (T19) loads this module in the browser. Anything it imports ships too, so
     // Supabase, zod or the database parsers (src/lib/meterRead.ts uses those) must stay out.
-    // Every module specifier in the file, however the import or re-export is laid out.
+    // Every module specifier in the file: `from "x"` (imports and re-exports, however laid out),
+    // a bare `import "x"`, and a dynamic `import("x")`.
     const specifiersOf = (file: string) =>
-      [...readFileSync(path.join(import.meta.dirname, file), "utf8").matchAll(/\bfrom\s+"([^"]+)"/g)].map(([, s]) => s);
+      [
+        ...readFileSync(path.join(import.meta.dirname, file), "utf8").matchAll(
+          /\bfrom\s+"([^"]+)"|\bimport\s+"([^"]+)"|\bimport\(\s*"([^"]+)"/g,
+        ),
+      ].map(([, from, bare, dynamic]) => from ?? bare ?? dynamic);
     expect(specifiersOf("meter.ts").sort()).toEqual(["@/config/meter", "@/lib/gameDay"]);
     expect(specifiersOf("gameDay.ts")).toEqual(["@/config/schedule"]);
   });

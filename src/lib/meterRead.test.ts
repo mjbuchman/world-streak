@@ -110,7 +110,7 @@ describe("readMeter", () => {
     [
       "attempt count",
       { survival_threshold: 0.6, game_day_counters: { attempts: 1.5, weighted_attempts: 4, weighted_passes: 3 } },
-      /attempts/,
+      /for attempts,/,
     ],
   ])("throws on a malformed %s instead of showing NaN or 0", async (_, data, message) => {
     const { db } = fakeDb({ data, error: null });
