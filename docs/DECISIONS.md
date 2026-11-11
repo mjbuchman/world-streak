@@ -201,6 +201,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - How to change it later: `readMeter` in `src/lib/meter.ts`.
 - Confirmed by human: not needed (implementation detail); recorded for reviewers.
 
+### 2026-11-11 — Seeding a day other than today (T20)
+- Choice: `npm run seed:dev` records today's results through `record_attempt_result`, as the backlog asks. For `--date` on another day it writes each result directly and adds each pass to that day's counters right after, with the attempt's own `counted_weight`, so the counters end the same as if `record_attempt_result` had recorded them. It refuses a closed day.
+- Reason: `record_attempt_result` deliberately refuses any game date but today (the deadline rule), so the backlog's "through record_attempt_result" cannot hold for other dates without weakening that rule.
+- How to change it later: `runSeed` and `supabaseSeedDeps` in `scripts/seed-dev.mts`. T37 (`simulate:days`) meets the same constraint and can reuse this path.
+- Confirmed by human: not needed (dev tooling); recorded for reviewers.
+
 ### 2026-11-10 — Wording for a started, unsubmitted attempt (T91)
 - Choice: "You started today's attempt but haven't finished it here. If it's still open in another tab, finish it there before the day ends. Otherwise it counts as not passed. Come back tomorrow."
 - Reason: since T87 a run has no time limit, so a run still open in another tab can be submitted; the old "You left today's attempt before finishing, so it counted as not passed" could be wrong.

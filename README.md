@@ -201,6 +201,15 @@ npm run dev                      # start the app at http://localhost:3000
 
 http://localhost:3000/api/health should return `{"db":"ok"}`. Local Supabase Studio (a database browser) is at http://127.0.0.1:54323. `npm run db:reset` wipes the local database and re-applies every migration in `supabase/migrations/`.
 
+**Fake players (to watch the meter move):**
+
+```bash
+npm run seed:dev -- --players 200 --pass-rate 0.7                    # today: 200 players, 140 pass
+npm run seed:dev -- --players 50 --pass-rate 0.4 --date 2026-11-01   # another (open) day
+```
+
+It creates fresh fake accounts (`seed-…@example.test`, with profiles) and submitted attempts, so the day's counters and the meter on http://localhost:3000 change at once. Run it again to add another batch. It refuses a day that is already closed. It reads `.env.local` and refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` is localhost, so it can never touch a real project. The meter hides its numbers from 21:00 to midnight UTC, so seed and look before then. `npm run db:reset` removes every fake player. Each player takes a moment to create, so 200 take about a minute.
+
 **Checks** (the same ones CI runs):
 
 ```bash
