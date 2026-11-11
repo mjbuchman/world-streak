@@ -198,7 +198,7 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 ### 2026-11-10 — The meter before today's game day exists (T18)
 - Choice: if nobody has started today and the day's row does not exist yet, the meter answers `threshold: null`, `attempts: 0`, `passRate: null`, instead of reading the default threshold from `game_settings`.
 - Reason: the endpoint must read only `game_days` and `game_day_counters` in one query (T18). Once the close job (T21) prepares each next day, the row always exists, so this is a short-lived early state.
-- How to change it later: `readMeter` in `src/lib/meter.ts`.
+- How to change it later: `readMeter` in `src/lib/meterRead.ts`.
 - Confirmed by human: not needed (implementation detail); recorded for reviewers.
 
 ### 2026-11-11 — Seeding a day other than today (T20)

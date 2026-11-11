@@ -1,4 +1,5 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import { dbInteger, dbNumber } from "@/lib/db/numeric";
 import type { AttemptStore } from "./start";
 import { RECORD_STATUSES, type RecordStatus, type SubmitStore } from "./submit";
 import type { DayAttempt, GameDay } from "./types";
@@ -44,8 +45,7 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient, "from" | "rpc">): 
         .single();
       if (error) throwDbError("Game day lookup", error);
       const row = data as GameDayRow;
-      // PostgREST returns numeric columns as JSON numbers or strings depending on size.
-      return { challengeType: row.challenge_type, passTarget: Number(row.pass_target), closed: row.closed_at !== null };
+      return { challengeType: row.challenge_type, passTarget: dbNumber(row.pass_target, "pass_target"), closed: row.closed_at !== null };
     },
 
     async findAttemptForDay(userId, gameDate): Promise<DayAttempt | null> {
@@ -61,9 +61,9 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient, "from" | "rpc">): 
       if (row.submitted_at === null) return { submitted: false };
       return {
         submitted: true,
-        score: Number(row.score),
+        score: dbNumber(row.score, "score"),
         passed: row.passed === true,
-        passTarget: Number(row.game_days.pass_target),
+        passTarget: dbNumber(row.game_days.pass_target, "pass_target"),
       };
     },
 
@@ -90,7 +90,7 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient, "from" | "rpc">): 
       return {
         userId: row.user_id,
         gameDate: row.game_date,
-        seed: Number(row.seed),
+        seed: dbInteger(row.seed, "seed"),
         startedAt: new Date(row.started_at),
         submitted: row.submitted_at !== null,
       };

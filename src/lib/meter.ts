@@ -1,8 +1,8 @@
-// Client-safe: the meter UI imports these types and helpers in the browser, so Supabase is
-// imported as a type only (a test checks this).
-import type { SupabaseClient } from "@supabase/supabase-js";
+// Client-safe and dependency-light: the meter UI imports these types and helpers in the browser,
+// so this module imports only config and the game-day arithmetic (a test checks this). The
+// database read lives in src/lib/meterRead.ts.
 import { METER_CACHE_SECONDS, METER_HIDE_HOURS } from "@/config/meter";
-import { deadlineFor, gameDateAt, HOUR_MS } from "@/lib/gameDay";
+import { deadlineFor, HOUR_MS } from "@/lib/gameDay";
 
 /** When the meter hides for the day closing at `closesAt`: METER_HIDE_HOURS before it. */
 export function meterHiddenFrom(closesAt: Date | string): Date {
@@ -47,14 +47,6 @@ export function meterBody(now: Date, gameDate: string, row: MeterRow): MeterBody
   return { gameDate, status: "open", passRate, attempts: row.attempts, threshold: row.threshold, closesAt, streak: null };
 }
 
-type CountersRow = { attempts: number; weighted_attempts: number | string; weighted_passes: number | string };
-type DayRow = {
-  survival_threshold: number | string;
-  // A one-to-one embed (the counters' key is the day's key) comes back as an object; accept a
-  // one-element array too, so a change in how PostgREST detects that can never read as zero.
-  game_day_counters: CountersRow | CountersRow[] | null;
-};
-
 /**
  * How long a CDN may keep `body`: METER_CACHE_SECONDS, but never past the moment the reading
  * goes out of date (the hidden window starting, or the deadline). The cache may also serve a
@@ -64,30 +56,4 @@ export function meterCacheSeconds(body: MeterBody, now: Date): number {
   const outOfDateAt = body.status === "open" ? meterHiddenFrom(body.closesAt) : new Date(body.closesAt);
   const secondsLeft = Math.floor((outOfDateAt.getTime() - now.getTime()) / 1000);
   return Math.max(0, Math.min(METER_CACHE_SECONDS, Math.floor(secondsLeft / 2)));
-}
-
-/**
- * Reads today's meter: the day's threshold and its running counters, in one query. It never
- * counts attempt rows (the counters are kept as attempts start and pass, T17). Pass the
- * service-role client: the counters are server-only, so that the hidden window means something.
- */
-export async function readMeter(db: Pick<SupabaseClient, "from">, now: Date): Promise<MeterBody> {
-  const gameDate = gameDateAt(now);
-  const { data, error } = await db
-    .from("game_days")
-    .select("survival_threshold, game_day_counters(attempts, weighted_attempts, weighted_passes)")
-    .eq("game_date", gameDate)
-    .maybeSingle();
-  if (error) throw new Error(`Meter lookup failed: ${error.message}`);
-
-  const day = data as DayRow | null;
-  const embedded = day?.game_day_counters ?? null;
-  const counters = Array.isArray(embedded) ? (embedded[0] ?? null) : embedded;
-  // PostgREST returns numeric columns as JSON numbers or strings depending on size.
-  return meterBody(now, gameDate, {
-    threshold: day ? Number(day.survival_threshold) : null,
-    attempts: Number(counters?.attempts ?? 0),
-    weightedAttempts: Number(counters?.weighted_attempts ?? 0),
-    weightedPasses: Number(counters?.weighted_passes ?? 0),
-  });
 }

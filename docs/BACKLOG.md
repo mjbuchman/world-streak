@@ -358,7 +358,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T20 Local fake-player seeding script
 - Type: infra
-- Status: in-progress
+- Status: done
 - Depends on: T17
 - Acceptance criteria:
   - [ ] `npm run seed:dev -- --players 200 --pass-rate 0.7 [--date YYYY-MM-DD]` creates 200 fake users with profiles and submitted attempts for the date (default today), of which 140 passed, through `record_attempt_result`, so the counters update.
@@ -972,7 +972,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T92 One strict parser for numeric database values
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none (coordinate with T65, which also edits `src/lib/attempts/store.ts`)
 - Acceptance criteria:
   - [ ] The strict `numeric` zod schema in `src/lib/settings.ts` moves to one shared module (for example `src/lib/db/numeric.ts`): a JSON number or a plain decimal string, and a throw on anything else (null, `""`, `"NaN"`, non-numbers).

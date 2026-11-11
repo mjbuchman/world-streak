@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withServerErrors } from "@/lib/http/route";
-import { meterCacheSeconds, readMeter } from "@/lib/meter";
+import { meterCacheSeconds } from "@/lib/meter";
+import { readMeter } from "@/lib/meterRead";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 /**

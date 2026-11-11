@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const readMeter = vi.hoisted(() => vi.fn());
 const adminClient = vi.hoisted(() => ({ admin: true }));
 
-vi.mock("@/lib/meter", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/meter")>()), readMeter }));
+vi.mock("@/lib/meterRead", () => ({ readMeter }));
 vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: () => adminClient }));
 // The shared route helpers import the cookie client; the meter never uses it (fails if it does).
 vi.mock("@/lib/supabase/server", () => ({
