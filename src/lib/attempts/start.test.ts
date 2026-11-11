@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { flashCount } from "@/challenges/flash-count/engine";
+import { innerClock } from "@/challenges/inner-clock/engine";
 import { paramsFromSeed } from "@/challenges/stacking/engine";
 import { startAttempt, type AttemptStore } from "./start";
 
@@ -22,6 +24,14 @@ function fakeStore(overrides: Partial<AttemptStore> = {}): AttemptStore {
 const start = (store: AttemptStore, seed = 1234) => startAttempt({ userId, now, store, randomSeed: () => seed });
 
 describe("startAttempt", () => {
+  it.each([
+    ["inner-clock", innerClock.paramsFromSeed],
+    ["flash-count", flashCount.paramsFromSeed],
+  ] as const)("starts a %s day with that challenge's instance for the seed (T30)", async (challengeType, paramsFor) => {
+    const store = fakeStore({ gameDay: vi.fn(async () => ({ challengeType, passTarget: 0.5, closed: false })) });
+    expect(await start(store, 99)).toMatchObject({ status: 200, body: { challengeType, seed: 99, params: paramsFor(99), passTarget: 0.5 } });
+  });
+
   it("refuses a player with no profile, and creates nothing", async () => {
     const store = fakeStore({ hasProfile: vi.fn(async () => false) });
     expect(await start(store)).toEqual({ status: 403, body: { error: "profile-required" } });

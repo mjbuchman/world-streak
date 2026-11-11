@@ -18,7 +18,11 @@ export default defineConfig({
     baseURL: `http://localhost:${PORT}`,
     trace: "retain-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: "after/**" },
+    // Tests that change today's game day for everyone (its challenge): only after the rest.
+    { name: "after", use: { ...devices["Desktop Chrome"] }, testMatch: "after/**/*.spec.ts", dependencies: ["chromium"] },
+  ],
   webServer: {
     // CI tests the production build; locally the dev server is faster to start and reuse.
     command: isCI ? `npm run build && npm run start -- -p ${PORT}` : `npm run dev -- -p ${PORT}`,

@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak is COMPLETE and play-tested (Nov 11); its follow-ups T102-T105 are done (new home page: gauge meter and streak bars).
-- Active task: T29 Swift Sum renderer and practice page.
+- Active task: T30 All challenges in daily play and practice hub.
 - Blocked tasks: none
 - Waiting on the human: nothing now; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
@@ -18,6 +18,13 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — Maintainer check after T29; T30 split
+- Health good. New task T109 (one practice page shell); its second idea (a registration consistency check) is already the registry test, and T30's UI registry will add the same check. T30 was over 400 lines, so the practice hub is now T108. Merges since this check: 0.
+
+### 2026-11-11 — T29 Swift Sum dot board and practice page (PR #67)
+- `render.ts` (square board, dots in a 6% padded field, `dotsVisible` by elapsed time), `FlashCountGame` (first frame after mount, cleared by `performance.now()`, numeric answer 0-999) and `/practice/flash-count`. All three challenges can now be practised (no home links yet: T30).
+- Review rounds: spec 1, quality 1, tests 1. Merges since the end-of-M2 maintainer check: 10 (check due).
 
 ### 2026-11-11 — T28 Flash Count (Swift Sum) engine (PR #66)
 - `src/challenges/flash-count/engine.ts`: 15-45 dots in whole thousandths, radii 0.018-0.028, centres >= 0.08 apart; 200 tries per dot, else a fixed grid. Score = error % (2 decimals), lower-better. Migration `20261112060000_flash_count` (15% placeholder).
