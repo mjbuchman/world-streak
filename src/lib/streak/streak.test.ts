@@ -160,6 +160,11 @@ describe("shapeRecentDays", () => {
     expect(days[13]).toEqual({ gameDate: "2026-11-14", kind: "empty", passRate: null, threshold: 0.6, outcome: "broken" });
   });
 
+  it("shows an empty slot even for a survived day with no pass rate inside the run", () => {
+    const days = shapeRecentDays([closed("2026-11-14", "survived", null)], today, "2026-11-14");
+    expect(days[13]).toMatchObject({ kind: "empty", outcome: "survived" });
+  });
+
   it("treats a run of survived days as muted when it is not the current one", () => {
     // With no current run (it broke), earlier survived days are history, not the streak.
     expect(kinds(shapeRecentDays([closed("2026-11-13", "survived"), closed("2026-11-14", "broken")], today, null)).slice(12)).toEqual([
@@ -237,6 +242,14 @@ describe("readStreakSummary", () => {
     }
   });
 
+  it("starts the recent window 15 days back, across a year boundary", async () => {
+    const { db, queries } = fakeDb([{ data: { current: 0, best: 0 }, error: null }, { data: null, error: null }, NO_RECENT]);
+    const summary = await readStreakSummary(db, new Date("2027-01-05T08:00:00Z"));
+    expect(queries[2]).toContainEqual(["gte", "game_date", "2026-12-21"]);
+    expect(summary.recent[0].gameDate).toBe("2026-12-22");
+    expect(summary.recent[13].gameDate).toBe("2027-01-04");
+  });
+
   it("has no yesterday line until yesterday has closed", async () => {
     const { db } = fakeDb([
       { data: { current: 0, best: 0, current_start_date: null }, error: null },
@@ -249,6 +262,7 @@ describe("readStreakSummary", () => {
   it.each([
     ["the streak", [{ data: null, error: { message: "down" } }, { data: null, error: null }], /World streak lookup failed: down/],
     ["a malformed streak", [{ data: { current: -1, best: 0 }, error: null }, { data: null, error: null }], /current/],
+    ["a running streak with no start date", [{ data: { current: 2, best: 2 }, error: null }, { data: null, error: null }], /start date/],
     [
       "yesterday",
       [{ data: { current: 0, best: 0 }, error: null }, { data: null, error: { message: "down" } }],

@@ -53,6 +53,14 @@ describe("StreakPanel", () => {
     expect(within(region()).getByText("Yesterday")).toBeTruthy();
   });
 
+  it("draws a day nobody played as an empty slot, with no bar and no threshold line", () => {
+    const nobody: RecentDay = { gameDate: "2026-11-14", kind: "empty", passRate: null, threshold: 0.6, outcome: "broken" };
+    const { container } = render(<StreakPanel summary={{ ...summary, recent: [...recent.slice(0, 13), nobody] }} />);
+    const last = [...container.querySelectorAll("[data-kind]")].at(-1)!;
+    expect(last.querySelector("[data-bar]")).toBeNull();
+    expect(last.querySelector("[data-line]")).toBeNull();
+  });
+
   it("lists the same days for screen readers, while the bars themselves are hidden from them", () => {
     const { container } = render(<StreakPanel summary={summary} />);
     const list = within(region()).getByRole("list", { name: "The last 14 days" });

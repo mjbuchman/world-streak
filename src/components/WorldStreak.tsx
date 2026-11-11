@@ -14,14 +14,17 @@ import styles from "./WorldStreak.module.css";
 
 const asPercent = (fraction: number) => `${Math.round(fraction * 100)}%`;
 
-/** One bar: its height is the day's pass rate, a tangerine line marks that day's threshold. */
+/**
+ * One bar: its height is the day's pass rate, a tangerine line marks that day's threshold. A day
+ * with no result, or nobody playing, is an empty slot (its details are in the list below).
+ */
 function Bar({ day }: { day: RecentDay }) {
   return (
     <div className={styles.slot} data-kind={day.kind}>
-      {day.kind !== "empty" && day.passRate !== null && (
-        <div className={styles.bar} data-bar="" style={{ height: asPercent(day.passRate) }} />
+      {day.passRate !== null && <div className={styles.bar} data-bar="" style={{ height: asPercent(day.passRate) }} />}
+      {day.passRate !== null && day.threshold !== null && (
+        <div className={styles.line} data-line="" style={{ bottom: asPercent(day.threshold) }} />
       )}
-      {day.threshold !== null && <div className={styles.line} data-line="" style={{ bottom: asPercent(day.threshold) }} />}
     </div>
   );
 }

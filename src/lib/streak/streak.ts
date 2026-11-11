@@ -122,6 +122,8 @@ export async function readStreakSummary(db: Pick<SupabaseClient, "from" | "rpc">
   const day = dayReply.data as { outcome: unknown; final_pass_rate: unknown } | null;
   const current = dbInteger(streak.current, "current");
   if (current < 0) throw new Error(`Expected a streak length for current, got ${current}`);
+  const currentStart = current > 0 ? streak.current_start_date : null;
+  if (currentStart === undefined || currentStart === "") throw new Error("A running streak came without its start date");
   const closed = (recentReply.data as RecentRow[]).map((row) => ({
     gameDate: row.game_date,
     outcome: dbOutcome(row.outcome),
@@ -132,7 +134,7 @@ export async function readStreakSummary(db: Pick<SupabaseClient, "from" | "rpc">
     current,
     best: dbInteger(streak.best, "best"),
     yesterday: day && { outcome: dbOutcome(day.outcome), finalPassRate: dbRate(day.final_pass_rate, "final_pass_rate") },
-    recent: shapeRecentDays(closed, today, current > 0 ? (streak.current_start_date ?? null) : null),
+    recent: shapeRecentDays(closed, today, currentStart),
   };
 }
 
