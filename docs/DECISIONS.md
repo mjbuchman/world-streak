@@ -230,3 +230,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: the backlog puts the computation in the close, but a player starting just after midnight (before the close job runs, T23) would otherwise create the day with the plain defaults. One path keeps both the same. The only difference in that race is the streak used for the steps, which is one day behind; with the launch steps at 0 it changes nothing.
 - How to change it later: `pass_target_for` and `ensure_game_day` (migration `20261112010000_prepare_next_day`); the values are the admin-editable `game_settings` (T16, confirmed).
 - Confirmed by human: not needed (the values are the confirmed T16 settings); recorded for reviewers and T23.
+
+### 2026-11-11 — /admin creates the next 7 days early (T25)
+- Choice: as the backlog asks, opening `/admin` creates any missing day among today and the next 7 with `ensure_game_day`. A day created early gets the pass target and threshold that today's scores and streak give, and keeps them, since `ensure_game_day` never touches an existing row. So until an admin edits it, it misses the streak step and the newer scores it would have got from the close the night before.
+- Reason: the admin needs rows to edit (T99). With the launch steps at 0 only the percentile target differs, and only once there are 50 recent scores.
+- How to change it later: T99 could show such days as "provisional" and recompute any unedited, unstarted future day at the close (for example with an `edited` flag), or `/admin` could list future days without creating them until one is saved.
+- Confirmed by human: pending (NEEDS_HUMAN).

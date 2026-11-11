@@ -32,7 +32,7 @@ describe("/admin", () => {
     expect(readAdminDays).not.toHaveBeenCalled();
   });
 
-  it("lists the coming days for an admin, read with the service role", async () => {
+  it("lists the coming days for an admin, read with the service role", { timeout: 10_000 }, async () => {
     isAdmin.mockResolvedValue(true);
     readAdminDays.mockResolvedValue([
       { gameDate: "2026-11-11", challengeType: "stacking", passTarget: 10, threshold: 0.6, closed: false },

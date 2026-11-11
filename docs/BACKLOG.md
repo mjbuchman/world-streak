@@ -440,7 +440,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
   - [ ] On `/admin`, each open day's pass target and survival threshold (0 to 1, entered as %) are editable. Saving calls a server action that re-checks `is_admin` and validates with zod. Closed days are read-only, in the database too (row-level security: admins may update only the two fields, only on open days).
   - [ ] Changing today's survival threshold is reflected in `/api/meter` on the next cache refresh.
   - [ ] Unit tests for the server action (non-admin is rejected, invalid threshold 1.5 is rejected, closed day is rejected); pgTAP for the policy. e2e: an admin changes tomorrow's threshold to 55% and sees it persisted.
-- Notes: Split from T25. From the T77 review: the Tower's pass target must stay within the board (1 to 15 rows; the HUD rounds a fractional target up), or the target line is drawn off the grid; validate that range for stacking days.
+- Notes: Split from T25. Ask the human first about the "create the coming days early" item in NEEDS_HUMAN (DECISIONS, T25): recomputing unedited future days at the close may join this task. From the T77 review: the Tower's pass target must stay within the board (1 to 15 rows; the HUD rounds a fractional target up), or the target line is drawn off the grid; validate that range for stacking days.
 
 ## M3 More challenges and sharing
 

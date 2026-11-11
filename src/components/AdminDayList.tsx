@@ -12,7 +12,7 @@ export function AdminDayList({ days }: { days: AdminDay[] }) {
             <th scope="col">Day</th>
             <th scope="col">Challenge</th>
             <th scope="col">Pass target</th>
-            <th scope="col">Needed</th>
+            <th scope="col">Survival threshold</th>
             <th scope="col">Status</th>
           </tr>
         </thead>

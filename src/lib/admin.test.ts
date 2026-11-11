@@ -86,6 +86,15 @@ describe("readAdminDays", () => {
     expect(result[0]).toEqual({ gameDate: "2026-11-11", challengeType: "stacking", passTarget: 10, threshold: 0.6, closed: false });
   });
 
+  it.each([
+    ["2026-11-11T23:59:59Z", "2026-11-11"],
+    ["2026-11-12T00:00:00Z", "2026-11-12"],
+  ])("starts from the game day being played at %s, not the server's calendar date", async (now, first) => {
+    const { db, calls } = fakeDb([...Array.from({ length: 8 }, () => ok), { data: [], error: null }]);
+    await readAdminDays(db, new Date(now));
+    expect(calls[0]).toEqual([["rpc", "ensure_game_day", { d: first }]]);
+  });
+
   it("marks a closed day", async () => {
     const { db } = fakeDb([...Array.from({ length: 8 }, () => ok), { data: [row("2026-11-11", "2026-11-12T00:00:05Z")], error: null }]);
     expect((await readAdminDays(db, new Date("2026-11-11T09:00:00Z")))[0].closed).toBe(true);
