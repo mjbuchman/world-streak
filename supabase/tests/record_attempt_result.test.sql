@@ -33,14 +33,16 @@ insert into public.profiles (id, birth_date, country) values
   ('00000000-0000-0000-0000-00000000000a', '1990-01-01', 'US'),
   ('00000000-0000-0000-0000-00000000000b', '1991-02-02', 'US');
 select public.ensure_game_day(public.game_date_at(now()));
-insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold, closed_at, outcome) values
-  ('2000-01-01', 'stacking', 10, 0.6, '2000-01-02T00:00:05Z', 'survived'),
-  ('2000-01-03', 'stacking', 10, 0.6, null, null);
+insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold) values
+  ('2000-01-01', 'stacking', 10, 0.6),
+  ('2000-01-03', 'stacking', 10, 0.6);
 insert into public.attempts (id, user_id, game_date, seed) values
   ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000000a', public.game_date_at(now()), 1),
   ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-00000000000a', '2000-01-03', 3),
   ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-00000000000b', '2000-01-01', 2),
   ('00000000-0000-0000-0000-0000000000b2', '00000000-0000-0000-0000-00000000000b', public.game_date_at(now()), 4);
+-- 2000-01-01 is closed after its attempt started: a start on a closed day is refused (T93).
+update public.game_days set closed_at = '2000-01-02T00:00:05Z', outcome = 'survived' where game_date = '2000-01-01';
 
 -- Players cannot call it, even for their own attempt.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);

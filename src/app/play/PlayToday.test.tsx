@@ -217,6 +217,17 @@ describe("PlayToday", () => {
     expect(await screen.findByText(/You left today's attempt before finishing/)).toBeTruthy();
   });
 
+  it("says the day just closed, not that the player left, when a start races the deadline", async () => {
+    respond(json(409, { error: "day-closed" }));
+    render(<PlayToday initial={{ kind: "ready" }} />);
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("Today's challenge just closed. Press Start to play the next one.");
+    expect(screen.queryByText(/You left today's attempt/)).toBeNull();
+    expect(games).toHaveLength(0);
+    // Pressing Start again works out the new game date, so it starts the next day's attempt.
+    expect(screen.getByRole("button", { name: "Start" })).toHaveProperty("disabled", false);
+  });
+
   it("lets the player try Start again if starting failed", async () => {
     for (const failure of [json(500, { error: "server-error" }), new Error("offline")]) {
       respond(failure);

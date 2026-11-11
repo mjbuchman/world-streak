@@ -71,6 +71,12 @@ describe("startAttempt", () => {
     expect(findAttemptForDay).toHaveBeenCalledTimes(2);
   });
 
+  it("answers 409 day-closed when the day closed between working out the date and the insert", async () => {
+    // The close job ran at the deadline just as this start was being made (T93).
+    const store = fakeStore({ insertAttempt: vi.fn(async () => "day-closed" as const) });
+    expect(await start(store)).toEqual({ status: 409, body: { error: "day-closed" } });
+  });
+
   it("still answers 409, as not submitted, if the winning row cannot be read back", async () => {
     const store = fakeStore({ insertAttempt: vi.fn(async () => "duplicate" as const) });
     expect(await start(store)).toEqual({ status: 409, body: { error: "already-started", submitted: false } });

@@ -5,6 +5,8 @@ import { RECORD_STATUSES, type RecordStatus, type SubmitStore } from "./submit";
 import type { DayAttempt, GameDay } from "./types";
 
 const UNIQUE_VIOLATION = "23505";
+// Raised by the attempt insert trigger when the game day is already closed (migration T93).
+const DAY_CLOSED = "WS001";
 
 function throwDbError(operation: string, error: PostgrestError): never {
   throw new Error(`${operation} failed: ${error.message}`);
@@ -74,6 +76,7 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient, "from" | "rpc">): 
         .select("id")
         .single();
       if (error?.code === UNIQUE_VIOLATION) return "duplicate";
+      if (error?.code === DAY_CLOSED) return "day-closed";
       if (error) throwDbError("Attempt insert", error);
       return { id: (data as { id: string }).id };
     },

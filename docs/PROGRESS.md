@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T92 One strict parser for numeric database values
+- Active task: T93 Day counter integrity
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T92, T93, then T21 daily close. T91 (approved wording) fits in when convenient.
+- Next: T93, the maintainer check (5 merges after T93), then T21 daily close. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T92 One strict parser for numeric database values (PR #45)
+- `src/lib/db/numeric.ts` (`numericSchema`, `dbNumber`, `dbInteger`) used by the attempt store and the meter read, so a malformed row fails with a 500 instead of becoming 0 or NaN. `readMeter` moved to the server-only `src/lib/meterRead.ts`.
+- Review rounds: spec 2, quality 2, tests 2 (round 1, quality: `meter.ts`, loaded by the browser, pulled zod into the home page's bundle; fixed and checked in the build output; an import allowlist test now guards it).
+- Notes: client-bundle checks are worth doing by grepping `.next/static/chunks` after a build. Merges since the maintainer check after T18: 4.
 
 ### 2026-11-11 — T20 Local fake-player seeding script (PR #44)
 - `npm run seed:dev -- --players N --pass-rate R [--date YYYY-MM-DD]`: fresh fake accounts with profiles and submitted attempts; today through `record_attempt_result`, another day by direct writes plus a pass per passing attempt with its `counted_weight` (DECISIONS); refuses closed days and any non-localhost URL (guard first, exits 1). README "Fake players".
