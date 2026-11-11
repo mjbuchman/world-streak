@@ -63,9 +63,12 @@ describe("readAdminDays", () => {
     closed_at: closedAt,
   });
 
+  const ensured = Array.from({ length: 8 }, () => ok);
+  const noneStarted = { data: [], error: null };
+
   it("makes sure today and the next 7 days exist, then reads them in date order", async () => {
     const days = Array.from({ length: ADMIN_DAYS_AHEAD + 1 }, (_, i) => row(`2026-11-${String(11 + i).padStart(2, "0")}`));
-    const { db, calls } = fakeDb([...Array.from({ length: 8 }, () => ok), { data: days, error: null }]);
+    const { db, calls } = fakeDb([...ensured, { data: days, error: null }, noneStarted]);
     const result = await readAdminDays(db, new Date("2026-11-11T09:00:00Z"));
 
     expect(calls.slice(0, 8).map(([first]) => first)).toEqual(
@@ -82,32 +85,56 @@ describe("readAdminDays", () => {
       ["lte", "game_date", "2026-11-18"],
       ["order", "game_date", { ascending: true }],
     ]);
+    expect(calls[9]).toEqual([
+      ["from", "game_day_counters"],
+      ["select", "game_date"],
+      ["gt", "attempts", 0],
+      ["gte", "game_date", "2026-11-11"],
+      ["lte", "game_date", "2026-11-18"],
+    ]);
     expect(result).toHaveLength(8);
-    expect(result[0]).toEqual({ gameDate: "2026-11-11", challengeType: "stacking", passTarget: 10, threshold: 0.6, closed: false });
+    expect(result[0]).toEqual({
+      gameDate: "2026-11-11",
+      challengeType: "stacking",
+      passTarget: 10,
+      threshold: 0.6,
+      closed: false,
+      started: false,
+    });
   });
 
   it.each([
     ["2026-11-11T23:59:59Z", "2026-11-11"],
     ["2026-11-12T00:00:00Z", "2026-11-12"],
   ])("starts from the game day being played at %s, not the server's calendar date", async (now, first) => {
-    const { db, calls } = fakeDb([...Array.from({ length: 8 }, () => ok), { data: [], error: null }]);
+    const { db, calls } = fakeDb([...ensured, { data: [], error: null }, noneStarted]);
     await readAdminDays(db, new Date(now));
     expect(calls[0]).toEqual([["rpc", "ensure_game_day", { d: first }]]);
   });
 
   it("marks a closed day", async () => {
-    const { db } = fakeDb([...Array.from({ length: 8 }, () => ok), { data: [row("2026-11-11", "2026-11-12T00:00:05Z")], error: null }]);
+    const { db } = fakeDb([...ensured, { data: [row("2026-11-11", "2026-11-12T00:00:05Z")], error: null }, noneStarted]);
     expect((await readAdminDays(db, new Date("2026-11-11T09:00:00Z")))[0].closed).toBe(true);
   });
 
+  it("marks only the days somebody has started", async () => {
+    const days = [row("2026-11-11"), row("2026-11-12"), row("2026-11-13")];
+    const { db } = fakeDb([...ensured, { data: days, error: null }, { data: [{ game_date: "2026-11-12" }], error: null }]);
+    const result = await readAdminDays(db, new Date("2026-11-11T09:00:00Z"));
+    expect(result.map((day) => day.started)).toEqual([false, true, false]);
+  });
+
   it("throws when a day cannot be prepared or read, or a number is malformed", async () => {
-    const failsEnsure = fakeDb([{ data: null, error: { message: "no settings" } }, ...Array.from({ length: 7 }, () => ok)]);
+    const failsEnsure = fakeDb([{ data: null, error: { message: "no settings" } }, ...ensured.slice(1)]);
     await expect(readAdminDays(failsEnsure.db, new Date())).rejects.toThrow("Preparing game days failed: no settings");
 
-    const failsRead = fakeDb([...Array.from({ length: 8 }, () => ok), { data: null, error: { message: "down" } }]);
+    const failsRead = fakeDb([...ensured, { data: null, error: { message: "down" } }, noneStarted]);
     await expect(readAdminDays(failsRead.db, new Date())).rejects.toThrow("Game day lookup failed: down");
 
-    const malformed = fakeDb([...Array.from({ length: 8 }, () => ok), { data: [{ ...row("2026-11-11"), pass_target: "x" }], error: null }]);
+    const failsStarts = fakeDb([...ensured, { data: [row("2026-11-11")], error: null }, { data: null, error: { message: "denied" } }]);
+    await expect(readAdminDays(failsStarts.db, new Date())).rejects.toThrow("Start count lookup failed: denied");
+
+    const malformed = fakeDb([...ensured, { data: [{ ...row("2026-11-11"), pass_target: "x" }], error: null }, noneStarted]);
     await expect(readAdminDays(malformed.db, new Date())).rejects.toThrow(/pass_target/);
   });
 });

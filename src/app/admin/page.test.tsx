@@ -36,12 +36,17 @@ describe("/admin", () => {
   it("lists the coming days for an admin, read with the service role: open ones editable, closed ones not", { timeout: 10_000 }, async () => {
     isAdmin.mockResolvedValue(true);
     readAdminDays.mockResolvedValue([
-      { gameDate: "2026-11-11", challengeType: "stacking", passTarget: 3.5, threshold: 0.55, closed: true },
-      { gameDate: "2026-11-12", challengeType: "stacking", passTarget: 10, threshold: 0.6, closed: false },
+      { gameDate: "2026-11-11", challengeType: "stacking", passTarget: 3.5, threshold: 0.55, closed: true, started: true },
+      { gameDate: "2026-11-12", challengeType: "stacking", passTarget: 10, threshold: 0.6, closed: false, started: false },
+      { gameDate: "2026-11-13", challengeType: "stacking", passTarget: 8, threshold: 0.6, closed: false, started: true },
     ]);
     render(await AdminPage());
     expect(readAdminDays).toHaveBeenCalledWith(serviceClient, expect.any(Date));
-    const [closed, open] = within(screen.getByRole("region", { name: "Coming game days" })).getAllByRole("row").slice(1);
+    const [closed, open, started] = within(screen.getByRole("region", { name: "Coming game days" })).getAllByRole("row").slice(1);
+    expect(within(started).getAllByRole("spinbutton").map((input) => input.getAttribute("aria-label"))).toEqual([
+      "Survival threshold in percent for Nov 13, 2026",
+    ]);
+    expect(within(started).getByText("Locked: players have started this day.")).toBeTruthy();
     expect([...(closed as HTMLTableRowElement).cells].map((cell) => cell.textContent)).toEqual([
       "Nov 11, 2026",
       "Teetering Tower",

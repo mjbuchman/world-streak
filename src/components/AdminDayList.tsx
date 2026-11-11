@@ -31,7 +31,14 @@ export function AdminDayList({ days }: { days: AdminDay[] }) {
               return (
                 <GameDayEditRow
                   key={day.gameDate}
-                  day={{ gameDate: day.gameDate, label, challenge, passTarget: day.passTarget, thresholdPercent: asPercent(day.threshold) }}
+                  day={{
+                    gameDate: day.gameDate,
+                    label,
+                    challenge,
+                    passTarget: day.passTarget,
+                    thresholdPercent: asPercent(day.threshold),
+                    started: day.started,
+                  }}
                 />
               );
             }

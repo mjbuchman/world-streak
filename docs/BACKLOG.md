@@ -434,7 +434,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T99 Admin game-day editor
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T25
 - Acceptance criteria:
   - [ ] On `/admin`, each open day's pass target and survival threshold (0 to 1, entered as %) are editable. Saving calls a server action that re-checks `is_admin` and validates with zod. Closed days are read-only, in the database too (row-level security: admins may update only the two fields, only on open days).
@@ -1181,3 +1181,55 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `AdminDayList.tsx` and `HistoryTable.tsx` no longer share `HistoryTable.module.css`: the shared table rules move to a neutral module (for example `DataTable.module.css`) both import, or the admin list gets its own.
   - [ ] Rendered markup is unchanged and the existing component tests pass unmodified; `npm run verify` passes.
 - Notes: From the maintainer check after T25 (about 60 lines). A restyle of the history table would otherwise silently change the admin page. Fold into T99 if T99 restyles the admin table anyway.
+
+### T102 Today's pass target locks once the day has started
+- Type: feature
+- Status: in-progress
+- Depends on: T99
+- Acceptance criteria:
+  - [ ] A migration makes the database refuse a change to a game day's pass target once that day has any attempt (admins included); the threshold stays editable on any open day. pgTAP covers: target edit before any start allowed, refused after a start, threshold edit after a start allowed.
+  - [ ] On `/admin`, a started day's pass target is shown read-only with a short reason; the save action reports a refused edit instead of failing silently.
+  - [ ] `npm run verify` and `npm run test:db` pass.
+- Notes: Human decision at the M2 play-test (DECISIONS, Nov 11). Full review (migration, row-level security).
+
+### T103 Show the meter until the deadline
+- Type: maintenance
+- Status: todo
+- Depends on: T19
+- Acceptance criteria:
+  - [ ] `METER_HIDE_HOURS` becomes 0, and with 0 the meter and `/api/meter` never answer `hidden` before the deadline (unit tests at 0, plus the hidden path still tested with a non-zero value so it can be switched back on).
+  - [ ] The hidden message reads correctly for any non-zero value (no "final 0 hours"); README or config comment says how to turn hiding back on.
+  - [ ] `npm run verify` passes; e2e if the meter flow tests rely on the window.
+- Notes: Human decision at the M2 play-test: hide it later only if sniping becomes a real problem. Keep the private-counters migration as is. Full review (the meter).
+
+### T104 Gauge meter at the top of the home page
+- Type: feature
+- Status: todo
+- Depends on: T103
+- Acceptance criteria:
+  - [ ] Follows the "Chosen" artboard of https://claude.ai/artifact/MRXZU4jQW9RvVqLLDohXXQ (option A's meter). Home order: header, meter, today's challenge card, streak card. The countdown ("Closes in h:mm:ss") moves to the page header.
+  - [ ] The meter is a half-circle gauge: the arc fills to the pass rate (mint when at or above the threshold, light tangerine below), a glowing tangerine tick marks the threshold, the big percentage sits inside the arc with "passing right now", and a pill says "N points above the line", "N points below the line" or "Right on the line". Under it: the threshold ("60% needed") and the attempt count. A soft glow behind it takes the same colour as the state.
+  - [ ] Keeps today's behaviour: `role="meter"` with value and value text, loading and unavailable states, "No attempts yet" when the pass rate is null, the reload at the deadline, polling only while visible. The arc animates to a new value (about 400 ms ease-out); instant with reduced motion.
+  - [ ] The challenge card keeps its current content, with option A's "Your part today" eyebrow. On a 390 x 844 phone the Play button is visible without scrolling (e2e check).
+  - [ ] Text contrast at least 4.5:1 (3:1 for 24 px and up); colours, radii and shadows from `tokens.css` (add tokens if needed); `npm run verify` and `npm run test:e2e` pass; meter tests updated to the new markup without weakening.
+- Notes: Human choice after the M2 play-test (Nov 11). The mockup draws the arc with a conic gradient and a masking circle; an SVG arc is fine too if it animates more cleanly.
+
+### T105 Streak card with a 14-day bar chart
+- Type: feature
+- Status: todo
+- Depends on: T104
+- Acceptance criteria:
+  - [ ] Follows the "Chosen" artboard (option A's header with option C's bars). Header: "World streak" eyebrow, the big glowing mint streak number with "days", and "Best N" on the right.
+  - [ ] Under it, one bar for each of the last 14 days, oldest on the left: the bar height is that day's final pass rate and a tangerine line marks that day's threshold. Survived days in the streak are mint, the day that broke a streak is light tangerine, other closed days are muted, and a day with no row or no attempts shows as an empty slot. Labels "14 days ago" and "Yesterday". An accessible text alternative lists the days (date, pass rate, needed, survived or broken).
+  - [ ] Keeps yesterday's line and the "Every day so far" link. The read of the last 14 closed days is public (no service role), with unit tests for the shaping (missing days, broken day, fewer than 14 days of history).
+  - [ ] Contrast and tokens as in T104; `npm run verify` and `npm run test:e2e` pass; streak tests updated without weakening.
+- Notes: Human choice after the M2 play-test (Nov 11). Reuse the history read in `src/lib/streak/streak.ts` where it fits.
+
+### T106 Patch-level dependency bump
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] Patch/minor bumps only: `next` and `eslint-config-next` 16.4.6, `react` and `react-dom` 19.3.1, `supabase` 3.1.0, `@testing-library/user-event` 14.6.9 (package.json and lockfile). Not `eslint` 10, `typescript` 7 or `@types/node` 26.
+  - [ ] `npm run verify` and `npm run test:e2e` pass; `npm audit` stays clean; README "Running the app" still matches the Supabase CLI.
+- Notes: From the end-of-M2 maintainer check. Its other proposal (flaky 6-worker sign-up e2e) is already T78; do T78 before M3.

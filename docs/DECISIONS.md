@@ -186,14 +186,14 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Choice: a submission the server refused (day closed, implausible timing) shows "Counted as not passed" and "...so it counted as not passed."; one that never arrived shows "Result not sent" and "Reload the page to see whether it counted."
 - Reason: from T17 a started attempt counts, so "Not counted" became wrong (the T74 spec review asked for this rewording). A result that never arrived may have been recorded, so it claims neither.
 - How to change it later: `SUBMIT_REFUSED`, `REFUSED_HEADING` and `SUBMIT_FAILED` in `src/app/play/PlayToday.tsx`.
-- Confirmed by human: follows the human's Nov 9 decision that leaving early is a loss; the exact text is new.
+- Confirmed by human: yes (Nov 11).
 
 ### 2026-11-10 — Hide the meter for the final 3 hours (T18)
 - Choice: from 3 hours before the deadline until the deadline, `GET /api/meter` answers `status: "hidden"` with the threshold and closing time only, and no pass rate or attempt count at all. `METER_HIDE_HOURS = 3` in `src/config/meter.ts`.
 - Reason: the design's Open item "How to handle last-minute sniping" recommends hiding the meter for the final hours; the backlog sets 3 as the configurable placeholder. Leaving the fields out, not nulling them, means a client cannot show them by accident.
 - What makes it real (T18 quality review): the anon key ships to every browser, so T17's "counters readable by everyone" would let anyone read the live numbers straight from Supabase during the window. Migration `20261110020000_private_day_counters` drops that read policy and the table privileges; only the service role reads the counters, and `/api/meter` reads them that way. The proxy skips `/api/meter`, so no session refresh can put a cookie on the shared, cached answer, and the cache time shrinks near 21:00 and midnight so a cached "open" reading is never served into the window.
 - How to change it later: edit `METER_HIDE_HOURS` (the meter UI, T19, reads the same constant).
-- Confirmed by human: pending (NEEDS_HUMAN).
+- Confirmed by human: no (Nov 11). Show the meter until the deadline; hide it later only if sniping becomes a real problem (T103).
 
 ### 2026-11-10 — The meter before today's game day exists (T18)
 - Choice: if nobody has started today and the day's row does not exist yet, the meter answers `threshold: null`, `attempts: 0`, `passRate: null`, instead of reading the default threshold from `game_settings`.
@@ -223,7 +223,7 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Choice: a day with no weighted attempts (nobody played, no game day row at all, or only zero-weight accounts) closes as `broken` with `final_pass_rate` null. `close_game_day` also refuses a day before its deadline and a day while an earlier day is still open (days close in order). A broken day ends the run on its last survived day. A day with no row at all is a gap and counts as not survived: a survived day after it starts a new run rather than extending across it.
 - Reason: the backlog's judgment call. The design's rule is "survives if the day's pass rate meets the threshold"; with no attempts there is no rate to meet it, and a world that does not show up has not held the line.
 - How to change it later: the `v_outcome` line in `close_game_day` (a new migration); the empty-day cases in `supabase/tests/daily_close.test.sql`.
-- Confirmed by human: pending (NEEDS_HUMAN).
+- Confirmed by human: yes (Nov 11).
 
 ### 2026-11-11 — One path prepares every game day (T22)
 - Choice: `ensure_game_day(d)` computes the pass target (`pass_target_for`: the `pass_target_percentile` best score of the `percentile_lookback_days` days before `d`, given `percentile_min_sample` scores, else the default; plus the streak step in the harder direction) and the threshold (`default + threshold_streak_step × current streak`, at most 0.95). `close_game_day(d)` calls it for `d + 1` after updating the streak, and an attempt start calls it for today. An existing day is never touched.
@@ -237,4 +237,13 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - How to change it later: T99 could show such days as "provisional" and recompute any unedited, unstarted future day at the close (for example with an `edited` flag), or `/admin` could list future days without creating them until one is saved.
 - Update (T99, admin edits of a started day): an admin may still edit today (or any open day) after players have started. The backlog wants today's threshold change to show in the meter. A pass target change also judges later submissions by the new target, while passes already recorded stay counted. Left to the admin's judgment; NEEDS_HUMAN asks whether the pass target should lock once a day has attempts.
 - Update (T99): done the first way. `game_days.edited` is set by an admin's save, and `ensure_game_day` refreshes any day that is not edited, not started and not closed. So an early day picks up the streak and recent scores at the close before it, and also follows a change to `game_settings` until then. An admin's edit, or anyone starting the day, freezes it.
-- Confirmed by human: pending (NEEDS_HUMAN).
+- Confirmed by human: yes (Nov 11), and the pass target must also lock once anyone has started the day (T102). The threshold stays editable.
+
+### 2026-11-11 — Human decisions at the M2 play-test (overrides)
+- **Empty day:** breaks the streak, as built (T21).
+- **Coming days:** follow the settings until edited or started, as built (T99). Today's pass target locks once anyone has started the day (T102).
+- **Hidden meter:** not wanted for now. "We can always later hide it if it becomes an active problem in real play." The meter shows until the deadline (T103).
+- **Refused or not-sent wording:** keep it (T17).
+- **Meter and streak look:** the meter is the core of the game and should be the star of the home screen, maybe its top element; the streak card should be more interesting too. Three mockups (gauge, tower meter, rising tide): https://claude.ai/artifact/MRXZU4jQW9RvVqLLDohXXQ. Chosen: A's gauge meter and play card; the streak card takes A's header with C's bar chart over 14 days ("Chosen" artboard). Built as T104 (meter) and T105 (streak card).
+- No other issues found in the play-test.
+- Confirmed by human: yes (these are the human's decisions).

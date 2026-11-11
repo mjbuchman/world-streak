@@ -14,16 +14,19 @@ afterEach(() => {
   saveGameDayAction.mockReset();
 });
 
-const day = { gameDate: "2026-11-12", label: "Nov 12, 2026", challenge: "Teetering Tower", passTarget: 10, thresholdPercent: 60 };
+const day = { gameDate: "2026-11-12", label: "Nov 12, 2026", challenge: "Teetering Tower", passTarget: 10, thresholdPercent: 60, started: false };
 
-function renderRow() {
+function renderRow(started = false) {
   render(
     <table>
       <tbody>
-        <GameDayEditRow day={day} />
+        <GameDayEditRow day={{ ...day, started }} />
       </tbody>
     </table>,
   );
+  if (started) {
+    return { threshold: screen.getByRole("spinbutton", { name: "Survival threshold in percent for Nov 12, 2026" }) };
+  }
   return {
     target: screen.getByRole("spinbutton", { name: "Pass target for Nov 12, 2026" }),
     threshold: screen.getByRole("spinbutton", { name: "Survival threshold in percent for Nov 12, 2026" }),
@@ -46,6 +49,26 @@ describe("GameDayEditRow", () => {
       thresholdPercent: "55",
     });
     expect((await screen.findByRole("status")).textContent).toBe("Saved Nov 12, 2026.");
+  });
+
+  it("shows a started day's pass target read-only with the reason, and still saves its threshold", async () => {
+    saveGameDayAction.mockResolvedValue({ ok: true, message: "Saved Nov 12, 2026." });
+    const user = userEvent.setup();
+    const { threshold } = renderRow(true);
+    expect(screen.getAllByRole("spinbutton")).toEqual([threshold]);
+    const targetCell = screen.getAllByRole("cell")[1];
+    expect(targetCell.textContent).toBe("10Locked: players have started this day.");
+
+    await user.clear(threshold);
+    await user.type(threshold, "50");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await vi.waitFor(() => expect(saveGameDayAction).toHaveBeenCalledTimes(1));
+    // The unchanged target goes along, so the save's checks and the database see the same form.
+    expect(Object.fromEntries(saveGameDayAction.mock.calls[0][1])).toEqual({
+      gameDate: "2026-11-12",
+      passTarget: "10",
+      thresholdPercent: "50",
+    });
   });
 
   it("shows a refusal from the server", async () => {

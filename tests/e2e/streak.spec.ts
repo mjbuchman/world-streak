@@ -17,19 +17,27 @@ function daysAgo(days: number): string {
 async function seedThreeClosedDays() {
   const db = adminClient();
   const closedAt = new Date().toISOString();
-  const day = (gameDate: string, rate: number, outcome: string) => ({
-    game_date: gameDate,
-    challenge_type: "stacking",
-    pass_target: 10,
-    survival_threshold: 0.6,
-    final_pass_rate: rate,
-    outcome,
-    closed_at: closedAt,
-  });
-  const days = await db
+  const results = [
+    { game_date: daysAgo(3), final_pass_rate: 0.81, outcome: "survived" },
+    { game_date: daysAgo(2), final_pass_rate: 0.74, outcome: "survived" },
+    { game_date: daysAgo(1), final_pass_rate: 0.52, outcome: "broken" },
+  ];
+  // Create missing days, but never rewrite an existing day's pass target: once a day has
+  // attempts (earlier local runs) the database refuses to move it (T102).
+  const created = await db
     .from("game_days")
-    .upsert([day(daysAgo(3), 0.81, "survived"), day(daysAgo(2), 0.74, "survived"), day(daysAgo(1), 0.52, "broken")]);
-  if (days.error) throw days.error;
+    .upsert(
+      results.map(({ game_date }) => ({ game_date, challenge_type: "stacking", pass_target: 10, survival_threshold: 0.6 })),
+      { ignoreDuplicates: true },
+    );
+  if (created.error) throw created.error;
+  for (const { game_date, ...result } of results) {
+    const closed = await db
+      .from("game_days")
+      .update({ ...result, challenge_type: "stacking", survival_threshold: 0.6, closed_at: closedAt })
+      .eq("game_date", game_date);
+    if (closed.error) throw closed.error;
+  }
   const cleared = await db.from("streak_runs").delete().gte("id", 0);
   if (cleared.error) throw cleared.error;
   const run = await db.from("streak_runs").insert({ start_date: daysAgo(3), end_date: daysAgo(2), length: 2 });

@@ -6,7 +6,15 @@ import { addDays, gameDateAt } from "@/lib/gameDay";
 /** The admin page shows today and this many days after it. */
 export const ADMIN_DAYS_AHEAD = 7;
 
-export type AdminDay = { gameDate: string; challengeType: string; passTarget: number; threshold: number; closed: boolean };
+/** `started`: somebody has started the day, so its pass target is locked (T102). */
+export type AdminDay = {
+  gameDate: string;
+  challengeType: string;
+  passTarget: number;
+  threshold: number;
+  closed: boolean;
+  started: boolean;
+};
 
 /**
  * Whether the signed-in caller is an admin, from the database's own `is_admin()` (which reads
@@ -30,13 +38,20 @@ export async function readAdminDays(db: Pick<SupabaseClient, "from" | "rpc">, no
   const failed = ensured.find((reply) => reply.error);
   if (failed?.error) throw new Error(`Preparing game days failed: ${failed.error.message}`);
 
-  const { data, error } = await db
-    .from("game_days")
-    .select("game_date, challenge_type, pass_target, survival_threshold, closed_at")
-    .gte("game_date", today)
-    .lte("game_date", dates[dates.length - 1])
-    .order("game_date", { ascending: true });
+  const last = dates[dates.length - 1];
+  const [{ data, error }, starts] = await Promise.all([
+    db
+      .from("game_days")
+      .select("game_date, challenge_type, pass_target, survival_threshold, closed_at")
+      .gte("game_date", today)
+      .lte("game_date", last)
+      .order("game_date", { ascending: true }),
+    // The counters, not the attempts themselves: one row per day rather than one per player.
+    db.from("game_day_counters").select("game_date").gt("attempts", 0).gte("game_date", today).lte("game_date", last),
+  ]);
   if (error) throw new Error(`Game day lookup failed: ${error.message}`);
+  if (starts.error) throw new Error(`Start count lookup failed: ${starts.error.message}`);
+  const started = new Set((starts.data as { game_date: string }[]).map((row) => row.game_date));
 
   const rows = data as { game_date: string; challenge_type: string; pass_target: unknown; survival_threshold: unknown; closed_at: string | null }[];
   return rows.map((row) => ({
@@ -45,5 +60,6 @@ export async function readAdminDays(db: Pick<SupabaseClient, "from" | "rpc">, no
     passTarget: dbNumber(row.pass_target, "pass_target"),
     threshold: dbNumber(row.survival_threshold, "survival_threshold"),
     closed: row.closed_at !== null,
+    started: started.has(row.game_date),
   }));
 }

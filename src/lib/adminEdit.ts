@@ -1,5 +1,6 @@
 // Saving an admin's edit to one game day (T99). The database enforces the same rules (row-level
-// security: admins only, open days only, the two values only); this gives clear messages first.
+// security: admins only, open days only, the two values only; a trigger locks a started day's
+// pass target, T102); this gives clear messages first.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { isAdmin } from "@/lib/admin";
@@ -9,6 +10,9 @@ import { dayLabel } from "@/lib/streak/streak";
 export const STACKING_TARGET_RANGE = { min: 1, max: 15 } as const;
 
 export type EditState = { ok: boolean; message: string };
+
+/** The database's refusal to move a started day's pass target (T102). */
+const TARGET_LOCKED = "WS002";
 
 const number = (label: string) =>
   z
@@ -60,6 +64,9 @@ export async function saveGameDayEdit(db: Pick<SupabaseClient, "from" | "rpc">, 
     .eq("game_date", gameDate)
     .is("closed_at", null)
     .select("game_date");
+  if (saved.error?.code === TARGET_LOCKED) {
+    return refuse(`${dayLabel(gameDate)} has started, so its pass target can no longer change. The threshold still can.`);
+  }
   if (saved.error) throw new Error(`Saving the game day failed: ${saved.error.message}`);
   // No row: it closed between the check above and the save.
   if (saved.data.length === 0) return refuse(`${dayLabel(gameDate)} has closed, so it can no longer change.`);
