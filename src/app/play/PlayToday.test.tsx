@@ -221,7 +221,7 @@ describe("PlayToday", () => {
     respond(json(409, { error: "day-closed" }));
     render(<PlayToday initial={{ kind: "ready" }} />);
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
-    expect((await screen.findByRole("alert")).textContent).toBe("Today's challenge just closed. Reload the page to play the next one.");
+    expect((await screen.findByRole("alert")).textContent).toBe("Today's challenge just closed. Press Start to play the next one.");
     expect(screen.queryByText(/You left today's attempt/)).toBeNull();
     expect(games).toHaveLength(0);
     // Pressing Start again works out the new game date, so it starts the next day's attempt.

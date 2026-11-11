@@ -34,7 +34,7 @@ type Phase =
 
 const START_FAILED = "Today's attempt could not be started. Please try again.";
 // Start raced the deadline and the day closed first; nothing was stored, so nothing counted.
-const START_DAY_CLOSED = "Today's challenge just closed. Reload the page to play the next one.";
+const START_DAY_CLOSED = "Today's challenge just closed. Press Start to play the next one.";
 // Trying again cannot fix these two, so say what will.
 const START_REFUSED: Record<number, string> = {
   401: "Your session has ended. Sign in again to play.",

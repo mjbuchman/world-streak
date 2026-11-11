@@ -202,7 +202,7 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Confirmed by human: not needed (implementation detail); recorded for reviewers.
 
 ### 2026-11-11 — A start on a closed day is refused in the database (T93)
-- Choice: the attempt insert trigger refuses an insert for a game day with `closed_at` set (SQLSTATE `WS001`), share-locking the day row so it cannot race the close job. `POST /api/attempts/start` answers 409 `{ error: "day-closed" }`, and `/play` says "Today's challenge just closed. Reload the page to play the next one." (Start stays available and starts the new day). A recorded pass whose day has no counters row raises instead of recording an uncounted pass. `attempts.counted_weight` is not null.
+- Choice: the attempt insert trigger refuses an insert for a game day with `closed_at` set (SQLSTATE `WS001`), share-locking the day row so it cannot race the close job. `POST /api/attempts/start` answers 409 `{ error: "day-closed" }`, and `/play` says "Today's challenge just closed. Press Start to play the next one." (Start stays available and starts the new day). A recorded pass whose day has no counters row raises instead of recording an uncounted pass. `attempts.counted_weight` is not null.
 - Reason: from the T17 quality review and the maintainer check after T18: a start that works out its game date just before the deadline and inserts after the close job ran would change a closed day's counts after its outcome was fixed.
 - How to change it later: `count_started_attempt` and `record_attempt_result` (migration `20261111000000_day_counter_integrity`); the message in `src/app/play/PlayToday.tsx`.
 - Confirmed by human: not needed (a bug fix); the new message follows the existing refused-start wording.

@@ -1,5 +1,5 @@
 begin;
-select plan(15);
+select plan(16);
 
 -- Every attempt carries the weight it was counted with.
 select col_not_null('public', 'attempts', 'counted_weight', 'counted_weight is required');
@@ -67,8 +67,11 @@ select results_eq(
 );
 
 -- The server inserts as service_role. With stamp_attempt_weight now security invoker, that role
--- must still read the profile's weight, so the insert stamps 0.5 and counts it.
+-- must still read the profile's weight, so the insert stamps 0.5 and counts it. This relies on
+-- Supabase's default table grants to service_role (no migration grants them), so it would fail
+-- if those defaults ever changed.
 set local role service_role;
+select is(current_user::text, 'service_role', 'setup: the insert below really runs as service_role');
 select lives_ok(
   $$insert into public.attempts (id, user_id, game_date, seed)
     values ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-00000000000c', public.game_date_at(now()), 5)$$,
