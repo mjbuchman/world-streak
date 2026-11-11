@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { innerClock } from "@/challenges/inner-clock/engine";
 import { simulate, stacking } from "@/challenges/stacking/engine";
 import { tapsForAMiss } from "@/challenges/stacking/player";
 import { submitAttempt, type SubmitStore } from "./submit";
@@ -66,6 +67,16 @@ describe("submitAttempt", () => {
     const at = (passTarget: number) => fakeStore({ gameDay: vi.fn(async () => ({ challengeType: "stacking", passTarget, closed: false })) });
     expect((await submit({ attemptId, inputs: { tapsMs: goodTaps } }, at(score))).body).toMatchObject({ passed: true });
     expect((await submit({ attemptId, inputs: { tapsMs: goodTaps } }, at(score + 1))).body).toMatchObject({ passed: false });
+  });
+
+  it("passes a lower score for a lower-better challenge (Second Sense), and fails a higher one", async () => {
+    const target = innerClock.paramsFromSeed(seed).targetMs;
+    // 0.25 s off the target, against a pass target of 0.3 s (passes) and of 0.2 s (fails).
+    const inputs = { tapMs: target + 250 };
+    const day = (passTarget: number) =>
+      fakeStore({ gameDay: vi.fn(async () => ({ challengeType: "inner-clock", passTarget, closed: false })) });
+    expect((await submit({ attemptId, inputs }, day(0.3))).body).toEqual({ score: 0.25, passed: true, passTarget: 0.3 });
+    expect((await submit({ attemptId, inputs }, day(0.2))).body).toEqual({ score: 0.25, passed: false, passTarget: 0.2 });
   });
 
   it("returns 400 for a malformed body, without touching the database", async () => {

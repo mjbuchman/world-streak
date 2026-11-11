@@ -17,7 +17,7 @@ select results_eq(
   $$select default_survival_threshold, pass_target_percentile, pass_target_streak_step, threshold_streak_step,
       percentile_lookback_days, percentile_min_sample, default_pass_targets, new_account_weight, full_weight_after_days
     from public.game_settings$$,
-  $$values (0.60::numeric, 0.80::numeric, 0::numeric, 0::numeric, 14, 50, '{"stacking": 10}'::jsonb, 1.0::numeric, 0)$$,
+  $$values (0.60::numeric, 0.80::numeric, 0::numeric, 0::numeric, 14, 50, '{"stacking": 10, "inner-clock": 0.5}'::jsonb, 1.0::numeric, 0)$$,
   'the one settings row holds the launch defaults'
 );
 

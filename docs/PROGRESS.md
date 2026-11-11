@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak is COMPLETE and play-tested (Nov 11); its follow-ups T102-T105 are done (new home page: gauge meter and streak bars).
-- Active task: T78 e2e waits for hydration and for server actions (with T107).
+- Active task: T26 Inner Clock (Second Sense) engine (M3 begins).
 - Blocked tasks: none
 - Waiting on the human: nothing now; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T78, then M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
+- Next: M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T78 e2e waits for hydration and server actions, with T107 (PR #63)
+- `HydrationMarker` sets `<html data-hydrated>`; `gotoReady` waits for it. `submitAndWait` waits for the server action's reply (`Next-Action` header): under 6-worker load the dev server answered sign-ups after the old 5 s URL waits. `tests/e2e/global-setup.ts` warms every page, API route and action locally (needs the seed admin). T107: attempts spec reads the stored target.
+- Review: light review, 1 round. Three cold runs 51/51 at 6 workers. Merges since the end-of-M2 maintainer check: 6.
 
 ### 2026-11-11 — T106 Patch-level dependency bump (PR #62)
 - Next 16.4.6, React 19.3.1, Supabase CLI 3.1.0, eslint-config-next 16.4.6, user-event 14.6.9; `npm audit fix` in range. One dev-only moderate advisory remains (minimatch in typescript-eslint, pinned by eslint-config-next); production audit clean. New task T107.
