@@ -7,11 +7,20 @@ import { SubmitButton } from "@/components/form/FormParts";
 import type { EditState } from "@/lib/adminEdit";
 import styles from "./AdminDayList.module.css";
 
-export type EditableDay = { gameDate: string; label: string; challenge: string; passTarget: number; thresholdPercent: number };
+export type EditableDay = {
+  gameDate: string;
+  label: string;
+  challenge: string;
+  passTarget: number;
+  thresholdPercent: number;
+  started: boolean;
+};
 
 /**
  * One open day in the admin table, with its two values editable. The inputs sit in their own
  * cells and join the row's form through the `form` attribute, since a form cannot span cells.
+ * Once somebody has started the day its pass target is locked (the database refuses a change),
+ * so it is shown as text and sent unchanged.
  */
 export function GameDayEditRow({ day }: { day: EditableDay }) {
   const [state, formAction, pending] = useActionState<EditState | null, FormData>(saveGameDayAction, null);
@@ -21,17 +30,25 @@ export function GameDayEditRow({ day }: { day: EditableDay }) {
       <th scope="row">{day.label}</th>
       <td>{day.challenge}</td>
       <td>
-        <TextInput
-          form={formId}
-          name="passTarget"
-          type="number"
-          inputMode="decimal"
-          step="any"
-          min={0}
-          required
-          defaultValue={day.passTarget}
-          aria-label={`Pass target for ${day.label}`}
-        />
+        {day.started ? (
+          <>
+            {day.passTarget}
+            <input type="hidden" form={formId} name="passTarget" value={day.passTarget} />
+            <p className={styles.locked}>Locked: players have started this day.</p>
+          </>
+        ) : (
+          <TextInput
+            form={formId}
+            name="passTarget"
+            type="number"
+            inputMode="decimal"
+            step="any"
+            min={0}
+            required
+            defaultValue={day.passTarget}
+            aria-label={`Pass target for ${day.label}`}
+          />
+        )}
       </td>
       <td>
         <TextInput

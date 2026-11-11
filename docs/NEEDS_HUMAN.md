@@ -12,31 +12,6 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
-### Please confirm: coming days follow the settings until edited or started (blocks nothing)
-- What is needed: a yes, or "keep a day's values fixed once created".
-- Where to put it: reply in chat.
-- Why: opening `/admin` creates the next 7 days early. As built (T99), a day you have not edited and nobody has started keeps following the settings, the streak and recent scores, and is refreshed at the close before it. Saving a day on `/admin`, or the first player starting it, freezes its values. Details in `docs/DECISIONS.md` (T25, with the T99 update).
-- Agent's recommendation: keep it as built.
-- Also: as built, you can still change today's pass target after players have started, and later results are then judged by the new target. Should the pass target lock once anyone has started the day? (The threshold stays editable either way, as the backlog asks.) Recommendation: lock it. It is a small follow-up task.
-
-### Please confirm: a day nobody played breaks the streak (blocks nothing)
-- What is needed: a yes, or "it survives" / "it is skipped".
-- Where to put it: reply in chat.
-- Why: with no attempts there is no pass rate. As built (T21), such a day closes as broken and resets the streak to 0. Details in `docs/DECISIONS.md` (T21).
-- Agent's recommendation: keep it broken; once the game has players, an empty day is unlikely.
-
-### Please confirm: wording when a result is refused or not sent (blocks nothing)
-- What is needed: a yes, or new text. On `/play`, a result the server refused (the day closed first, or the timing could not be checked) now shows the heading "Counted as not passed" with "...so it counted as not passed."; a result that never reached the server shows "Result not sent" with "Your result could not be sent. Reload the page to see whether it counted."
-- Where to put it: reply in chat.
-- Why: from T17 a started attempt counts, so the old "Not counted" was wrong. Details in `docs/DECISIONS.md` (T17).
-- Agent's recommendation: keep the text above.
-
-### Please confirm: hide the meter for the final 3 hours (blocks nothing)
-- What is needed: a yes, or a different number of hours. From 9 pm UTC (3 hours before the midnight UTC deadline), the meter stops showing the pass rate and attempt count; it shows only the threshold and a countdown until the result is revealed.
-- Where to put it: reply in chat. It is one constant, `METER_HIDE_HOURS` in `src/config/meter.ts`.
-- Why: the design leaves "last-minute sniping" Open and recommends hiding the meter for the final hours, so a group cannot time a late wave of attempts to tip the day.
-- Agent's recommendation: keep 3 hours.
-
 ### Accessibility pass (blocks nothing; before launch)
 - What is needed: one session testing the app with a screen reader and keyboard only (and reduced motion on), all at once, once the main screens exist.
 - Where to put it: reply in chat with anything that is hard to use.
@@ -62,6 +37,10 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: do it before the public launch. T52 works without the keys locally (it skips the CAPTCHA and logs a warning).
 
 ## Resolved
+
+- **CI could not install the Playwright browser** (Nov 11, 2026): the e2e job's apt step failed 4 times (runner could not resolve `azure.archive.ubuntu.com`), and a fifth re-run failed with no jobs. The human approved dropping `--with-deps` from `.github/workflows/ci.yml` (T102 branch).
+
+- **M2 play-test** (Nov 11, 2026): no issues beyond the look of the meter and streak card (T104). Empty days break the streak (as built). Coming days follow the settings until edited or started, and the pass target locks once a day has started (T102). Do not hide the meter for now (T103). The refused/not-sent wording is approved. Redesign: A's gauge meter and play card, with a streak card made of A's header and C's bar chart (T104, T105).
 
 - **Launch values in game_settings** (Nov 10, 2026): approved as built in T16 (60% threshold, 80th percentile, step 0, full weight from day one, 14 days / 50 scores, Tower target row 10).
 - **Wording for an unfinished attempt on /play** (Nov 10, 2026): approved as proposed; T91 may proceed.

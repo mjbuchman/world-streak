@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import { saveGameDayEdit } from "./adminEdit";
 
-type Result = { data: unknown; error: { message: string } | null };
+type Result = { data: unknown; error: { message: string; code?: string } | null };
 
 /** A client whose calls answer `results` in order, recording each call and its builder steps. */
 function fakeDb(results: Result[]) {
@@ -104,6 +104,15 @@ describe("saveGameDayEdit", () => {
     expect(await saveGameDayEdit(db, edit())).toMatchObject({ ok: false, message: /has closed/ });
   });
 
+  it("reports the database's lock on a started day's pass target (WS002) as a refusal", async () => {
+    const locked = { data: null, error: { code: "WS002", message: "game day 2026-11-12 has started, so its pass target is locked" } };
+    const { db } = fakeDb([ADMIN, OPEN_STACKING, locked]);
+    expect(await saveGameDayEdit(db, edit())).toEqual({
+      ok: false,
+      message: "Nov 12, 2026 has started, so its pass target can no longer change. The threshold still can.",
+    });
+  });
+
   it("refuses an unknown day", async () => {
     const { db } = fakeDb([ADMIN, { data: null, error: null }]);
     expect(await saveGameDayEdit(db, edit())).toEqual({ ok: false, message: "Unknown game day." });
@@ -139,7 +148,7 @@ describe("saveGameDayEdit", () => {
   it("throws on a database error, so the page shows its error rather than a false message", async () => {
     const lookup = fakeDb([ADMIN, { data: null, error: { message: "down" } }]);
     await expect(saveGameDayEdit(lookup.db, edit())).rejects.toThrow("Game day lookup failed: down");
-    const save = fakeDb([ADMIN, OPEN_STACKING, { data: null, error: { message: "denied" } }]);
+    const save = fakeDb([ADMIN, OPEN_STACKING, { data: null, error: { code: "42501", message: "denied" } }]);
     await expect(saveGameDayEdit(save.db, edit())).rejects.toThrow("Saving the game day failed: denied");
   });
 });

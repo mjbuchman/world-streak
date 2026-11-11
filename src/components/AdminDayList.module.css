@@ -8,6 +8,11 @@
   color: var(--fs-color-mint);
 }
 
+.locked {
+  margin: 0;
+  color: var(--fs-color-text-muted);
+}
+
 .refused {
   color: var(--fs-color-error);
 }

@@ -4,11 +4,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T99 Admin game-day editor (last task of M2)
+- Milestone: M2 The world streak is COMPLETE and play-tested (Nov 11). Feedback tasks T102 (lock a started day's pass target), T103 (show the meter until the deadline), T104 (gauge meter) and T105 (streak bar chart) come before M3.
+- Active task: T102 (PR #58, approved, auto-merge on). CI's browser install failed 4 times on a runner DNS problem; the human approved dropping `--with-deps` in CI. The branch also carries T99's doc updates, the play-test decisions and the end-of-M2 maintainer check. If PR #58 has merged, set T102 to done and go on with T103.
 - Blocked tasks: none
-- Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T99 ends M2; then the M2 play-test and the end-of-milestone maintainer check daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
+- Waiting on the human: nothing now; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
+- Next: T102, T103, T104, T105, then M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,14 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — Maintainer check at the end of M2
+- Health good (npm audit clean, no TODOs or `any`). New task T106 (patch dependency bump); its flaky 6-worker e2e point is T78 already. Merges since this check: 0.
+
+### 2026-11-11 — T99 Admin game-day editor (PR #57); M2 complete
+- Migration `20261112030000_admin_game_day_edits`: `game_days.edited`, a column-level UPDATE grant plus an RLS policy (admins, open days, an edit sets `edited`); `ensure_game_day` refreshes days nobody has edited, started or closed. `/admin` rows are editable through a server action (zod; Tower target 1-15). Shared `DataTable.module.css` (T101).
+- Review rounds: spec 1, quality 1, tests 2 (round 1: inclusive bounds). CI failed once: a coverage threshold I added for `adminEdit.ts` (88% of branches) was never run locally in full. Fixed with a missing-field test.
+- Notes: always run the full `npm run test` after adding a coverage threshold. Locally, 6-worker e2e sign-ups time out on main too (recorded on T78). Merges since the maintainer check after T25: 1.
 
 ### 2026-11-11 — Maintainer check after T25
 - Health good (837 unit, 315 pgTAP). New tasks T100 (one fake Supabase query builder for unit tests) and T101 (AdminDayList's own table styles). Merges since this check: 0.
