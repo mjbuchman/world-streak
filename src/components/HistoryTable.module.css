@@ -1,0 +1,45 @@
+/* The table may be wider than a phone; it scrolls inside its own box, never the page. */
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: var(--space-3) var(--space-2);
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--fs-color-surface-border);
+}
+
+.table thead th {
+  font-size: var(--fs-text-label);
+  color: var(--fs-color-text-muted);
+}
+
+.survived {
+  color: var(--fs-color-mint);
+  font-weight: 700;
+}
+
+.broken {
+  color: var(--fs-color-tangerine);
+  font-weight: 700;
+}
+
+.pages {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 48px;
+}
+
+.empty {
+  color: var(--fs-color-text-muted);
+}

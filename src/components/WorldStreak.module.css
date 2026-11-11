@@ -1,0 +1,18 @@
+.streak {
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-headline);
+  line-height: 1.05;
+  color: var(--fs-color-mint);
+}
+
+.muted {
+  color: var(--fs-color-text-muted);
+}
+
+.link {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+}

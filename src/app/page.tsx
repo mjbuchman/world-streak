@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Meter } from "@/components/Meter";
+import { WorldStreak } from "@/components/WorldStreak";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
@@ -7,7 +8,7 @@ import { CHALLENGE_NAMES } from "@/config/challenges";
 import { GAME_NAME, GAME_PITCH } from "@/config/game";
 import styles from "./page.module.css";
 
-/** Home: the game, its one-line pitch, today's challenge front and centre, and the live meter. */
+/** Home: the game, its pitch, today's challenge front and centre, the live meter and the world streak. */
 export default function Home() {
   return (
     <PageShell>
@@ -27,6 +28,7 @@ export default function Home() {
         </Link>
       </Surface>
       <Meter />
+      <WorldStreak />
     </PageShell>
   );
 }
