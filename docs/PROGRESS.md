@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T23 Scheduled close job
+- Active task: T24 World streak display and history
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T23 (scheduled close), then T24 (streak display) daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
+- Next: T24, then T25 (admin editor), which ends M2 (play-test) daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T23 Scheduled close and catch-up (PR #54)
+- Migration `20261112020000_scheduled_close`: `close_due_game_days(at)` (advisory lock, closes due days oldest first, ensures today) on pg_cron at `0 0 * * *` and every 5 minutes. `npm run close-day -- --date` (local-only). README "The daily close".
+- Review rounds: spec 1, quality 1, tests 1. Notes: locally the job really closes past days now, so pgTAP files must use far-past dates (2000/2001) or reset the days they use (`game_days` and `game_settings` tests moved to 2001). Merges since the maintainer check after T93: 8.
 
 ### 2026-11-11 — T22 Prepare the next day (PR #53)
 - Migration `20261112010000_prepare_next_day`: `challenge_types`, `pass_target_for` (percentile_disc over the lookback window, default below the minimum sample, streak step), `ensure_game_day` computes target and threshold (capped 0.95) and is the one path for every day; `close_game_day` prepares `d + 1`. Index on `attempts(game_date)`.
