@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T94 One meter-window helper (before T19)
+- Active task: T19 Meter UI with visibility-aware polling
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T94, then T19 meter UI, T20 fake players; T92 and T93 before T21 daily close. T91 (approved wording) fits in when convenient.
+- Next: T19, then T20 fake players; T92 and T93 before T21 daily close. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-10 — T94 One meter-window helper (PR #42)
+- `meterHiddenFrom(closesAt)` in `src/lib/meter.ts` is the only copy of the hide-window start; the module is client-safe (a test checks every import specifier).
+- Review rounds: spec 1, quality 1, tests 1. Merges since the maintainer check after T18: 1.
 
 ### 2026-11-10 — Maintainer check after T18
 - Health good (604 unit, 210 pgTAP; no TODOs; audit issues dev-only). New tasks T92 (one strict numeric parser), T93 (counter integrity, taking the T17 follow-ups out of T21) and T94 (one meter-window helper, before T19). Merges since this check: 0.

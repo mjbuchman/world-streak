@@ -18,6 +18,8 @@ vi.mock("@/components/stacking/StackingGame", () => ({
     return <div data-testid="game" tabIndex={-1} ref={(element) => element?.focus()} />;
   },
 }));
+// The meter polls on its own (Meter.test.tsx); here it must not take the start and submit replies.
+vi.mock("@/components/Meter", () => ({ Meter: () => <section data-testid="meter" /> }));
 const refresh = vi.hoisted(() => vi.fn());
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 
@@ -111,6 +113,18 @@ describe("PlayToday", () => {
     await startRun();
     await finish([900], 1);
     expect((await screen.findByRole("heading", { name: "Counted as not passed" })).className).not.toMatch(/resultMint|resultGlow/);
+  });
+
+  it("shows the live meter below the result, and not before or during the run", async () => {
+    render(<PlayToday initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
+    const verdict = screen.getByRole("heading", { name: "Passed" });
+    const meter = screen.getByTestId("meter");
+    expect(verdict.compareDocumentPosition(meter) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    cleanup();
+
+    respond(json(200, started));
+    await startRun();
+    expect(screen.queryByTestId("meter")).toBeNull();
   });
 
   it("shows the score as the result's big number, above the verdict as in practice", () => {

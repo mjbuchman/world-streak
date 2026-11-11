@@ -1,0 +1,57 @@
+.meter {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border-radius: var(--fs-radius-surface);
+  background: var(--fs-color-surface);
+  border: 1px solid var(--fs-color-surface-border);
+}
+
+/* The bar: a pill track, a mint fill that grows into place, and a marker at the threshold. */
+.track {
+  position: relative;
+  height: 16px;
+  border-radius: var(--fs-radius-pill);
+  background: var(--fs-color-surface-strong);
+}
+
+.fill {
+  height: 100%;
+  border-radius: var(--fs-radius-pill);
+  background: var(--fs-gradient-mint);
+  box-shadow: var(--fs-shadow-mint);
+  transition: width var(--fs-duration-slow) var(--fs-ease-out);
+}
+
+/* Taller than the track and in the text colour, so it stands apart from the mint fill by
+   lightness as well as by colour. */
+.marker {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: var(--fs-radius-pill);
+  background: var(--fs-color-text);
+}
+
+.label {
+  margin: 0;
+  font-weight: 700;
+  font-size: var(--fs-text-body);
+  color: var(--fs-color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.hidden {
+  margin: 0;
+  color: var(--fs-color-text);
+}
+
+.countdown,
+.status {
+  margin: 0;
+  font-size: var(--fs-text-small);
+  color: var(--fs-color-text-muted);
+  font-variant-numeric: tabular-nums;
+}

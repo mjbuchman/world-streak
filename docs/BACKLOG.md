@@ -346,7 +346,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T19 Meter UI with visibility-aware polling
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T18
 - Acceptance criteria:
   - [ ] `src/components/Meter.tsx` shows a bar for the pass rate with a marker at the threshold, a label like "72% passing · 60% needed · 1,234 attempts", and a countdown to the deadline.
@@ -995,7 +995,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T94 One meter-window helper for the endpoint and the meter UI
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T18
 - Acceptance criteria:
   - [ ] One pure function holds the only copy of `closes - METER_HIDE_HOURS * HOUR_MS` (for example `meterHiddenFrom(closesAt)`), used by `meterBody` and `meterCacheSeconds`.

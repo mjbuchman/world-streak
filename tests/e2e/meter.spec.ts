@@ -24,6 +24,13 @@ test("the meter answers anyone with today's reading, cached publicly", async ({ 
   }
 });
 
+test("the home page shows the live meter, or the hidden message in the final hours", async ({ page }) => {
+  await page.goto("/");
+  const meter = page.getByRole("region", { name: "Today's meter" });
+  await expect(meter.getByText(/% needed|No attempts yet|The meter is hidden for the final 3 hours/)).toBeVisible();
+  await expect(meter.getByRole("timer")).toHaveText(/^Closes in \d+:\d{2}:\d{2}$/);
+});
+
 test("a signed-in player's meter request carries no cookie, and a started attempt shows in it", async ({ page, accounts }) => {
   await signUpViaForm(page, { email: accounts.uniqueEmail() });
   await expect(page).toHaveURL("/");
