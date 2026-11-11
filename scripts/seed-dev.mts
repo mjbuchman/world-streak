@@ -9,6 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { dbNumber } from "../src/lib/db/numeric.ts";
+import { isCalendarDate } from "./lib/dates.mts";
 import { assertLocalSupabaseUrl, check, createServiceClient } from "./lib/localSupabase.mts";
 
 /** At most this many players per run, so a typo cannot create a million accounts. */
@@ -40,12 +41,6 @@ export function parseSeedArgs(argv: string[]): SeedArgs {
   const date = values.date ?? null;
   if (date !== null && !isCalendarDate(date)) throw new Error("--date must be a real date as YYYY-MM-DD.");
   return { players, passRate, date };
-}
-
-function isCalendarDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const parsed = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
 /**
