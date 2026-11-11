@@ -346,7 +346,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T19 Meter UI with visibility-aware polling
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T18
 - Acceptance criteria:
   - [ ] `src/components/Meter.tsx` shows a bar for the pass rate with a marker at the threshold, a label like "72% passing · 60% needed · 1,234 attempts", and a countdown to the deadline.
@@ -358,7 +358,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T20 Local fake-player seeding script
 - Type: infra
-- Status: todo
+- Status: in-progress
 - Depends on: T17
 - Acceptance criteria:
   - [ ] `npm run seed:dev -- --players 200 --pass-rate 0.7 [--date YYYY-MM-DD]` creates 200 fake users with profiles and submitted attempts for the date (default today), of which 140 passed, through `record_attempt_result`, so the counters update.

@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T19 Meter UI with visibility-aware polling
+- Active task: T20 Local fake-player seeding script
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T19, then T20 fake players; T92 and T93 before T21 daily close. T91 (approved wording) fits in when convenient.
+- Next: T20, then T92 and T93 before T21 daily close. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T19 Meter UI (PR #43)
+- `src/components/Meter.tsx` on `/` and below the result on `/play`: a mint bar with a threshold marker, "72% passing · 60% needed · 1,234 attempts", a countdown; the hidden message in the final 3 hours, switching by its own clock. Polls every 60 s only while visible; newest reply wins; one reload at the deadline; malformed replies read as unavailable.
+- Review rounds: spec 3, quality 3, tests 3. Rounds 1 and 2 approved with suggestions (applied and re-reviewed); round 2's test review blocked on an untested request storm after the deadline, now pinned.
+- Notes: open question for the human: should the refused-result view on `/play` show the meter too? Merges since the maintainer check after T18: 2.
 
 ### 2026-11-10 — T94 One meter-window helper (PR #42)
 - `meterHiddenFrom(closesAt)` in `src/lib/meter.ts` is the only copy of the hide-window start; the module is client-safe (a test checks every import specifier).
