@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Surface } from "@/components/ui/Surface";
 import { METER_HIDE_HOURS, METER_POLL_SECONDS } from "@/config/meter";
 import { meterHiddenFrom, type MeterBody } from "@/lib/meter";
 import styles from "./Meter.module.css";
@@ -10,8 +11,10 @@ const UNAVAILABLE = "The meter is unavailable right now.";
 
 const percent = (fraction: number) => Math.round(fraction * 100);
 
+type OpenBody = Extract<MeterBody, { status: "open" }>;
+
 /** "72% passing · 60% needed · 1,234 attempts", leaving out whatever is not known yet. */
-function label(body: Extract<MeterBody, { status: "open" }>): string {
+function label(body: OpenBody): string {
   const parts = [body.passRate === null ? "No attempts yet" : `${percent(body.passRate)}% passing`];
   if (body.threshold !== null) parts.push(`${percent(body.threshold)}% needed`);
   if (body.attempts > 0) parts.push(`${body.attempts.toLocaleString("en-US")} ${body.attempts === 1 ? "attempt" : "attempts"}`);
@@ -27,29 +30,52 @@ function countdown(msLeft: number): string {
   return `${hours}:${minutes}:${seconds}`;
 }
 
-/** Fetches /api/meter now and every METER_POLL_SECONDS, but only while the tab is visible. */
-function useMeterReading(): { body: MeterBody | null; failed: boolean } {
+const isNumberOrNull = (value: unknown) => value === null || (typeof value === "number" && Number.isFinite(value));
+
+/** Whether a reply has the shape the meter draws, so a malformed one reads as unavailable, not NaN. */
+function isMeterBody(value: unknown): value is MeterBody {
+  if (typeof value !== "object" || value === null) return false;
+  const body = value as Record<string, unknown>;
+  if (typeof body.closesAt !== "string" || Number.isNaN(Date.parse(body.closesAt))) return false;
+  if (!isNumberOrNull(body.threshold)) return false;
+  if (body.status === "hidden") return true;
+  return body.status === "open" && isNumberOrNull(body.passRate) && typeof body.attempts === "number";
+}
+
+/**
+ * Fetches /api/meter now and every METER_POLL_SECONDS, but only while the tab is visible.
+ * `reload` asks again at once (used when the day closes).
+ */
+function useMeterReading(): { body: MeterBody | null; failed: boolean; reload: () => void } {
   const [body, setBody] = useState<MeterBody | null>(null);
   const [failed, setFailed] = useState(false);
+  // Only the newest request may update the meter, so a slow older reply cannot overwrite it.
+  const latest = useRef(0);
+  const active = useRef(true);
+
+  const load = useCallback(async () => {
+    const request = ++latest.current;
+    const settle = (apply: () => void) => {
+      if (active.current && request === latest.current) apply();
+    };
+    try {
+      const response = await fetch("/api/meter");
+      if (!response.ok) throw new Error(`Meter answered ${response.status}`);
+      const reading: unknown = await response.json();
+      if (!isMeterBody(reading)) throw new Error("Malformed meter reading");
+      settle(() => {
+        setBody(reading);
+        setFailed(false);
+      });
+    } catch {
+      // Keep showing the last good reading; only an empty meter says it is unavailable.
+      settle(() => setFailed(true));
+    }
+  }, []);
 
   useEffect(() => {
-    let active = true;
+    active.current = true;
     let timer: ReturnType<typeof setInterval> | undefined;
-
-    async function load() {
-      try {
-        const response = await fetch("/api/meter");
-        if (!response.ok) throw new Error(`Meter answered ${response.status}`);
-        const reading = (await response.json()) as MeterBody;
-        if (active) {
-          setBody(reading);
-          setFailed(false);
-        }
-      } catch {
-        // Keep showing the last good reading; only an empty meter says it is unavailable.
-        if (active) setFailed(true);
-      }
-    }
     const stop = () => {
       clearInterval(timer);
       timer = undefined;
@@ -64,13 +90,13 @@ function useMeterReading(): { body: MeterBody | null; failed: boolean } {
     if (document.visibilityState === "visible") start();
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
-      active = false;
+      active.current = false;
       stop();
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, []);
+  }, [load]);
 
-  return { body, failed };
+  return { body, failed, reload: () => void load() };
 }
 
 /** The current time, ticking every second, for the countdown and the hidden window. */
@@ -89,37 +115,49 @@ function useNow(): number {
  * cached reading from just before the window is never shown inside it.
  */
 export function Meter() {
-  const { body, failed } = useMeterReading();
+  const { body, failed, reload } = useMeterReading();
   const now = useNow();
 
-  if (!body) {
+  // When the day closes, ask for the next day's reading at once rather than at the next poll.
+  const closesAtMs = body ? Date.parse(body.closesAt) : null;
+  const closed = closesAtMs !== null && now >= closesAtMs;
+  const reloadedFor = useRef<number | null>(null);
+  useEffect(() => {
+    if (closed && reloadedFor.current !== closesAtMs) {
+      reloadedFor.current = closesAtMs;
+      reload();
+    }
+  }, [closed, closesAtMs, reload]);
+
+  if (!body || closesAtMs === null) {
     return (
-      <section className={styles.meter} aria-label="Today's meter">
+      <Surface as="section" aria-label="Today's meter">
         <p className={styles.status}>{failed ? UNAVAILABLE : "Loading today’s meter…"}</p>
-      </section>
+      </Surface>
     );
   }
 
-  const hidden = body.status === "hidden" || now >= meterHiddenFrom(body.closesAt).getTime();
   const timer = (
     <p className={styles.countdown} role="timer">
-      {`Closes in ${countdown(new Date(body.closesAt).getTime() - now)}`}
+      {`Closes in ${countdown(closesAtMs - now)}`}
     </p>
   );
 
+  // The status check is repeated so TypeScript knows the body below is an open reading.
+  const hidden = body.status !== "open" || now >= meterHiddenFrom(body.closesAt).getTime();
   if (hidden || body.status !== "open") {
     return (
-      <section className={styles.meter} aria-label="Today's meter">
+      <Surface as="section" aria-label="Today's meter">
         <p className={styles.hidden}>{HIDDEN_MESSAGE}</p>
         {timer}
-      </section>
+      </Surface>
     );
   }
 
   const rate = body.passRate === null ? 0 : percent(body.passRate);
   const text = label(body);
   return (
-    <section className={styles.meter} aria-label="Today's meter">
+    <Surface as="section" aria-label="Today's meter">
       <div
         className={styles.track}
         role="meter"
@@ -127,7 +165,7 @@ export function Meter() {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={rate}
-        aria-valuetext={body.passRate === null ? "No attempts yet" : text}
+        aria-valuetext={text}
       >
         <div className={styles.fill} data-meter-fill style={{ width: `${rate}%` }} />
         {body.threshold !== null && (
@@ -136,6 +174,6 @@ export function Meter() {
       </div>
       <p className={styles.label}>{text}</p>
       {timer}
-    </section>
+    </Surface>
   );
 }

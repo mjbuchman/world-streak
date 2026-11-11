@@ -1,12 +1,3 @@
-.meter {
-  display: grid;
-  gap: var(--space-3);
-  padding: var(--space-6);
-  border-radius: var(--fs-radius-surface);
-  background: var(--fs-color-surface);
-  border: 1px solid var(--fs-color-surface-border);
-}
-
 /* The bar: a pill track, a mint fill that grows into place, and a marker at the threshold. */
 .track {
   position: relative;
@@ -15,12 +6,21 @@
   background: var(--fs-color-surface-strong);
 }
 
+/* It fills up from empty when it first appears, then slides to each new reading. Reduced
+   motion sets the durations to 0, so it simply appears. */
 .fill {
   height: 100%;
   border-radius: var(--fs-radius-pill);
   background: var(--fs-gradient-mint);
   box-shadow: var(--fs-shadow-mint);
+  animation: grow var(--fs-duration-slow) var(--fs-ease-out);
   transition: width var(--fs-duration-slow) var(--fs-ease-out);
+}
+
+@keyframes grow {
+  from {
+    width: 0;
+  }
 }
 
 /* Taller than the track and in the text colour, so it stands apart from the mint fill by

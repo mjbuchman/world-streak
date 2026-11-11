@@ -94,7 +94,8 @@ describe("Meter", () => {
     const { container } = render(<Meter />);
     await flush();
     expect(screen.getByText("No attempts yet · 60% needed")).toBeTruthy();
-    expect(screen.getByRole("meter").getAttribute("aria-valuetext")).toBe("No attempts yet");
+    // Screen readers get the same words as the visible label, threshold included.
+    expect(screen.getByRole("meter").getAttribute("aria-valuetext")).toBe("No attempts yet · 60% needed");
     expect((container.querySelector("[data-meter-fill]") as HTMLElement).style.width).toBe("0%");
   });
 
@@ -162,11 +163,91 @@ describe("Meter", () => {
     expect(screen.getByText("72% passing · 60% needed · 1,234 attempts")).toBeTruthy();
   });
 
-  it("stops polling when it unmounts", async () => {
+  it("stops polling when it unmounts, and ignores the tab coming back afterwards", async () => {
     const { unmount } = render(<Meter />);
     await flush();
     unmount();
     await advance(180_000);
+    setVisibility("hidden");
+    setVisibility("visible");
+    await flush();
     expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("says the meter is unavailable when the first reply is an error or malformed", async () => {
+    fetchSpy.mockResolvedValueOnce(json({ error: "server-error" }, 500));
+    render(<Meter />);
+    await flush();
+    expect(screen.getByText("The meter is unavailable right now.")).toBeTruthy();
+    cleanup();
+
+    for (const malformed of [{ status: "open" }, open({ closesAt: "soon" }), open({ attempts: "many" }), null]) {
+      fetchSpy.mockResolvedValueOnce(json(malformed));
+      render(<Meter />);
+      await flush();
+      expect(screen.getByText("The meter is unavailable right now.")).toBeTruthy();
+      expect(screen.queryByText(/NaN/)).toBeNull();
+      cleanup();
+    }
+  });
+
+  it("never lets a slow older reply overwrite a newer one", async () => {
+    let answerFirst: (response: Response) => void = () => undefined;
+    fetchSpy.mockImplementationOnce(() => new Promise((resolve) => (answerFirst = resolve)));
+    fetchSpy.mockResolvedValueOnce(json(open({ passRate: 0.5, attempts: 2000 })));
+    render(<Meter />);
+    await flush();
+    // The tab is hidden and shown again before the first reply arrives: a second request goes out.
+    setVisibility("hidden");
+    setVisibility("visible");
+    await flush();
+    expect(screen.getByText("50% passing · 60% needed · 2,000 attempts")).toBeTruthy();
+
+    await act(async () => answerFirst(json(open())));
+    expect(screen.getByText("50% passing · 60% needed · 2,000 attempts")).toBeTruthy();
+  });
+
+  it("stops the countdown at zero and asks for the next day's reading at the deadline", async () => {
+    vi.setSystemTime(new Date("2026-11-08T23:59:59Z"));
+    fetchSpy.mockResolvedValueOnce(json(hidden));
+    fetchSpy.mockResolvedValueOnce(json(open({ gameDate: "2026-11-09", closesAt: "2026-11-10T00:00:00.000Z", passRate: null, attempts: 0 })));
+    render(<Meter />);
+    await flush();
+    expect(screen.getByRole("timer").textContent).toBe("Closes in 0:00:01");
+
+    await advance(1_000);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("No attempts yet · 60% needed")).toBeTruthy();
+    expect(screen.getByRole("timer").textContent).toBe("Closes in 24:00:00");
+  });
+
+  it("never counts down below zero while the next reading is on its way", async () => {
+    vi.setSystemTime(new Date("2026-11-09T00:00:05Z"));
+    fetchSpy.mockResolvedValue(json(hidden));
+    render(<Meter />);
+    await flush();
+    expect(screen.getByRole("timer").textContent).toBe("Closes in 0:00:00");
+  });
+});
+
+describe("Meter hidden window from config", () => {
+  afterEach(() => {
+    vi.doUnmock("@/config/meter");
+    vi.resetModules();
+  });
+
+  it("names the hours from METER_HIDE_HOURS and hides at that point", async () => {
+    vi.resetModules();
+    vi.doMock("@/config/meter", () => ({ METER_HIDE_HOURS: 2, METER_CACHE_SECONDS: 30, METER_POLL_SECONDS: 60 }));
+    const { Meter: TwoHourMeter } = await import("./Meter");
+    // 21:30 is inside a 3-hour window but outside a 2-hour one.
+    vi.setSystemTime(new Date("2026-11-08T21:30:00Z"));
+    render(<TwoHourMeter />);
+    await flush();
+    expect(screen.getByRole("meter")).toBeTruthy();
+
+    fetchSpy.mockResolvedValue(json(hidden));
+    await advance(60_000);
+    expect(screen.getByText("The meter is hidden for the final 2 hours. The result is revealed at the deadline.")).toBeTruthy();
   });
 });
