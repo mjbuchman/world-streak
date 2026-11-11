@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Meter } from "@/components/Meter";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
@@ -6,7 +7,7 @@ import { CHALLENGE_NAMES } from "@/config/challenges";
 import { GAME_NAME, GAME_PITCH } from "@/config/game";
 import styles from "./page.module.css";
 
-/** Home: the game, its one-line pitch, and today's challenge front and centre. */
+/** Home: the game, its one-line pitch, today's challenge front and centre, and the live meter. */
 export default function Home() {
   return (
     <PageShell>
@@ -25,6 +26,7 @@ export default function Home() {
           Practice first
         </Link>
       </Surface>
+      <Meter />
     </PageShell>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { StackingParams } from "@/challenges/stacking/engine";
+import { Meter } from "@/components/Meter";
 import { reachedRow, targetRow } from "@/components/stacking/rows";
 import { type FinishedRun, StackingGame } from "@/components/stacking/StackingGame";
 import { Button } from "@/components/ui/Button";
@@ -133,19 +134,23 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
     case "result": {
       const { score, passed, passTarget } = phase.verdict;
       return (
-        <ResultHero
-          score={score}
-          heading={passed ? "Passed" : "Not this time"}
-          headingRef={headingRef}
-          tone={passed ? "pass" : "plain"}
-          confetti={passed && phase.fresh}
-          actions={backHome}
-        >
-          <p className={styles.summary}>{`${reachedRow(score)}. Today's target was ${targetRow(passTarget)}.`}</p>
-          <p className={styles.note}>
-            {passed ? "You helped keep the streak alive. " : ""}Come back tomorrow for the next challenge.
-          </p>
-        </ResultHero>
+        <>
+          <ResultHero
+            score={score}
+            heading={passed ? "Passed" : "Not this time"}
+            headingRef={headingRef}
+            tone={passed ? "pass" : "plain"}
+            confetti={passed && phase.fresh}
+            actions={backHome}
+          >
+            <p className={styles.summary}>{`${reachedRow(score)}. Today's target was ${targetRow(passTarget)}.`}</p>
+            <p className={styles.note}>
+              {passed ? "You helped keep the streak alive. " : ""}Come back tomorrow for the next challenge.
+            </p>
+          </ResultHero>
+          {/* How the world is doing today, below your own result. */}
+          <Meter />
+        </>
       );
     }
 
