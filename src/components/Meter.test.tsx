@@ -181,6 +181,19 @@ describe("Meter", () => {
     expect(css).toMatch(/stroke-dasharray var\(--fs-duration-slow\) var\(--fs-ease-out\)/);
   });
 
+  it("colours the arc mint at or above the line and light tangerine below it", () => {
+    const css = readFileSync(path.join(import.meta.dirname, "Meter.module.css"), "utf8");
+    expect(css).toMatch(/\[data-state="above"\] \.fill \{\s*stroke: var\(--fs-color-mint\);/);
+    expect(css).toMatch(/\[data-state="below"\] \.fill \{\s*stroke: var\(--fs-color-tangerine-light\);/);
+  });
+
+  it("turns the threshold tick 1.8 degrees per percent", async () => {
+    fetchSpy.mockResolvedValue(json(open({ threshold: 0.45 })));
+    const { container } = render(<Meter />);
+    await flush();
+    expect(container.querySelector("[data-gauge-tick]")?.getAttribute("transform")).toBe("rotate(81 150 150)");
+  });
+
   it("moves the arc to each new reading", async () => {
     const { container } = render(<Meter />);
     await flush();

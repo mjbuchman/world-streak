@@ -36,6 +36,10 @@ function standing(passRate: number, threshold: number): { state: "above" | "belo
 
 // The gauge: a half circle of radius 135 around (150, 150), drawn left to right, 30 wide.
 const ARC = "M 15 150 A 135 135 0 0 1 285 150";
+/** The arc's path length as drawn (`pathLength`), so a dash of N covers N%. */
+const ARC_LENGTH = 100;
+/** The half circle is 180 degrees for 100%. */
+const DEGREES_PER_PERCENT = 1.8;
 
 /**
  * Fetches /api/meter now and every METER_POLL_SECONDS, but only while the tab is visible.
@@ -160,17 +164,23 @@ export function Meter() {
         aria-valuetext={label(body)}
       >
         <svg viewBox="0 0 300 165" className={styles.arc} aria-hidden="true">
-          <path d={ARC} className={styles.track} pathLength={100} />
-          <path d={ARC} className={styles.fill} pathLength={100} strokeDasharray={`${rate} 100`} data-gauge-fill="" />
+          <path d={ARC} className={styles.track} pathLength={ARC_LENGTH} />
+          <path
+            d={ARC}
+            className={styles.fill}
+            pathLength={ARC_LENGTH}
+            strokeDasharray={`${rate} ${ARC_LENGTH}`}
+            data-gauge-fill=""
+          />
           {body.threshold !== null && (
-            // Drawn across the left end (0%) and turned about the centre: 1% is 1.8 degrees.
+            // Drawn across the left end (0%) and turned about the centre.
             <line
               x1={-10}
               y1={150}
               x2={42}
               y2={150}
               className={styles.tick}
-              transform={`rotate(${percent(body.threshold) * 1.8} 150 150)`}
+              transform={`rotate(${percent(body.threshold) * DEGREES_PER_PERCENT} 150 150)`}
               data-gauge-tick=""
             />
           )}
