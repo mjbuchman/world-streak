@@ -93,7 +93,7 @@ update public.game_settings set default_pass_targets = '{"stacking": 10}';
 -- Without its row, ensure_game_day fails loudly instead of creating no day.
 delete from public.game_settings;
 select throws_ok(
-  $$select public.ensure_game_day('2026-11-21')$$,
+  $$select public.ensure_game_day('2001-11-21')$$,
   'P0001', 'game_settings has no row', 'ensure_game_day refuses to run without the settings row'
 );
 insert into public.game_settings default values;
@@ -135,16 +135,16 @@ insert into public.profiles (id, birth_date, country, is_admin) values
 -- must not set the target here (T22 tests that), so none count as enough.
 update public.game_settings set default_survival_threshold = 0.55, default_pass_targets = '{"stacking": 12}',
   percentile_min_sample = 2147483647;
-select public.ensure_game_day('2026-11-20');
+select public.ensure_game_day('2001-11-20');
 select results_eq(
-  $$select challenge_type, pass_target, survival_threshold from public.game_days where game_date = '2026-11-20'$$,
+  $$select challenge_type, pass_target, survival_threshold from public.game_days where game_date = '2001-11-20'$$,
   $$values ('stacking'::text, 12::numeric, 0.55::numeric)$$,
   'a new game day takes its pass target and survival threshold from game_settings'
 );
 update public.game_settings set default_survival_threshold = 0.60, default_pass_targets = '{"stacking": 10}';
-select public.ensure_game_day('2026-11-20');
+select public.ensure_game_day('2001-11-20');
 select results_eq(
-  $$select pass_target, survival_threshold from public.game_days where game_date = '2026-11-20'$$,
+  $$select pass_target, survival_threshold from public.game_days where game_date = '2001-11-20'$$,
   $$values (12::numeric, 0.55::numeric)$$,
   'changing the settings leaves an existing game day as it was'
 );

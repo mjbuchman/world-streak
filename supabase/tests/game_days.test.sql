@@ -72,64 +72,64 @@ insert into public.profiles (id, birth_date, country) values
 -- ensure_game_day: inserts the stacking defaults once, then does nothing. Recent scores from
 -- local dev runs must not set the target here (T22 tests that), so none count as enough.
 update public.game_settings set percentile_min_sample = 2147483647;
-select lives_ok($$select public.ensure_game_day('2026-11-08')$$, 'ensure_game_day creates a missing day');
+select lives_ok($$select public.ensure_game_day('2001-11-08')$$, 'ensure_game_day creates a missing day');
 select results_eq(
   $$select challenge_type, pass_target, survival_threshold, outcome, closed_at
-    from public.game_days where game_date = '2026-11-08'$$,
+    from public.game_days where game_date = '2001-11-08'$$,
   $$values ('stacking'::text, 10::numeric, 0.60::numeric, null::text, null::timestamptz)$$,
   'a new day is a stacking day with the default target and a 60% threshold, still open'
 );
-update public.game_days set pass_target = 12 where game_date = '2026-11-08';
-select public.ensure_game_day('2026-11-08');
+update public.game_days set pass_target = 12 where game_date = '2001-11-08';
+select public.ensure_game_day('2001-11-08');
 select is(
-  (select count(*)::int from public.game_days where game_date = '2026-11-08'), 1,
+  (select count(*)::int from public.game_days where game_date = '2001-11-08'), 1,
   'ensure_game_day run twice leaves one row'
 );
 select is(
-  (select pass_target from public.game_days where game_date = '2026-11-08'), 12::numeric,
+  (select pass_target from public.game_days where game_date = '2001-11-08'), 12::numeric,
   'ensure_game_day leaves an existing day untouched'
 );
 
 -- Check constraints.
 select throws_ok(
   $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold)
-    values ('2026-11-09', 'stacking', 10, 1.5)$$,
+    values ('2001-11-09', 'stacking', 10, 1.5)$$,
   '23514', null, 'survival_threshold must be between 0 and 1'
 );
 select throws_ok(
   $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold, outcome)
-    values ('2026-11-09', 'stacking', 10, 0.6, 'tied')$$,
+    values ('2001-11-09', 'stacking', 10, 0.6, 'tied')$$,
   '23514', null, 'outcome is survived or broken'
 );
 select throws_ok(
   $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold)
-    values ('2026-11-09', 'stacking', -1, 0.6)$$,
+    values ('2001-11-09', 'stacking', -1, 0.6)$$,
   '23514', null, 'pass_target cannot be negative'
 );
 select throws_ok(
   $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold, final_pass_rate)
-    values ('2026-11-09', 'stacking', 10, 0.6, 1.2)$$,
+    values ('2001-11-09', 'stacking', 10, 0.6, 1.2)$$,
   '23514', null, 'final_pass_rate is a fraction between 0 and 1'
 );
 
 select throws_ok(
   $$insert into public.attempts (user_id, game_date, seed)
-    values ('00000000-0000-0000-0000-00000000000a', '2026-11-08', 4294967296)$$,
+    values ('00000000-0000-0000-0000-00000000000a', '2001-11-08', 4294967296)$$,
   '23514', null, 'a seed must fit in an unsigned 32-bit integer'
 );
 select throws_ok(
   $$insert into public.attempts (user_id, game_date, seed)
-    values ('00000000-0000-0000-0000-00000000000a', '2026-11-08', -1)$$,
+    values ('00000000-0000-0000-0000-00000000000a', '2001-11-08', -1)$$,
   '23514', null, 'a seed cannot be negative'
 );
 
 -- One attempt per user per day, enforced by the database.
 insert into public.attempts (user_id, game_date, seed) values
-  ('00000000-0000-0000-0000-00000000000a', '2026-11-08', 1),
-  ('00000000-0000-0000-0000-00000000000b', '2026-11-08', 2);
+  ('00000000-0000-0000-0000-00000000000a', '2001-11-08', 1),
+  ('00000000-0000-0000-0000-00000000000b', '2001-11-08', 2);
 select throws_ok(
   $$insert into public.attempts (user_id, game_date, seed)
-    values ('00000000-0000-0000-0000-00000000000a', '2026-11-08', 3)$$,
+    values ('00000000-0000-0000-0000-00000000000a', '2001-11-08', 3)$$,
   '23505', null, 'a second attempt for the same user and date is a unique violation'
 );
 
@@ -142,19 +142,19 @@ select results_eq(
   'user A sees only their own attempt, not user B''s'
 );
 -- Counted by date: the local database may also hold real days created by e2e runs.
-select is((select count(*)::int from public.game_days where game_date = '2026-11-08'), 1, 'a signed-in user can read game days');
+select is((select count(*)::int from public.game_days where game_date = '2001-11-08'), 1, 'a signed-in user can read game days');
 select throws_ok(
   $$insert into public.attempts (user_id, game_date, seed)
-    values ('00000000-0000-0000-0000-00000000000a', '2026-11-09', 4)$$,
+    values ('00000000-0000-0000-0000-00000000000a', '2001-11-09', 4)$$,
   '42501', null, 'a signed-in user cannot insert an attempt directly'
 );
 select throws_ok(
   $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold)
-    values ('2026-11-10', 'stacking', 0, 0)$$,
+    values ('2001-11-10', 'stacking', 0, 0)$$,
   '42501', null, 'a signed-in user cannot create a game day'
 );
 select throws_ok(
-  $$select public.ensure_game_day('2026-11-10')$$,
+  $$select public.ensure_game_day('2001-11-10')$$,
   '42501', null, 'a signed-in user cannot call ensure_game_day'
 );
 -- No update or delete policy, so RLS filters every row out: no error, and nothing changes
@@ -169,7 +169,7 @@ select lives_ok($$delete from public.attempts$$, 'setup: user A tries to delete 
 reset role;
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
 set local role anon;
-select is((select count(*)::int from public.game_days where game_date = '2026-11-08'), 1, 'an anonymous visitor can read game days');
+select is((select count(*)::int from public.game_days where game_date = '2001-11-08'), 1, 'an anonymous visitor can read game days');
 select is_empty('select id from public.attempts', 'an anonymous visitor sees no attempts');
 reset role;
 

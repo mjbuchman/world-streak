@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T22 Prepare next day
+- Active task: T23 Scheduled close job
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T22, then T23 (scheduled close) daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
+- Next: T23 (scheduled close), then T24 (streak display) daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T22 Prepare the next day (PR #53)
+- Migration `20261112010000_prepare_next_day`: `challenge_types`, `pass_target_for` (percentile_disc over the lookback window, default below the minimum sample, streak step), `ensure_game_day` computes target and threshold (capped 0.95) and is the one path for every day; `close_game_day` prepares `d + 1`. Index on `attempts(game_date)`.
+- Review rounds: spec 1, quality 1, tests 2 (round 1: the step through the close path and the submitted/scored filter were untested). Notes: `tests.play_day` now upserts, since a close pre-creates the next day. Auto-merge stalled once (toggled). Merges since the maintainer check after T93: 7.
 
 ### 2026-11-11 — T98 The meter carries the world streak (PR #52)
 - `/api/meter` fills `streak: { current, best }` from `world_streak()` in both statuses, read in parallel with the day; `isMeterBody` checks its shape. No UI yet (T24).
