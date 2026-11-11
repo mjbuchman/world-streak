@@ -1,9 +1,10 @@
+import { flashCount } from "./flash-count/engine";
 import { innerClock } from "./inner-clock/engine";
 import { CHALLENGE_TYPES, type ChallengeModule, type ChallengeType } from "./shared/types";
 import { stacking } from "./stacking/engine";
 
 /** Every challenge's engine, by type. The server builds and scores attempts through this. */
-export const CHALLENGES = { stacking, "inner-clock": innerClock } satisfies Record<ChallengeType, unknown>;
+export const CHALLENGES = { stacking, "inner-clock": innerClock, "flash-count": flashCount } satisfies Record<ChallengeType, unknown>;
 
 /** Narrows a stored challenge type (plain text in the database) to one the server knows. */
 export function isChallengeType(value: string): value is ChallengeType {

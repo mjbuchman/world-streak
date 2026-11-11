@@ -460,7 +460,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T27 Inner Clock (Second Sense) renderer and practice page
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T26
 - Acceptance criteria:
   - [ ] `/practice/inner-clock` shows "Tap when you think N seconds have passed", a Start control, and no visible timer or progress indicator while running. A tap (pointer or Space) ends the run and reveals the actual time and the error.
@@ -470,7 +470,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T28 Flash Count (Swift Sum) engine
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/flash-count/engine.ts` implements `ChallengeModule` with `direction "lower-better"`. `paramsFromSeed(seed)` returns `{ dotCount, flashMs: 1000, dots: { x, y, r }[] }`, with `dotCount` within a documented range (default 15 to 45) and positions in a unit square, no two dots closer than the documented minimum spacing, and none clipped by the edges.
