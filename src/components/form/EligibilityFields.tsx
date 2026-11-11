@@ -19,10 +19,12 @@ export function CountrySelect({ error, defaultValue }: { error?: string; default
     <Field name="country" label="Country of residence" error={error}>
       {(control) => (
         <select
-          {...control}
           // A select only reads defaultValue when it mounts, so remount it to show a new value
-          // (for example after React resets the form following a failed submit).
+          // (for example after React resets the form following a failed submit). The key comes
+          // before the spread: after it, JSX falls back to createElement, whose children React's
+          // dev build reports as a list missing keys.
           key={value || "initial"}
+          {...control}
           required
           defaultValue={value}
           className={styles.input}

@@ -2,9 +2,24 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 
+// A key after a prop spread makes JSX fall back to createElement, and Next's dev build of React
+// then warns that the element's children are a list missing keys (T80). Listed in every
+// no-restricted-syntax block, since a later block's list replaces an earlier one.
+const KEY_AFTER_SPREAD = {
+  selector: "JSXOpeningElement > JSXSpreadAttribute ~ JSXAttribute[name.name='key']",
+  message: "Put key before any {...spread} props.",
+};
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    files: ["**/*.{jsx,tsx}"],
+    rules: {
+      "react/jsx-key": ["error", { checkFragmentShorthand: true }],
+      "no-restricted-syntax": ["error", KEY_AFTER_SPREAD],
+    },
+  },
   // Challenge engines must be pure functions of (seed, inputs) so the server can replay them
   // (CLAUDE.md, Challenge engines). Only render.ts, which draws to the canvas, may use these.
   {
@@ -34,6 +49,7 @@ const eslintConfig = defineConfig([
       "no-restricted-syntax": [
         "error",
         { selector: "NewExpression[callee.name='Date']", message: "Engines take elapsed milliseconds as input, never the clock." },
+        KEY_AFTER_SPREAD,
       ],
     },
   },
