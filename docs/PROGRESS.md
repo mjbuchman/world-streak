@@ -5,8 +5,8 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak is COMPLETE and play-tested (Nov 11). Feedback tasks T102 (lock a started day's pass target), T103 (show the meter until the deadline), T104 (gauge meter) and T105 (streak bar chart) come before M3.
-- Active task: T102 (its branch also carries T99's doc updates, the play-test decisions and the end-of-M2 maintainer check).
-- Blocked tasks: none
+- Active task: none.
+- Blocked tasks: T102 (PR #58, approved, auto-merge on). The CI e2e job failed 3 times installing the Playwright browser (runner DNS outage), see NEEDS_HUMAN. Its branch also carries T99's doc updates, the play-test decisions and the end-of-M2 maintainer check. If PR #58 has merged, set T102 to done and go on with T103.
 - Waiting on the human: nothing now; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: T102, T103, T104, T105, then M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
 
