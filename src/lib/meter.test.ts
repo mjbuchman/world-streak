@@ -153,6 +153,7 @@ describe("with METER_HIDE_HOURS at 0: shown until the deadline (T103)", () => {
     const body = meterBody(new Date("2026-11-08T21:00:00Z"), "2026-11-08", row);
     expect(meterCacheSeconds(body, new Date("2026-11-08T21:00:00Z"))).toBe(30);
     expect(meterCacheSeconds(body, new Date("2026-11-08T23:59:10Z"))).toBe(25);
+    expect(meterCacheSeconds(body, new Date("2026-11-08T23:59:58Z"))).toBe(1);
     expect(meterCacheSeconds(body, new Date("2026-11-08T23:59:59Z"))).toBe(0);
   });
 });

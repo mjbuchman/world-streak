@@ -310,6 +310,13 @@ describe("Meter hidden window from config", () => {
     expect(screen.getByText("The meter is hidden for the final 2 hours. The result is revealed at the deadline.")).toBeTruthy();
   });
 
+  it("with the setting at 0, a stale hidden reply names no hours", async () => {
+    fetchSpy.mockResolvedValue(json(hidden));
+    render(<Meter />);
+    await flush();
+    expect(screen.getByText("The meter is hidden until the deadline, when the result is revealed.")).toBeTruthy();
+  });
+
   it("says the final hour, not the final 1 hours", async () => {
     config.hideHours = 1;
     fetchSpy.mockResolvedValue(json(hidden));
