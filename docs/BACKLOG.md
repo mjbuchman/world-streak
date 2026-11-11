@@ -932,7 +932,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T80 Fix the missing-key warning in form fields; quieter test output
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T75
 - Acceptance criteria:
   - [ ] The React warning "Each child in a list should have a unique key prop. Check the render method of `Field`" no longer appears on `/signup`, `/signin` or `/complete-profile` (a component test fails on that console error).
@@ -1020,7 +1020,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T96 Shared pgTAP fixtures for players, attempts and days
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T17
 - Acceptance criteria:
   - [ ] One helper file under `supabase/tests/` provides, for example, `tests.make_player(id, weight default 1)`, `tests.clear_today()` and `tests.play_day(date, attempts, passes, threshold)`.

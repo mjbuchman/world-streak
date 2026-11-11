@@ -23,24 +23,19 @@ select function_privs_are(
   'anonymous visitors cannot record results'
 );
 
--- Fixtures. Results are only accepted for today's game date, so A's open attempt is on it (the
--- day may already exist from e2e runs, hence "on conflict"). The other days are far in the past:
--- 2000-01-01 is closed, 2000-01-03 passed its deadline but was never closed.
-insert into auth.users (id, email) values
-  ('00000000-0000-0000-0000-00000000000a', 'a@example.test'),
-  ('00000000-0000-0000-0000-00000000000b', 'b@example.test');
-insert into public.profiles (id, birth_date, country) values
-  ('00000000-0000-0000-0000-00000000000a', '1990-01-01', 'US'),
-  ('00000000-0000-0000-0000-00000000000b', '1991-02-02', 'US');
-select public.ensure_game_day(public.game_date_at(now()));
-insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold) values
-  ('2000-01-01', 'stacking', 10, 0.6),
-  ('2000-01-03', 'stacking', 10, 0.6);
-insert into public.attempts (id, user_id, game_date, seed) values
-  ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000000a', public.game_date_at(now()), 1),
-  ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-00000000000a', '2000-01-03', 3),
-  ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-00000000000b', '2000-01-01', 2),
-  ('00000000-0000-0000-0000-0000000000b2', '00000000-0000-0000-0000-00000000000b', public.game_date_at(now()), 4);
+-- Fixtures. Results are only accepted for today's game date, so A's open attempt is on it. The
+-- other days are far in the past: 2000-01-01 is closed, 2000-01-03 passed its deadline but was
+-- never closed. play_day gives both a counters row at zero, which the starts below add to.
+\ir fixtures/fixtures.psql
+create temporary table today as select tests.clear_today() as d;
+select tests.make_player('00000000-0000-0000-0000-00000000000a');
+select tests.make_player('00000000-0000-0000-0000-00000000000b');
+select tests.play_day('2000-01-01', 0, 0);
+select tests.play_day('2000-01-03', 0, 0);
+select tests.start('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000000a', d, 1) from today;
+select tests.start('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-00000000000a', '2000-01-03', 3);
+select tests.start('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-00000000000b', '2000-01-01', 2);
+select tests.start('00000000-0000-0000-0000-0000000000b2', '00000000-0000-0000-0000-00000000000b', d, 4) from today;
 -- 2000-01-01 is closed after its attempt started: a start on a closed day is refused (T93).
 update public.game_days set closed_at = '2000-01-02T00:00:05Z', outcome = 'survived' where game_date = '2000-01-01';
 

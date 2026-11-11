@@ -1,0 +1,50 @@
+-- Shared pgTAP fixtures. A test file includes this right after `begin;` with
+--   \ir fixtures/fixtures.psql
+-- so the helpers live in that file's transaction and roll back with it: nothing reaches the
+-- migrations or outlives the test. The .psql extension keeps `supabase test db` (which runs
+-- *.sql files) from running this file as a test of its own.
+
+create schema tests;
+
+-- A player: an auth user and a profile. Weight defaults to full; birth date and country make
+-- the player an eligible adult in the US.
+create function tests.make_player(player uuid, weight numeric default 1) returns uuid
+language sql as $$
+  insert into auth.users (id, email) values (player, player || '@example.test');
+  insert into public.profiles (id, birth_date, country, weight) values (player, '1990-01-01', 'US', weight);
+  select player;
+$$;
+
+-- Today's game date with an open game day and no attempts or counters yet. The local database
+-- may hold real attempts for today from e2e runs; the test's rollback brings them back.
+create function tests.clear_today() returns date
+language plpgsql as $$
+declare
+  today date := public.game_date_at(now());
+begin
+  delete from public.game_day_counters where game_date = today;
+  delete from public.attempts where game_date = today;
+  perform public.ensure_game_day(today);
+  return today;
+end;
+$$;
+
+-- Start an attempt (the start endpoint's insert), which counts it.
+create function tests.start(attempt uuid, player uuid, day date, seed integer) returns uuid
+language sql as $$
+  insert into public.attempts (id, user_id, game_date, seed) values (attempt, player, day, seed);
+  select attempt;
+$$;
+
+-- A past game day that already holds set counts at full weight, without per-player attempts.
+-- Left open (closed_at null) unless `closed` is given, so a close job can be tested on it.
+create function tests.play_day(
+  day date, attempt_count integer, pass_count integer, threshold numeric default 0.6, closed timestamptz default null
+) returns date
+language sql as $$
+  insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold, closed_at)
+  values (day, 'stacking', 10, threshold, closed);
+  insert into public.game_day_counters (game_date, attempts, passes, weighted_attempts, weighted_passes)
+  values (day, attempt_count, pass_count, attempt_count, pass_count);
+  select day;
+$$;
