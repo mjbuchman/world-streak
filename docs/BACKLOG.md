@@ -368,15 +368,25 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T21 Daily close: outcome and world streak
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T17
 - Acceptance criteria:
   - [ ] A migration creates `streak_runs` (`id`, `start_date`, `end_date null`, `length int`) and SQL function `close_game_day(d date)`. It computes `final_pass_rate = weighted_passes / weighted_attempts`, sets `outcome = 'survived'` if that is `>= survival_threshold` and `'broken'` otherwise, sets `closed_at`, and updates the streak: survived extends the open run (or starts one with length 1), and broken ends the open run (sets `end_date`), so the current streak is 0.
   - [ ] It is keyed by date and idempotent: calling it twice for the same date leaves identical rows and does not double-count the streak.
   - [ ] pgTAP: 10 attempts with 6 passes at threshold 0.60 is survived (the boundary counts); 5 of 10 is broken; 3 consecutive survived days give current streak 3, and a broken fourth day gives 0 with best 3; an idempotent re-run changes nothing.
   - [ ] A day with 0 attempts closes as `broken` with `final_pass_rate null` (judgment call, record it and flag it).
-  - [ ] SQL view or function `world_streak()` returns `{ current, best, current_start_date }`, readable by everyone. `/api/meter` now fills `streak`.
+  - [ ] SQL view or function `world_streak()` returns `{ current, best, current_start_date }`, readable by everyone. (`/api/meter` filling `streak` moved to T98, to keep this PR under about 400 lines.)
 - Notes: Pass rate is weighted per the definition "among counted accounts" (weights from T17). The cycle-aware streak reset comes later (T34). From the T11 quality review: add a `game_days` check that `outcome` and `closed_at` are both set or both null, so a half-closed day cannot be stored (`final_pass_rate` is already checked to be between 0 and 1). From the T81 quality review: the game reports a finished run from its animation loop, which browsers pause in a hidden tab, so a run that ends while the tab is hidden is submitted only when the player returns. Near the deadline that can turn into "day closed"; if it matters, finish the run with a timer when `document.hidden` (the server scores the taps either way). From the T17 quality review: counter updates serialize on one row per day; fine for the MVP, note it as a scaling limit. From the T93 quality review: in `close_game_day`, lock (update, or `select ... for update`) the `game_days` row first, then read the counters; a start holds a share lock on the day row while it updates the counters, so the opposite order could deadlock or miss that start. (The other T17 follow-ups, refusing starts on a closed day and raising on a missing counter row, moved to T93.) From the T97 reviews: `isMeterBody` in `src/lib/meter.ts` accepts only `streak: null`, on purpose, so filling in `streak` fails its tests until the check follows (decide too whether hidden bodies carry it). Ship the server and the check together: the meter's 30 s CDN cache can briefly serve an old-shape body to a new bundle, or the reverse, which reads as "unavailable".
+
+### T98 The meter carries the world streak
+- Type: feature
+- Status: todo
+- Depends on: T21
+- Acceptance criteria:
+  - [ ] `/api/meter` fills `streak` with `{ current, best }` from `world_streak()` in both open and hidden bodies (the streak is not secret in the final hours), read in the same request as the day; malformed numbers fail with a 500 via `dbInteger`.
+  - [ ] `isMeterBody` checks the new `streak` shape (non-negative integers, `best >= current`); the "every body `meterBody` produces passes" test covers both statuses; `tests/e2e/meter.spec.ts` key list updated.
+  - [ ] The meter shows nothing new yet (the streak display is T24), so no UI change; `npm run verify` and the meter e2e pass.
+- Notes: Split from T21 (Nov 11). See T21's notes on shipping the server and the check together: the 30 s CDN cache can briefly serve the old shape to a new bundle.
 
 ### T22 Prepare next day: pass target and threshold
 - Type: feature
@@ -1031,7 +1041,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T97 One meter-reply check, shared and guarded against drift
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T19
 - Acceptance criteria:
   - [ ] `isMeterBody` moves from `src/components/Meter.tsx` to the client-safe `src/lib/meter.ts` (still without zod; the import allowlist test passes) and is exported for the UI.

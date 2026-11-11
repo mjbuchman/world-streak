@@ -92,14 +92,14 @@ select results_eq(
 -- A pass refused because the day closed is not counted as a pass.
 update public.attempts set submitted_at = null, score = null, passed = null
   where id = '00000000-0000-0000-0000-0000000000c1';
-update public.game_days set closed_at = now() where game_date = (select d from today);
+update public.game_days set closed_at = now(), outcome = 'broken' where game_date = (select d from today);
 select is(
   public.record_attempt_result('00000000-0000-0000-0000-0000000000c1', '{"tapsMs":[900]}', 12, true),
   'day-closed',
   'setup: a submission after the day closed is refused'
 );
 select results_eq('select * from counters', $$values (6, 4, 5.5::numeric, 3.5::numeric)$$, 'a refused late pass adds nothing');
-update public.game_days set closed_at = null where game_date = (select d from today);
+update public.game_days set closed_at = null, outcome = null where game_date = (select d from today);
 
 -- A refused second start (the unique constraint the start endpoint relies on) counts nothing.
 select throws_ok(

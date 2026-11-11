@@ -37,13 +37,21 @@ language sql as $$
 $$;
 
 -- A past game day that already holds set counts at full weight, without per-player attempts.
--- Left open (closed_at null) unless `closed` is given, so a close job can be tested on it.
+-- Left open (closed_at null) unless `closed` is given, so a close job can be tested on it; a
+-- closed day gets the outcome its counts give, since a day closes with its outcome.
 create function tests.play_day(
   day date, attempt_count integer, pass_count integer, threshold numeric default 0.6, closed timestamptz default null
 ) returns date
 language sql as $$
-  insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold, closed_at)
-  values (day, 'stacking', 10, threshold, closed);
+  insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold, closed_at, outcome)
+  values (
+    day, 'stacking', 10, threshold, closed,
+    case
+      when closed is null then null
+      when attempt_count > 0 and pass_count::numeric / attempt_count >= threshold then 'survived'
+      else 'broken'
+    end
+  );
   insert into public.game_day_counters (game_date, attempts, passes, weighted_attempts, weighted_passes)
   values (day, attempt_count, pass_count, attempt_count, pass_count);
   select day;

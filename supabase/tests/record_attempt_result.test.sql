@@ -98,7 +98,7 @@ select is(
   'day-closed',
   'an attempt whose game date has passed is refused, even before the close job runs'
 );
-update public.game_days set closed_at = now() where game_date = public.game_date_at(now());
+update public.game_days set closed_at = now(), outcome = 'broken' where game_date = public.game_date_at(now());
 select is(
   public.record_attempt_result('00000000-0000-0000-0000-0000000000b2', '{"tapsMs":[900]}', 12, true),
   'day-closed',

@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T97 One meter-reply check
+- Active task: T21 Daily close: outcome and world streak
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T97 (meter-reply check), then T21 daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
+- Next: T21 daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T97 One meter-reply check (PR #50)
+- `isMeterBody` moved to `src/lib/meter.ts`; it requires `streak: null` so T21's streak fails a test until the check follows (noted in T21). Tests: every `meterBody` output passes; direct malformed cases.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the maintainer check after T93: 4.
 
 ### 2026-11-11 — T96 Shared pgTAP fixtures (PR #49)
 - `supabase/tests/fixtures/fixtures.psql` (`tests.make_player`, `clear_today`, `start`, `play_day`), included with `\ir fixtures/fixtures.psql` after `begin;` so it rolls back with each file; the `.psql` extension keeps `supabase test db` from running it. Used by the counters, integrity and record-result tests; `fixtures.test.sql` checks it. 231 pgTAP tests.
