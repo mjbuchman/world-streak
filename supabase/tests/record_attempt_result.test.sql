@@ -25,7 +25,7 @@ select function_privs_are(
 
 -- Fixtures. Results are only accepted for today's game date, so A's open attempt is on it. The
 -- other days are far in the past: 2000-01-01 is closed, 2000-01-03 passed its deadline but was
--- never closed.
+-- never closed. play_day gives both a counters row at zero, which the starts below add to.
 \ir fixtures/fixtures.psql
 create temporary table today as select tests.clear_today() as d;
 select tests.make_player('00000000-0000-0000-0000-00000000000a');
