@@ -35,8 +35,25 @@ test("the home page shows the live meter, or the hidden message in the final hou
   await page.goto("/");
   const meter = page.getByRole("region", { name: "Today's meter" });
   const reading = ALWAYS_OPEN ? /% needed|No attempts yet/ : /% needed|No attempts yet|The meter is hidden for the final/;
-  await expect(meter.getByText(reading)).toBeVisible();
-  await expect(meter.getByRole("timer")).toHaveText(/^Closes in \d+:\d{2}:\d{2}$/);
+  await expect(meter.getByText(reading).first()).toBeVisible();
+  // The countdown sits in the page header, above the meter (T104).
+  const timer = page.getByRole("main").getByRole("timer");
+  await expect(timer).toHaveText(/^Closes in \d+:\d{2}:\d{2}$/);
+  expect((await timer.boundingBox())!.y).toBeLessThan((await meter.boundingBox())!.y);
+});
+
+test.describe("on a 390 x 844 phone", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test("the meter comes first and the Play button is visible without scrolling", async ({ page }) => {
+    await page.goto("/");
+    // Wait for the reading, so the check runs against the meter's full height.
+    await expect(page.getByRole("meter", { name: "Today's pass rate" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Play today's challenge" })).toBeInViewport({ ratio: 1 });
+    const meterBox = await page.getByRole("region", { name: "Today's meter" }).boundingBox();
+    const cardBox = await page.getByRole("region", { name: "Teetering Tower" }).boundingBox();
+    expect(meterBox!.y).toBeLessThan(cardBox!.y);
+  });
 });
 
 test("a signed-in player's meter request carries no cookie, and a started attempt shows in it", async ({ page, accounts }) => {

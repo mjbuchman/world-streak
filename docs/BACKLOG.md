@@ -1194,7 +1194,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T103 Show the meter until the deadline
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T19
 - Acceptance criteria:
   - [ ] `METER_HIDE_HOURS` becomes 0, and with 0 the meter and `/api/meter` never answer `hidden` before the deadline (unit tests at 0, plus the hidden path still tested with a non-zero value so it can be switched back on).
@@ -1204,7 +1204,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T104 Gauge meter at the top of the home page
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T103
 - Acceptance criteria:
   - [ ] Follows the "Chosen" artboard of https://claude.ai/artifact/MRXZU4jQW9RvVqLLDohXXQ (option A's meter). Home order: header, meter, today's challenge card, streak card. The countdown ("Closes in h:mm:ss") moves to the page header.

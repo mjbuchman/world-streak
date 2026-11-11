@@ -13,7 +13,8 @@ test("home page uses the Fresh Sport tokens and fonts", async ({ page }) => {
       mint: root.getPropertyValue("--fs-color-mint").trim(),
       tangerine: root.getPropertyValue("--fs-color-tangerine").trim(),
       bodyFont: getComputedStyle(document.body).fontFamily,
-      headingFont: getComputedStyle(document.querySelector("h1")!).fontFamily,
+      // The h1 is for screen readers only (T104); today's challenge is the first visible heading.
+      headingFont: getComputedStyle(document.querySelector("h2")!).fontFamily,
       background: getComputedStyle(document.body).backgroundImage,
     };
   });

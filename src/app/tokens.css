@@ -24,6 +24,15 @@
   --fs-color-text-muted: #A3C4BD;
   --fs-color-error: #FFB3A8;
   --fs-color-error-surface: rgba(255,120,100,0.14);
+  --fs-color-meter-surface: #052E30;
+  --fs-color-tangerine-pale: #FFC27A;
+
+  /* The gauge meter's state tints (T104): mint at or above the line, tangerine below it. */
+  --fs-tint-mint: rgba(52,245,181,0.14);
+  --fs-tint-tangerine: rgba(255,176,80,0.16);
+  --fs-glow-mint: rgba(52,245,181,0.16);
+  --fs-glow-tangerine: rgba(255,122,26,0.22);
+  --fs-glow-tick: rgba(255,122,26,0.8);
 
   /* Gradients and shadows */
   --fs-gradient-ground: linear-gradient(170deg, var(--fs-color-ground-top) 0%, var(--fs-color-ground-bottom) 55%, var(--fs-color-ground-deep) 100%);
@@ -49,7 +58,6 @@
   --fs-text-page-title: 26px;
   /* Fluid sizes: shrink with the screen width on phones, capped at the sizes above. */
   --fs-text-score: clamp(72px, 28vw, var(--fs-text-hero));
-  --fs-text-home-title: clamp(40px, 11vw, var(--fs-text-display));
   --fs-text-result-heading: clamp(32px, 9vw, var(--fs-text-subdisplay));
   --fs-text-headline: 30px;
   --fs-text-title: 20px;

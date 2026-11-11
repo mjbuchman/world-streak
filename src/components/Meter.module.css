@@ -1,57 +1,178 @@
-/* The bar: a pill track, a mint fill that grows into place, and a marker at the threshold. */
-.track {
+/* The gauge card: a deep surface with a soft glow in the state's colour (T104). */
+.meter {
+  --glow: transparent;
   position: relative;
-  height: 16px;
-  border-radius: var(--fs-radius-pill);
-  background: var(--fs-color-surface-strong);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4) var(--space-4);
+  border-radius: var(--fs-radius-surface);
+  background: radial-gradient(120% 80% at 50% 30%, var(--glow) 0%, transparent 60%), var(--fs-color-meter-surface);
+  box-shadow: 0 20px 48px -20px var(--glow);
+  transition: box-shadow var(--fs-duration-slow) var(--fs-ease-out);
 }
 
-/* It fills up from empty when it first appears, then slides to each new reading. Reduced
-   motion sets the durations to 0, so it simply appears. */
-.fill {
-  height: 100%;
-  border-radius: var(--fs-radius-pill);
-  background: var(--fs-gradient-mint);
-  box-shadow: var(--fs-shadow-mint);
-  animation: grow var(--fs-duration-slow) var(--fs-ease-out);
-  transition: width var(--fs-duration-slow) var(--fs-ease-out);
+.meter[data-state="above"] {
+  --glow: var(--fs-glow-mint);
 }
 
-@keyframes grow {
-  from {
-    width: 0;
-  }
+.meter[data-state="below"] {
+  --glow: var(--fs-glow-tangerine);
 }
 
-/* Taller than the track and in the text colour, so it stands apart from the mint fill by
-   lightness as well as by colour. */
-.marker {
-  position: absolute;
-  top: -6px;
-  bottom: -6px;
-  width: 3px;
-  margin-left: -1.5px;
-  border-radius: var(--fs-radius-pill);
-  background: var(--fs-color-text);
-}
-
-.label {
+.eyebrow {
   margin: 0;
+  font-size: var(--fs-text-label);
   font-weight: 700;
-  font-size: var(--fs-text-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fs-color-text-muted);
+}
+
+/* The arc and the reading inside it share one box; the reading sits in the bowl of the arc. */
+.gauge {
+  position: relative;
+  width: min(300px, 100%);
+}
+
+.arc {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* The threshold tick reaches past the ends of the arc. */
+  overflow: visible;
+}
+
+.track,
+.fill {
+  fill: none;
+  stroke-width: 30;
+}
+
+.track {
+  stroke: var(--fs-color-surface-strong);
+}
+
+/* It slides to each new reading; reduced motion sets the duration to 0, so it simply jumps. */
+.fill {
+  stroke: var(--fs-color-text-muted);
+  transition:
+    stroke-dasharray var(--fs-duration-slow) var(--fs-ease-out),
+    stroke var(--fs-duration-slow) var(--fs-ease-out);
+}
+
+.meter[data-state="above"] .fill {
+  stroke: var(--fs-color-mint);
+}
+
+.meter[data-state="below"] .fill {
+  stroke: var(--fs-color-tangerine-light);
+}
+
+.tick {
+  stroke: var(--fs-color-tangerine);
+  stroke-width: 5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px var(--fs-glow-tick));
+}
+
+.reading {
+  position: absolute;
+  inset: 38% 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rate {
+  margin: 0;
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-display);
+  line-height: 1;
   color: var(--fs-color-text);
   font-variant-numeric: tabular-nums;
+}
+
+.meter[data-state="above"] .rate {
+  color: var(--fs-color-mint);
+}
+
+.meter[data-state="below"] .rate {
+  color: var(--fs-color-tangerine-light);
+}
+
+.caption {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-text-body);
+  font-weight: 600;
+  color: var(--fs-color-text-muted);
+}
+
+.empty {
+  margin: var(--space-4) 0 0;
+  font-family: var(--fs-font-display);
+  font-weight: 600;
+  font-size: var(--fs-text-title);
+  color: var(--fs-color-text);
+}
+
+.verdict {
+  margin: 0;
+  padding: 10px 18px;
+  border-radius: var(--fs-radius-pill);
+  font-weight: 700;
+  font-size: var(--fs-text-body);
+}
+
+.meter[data-state="above"] .verdict {
+  background: var(--fs-tint-mint);
+  color: var(--fs-color-mint-light);
+}
+
+.meter[data-state="below"] .verdict {
+  background: var(--fs-tint-tangerine);
+  color: var(--fs-color-tangerine-pale);
+}
+
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-6);
+  font-size: var(--fs-text-small);
+  color: var(--fs-color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.counts p {
+  margin: 0;
+}
+
+.needed {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.swatch {
+  display: inline-block;
+  width: 12px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--fs-color-tangerine);
 }
 
 .hidden {
   margin: 0;
+  text-align: center;
   color: var(--fs-color-text);
 }
 
-.countdown,
 .status {
   margin: 0;
   font-size: var(--fs-text-small);
   color: var(--fs-color-text-muted);
-  font-variant-numeric: tabular-nums;
 }

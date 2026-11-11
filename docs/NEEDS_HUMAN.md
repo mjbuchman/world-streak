@@ -12,6 +12,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Please confirm: gauge details (blocks nothing)
+- What is needed: OK or changes to three small calls in T104: the home page no longer shows the big title and pitch line (the chosen artboard has neither); the mint glow is a little softer than the mockup (contrast); a day that rounds to the line while below it says "Just below the line".
+- Where to put it: reply in chat.
+- Why: details the mockup did not settle. See docs/DECISIONS.md (T104).
+- Agent's recommendation: keep all three; if new players need the pitch, put one short line under the meter.
+
 ### Accessibility pass (blocks nothing; before launch)
 - What is needed: one session testing the app with a screen reader and keyboard only (and reduced motion on), all at once, once the main screens exist.
 - Where to put it: reply in chat with anything that is hard to use.

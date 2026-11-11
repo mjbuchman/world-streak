@@ -248,3 +248,8 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - **Meter and streak look:** the meter is the core of the game and should be the star of the home screen, maybe its top element; the streak card should be more interesting too. Three mockups (gauge, tower meter, rising tide): https://claude.ai/artifact/MRXZU4jQW9RvVqLLDohXXQ. Chosen: A's gauge meter and play card; the streak card takes A's header with C's bar chart over 14 days ("Chosen" artboard). Built as T104 (meter) and T105 (streak card).
 - No other issues found in the play-test.
 - Confirmed by human: yes (these are the human's decisions).
+
+### 2026-11-11 — Gauge details (T104)
+- Choice: the pill compares the rounded numbers on screen, but its colour follows the real comparison; a day that rounds to the line while below it says "Just below the line", never "Right on the line". The mint glow is 0.16 (the mockup's 0.22 left muted text at 4.3:1). The home page drops the big title and pitch, as the chosen artboard does (the h1 stays for screen readers).
+- How to change it later: `standing()` in `src/components/Meter.tsx`; `--fs-glow-mint` in `tokens.css` (and `METER_TINTS`); `src/app/page.tsx`.
+- Confirmed by human: pending (NEEDS_HUMAN).

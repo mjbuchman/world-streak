@@ -8,7 +8,7 @@ import { adminClient, findUserByEmail } from "./support/supabase";
 
 test("the home page offers today's challenge and practice", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText("Play today's challenge; if enough of the world passes, humanity's streak survives.")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Teetering Tower" }).getByText("Your part today")).toBeVisible();
   await page.getByRole("link", { name: "Play today's challenge" }).click();
   await expect(page).toHaveURL("/play");
 });
