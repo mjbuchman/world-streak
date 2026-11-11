@@ -7,6 +7,7 @@
 import { execSync, spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
+import { assertLocalSupabaseUrl } from "./lib/localSupabase.mts";
 
 const APP_VARIABLES = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
 
@@ -35,10 +36,7 @@ export function localSupabaseEnv(statusOutput: string): AppEnv {
 
   const env = Object.fromEntries(APP_VARIABLES.map((name) => [name, values.get(name)!])) as AppEnv;
   // The suite creates and deletes accounts, so it must never point at a real project.
-  const { hostname } = new URL(env.NEXT_PUBLIC_SUPABASE_URL);
-  if (hostname !== "127.0.0.1" && hostname !== "localhost") {
-    throw new Error(`Refusing to run e2e tests against ${hostname}; the Supabase URL must be localhost.`);
-  }
+  assertLocalSupabaseUrl(env.NEXT_PUBLIC_SUPABASE_URL, "run e2e tests", "the Supabase URL");
   return env;
 }
 

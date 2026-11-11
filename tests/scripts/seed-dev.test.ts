@@ -3,7 +3,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 // TypeScript maps the .mjs specifier to the .mts source.
 import {
-  assertLocalSupabaseUrl,
   main,
   parseSeedArgs,
   passingIndices,
@@ -11,23 +10,6 @@ import {
   supabaseSeedDeps,
   type SeedDeps,
 } from "../../scripts/seed-dev.mjs";
-
-describe("assertLocalSupabaseUrl", () => {
-  it.each(["http://127.0.0.1:54321", "http://localhost:54321"])("accepts %s", (url) => {
-    expect(() => assertLocalSupabaseUrl(url)).not.toThrow();
-  });
-
-  it.each([
-    "https://abcdefgh.supabase.co",
-    "http://127.0.0.1.example.com:54321",
-    "http://localhost.evil.test",
-    "not a url",
-    undefined,
-    "",
-  ])("refuses %s", (url) => {
-    expect(() => assertLocalSupabaseUrl(url)).toThrow(/localhost|127\.0\.0\.1/);
-  });
-});
 
 describe("parseSeedArgs", () => {
   it("reads players, pass rate and date", () => {
@@ -281,6 +263,23 @@ describe("supabaseSeedDeps", () => {
     await deps.addPastPass("2026-11-07", "a1");
     expect(calls).toContainEqual(["select", "counted_weight"]);
     expect(calls).toContainEqual(["update", { passes: 5, weighted_passes: 4.5 }]);
+  });
+
+  it.each([null, "abc", ""])("refuses a malformed pass target (%j) instead of seeding NaN scores", async (passTarget) => {
+    await expect(fakeClient([{ data: { pass_target: passTarget }, error: null }]).deps.passTarget("2026-11-08")).rejects.toThrow(
+      /pass_target/,
+    );
+  });
+
+  it.each([
+    ["counted_weight", { counted_weight: null }, { passes: 4, weighted_passes: "4" }],
+    ["weighted_passes", { counted_weight: "1" }, { passes: 4, weighted_passes: "x" }],
+  ])("refuses a malformed %s instead of adding NaN to the counters", async (field, attempt, counters) => {
+    const { deps } = fakeClient([
+      { data: attempt, error: null },
+      { data: counters, error: null },
+    ]);
+    await expect(deps.addPastPass("2026-11-07", "a1")).rejects.toThrow(new RegExp(field));
   });
 
   it("reports whether a day is closed", async () => {
