@@ -48,8 +48,11 @@ export function FlashCountGame({ params, onFinish }: FlashCountGameProps) {
     const draw = (showDots: boolean) => {
       const { width, height } = canvas.getBoundingClientRect();
       const devicePixelRatio = window.devicePixelRatio || 1;
-      canvas.width = Math.round(width * devicePixelRatio);
-      canvas.height = Math.round(height * devicePixelRatio);
+      // Resizing clears and reallocates the backing store, so only do it when the size changes.
+      const pixelWidth = Math.round(width * devicePixelRatio);
+      const pixelHeight = Math.round(height * devicePixelRatio);
+      if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
+      if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
       drawFlashCount(ctx, { dots: params.dots, showDots, width, height, devicePixelRatio, colors });
     };
 

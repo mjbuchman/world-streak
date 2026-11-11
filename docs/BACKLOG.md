@@ -497,6 +497,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] `/play` renders the component for today's `challenge_type`. Unit tests of the submit handler cover a passing and a failing attempt for each type (for example Inner Clock target 0.5: error 0.32 passes and 0.6 fails).
   - [ ] `/practice` lists the three challenges with a one-line description each and links to each practice page.
   - [ ] e2e: with today's game day set to `flash-count` via SQL fixture, the scored flow (start, enter count, result) works end to end.
+- Notes: From the T29 quality review: if the tab is hidden during Swift Sum's flash, animation frames pause and the dots may never show; for the scored version, restart or void the flash on `visibilitychange`. Second Sense's clock keeps running while hidden (decide whether that is fair).
 
 ### T31 Daily challenge rotation
 - Type: feature
