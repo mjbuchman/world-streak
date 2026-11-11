@@ -224,3 +224,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: the backlog's judgment call. The design's rule is "survives if the day's pass rate meets the threshold"; with no attempts there is no rate to meet it, and a world that does not show up has not held the line.
 - How to change it later: the `v_outcome` line in `close_game_day` (a new migration); the empty-day cases in `supabase/tests/daily_close.test.sql`.
 - Confirmed by human: pending (NEEDS_HUMAN).
+
+### 2026-11-11 — One path prepares every game day (T22)
+- Choice: `ensure_game_day(d)` computes the pass target (`pass_target_for`: the `pass_target_percentile` best score of the `percentile_lookback_days` days before `d`, given `percentile_min_sample` scores, else the default; plus the streak step in the harder direction) and the threshold (`default + threshold_streak_step × current streak`, at most 0.95). `close_game_day(d)` calls it for `d + 1` after updating the streak, and an attempt start calls it for today. An existing day is never touched.
+- Reason: the backlog puts the computation in the close, but a player starting just after midnight (before the close job runs, T23) would otherwise create the day with the plain defaults. One path keeps both the same. The only difference in that race is the streak used for the steps, which is one day behind; with the launch steps at 0 it changes nothing.
+- How to change it later: `pass_target_for` and `ensure_game_day` (migration `20261112010000_prepare_next_day`); the values are the admin-editable `game_settings` (T16, confirmed).
+- Confirmed by human: not needed (the values are the confirmed T16 settings); recorded for reviewers and T23.
