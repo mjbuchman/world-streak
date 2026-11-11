@@ -931,12 +931,14 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `npm run verify` passes; no behavior change.
 - Notes: From the maintainer check after T77 (about 60 lines). T77's `passTarget` had to be added by hand in two places; T30 adds two challenge types to this contract. From the check after T16: `tests/e2e/attempts.spec.ts` imports `tapsForAMiss` straight from `src/challenges/stacking/player`; route it through `tests/e2e/support/tower.ts` so the rule has one allowed path.
 
-### T80 Fix the missing-key warning in form fields
+### T80 Fix the missing-key warning in form fields; quieter test output
 - Type: maintenance
 - Status: todo
 - Depends on: T75
 - Acceptance criteria:
   - [ ] The React warning "Each child in a list should have a unique key prop. Check the render method of `Field`" no longer appears on `/signup`, `/signin` or `/complete-profile` (a component test fails on that console error).
+  - [ ] The Vitest coverage text reporter prints the summary only (for example `text-summary` plus `html`); every threshold stays as it is and still fails the run when missed.
+- Notes (added Nov 11): do right after T95. The human asked to cut usage; this warning repeats dozens of times in every e2e log, and the full coverage table prints on every test run.
 - Notes: Seen in every e2e run's server log since T55. In dev it also opens Next's error overlay, whose stack-frame lookups slow the dev server under parallel e2e (see T78). Overlaps T63's third criterion (maintainer check after T16): whichever lands first does the fix, and the other drops that criterion.
 
 ### T79 One shared result-hero style for play and practice
@@ -983,7 +985,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T93 Day counter integrity
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T17
 - Acceptance criteria:
   - [ ] A migration makes `attempts.counted_weight` not null for new rows (backfill or exclude old rows without a profile, said in the migration comment).
@@ -1004,6 +1006,39 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] The existing meter and route tests pass unchanged; a new test covers the helper at 20:59:59.999Z and 21:00:00.000Z.
   - [ ] `npm run verify` passes; no product behavior changes.
 - Notes: From the maintainer check after T18 (about 40-60 lines). Do before T19.
+
+### T95 One shared local-only toolkit for the dev scripts
+- Type: maintenance
+- Status: in-progress
+- Depends on: T20
+- Acceptance criteria:
+  - [ ] One module (for example `scripts/lib/localSupabase.mts`) holds the only copy of the localhost check, the service-role client factory and the `check(operation, result)` error helper; `scripts/seed-dev.mts` and `scripts/e2e-local.mts` both use it, and neither keeps its own hostname comparison.
+  - [ ] `seed-dev.mts` reads numeric database values strictly, with the same rules as `src/lib/db/numeric.ts` (`pass_target`, `weighted_passes`, `counted_weight`); a malformed value makes the script exit non-zero (unit test with `pass_target: null` and `"abc"`).
+  - [ ] Existing script tests pass, changed only where imports move; the shared module has its own guard tests (localhost, 127.0.0.1, remote, missing, unparsable).
+  - [ ] `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T93 (about 100-150 lines). T23 (`close-day`) and T37 (`simulate:days`) reuse it. Side note for T23: once the catch-up close runs, the README's `--date 2026-11-01` seed example is always closed and refused; update it then.
+
+### T96 Shared pgTAP fixtures for players, attempts and days
+- Type: maintenance
+- Status: todo
+- Depends on: T17
+- Acceptance criteria:
+  - [ ] One helper file under `supabase/tests/` provides, for example, `tests.make_player(id, weight default 1)`, `tests.clear_today()` and `tests.play_day(date, attempts, passes, threshold)`.
+  - [ ] The helpers live inside each file's rolled-back transaction or are installed by a setup file that runs first; nothing reaches `supabase/migrations/` (record which way was chosen, and that the helper file is not itself run as a test).
+  - [ ] At least `game_day_counters.test.sql`, `day_counter_integrity.test.sql` and `record_attempt_result.test.sql` use them, with unchanged assertions and at least 226 tests in total.
+  - [ ] `npx supabase test db` and `npm run verify` pass; no product behavior changes.
+- Notes: From the maintainer check after T93 (about 150-250 lines, mostly removed duplication). Land before T21, whose pgTAP needs several days with set counts.
+
+### T97 One meter-reply check, shared and guarded against drift
+- Type: maintenance
+- Status: todo
+- Depends on: T19
+- Acceptance criteria:
+  - [ ] `isMeterBody` moves from `src/components/Meter.tsx` to the client-safe `src/lib/meter.ts` (still without zod; the import allowlist test passes) and is exported for the UI.
+  - [ ] A unit test shows every body `meterBody` can produce passes the check (open with a rate, open with `passRate: null`, open with `threshold: null`, hidden), so when T21 fills in `streak` a missed update fails a test instead of showing "unavailable".
+  - [ ] The malformed-reply cases in `src/components/Meter.test.tsx` pass unchanged.
+  - [ ] `npm run verify` passes; no product behavior changes.
+- Notes: From the maintainer check after T93 (about 40-60 lines). Land before T21.
 
 ### T90 ResultHero owns the result focus and the shared result bits
 - Type: maintenance

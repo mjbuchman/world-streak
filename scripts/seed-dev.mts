@@ -5,27 +5,14 @@
  * It reads NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from .env.local (the npm script
  * loads it) and refuses to run unless the URL is localhost, because it creates accounts.
  */
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
+import { dbNumber } from "../src/lib/db/numeric.ts";
+import { assertLocalSupabaseUrl, check, createServiceClient } from "./lib/localSupabase.mts";
 
 /** At most this many players per run, so a typo cannot create a million accounts. */
 const MAX_PLAYERS = 10_000;
-
-/** Throws unless `url` points at the local Supabase. Runs before anything touches the database. */
-export function assertLocalSupabaseUrl(url: string | undefined): asserts url is string {
-  let hostname = "";
-  try {
-    hostname = new URL(url ?? "").hostname;
-  } catch {
-    // Falls through to the refusal below.
-  }
-  if (hostname !== "127.0.0.1" && hostname !== "localhost") {
-    throw new Error(
-      `Refusing to seed: NEXT_PUBLIC_SUPABASE_URL must be localhost or 127.0.0.1 (local Supabase), not "${url ?? ""}".`,
-    );
-  }
-}
 
 export type SeedArgs = {
   players: number;
@@ -123,10 +110,6 @@ export async function runSeed(args: SeedArgs, runId: string, deps: SeedDeps): Pr
   deps.log(`Seeded ${args.players} players for ${date}: ${passing.size} passed, ${args.players - passing.size} did not.`);
 }
 
-function check<T>(operation: string, result: { data: T; error: { message: string } | null }): T {
-  if (result.error) throw new Error(`${operation} failed: ${result.error.message}`);
-  return result.data;
-}
 
 const randomSeed = () => crypto.getRandomValues(new Uint32Array(1))[0];
 
@@ -141,7 +124,8 @@ export function supabaseSeedDeps(db: SupabaseClient): SeedDeps {
     },
     async passTarget(date) {
       const row = check("Game day lookup", await db.from("game_days").select("pass_target").eq("game_date", date).single());
-      return Number((row as { pass_target: number | string }).pass_target);
+      // Strict, like the app: a malformed target would otherwise seed NaN scores.
+      return dbNumber((row as { pass_target: unknown }).pass_target, "pass_target");
     },
     async createPlayer(email) {
       const created = await db.auth.admin.createUser({ email, password: crypto.randomUUID(), email_confirm: true });
@@ -185,7 +169,7 @@ export function supabaseSeedDeps(db: SupabaseClient): SeedDeps {
       ) as { passes: number; weighted_passes: number | string };
       const update = {
         passes: row.passes + 1,
-        weighted_passes: Number(row.weighted_passes) + Number(attempt.counted_weight),
+        weighted_passes: dbNumber(row.weighted_passes, "weighted_passes") + dbNumber(attempt.counted_weight, "counted_weight"),
       };
       check("Counters update", await db.from("game_day_counters").update(update).eq("game_date", date));
     },
@@ -195,9 +179,6 @@ export function supabaseSeedDeps(db: SupabaseClient): SeedDeps {
 
 type MakeClient = (url: string, serviceRoleKey: string) => SupabaseClient;
 
-const serviceClient: MakeClient = (url, serviceRoleKey) =>
-  createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
-
 /**
  * The whole command. The localhost guard runs first, before the key is read or any client is
  * made, so the script can never reach a real project.
@@ -205,10 +186,10 @@ const serviceClient: MakeClient = (url, serviceRoleKey) =>
 export async function main(
   env: Record<string, string | undefined>,
   argv: string[],
-  makeClient: MakeClient = serviceClient,
+  makeClient: MakeClient = createServiceClient,
 ): Promise<void> {
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
-  assertLocalSupabaseUrl(url);
+  assertLocalSupabaseUrl(url, "seed", "NEXT_PUBLIC_SUPABASE_URL");
   const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY is missing; copy it from `npx supabase status` into .env.local.");
   const args = parseSeedArgs(argv);

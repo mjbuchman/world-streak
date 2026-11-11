@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T93 Day counter integrity
+- Active task: T95 One shared local-only toolkit for the dev scripts
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T93, the maintainer check (5 merges after T93), then T21 daily close. T91 (approved wording) fits in when convenient.
+- Next: T95, T80 (missing-key warning and quieter output, to cut usage), T96 (pgTAP fixtures), T97 (meter-reply check), then T21 daily close. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,14 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — Maintainer check after T93
+- Health good (711 unit, 226 pgTAP, lint and typecheck clean; outdated packages all already in T51). New tasks T95 (one local-only toolkit for the dev scripts, strict numerics in seed-dev), T96 (shared pgTAP fixtures) and T97 (one meter-reply check tied to `MeterBody`), all before T21. Merges since this check: 0.
+
+### 2026-11-11 — T93 Day counter integrity (PR #46)
+- Migration `20261111000000_day_counter_integrity`: `counted_weight` not null; `stamp_attempt_weight` security invoker (pgTAP inserts as service_role); a start on a closed day is refused in the database (WS001, share lock on the day row); a pass with no counters row raises. Start answers 409 `day-closed`, and `/play` says "Today's challenge just closed. Press Start to play the next one."
+- Review rounds: spec 2, quality 2, tests 2 (round 1, spec and tests: the security-invoker switch lacked a service_role insert test).
+- Notes: T21's `close_game_day` must lock the `game_days` row before reading the counters (its notes say so). The `record_attempt_result` pgTAP fixture now closes its day after the attempt starts.
 
 ### 2026-11-11 — T92 One strict parser for numeric database values (PR #45)
 - `src/lib/db/numeric.ts` (`numericSchema`, `dbNumber`, `dbInteger`) used by the attempt store and the meter read, so a malformed row fails with a 500 instead of becoming 0 or NaN. `readMeter` moved to the server-only `src/lib/meterRead.ts`.
