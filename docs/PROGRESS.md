@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak is COMPLETE and play-tested (Nov 11). Feedback tasks T102 (lock a started day's pass target), T103 (show the meter until the deadline), T104 (gauge meter) and T105 (streak bar chart) come before M3.
-- Active task: T103 Show the meter until the deadline.
+- Active task: T104 Gauge meter at the top of the home page.
 - Blocked tasks: none
 - Waiting on the human: nothing now; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: T102, T103, T104, T105, then M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T103 Show the meter until the deadline (PR #59)
+- `METER_HIDE_HOURS = 0`; the hidden path stays, tested by mocking the setting (a `vi.mock` getter over `@/config/meter`). `meterHiddenMessage(hours)` handles 1 and 0. The meter e2e expects an open reading while the setting is 0.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the end-of-M2 maintainer check: 2.
 
 ### 2026-11-11 — T102 Lock a started day's pass target (PR #58)
 - Migration `20261112040000_lock_started_pass_target`: a security-definer trigger refuses a pass-target change once the day has an attempt (`WS002`, every role); threshold stays editable. `/admin` shows a started target as text ("Locked: players have started this day.") and reports a refused save. `streak.spec.ts` no longer rewrites existing days' targets.

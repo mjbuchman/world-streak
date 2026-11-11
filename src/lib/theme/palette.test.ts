@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { HIGHLIGHT_TINT, PALETTE, TEXT_PAIRS, composite, contrastRatio } from "./palette";
+import { HIGHLIGHT_TINT, METER_TINTS, PALETTE, TEXT_PAIRS, composite, contrastRatio } from "./palette";
 
 const tokensCss = readFileSync(path.resolve(import.meta.dirname, "../../app/tokens.css"), "utf8");
 
@@ -56,6 +56,10 @@ describe("Fresh Sport palette", () => {
 
   it("checks the highlight surface at the tint tokens.css actually uses", () => {
     expect(tokensCss).toContain(`--fs-gradient-highlight: linear-gradient(150deg, ${HIGHLIGHT_TINT},`);
+  });
+
+  it("checks the gauge at the tints and glows tokens.css actually uses", () => {
+    for (const [name, value] of Object.entries(METER_TINTS)) expect(tokensCss).toContain(`--fs-${name}: ${value};`);
   });
 
   it("keeps the brand colours from the approved mockup", () => {

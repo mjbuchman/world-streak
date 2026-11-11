@@ -20,10 +20,21 @@ export const PALETTE = {
   textMuted: "#A3C4BD",
   error: "#FFB3A8",
   errorSurface: "rgba(255,120,100,0.14)",
+  meterSurface: "#052E30",
+  tangerinePale: "#FFC27A",
 } as const;
 
 /** The mint tint at the bright end of the highlight surface's gradient (`--fs-gradient-highlight`). */
 export const HIGHLIGHT_TINT = "rgba(52,245,181,0.14)";
+
+/** The gauge meter's tints and glows, as tokens.css declares them (`--fs-tint-*`, `--fs-glow-*`). */
+export const METER_TINTS = {
+  "tint-mint": "rgba(52,245,181,0.14)",
+  "tint-tangerine": "rgba(255,176,80,0.16)",
+  // Softer than the mockup's 0.22, which left the muted text under the rate at 4.3:1.
+  "glow-mint": "rgba(52,245,181,0.16)",
+  "glow-tangerine": "rgba(255,122,26,0.22)",
+} as const;
 
 type Rgba = { r: number; g: number; b: number; a: number };
 
@@ -70,6 +81,12 @@ const surfaceOnTop = composite(P.surfaceStrong, P.groundTop);
 const highlightOnTop = composite(HIGHLIGHT_TINT, P.groundTop);
 const hoverOnTop = composite(P.surfaceBorder, P.groundTop);
 const errorOnTop = composite(P.errorSurface, P.groundTop);
+// The gauge: its surface at the brightest point of each state's glow, and each state's pill.
+const T = METER_TINTS;
+const mintGlowOnMeter = composite(T["glow-mint"], P.meterSurface);
+const tangerineGlowOnMeter = composite(T["glow-tangerine"], P.meterSurface);
+const mintPill = composite(T["tint-mint"], mintGlowOnMeter);
+const tangerinePill = composite(T["tint-tangerine"], tangerineGlowOnMeter);
 
 /** Every text-on-background pair the UI uses, with the WCAG minimum it must meet. */
 export const TEXT_PAIRS = [
@@ -91,4 +108,11 @@ export const TEXT_PAIRS = [
   { name: "error text on the error surface", text: P.error, background: errorOnTop, min: 4.5 },
   { name: "header link when hovered", text: P.mintLight, background: composite(P.surface, P.groundTop), min: 4.5 },
   { name: "text on the light end of mint", text: P.onMint, background: P.mintLight, min: 4.5 },
+  { name: "gauge rate above the line", text: P.mint, background: mintGlowOnMeter, min: 4.5 },
+  { name: "gauge rate below the line", text: P.tangerineLight, background: tangerineGlowOnMeter, min: 4.5 },
+  { name: "muted text on the gauge, above the line", text: P.textMuted, background: mintGlowOnMeter, min: 4.5 },
+  { name: "muted text on the gauge, below the line", text: P.textMuted, background: tangerineGlowOnMeter, min: 4.5 },
+  { name: "body text on the gauge", text: P.text, background: P.meterSurface, min: 4.5 },
+  { name: "pill text above the line", text: P.mintLight, background: mintPill, min: 4.5 },
+  { name: "pill text below the line", text: P.tangerinePale, background: tangerinePill, min: 4.5 },
 ] as const;

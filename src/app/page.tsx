@@ -1,23 +1,28 @@
 import Link from "next/link";
+import { Countdown } from "@/components/Countdown";
 import { Meter } from "@/components/Meter";
 import { WorldStreak } from "@/components/WorldStreak";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
 import { CHALLENGE_NAMES } from "@/config/challenges";
-import { GAME_NAME, GAME_PITCH } from "@/config/game";
+import { GAME_NAME } from "@/config/game";
 import styles from "./page.module.css";
 
-/** Home: the game, its pitch, today's challenge front and centre, the live meter and the world streak. */
+/**
+ * Home: the live meter is the star (T104), then today's challenge, then the world streak. The
+ * header bar above already shows the wordmark, so the page's h1 is for screen readers only.
+ */
 export default function Home() {
   return (
     <PageShell>
-      <div className={styles.intro}>
-        <h1 className={styles.title}>{GAME_NAME}</h1>
-        <p className={styles.pitch}>{GAME_PITCH}</p>
-      </div>
-      <Surface as="section" tone="highlight" aria-labelledby="todays-challenge">
-        <p className={styles.eyebrow}>Today&apos;s challenge</p>
+      <header className={styles.top}>
+        <h1 className="visually-hidden">{GAME_NAME}</h1>
+        <Countdown />
+      </header>
+      <Meter />
+      <Surface as="section" aria-labelledby="todays-challenge">
+        <p className={styles.eyebrow}>Your part today</p>
         <h2 id="todays-challenge" className={styles.challenge}>
           {CHALLENGE_NAMES.stacking}
         </h2>
@@ -27,7 +32,6 @@ export default function Home() {
           Practice first
         </Link>
       </Surface>
-      <Meter />
       <WorldStreak />
     </PageShell>
   );
