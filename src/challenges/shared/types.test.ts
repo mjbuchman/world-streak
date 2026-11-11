@@ -4,8 +4,8 @@ import { CHALLENGE_TYPES, type ChallengeModule, type ChallengeType, type ScoreDi
 
 describe("challenge types", () => {
   it("lists the challenge types, starting with stacking", () => {
-    expect(CHALLENGE_TYPES).toEqual(["stacking"]);
-    expectTypeOf<ChallengeType>().toEqualTypeOf<"stacking">();
+    expect(CHALLENGE_TYPES).toEqual(["stacking", "inner-clock"]);
+    expectTypeOf<ChallengeType>().toEqualTypeOf<"stacking" | "inner-clock">();
     expectTypeOf<ScoreDirection>().toEqualTypeOf<"higher-better" | "lower-better">();
   });
 

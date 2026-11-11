@@ -1,7 +1,7 @@
 import type { z } from "zod";
 
 /** Every challenge type, in the order they were added. */
-export const CHALLENGE_TYPES = ["stacking"] as const;
+export const CHALLENGE_TYPES = ["stacking", "inner-clock"] as const;
 
 export type ChallengeType = (typeof CHALLENGE_TYPES)[number];
 

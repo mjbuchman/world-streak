@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CHALLENGES, challengeForGameDay, isChallengeType } from "./registry";
 import { CHALLENGE_TYPES } from "./shared/types";
+import { innerClock } from "./inner-clock/engine";
 import { stacking } from "./stacking/engine";
 
 describe("challenge registry", () => {
@@ -11,12 +12,14 @@ describe("challenge registry", () => {
 
   it("recognises known challenge types only", () => {
     expect(isChallengeType("stacking")).toBe(true);
+    expect(isChallengeType("inner-clock")).toBe(true);
     expect(isChallengeType("chess")).toBe(false);
     expect(isChallengeType("toString")).toBe(false);
   });
 
   it("gives a game day's challenge module", () => {
     expect(challengeForGameDay("2026-11-08", "stacking")).toBe(stacking);
+    expect(challengeForGameDay("2026-11-08", "inner-clock")).toBe(innerClock);
   });
 
   it("fails loudly, naming the day and type, on a challenge type the server does not know", () => {

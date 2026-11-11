@@ -6,6 +6,7 @@ import type { ChallengeType } from "@/challenges/shared/types";
  */
 export const CHALLENGE_NAMES: Record<ChallengeType, string> = {
   stacking: "Teetering Tower",
+  "inner-clock": "Second Sense",
 };
 
 /** How to play the Tower: shown before a practice run and before today's scored attempt. */
