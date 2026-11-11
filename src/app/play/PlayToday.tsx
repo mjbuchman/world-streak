@@ -30,7 +30,8 @@ type Phase =
   | { name: "playing"; attemptId: string; challengeType: ChallengeType; params: unknown; passTarget: number }
   | { name: "checking" }
   // fresh: the verdict arrived in this visit (celebrated), not loaded on a later visit (not replayed).
-  | { name: "result"; verdict: Verdict; fresh: boolean }
+  // challengeType: the challenge played, when this visit played it (the page's may be a day old).
+  | { name: "result"; verdict: Verdict; fresh: boolean; challengeType?: ChallengeType }
   | { name: "abandoned" }
   | { name: "failed"; heading: string; message: string };
 
@@ -98,7 +99,7 @@ export function PlayToday({ challenge, initial }: { challenge: ChallengeType; in
     }
   }
 
-  async function submit(attemptId: string, inputs: unknown) {
+  async function submit(attemptId: string, challengeType: ChallengeType, inputs: unknown) {
     setPhase({ name: "checking" });
     try {
       const response = await fetch("/api/attempts/submit", {
@@ -107,7 +108,7 @@ export function PlayToday({ challenge, initial }: { challenge: ChallengeType; in
         body: JSON.stringify({ attemptId, inputs }),
       });
       const body: SubmitBody = await response.json();
-      if (!("error" in body)) return setPhase({ name: "result", verdict: body, fresh: true });
+      if (!("error" in body)) return setPhase({ name: "result", verdict: body, fresh: true, challengeType });
       // Already recorded (perhaps from another tab): the refreshed page shows the stored result.
       if (body.error === "already-submitted") return router.refresh();
       const refused = SUBMIT_REFUSED[body.error];
@@ -128,7 +129,7 @@ export function PlayToday({ challenge, initial }: { challenge: ChallengeType; in
       return challengeUi(phase.challengeType).play({
         params: phase.params,
         passTarget: phase.passTarget,
-        onFinish: (inputs) => submit(phase.attemptId, inputs),
+        onFinish: (inputs) => submit(phase.attemptId, phase.challengeType, inputs),
       });
 
     case "checking":
@@ -150,7 +151,7 @@ export function PlayToday({ challenge, initial }: { challenge: ChallengeType; in
             confetti={passed && phase.fresh}
             actions={backHome}
           >
-            <p className={styles.summary}>{ui.summary(score, passTarget)}</p>
+            <p className={styles.summary}>{challengeUi(phase.challengeType ?? challenge).summary(score, passTarget)}</p>
             <p className={styles.note}>
               {passed ? "You helped keep the streak alive. " : ""}Come back tomorrow for the next challenge.
             </p>

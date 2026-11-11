@@ -517,6 +517,15 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] Rendered markup is unchanged; existing unit and e2e tests pass unmodified; `npm run verify` passes.
 - Notes: From the maintainer check after T29 (about 150-250 lines). Each new challenge would otherwise copy the scaffolding again.
 
+### T110 Scored timing challenges and a hidden tab
+- Type: feature
+- Status: todo
+- Depends on: T30
+- Acceptance criteria:
+  - [ ] Swift Sum: if the tab is hidden while the dots are shown, the dots are shown again in full when it returns (or the run says so and lets the player see them), so a scored player always gets the whole flash. Unit test with a mocked `visibilitychange` and time.
+  - [ ] Second Sense: a decision, recorded in DECISIONS (and a please-confirm in NEEDS_HUMAN), on whether its clock keeps running while the tab is hidden; implemented and tested as decided.
+- Notes: From the T29 quality review and the T30 spec review; not part of T30's criteria. Before scores are relied on (M4).
+
 ### T31 Daily challenge rotation
 - Type: feature
 - Status: todo
@@ -526,7 +535,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] `ensure_game_day` and the prepare step in `close_game_day` both use the rotation.
   - [ ] pgTAP: 2027-01-01 is stacking, 2027-01-02 inner-clock, 2027-01-03 flash-count, 2027-01-04 stacking, and 2026-12-31 flash-count. An admin-edited future row keeps its type.
   - [ ] The admin editor (T25) gains a challenge type select for unplayed future days, validated against `challenge_types`.
-- Notes: Depends on **Open** "Which challenges join the rotation after the first three". The MVP rotates only the first three; adding a type later is a data change plus a new module.
+- Notes: Depends on **Open** "Which challenges join the rotation after the first three". The MVP rotates only the first three; adding a type later is a data change plus a new module. From the T30 spec review: `/play` falls back to `DEFAULT_CHALLENGE` (`src/lib/attempts/today.ts`) for a day nobody has created yet; with the rotation it must use the rotation's choice instead (also note that `ensure_game_day` and `pass_target_for` hard-code 'stacking' today).
 
 ### T32 Spoiler-free share card with call for help
 - Type: feature

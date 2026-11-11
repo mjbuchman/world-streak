@@ -95,6 +95,18 @@ describe("PlayToday with another challenge (T30)", () => {
     expect(screen.getByText("You were 20% off. Today's target was within 15%.")).toBeTruthy();
   });
 
+  it("sums up in the terms of the challenge played, even if the page was loaded for another (the day rolled over)", async () => {
+    respond(
+      json(200, { ...started, challengeType: "flash-count", params: { dotCount: 25, flashMs: 1000, dots: [] }, passTarget: 15 }),
+      json(200, { score: 4, passed: true, passTarget: 15 }),
+    );
+    const user = userEvent.setup();
+    render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    await user.click(await screen.findByRole("button", { name: "Answer 20" }));
+    expect(await screen.findByText("You were 4% off. Today's target was within 15%.")).toBeTruthy();
+  });
+
   it("refuses to play a challenge this build does not know, saying the start failed", async () => {
     respond(json(200, { ...started, challengeType: "chess" }));
     const user = userEvent.setup();
