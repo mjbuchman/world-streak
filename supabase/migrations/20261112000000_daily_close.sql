@@ -28,7 +28,7 @@ grant select on public.streak_runs to anon, authenticated;
 
 -- Closes game day `d` once its deadline has passed: the final weighted pass rate, the outcome
 -- and the streak. Keyed by date and idempotent: a day already closed is left as it is. Days
--- close in order, so the streak always extends from the day before. Returns the outcome.
+-- close in order (an earlier open day refuses the close). Returns the outcome.
 create or replace function public.close_game_day(d date)
 returns text
 language plpgsql
@@ -66,20 +66,22 @@ begin
   if coalesce(v_counters.weighted_attempts, 0) > 0 then
     v_rate := v_counters.weighted_passes / v_counters.weighted_attempts;
   end if;
-  v_outcome := case when v_rate >= v_day.survival_threshold then 'survived' else 'broken' end;
+  v_outcome := case when v_rate is not null and v_rate >= v_day.survival_threshold then 'survived' else 'broken' end;
 
   update public.game_days
     set final_pass_rate = v_rate, outcome = v_outcome, closed_at = now()
     where game_date = d;
 
-  if v_outcome = 'survived' then
-    update public.streak_runs set length = length + 1 where end_date is null;
-    if not found then
+  -- A survived day extends the open run only if that run's last day is the day before. A day
+  -- with no row at all (never prepared, so never closed) is a gap, which counts as not survived:
+  -- the open run ends on its last survived day, as it does on a broken day.
+  update public.streak_runs set length = length + 1
+    where end_date is null and v_outcome = 'survived' and start_date + length = d;
+  if not found then
+    update public.streak_runs set end_date = start_date + length - 1 where end_date is null;
+    if v_outcome = 'survived' then
       insert into public.streak_runs (start_date, length) values (d, 1);
     end if;
-  else
-    -- The run ends on its last survived day, the day before this one.
-    update public.streak_runs set end_date = d - 1 where end_date is null;
   end if;
 
   return v_outcome;

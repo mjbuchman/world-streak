@@ -220,7 +220,7 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Confirmed by human: yes (Nov 10).
 
 ### 2026-11-11 — A day nobody played breaks the streak (T21)
-- Choice: a day with no weighted attempts (nobody played, no game day row at all, or only zero-weight accounts) closes as `broken` with `final_pass_rate` null. `close_game_day` also refuses a day before its deadline and a day while an earlier day is still open (days close in order, so the streak always extends from the day before). A broken day ends the run on its last survived day (`end_date` = the day before).
+- Choice: a day with no weighted attempts (nobody played, no game day row at all, or only zero-weight accounts) closes as `broken` with `final_pass_rate` null. `close_game_day` also refuses a day before its deadline and a day while an earlier day is still open (days close in order). A broken day ends the run on its last survived day. A day with no row at all is a gap and counts as not survived: a survived day after it starts a new run rather than extending across it.
 - Reason: the backlog's judgment call. The design's rule is "survives if the day's pass rate meets the threshold"; with no attempts there is no rate to meet it, and a world that does not show up has not held the line.
 - How to change it later: the `v_outcome` line in `close_game_day` (a new migration); the empty-day cases in `supabase/tests/daily_close.test.sql`.
 - Confirmed by human: pending (NEEDS_HUMAN).

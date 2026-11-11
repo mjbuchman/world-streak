@@ -1,5 +1,5 @@
 begin;
-select plan(38);
+select plan(44);
 
 -- Structure, row-level security and privileges.
 select has_table('public', 'streak_runs', 'streak_runs table exists');
@@ -41,7 +41,7 @@ select is(public.close_game_day('2000-01-02'), 'survived', 'the weighted pass ra
 select is((select final_pass_rate from day where game_date = '2000-01-02'), 0.625::numeric, 'the final rate is weighted passes over weighted attempts');
 
 select tests.play_day('2000-01-03', 10, 9, 0.60);
-select public.close_game_day('2000-01-03');
+select is(public.close_game_day('2000-01-03'), 'survived', '9 of 10 survives');
 select results_eq('select * from streak', $$values (3, 3, '2000-01-01'::date)$$, 'three survived days in a row make a streak of 3');
 
 -- Below the threshold: 5 of 10.
@@ -71,10 +71,13 @@ select is((select final_pass_rate from day where game_date = '2000-01-07'), null
 
 -- A new run after a break.
 select tests.play_day('2000-01-08', 10, 8, 0.60);
-select public.close_game_day('2000-01-08');
+select is(public.close_game_day('2000-01-08'), 'survived', '8 of 10 survives');
 select results_eq('select * from streak', $$values (1, 3, '2000-01-08'::date)$$, 'a survived day after a break starts a new run of 1');
 
--- Idempotent: closing a closed day again changes nothing and returns its outcome.
+-- Idempotent: closing a closed day again changes nothing and returns its outcome. The close
+-- times are set back first: now() is fixed inside this transaction, so a re-close that rewrote
+-- them would otherwise go unnoticed.
+update public.game_days set closed_at = '2000-03-01T00:00:00Z' where game_date between '2000-01-01' and '2000-01-08';
 create temporary table before as
   select (select array_agg(row(d.*)::text order by game_date) from public.game_days d where game_date < '2000-02-01') as days,
          (select array_agg(row(r.*)::text order by id) from public.streak_runs r) as runs;
@@ -90,14 +93,25 @@ select results_eq(
 );
 select results_eq('select * from streak', $$values (1, 3, '2000-01-08'::date)$$, 'and does not count the streak twice');
 
--- Days close in order, and only after their deadline.
-select tests.play_day('2000-01-09', 10, 8, 0.60);
+-- A gap: 2000-01-09 has no row (never prepared, so never closed). A survived 2000-01-10 does not
+-- extend the run across it; the run ends on 2000-01-08 and a new one starts.
 select tests.play_day('2000-01-10', 10, 8, 0.60);
+select is(public.close_game_day('2000-01-10'), 'survived', 'a survived day after a gap closes');
+select results_eq('select * from streak', $$values (1, 3, '2000-01-10'::date)$$, 'and starts a new run instead of extending across the gap');
+select results_eq(
+  $$select end_date from public.streak_runs where start_date = '2000-01-08'$$,
+  $$values ('2000-01-08'::date)$$,
+  'the run before the gap ends on its last survived day'
+);
+
+-- Days close in order, and only after their deadline.
+select tests.play_day('2000-01-11', 10, 8, 0.60);
+select tests.play_day('2000-01-12', 10, 8, 0.60);
 select throws_ok(
-  $$select public.close_game_day('2000-01-10')$$,
+  $$select public.close_game_day('2000-01-12')$$,
   'P0001', 'an earlier game day is still open; close days in order', 'a day cannot close while an earlier one is open'
 );
-select is((select closed from day where game_date = '2000-01-10'), false, 'the refused day stays open');
+select is((select closed from day where game_date = '2000-01-12'), false, 'the refused day stays open');
 select throws_ok(
   $$select public.close_game_day(public.game_date_at(now()))$$,
   'P0001', null, 'today cannot close before its deadline'
@@ -105,24 +119,33 @@ select throws_ok(
 
 -- A day is closed with its outcome, never one without the other.
 select throws_ok(
-  $$update public.game_days set closed_at = now() where game_date = '2000-01-09'$$,
+  $$update public.game_days set closed_at = now() where game_date = '2000-01-11'$$,
   '23514', null, 'a day cannot be closed without an outcome'
 );
 select throws_ok(
-  $$update public.game_days set outcome = 'broken' where game_date = '2000-01-09'$$,
+  $$update public.game_days set outcome = 'broken' where game_date = '2000-01-11'$$,
   '23514', null, 'nor given an outcome while open'
 );
 select throws_ok(
-  $$insert into public.streak_runs (start_date, length) values ('2000-01-09', 1)$$,
+  $$insert into public.streak_runs (start_date, length) values ('2000-01-11', 1)$$,
   '23505', null, 'there is only ever one open run'
 );
 
 -- Visitors read the streak and nothing else.
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
 set local role anon;
-select results_eq('select * from public.world_streak()', $$values (1, 3, '2000-01-08'::date)$$, 'an anonymous visitor reads the world streak');
+select results_eq('select * from public.world_streak()', $$values (1, 3, '2000-01-10'::date)$$, 'an anonymous visitor reads the world streak');
 select throws_ok($$delete from public.streak_runs$$, '42501', null, 'an anonymous visitor cannot change the streak');
 reset role;
+
+-- Yesterday is past its deadline, so it can close. Every earlier day (here, and any the local
+-- database holds from dev runs) is closed first, inside this rolled-back transaction.
+update public.game_days set closed_at = now(), outcome = 'broken'
+  where closed_at is null and game_date < public.game_date_at(now()) - 1;
+select lives_ok(
+  $$select public.close_game_day(public.game_date_at(now()) - 1)$$,
+  'yesterday, past its deadline, can close'
+);
 
 select * from finish();
 rollback;
