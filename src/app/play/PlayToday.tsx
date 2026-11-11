@@ -33,6 +33,8 @@ type Phase =
   | { name: "failed"; heading: string; message: string };
 
 const START_FAILED = "Today's attempt could not be started. Please try again.";
+// Start raced the deadline and the day closed first; nothing was stored, so nothing counted.
+const START_DAY_CLOSED = "Today's challenge just closed. Reload the page to play the next one.";
 // Trying again cannot fix these two, so say what will.
 const START_REFUSED: Record<number, string> = {
   401: "Your session has ended. Sign in again to play.",
@@ -77,6 +79,7 @@ export function PlayToday({ initial }: { initial: PlayStatus }) {
         const { attemptId, params, passTarget } = body;
         return setPhase({ name: "playing", attemptId, params, passTarget });
       }
+      if (response.status === 409 && body.error === "day-closed") return setPhase({ name: "ready", error: START_DAY_CLOSED });
       if (response.status === 409) {
         // Already submitted (perhaps in another tab): the page shows that result once refreshed.
         if (body.submitted) return router.refresh();

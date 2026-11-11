@@ -972,7 +972,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T92 One strict parser for numeric database values
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none (coordinate with T65, which also edits `src/lib/attempts/store.ts`)
 - Acceptance criteria:
   - [ ] The strict `numeric` zod schema in `src/lib/settings.ts` moves to one shared module (for example `src/lib/db/numeric.ts`): a JSON number or a plain decimal string, and a throw on anything else (null, `""`, `"NaN"`, non-numbers).
@@ -983,7 +983,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T93 Day counter integrity
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T17
 - Acceptance criteria:
   - [ ] A migration makes `attempts.counted_weight` not null for new rows (backfill or exclude old rows without a profile, said in the migration comment).

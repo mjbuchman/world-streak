@@ -10,8 +10,11 @@ export type AttemptStore = {
   /** The day's challenge, target and state (a game day exists once ensureGameDay has run). */
   gameDay: (gameDate: string) => Promise<GameDay>;
   findAttemptForDay: (userId: string, gameDate: string) => Promise<DayAttempt | null>;
-  /** "duplicate" when the player already has an attempt that day (the unique constraint). */
-  insertAttempt: (attempt: { userId: string; gameDate: string; seed: number }) => Promise<{ id: string } | "duplicate">;
+  /**
+   * "duplicate" when the player already has an attempt that day (the unique constraint);
+   * "day-closed" when the day was closed by the time the insert ran (the close job won the race).
+   */
+  insertAttempt: (attempt: { userId: string; gameDate: string; seed: number }) => Promise<{ id: string } | "duplicate" | "day-closed">;
 };
 
 export type StartResult =
@@ -20,7 +23,8 @@ export type StartResult =
       body: { attemptId: string; gameDate: string; challengeType: string; seed: number; params: unknown; passTarget: number };
     }
   | { status: 403; body: { error: "profile-required" } }
-  | { status: 409; body: { error: "already-started"; submitted: boolean } };
+  | { status: 409; body: { error: "already-started"; submitted: boolean } }
+  | { status: 409; body: { error: "day-closed" } };
 
 type StartInput = {
   userId: string;
@@ -59,6 +63,8 @@ export async function startAttempt({ userId, now, store, randomSeed }: StartInpu
     // A simultaneous request won the race; report what it created.
     return alreadyStarted((await store.findAttemptForDay(userId, gameDate))?.submitted ?? false);
   }
+  // The deadline passed between working out the game date and the insert; nothing was stored.
+  if (inserted === "day-closed") return { status: 409, body: { error: "day-closed" } };
   return {
     status: 200,
     body: {

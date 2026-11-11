@@ -127,6 +127,11 @@ describe("supabaseAttemptStore", () => {
     expect(await store.insertAttempt({ userId: "u1", gameDate: "2026-11-08", seed: 42 })).toBe("duplicate");
   });
 
+  it("insertAttempt reports the database's closed-day refusal (WS001) as day-closed", async () => {
+    const { store } = fakeDb({ data: null, error: { code: "WS001", message: "game day 2026-11-08 is closed" } });
+    expect(await store.insertAttempt({ userId: "u1", gameDate: "2026-11-08", seed: 42 })).toBe("day-closed");
+  });
+
   it("findAttemptById reads the attempt's owner, day, seed, start time and submission state", async () => {
     const row = { user_id: "u1", game_date: "2026-11-08", seed: 42, started_at: "2026-11-08T12:00:00+00:00", submitted_at: null };
     const { store, calls } = fakeDb({ data: row, error: null });
