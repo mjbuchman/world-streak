@@ -16,6 +16,7 @@ vi.mock("next/navigation", () => ({ notFound }));
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: vi.fn(async () => sessionClient) }));
 vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: vi.fn(() => serviceClient) }));
 vi.mock("@/lib/admin", () => ({ isAdmin, readAdminDays }));
+vi.mock("@/app/admin/actions", () => ({ saveGameDayAction: vi.fn() }));
 
 import AdminPage from "./page";
 
@@ -32,18 +33,24 @@ describe("/admin", () => {
     expect(readAdminDays).not.toHaveBeenCalled();
   });
 
-  it("lists the coming days for an admin, read with the service role", { timeout: 10_000 }, async () => {
+  it("lists the coming days for an admin, read with the service role: open ones editable, closed ones not", { timeout: 10_000 }, async () => {
     isAdmin.mockResolvedValue(true);
     readAdminDays.mockResolvedValue([
-      { gameDate: "2026-11-11", challengeType: "stacking", passTarget: 10, threshold: 0.6, closed: false },
-      { gameDate: "2026-11-12", challengeType: "stacking", passTarget: 3.5, threshold: 0.55, closed: true },
+      { gameDate: "2026-11-11", challengeType: "stacking", passTarget: 3.5, threshold: 0.55, closed: true },
+      { gameDate: "2026-11-12", challengeType: "stacking", passTarget: 10, threshold: 0.6, closed: false },
     ]);
     render(await AdminPage());
     expect(readAdminDays).toHaveBeenCalledWith(serviceClient, expect.any(Date));
-    const rows = within(screen.getByRole("region", { name: "Coming game days" })).getAllByRole("row").slice(1);
-    expect(rows.map((row) => [...(row as HTMLTableRowElement).cells].map((cell) => cell.textContent))).toEqual([
-      ["Nov 11, 2026", "Teetering Tower", "10", "60%", "Open"],
-      ["Nov 12, 2026", "Teetering Tower", "3.5", "55%", "Closed"],
+    const [closed, open] = within(screen.getByRole("region", { name: "Coming game days" })).getAllByRole("row").slice(1);
+    expect([...(closed as HTMLTableRowElement).cells].map((cell) => cell.textContent)).toEqual([
+      "Nov 11, 2026",
+      "Teetering Tower",
+      "3.5",
+      "55%",
+      "Closed",
     ]);
+    expect(within(closed).queryByRole("spinbutton")).toBeNull();
+    expect(within(open).getByRole<HTMLInputElement>("spinbutton", { name: "Pass target for Nov 12, 2026" }).value).toBe("10");
+    expect(within(open).getByRole<HTMLInputElement>("spinbutton", { name: "Survival threshold in percent for Nov 12, 2026" }).value).toBe("60");
   });
 });

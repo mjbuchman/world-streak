@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { challengeName, dayLabel, passRateLabel, type HistoryPage } from "@/lib/streak/streak";
+import table from "@/components/ui/DataTable.module.css";
 import styles from "./HistoryTable.module.css";
 
 const OUTCOME_LABELS = { survived: "Survived", broken: "Broke" } as const;
@@ -10,8 +11,8 @@ export function HistoryTable({ history }: { history: HistoryPage }) {
   if (days.length === 0) return <p className={styles.empty}>No game day has closed yet.</p>;
   return (
     <>
-      <div className={styles.scroll}>
-        <table className={styles.table}>
+      <div className={table.scroll}>
+        <table className={table.table}>
           <thead>
             <tr>
               <th scope="col">Day</th>

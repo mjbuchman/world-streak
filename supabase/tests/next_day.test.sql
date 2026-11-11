@@ -89,7 +89,7 @@ delete from public.attempts where id = '00000000-0000-0000-0000-000000000110';
 select is(public.pass_target_for('stacking', '2000-02-10', 0), 10::numeric, 'with 9 scores the default target of 10 is used');
 
 -- An existing next day (an admin's edit) is never overwritten, by the close or a re-run of it.
-update public.game_days set pass_target = 99 where game_date = '2000-02-10';
+update public.game_days set pass_target = 99, edited = true where game_date = '2000-02-10';
 select is(public.close_game_day('2000-02-09'), 'broken', 'setup: re-running the close');
 select is((select pass_target from public.game_days where game_date = '2000-02-10'), 99::numeric, 'the edited next day keeps its target');
 

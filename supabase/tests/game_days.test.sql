@@ -31,7 +31,7 @@ select col_is_unique('public', 'attempts', array['user_id', 'game_date'], 'one a
 -- Row-level security and policies.
 select ok((select relrowsecurity from pg_class where oid = 'public.game_days'::regclass), 'RLS is enabled on game_days');
 select ok((select relrowsecurity from pg_class where oid = 'public.attempts'::regclass), 'RLS is enabled on attempts');
-select policies_are('public', 'game_days', array['game_days_select_all'], 'game_days has only the read policy');
+select policies_are('public', 'game_days', array['game_days_select_all', 'game_days_update_admin_open'], 'game_days has the read policy and the admin edit policy (T99)');
 select policy_cmd_is('public', 'game_days', 'game_days_select_all', 'select', 'the game_days policy covers select only');
 select policy_roles_are('public', 'game_days', 'game_days_select_all', array['anon', 'authenticated'], 'everyone may read game days');
 select policies_are('public', 'attempts', array['attempts_select_own'], 'attempts has only the select-own policy');
@@ -79,7 +79,8 @@ select results_eq(
   $$values ('stacking'::text, 10::numeric, 0.60::numeric, null::text, null::timestamptz)$$,
   'a new day is a stacking day with the default target and a 60% threshold, still open'
 );
-update public.game_days set pass_target = 12 where game_date = '2001-11-08';
+-- An admin's edit (T99) marks the day edited.
+update public.game_days set pass_target = 12, edited = true where game_date = '2001-11-08';
 select public.ensure_game_day('2001-11-08');
 select is(
   (select count(*)::int from public.game_days where game_date = '2001-11-08'), 1,
@@ -87,7 +88,7 @@ select is(
 );
 select is(
   (select pass_target from public.game_days where game_date = '2001-11-08'), 12::numeric,
-  'ensure_game_day leaves an existing day untouched'
+  'ensure_game_day leaves an edited day untouched'
 );
 
 -- Check constraints.
