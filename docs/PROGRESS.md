@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T21 Daily close: outcome and world streak
+- Active task: T98 The meter carries the world streak
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T21 daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
+- Next: T98, then T22 (prepare next day), T23 (scheduled close) daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T21 Daily close and world streak (PR #51)
+- Migration `20261112000000_daily_close`: `streak_runs`, `close_game_day(d)` (service role; locks the day first; idempotent; refuses before the deadline or out of order; a gap day cannot extend a run), `world_streak()` for everyone, and a check that a day closes with its outcome. A day with no weighted attempts breaks (please-confirm in NEEDS_HUMAN). `/api/meter` streak split into T98.
+- Review rounds: spec 1, quality 1, tests 1 (gap handling and extra tests applied from non-blocking points). Notes: an edited, already-applied local migration can be reloaded with `npx supabase db query -f <file>` instead of `db reset`. Merges since the maintainer check after T93: 5.
 
 ### 2026-11-11 — T97 One meter-reply check (PR #50)
 - `isMeterBody` moved to `src/lib/meter.ts`; it requires `streak: null` so T21's streak fails a test until the check follows (noted in T21). Tests: every `meterBody` output passes; direct malformed cases.

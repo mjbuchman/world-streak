@@ -368,7 +368,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T21 Daily close: outcome and world streak
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T17
 - Acceptance criteria:
   - [ ] A migration creates `streak_runs` (`id`, `start_date`, `end_date null`, `length int`) and SQL function `close_game_day(d date)`. It computes `final_pass_rate = weighted_passes / weighted_attempts`, sets `outcome = 'survived'` if that is `>= survival_threshold` and `'broken'` otherwise, sets `closed_at`, and updates the streak: survived extends the open run (or starts one with length 1), and broken ends the open run (sets `end_date`), so the current streak is 0.
@@ -380,7 +380,7 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T98 The meter carries the world streak
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T21
 - Acceptance criteria:
   - [ ] `/api/meter` fills `streak` with `{ current, best }` from `world_streak()` in both open and hidden bodies (the streak is not secret in the final hours), read in the same request as the day; malformed numbers fail with a 500 via `dbInteger`.

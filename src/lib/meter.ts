@@ -9,13 +9,17 @@ export function meterHiddenFrom(closesAt: Date | string): Date {
   return new Date(new Date(closesAt).getTime() - METER_HIDE_HOURS * HOUR_MS);
 }
 
-/** What the meter needs about one game day. */
+/** The world streak: the current run (0 after a broken day) and the best run ever. */
+export type MeterStreak = { current: number; best: number };
+
+/** What the meter needs: one game day's numbers and the world streak. */
 export type MeterRow = {
   /** Null only before the day's row exists (no one has started yet, and the close job has not prepared it). */
   threshold: number | null;
   attempts: number;
   weightedAttempts: number;
   weightedPasses: number;
+  streak: MeterStreak;
 };
 
 export type MeterBody =
@@ -26,12 +30,19 @@ export type MeterBody =
       attempts: number;
       threshold: number | null;
       closesAt: string;
-      /** Filled in by T21 (the world streak); null until then. */
-      streak: null;
+      streak: MeterStreak;
     }
-  | { gameDate: string; status: "hidden"; threshold: number | null; closesAt: string };
+  // The streak is not secret in the final hours: it only changes at the close.
+  | { gameDate: string; status: "hidden"; threshold: number | null; closesAt: string; streak: MeterStreak };
 
 const isNumberOrNull = (value: unknown) => value === null || (typeof value === "number" && Number.isFinite(value));
+const isCount = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0;
+
+function isMeterStreak(value: unknown): value is MeterStreak {
+  if (typeof value !== "object" || value === null) return false;
+  const streak = value as Record<string, unknown>;
+  return isCount(streak.current) && isCount(streak.best) && streak.best >= streak.current;
+}
 
 /**
  * Whether a reply has the shape the meter draws, so a malformed one reads as unavailable, not NaN.
@@ -42,17 +53,9 @@ export function isMeterBody(value: unknown): value is MeterBody {
   if (typeof value !== "object" || value === null) return false;
   const body = value as Record<string, unknown>;
   if (typeof body.closesAt !== "string" || Number.isNaN(Date.parse(body.closesAt))) return false;
-  if (!isNumberOrNull(body.threshold)) return false;
+  if (!isNumberOrNull(body.threshold) || !isMeterStreak(body.streak)) return false;
   if (body.status === "hidden") return true;
-  return (
-    body.status === "open" &&
-    isNumberOrNull(body.passRate) &&
-    typeof body.attempts === "number" &&
-    Number.isInteger(body.attempts) &&
-    body.attempts >= 0 &&
-    // Null until T21 fills it in; T21 must check its real shape here.
-    body.streak === null
-  );
+  return body.status === "open" && isNumberOrNull(body.passRate) && isCount(body.attempts);
 }
 
 /**
@@ -64,11 +67,11 @@ export function meterBody(now: Date, gameDate: string, row: MeterRow): MeterBody
   const deadline = deadlineFor(gameDate);
   const closesAt = deadline.toISOString();
   if (now.getTime() >= meterHiddenFrom(deadline).getTime()) {
-    return { gameDate, status: "hidden", threshold: row.threshold, closesAt };
+    return { gameDate, status: "hidden", threshold: row.threshold, closesAt, streak: row.streak };
   }
   // With no weighted attempts yet the rate is unknown, not 0% and not NaN.
   const passRate = row.weightedAttempts > 0 ? row.weightedPasses / row.weightedAttempts : null;
-  return { gameDate, status: "open", passRate, attempts: row.attempts, threshold: row.threshold, closesAt, streak: null };
+  return { gameDate, status: "open", passRate, attempts: row.attempts, threshold: row.threshold, closesAt, streak: row.streak };
 }
 
 /**

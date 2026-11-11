@@ -9,7 +9,8 @@ const hidden = new Date("2026-11-08T21:00:00Z");
 const closesAt = "2026-11-09T00:00:00.000Z";
 
 // 12 attempts, some at reduced weight: the rate uses the weighted counts (7.5 / 10), not 12.
-const row: MeterRow = { threshold: 0.6, attempts: 12, weightedAttempts: 10, weightedPasses: 7.5 };
+const streak = { current: 4, best: 9 };
+const row: MeterRow = { threshold: 0.6, attempts: 12, weightedAttempts: 10, weightedPasses: 7.5, streak };
 
 describe("meterBody", () => {
   it("is open before the final hours, with the weighted pass rate and the attempt count", () => {
@@ -20,13 +21,13 @@ describe("meterBody", () => {
       attempts: 12,
       threshold: 0.6,
       closesAt,
-      streak: null,
+      streak,
     });
   });
 
-  it("is hidden from three hours before the deadline, with no pass rate or attempt count at all", () => {
+  it("is hidden from three hours before the deadline, with no pass rate or attempt count at all, but the streak", () => {
     const body = meterBody(hidden, "2026-11-08", row);
-    expect(body).toEqual({ gameDate: "2026-11-08", status: "hidden", threshold: 0.6, closesAt });
+    expect(body).toEqual({ gameDate: "2026-11-08", status: "hidden", threshold: 0.6, closesAt, streak });
     expect("passRate" in body).toBe(false);
     expect("attempts" in body).toBe(false);
   });
@@ -36,25 +37,28 @@ describe("meterBody", () => {
   });
 
   it("gives a null pass rate, not NaN, when nobody has played yet", () => {
-    const body = meterBody(open, "2026-11-08", { threshold: 0.6, attempts: 0, weightedAttempts: 0, weightedPasses: 0 });
+    const body = meterBody(open, "2026-11-08", { ...row, attempts: 0, weightedAttempts: 0, weightedPasses: 0 });
     expect(body).toMatchObject({ status: "open", passRate: null, attempts: 0 });
   });
 
   it("gives a null pass rate when every attempt so far has zero weight", () => {
-    const body = meterBody(open, "2026-11-08", { threshold: 0.6, attempts: 3, weightedAttempts: 0, weightedPasses: 0 });
+    const body = meterBody(open, "2026-11-08", { ...row, attempts: 3, weightedAttempts: 0, weightedPasses: 0 });
     expect(body).toMatchObject({ passRate: null, attempts: 3 });
   });
 });
 
 describe("isMeterBody", () => {
-  // Every kind of body the endpoint can send. If meterBody changes shape (T21 fills in `streak`)
-  // without the check following, the UI would show "unavailable"; this fails first.
+  // Every kind of body the endpoint can send. If meterBody changes shape without the check
+  // following, the UI would show "unavailable"; this fails first.
+  const noStreak = { current: 0, best: 0 };
   const bodies = [
     ["open with a rate", meterBody(open, "2026-11-08", row)],
     ["open with no rate yet", meterBody(open, "2026-11-08", { ...row, weightedAttempts: 0, weightedPasses: 0 })],
     ["open before the day's row exists", meterBody(open, "2026-11-08", { ...row, threshold: null })],
+    ["open with no streak yet", meterBody(open, "2026-11-08", { ...row, streak: noStreak })],
     ["hidden", meterBody(hidden, "2026-11-08", row)],
     ["hidden before the day's row exists", meterBody(hidden, "2026-11-08", { ...row, threshold: null })],
+    ["hidden with no streak yet", meterBody(hidden, "2026-11-08", { ...row, streak: noStreak })],
   ] as const;
 
   it.each(bodies)("accepts every body meterBody produces: %s", (_name, body) => {
@@ -62,11 +66,21 @@ describe("isMeterBody", () => {
     expect(isMeterBody(JSON.parse(JSON.stringify(body)))).toBe(true);
   });
 
-  it("rejects an open body whose streak is not the null it is today", () => {
-    expect(isMeterBody({ ...meterBody(open, "2026-11-08", row), streak: 3 })).toBe(false);
+  const openBody = meterBody(open, "2026-11-08", row);
+  const hiddenBody = meterBody(hidden, "2026-11-08", row);
+  it.each([
+    ["no streak", undefined],
+    ["a null streak", null],
+    ["a bare number", 3],
+    ["a fractional current", { current: 1.5, best: 9 }],
+    ["a negative current", { current: -1, best: 9 }],
+    ["a text best", { current: 4, best: "9" }],
+    ["a best below the current run", { current: 5, best: 4 }],
+  ])("rejects a streak with %s, open or hidden", (_name, bad) => {
+    expect(isMeterBody({ ...openBody, streak: bad })).toBe(false);
+    expect(isMeterBody({ ...hiddenBody, streak: bad })).toBe(false);
   });
 
-  const openBody = meterBody(open, "2026-11-08", row);
   it.each([
     ["not an object", "open"],
     ["null", null],

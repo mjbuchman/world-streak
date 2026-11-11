@@ -13,21 +13,29 @@ type DayRow = {
   game_day_counters: CountersRow | CountersRow[] | null;
 };
 
-/**
- * Reads today's meter: the day's threshold and its running counters, in one query. It never
- * counts attempt rows (the counters are kept as attempts start and pass, T17). Pass the
- * service-role client: the counters are server-only, so that the hidden window means something.
- */
-export async function readMeter(db: Pick<SupabaseClient, "from">, now: Date): Promise<MeterBody> {
-  const gameDate = gameDateAt(now);
-  const { data, error } = await db
-    .from("game_days")
-    .select("survival_threshold, game_day_counters(attempts, weighted_attempts, weighted_passes)")
-    .eq("game_date", gameDate)
-    .maybeSingle();
-  if (error) throw new Error(`Meter lookup failed: ${error.message}`);
+type StreakRow = { current: unknown; best: unknown };
 
-  const day = data as DayRow | null;
+/**
+ * Reads today's meter: the day's threshold and its running counters in one query, and the world
+ * streak (T21) alongside it. It never counts attempt rows (the counters are kept as attempts
+ * start and pass, T17). Pass the service-role client: the counters are server-only, so that the
+ * hidden window means something.
+ */
+export async function readMeter(db: Pick<SupabaseClient, "from" | "rpc">, now: Date): Promise<MeterBody> {
+  const gameDate = gameDateAt(now);
+  const [dayReply, streakReply] = await Promise.all([
+    db
+      .from("game_days")
+      .select("survival_threshold, game_day_counters(attempts, weighted_attempts, weighted_passes)")
+      .eq("game_date", gameDate)
+      .maybeSingle(),
+    db.rpc("world_streak").single(),
+  ]);
+  if (dayReply.error) throw new Error(`Meter lookup failed: ${dayReply.error.message}`);
+  if (streakReply.error) throw new Error(`World streak lookup failed: ${streakReply.error.message}`);
+
+  const day = dayReply.data as DayRow | null;
+  const streak = streakReply.data as StreakRow;
   const embedded = day?.game_day_counters ?? null;
   const counters = Array.isArray(embedded) ? (embedded[0] ?? null) : embedded;
   // No row yet means nobody has started; a row with a bad value is an error, not a zero.
@@ -36,5 +44,6 @@ export async function readMeter(db: Pick<SupabaseClient, "from">, now: Date): Pr
     attempts: counters ? dbInteger(counters.attempts, "attempts") : 0,
     weightedAttempts: counters ? dbNumber(counters.weighted_attempts, "weighted_attempts") : 0,
     weightedPasses: counters ? dbNumber(counters.weighted_passes, "weighted_passes") : 0,
+    streak: { current: dbInteger(streak.current, "current"), best: dbInteger(streak.best, "best") },
   });
 }

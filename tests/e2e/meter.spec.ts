@@ -20,8 +20,11 @@ test("the meter answers anyone with today's reading, cached publicly", async ({ 
     expect(Number.isInteger(body.attempts)).toBe(true);
   } else {
     expect(body.status).toBe("hidden");
-    expect(Object.keys(body).sort()).toEqual(["closesAt", "gameDate", "status", "threshold"]);
+    expect(Object.keys(body).sort()).toEqual(["closesAt", "gameDate", "status", "streak", "threshold"]);
   }
+  // The world streak, from the real world_streak() (T21), in either status.
+  expect(Object.keys(body.streak).sort()).toEqual(["best", "current"]);
+  expect(Number.isInteger(body.streak.current) && body.streak.best >= body.streak.current).toBe(true);
 });
 
 test("the home page shows the live meter, or the hidden message in the final hours", async ({ page }) => {

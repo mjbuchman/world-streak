@@ -8,28 +8,41 @@ const closesAt = "2026-11-09T00:00:00.000Z";
 
 type Result = { data: unknown; error: { message: string } | null };
 
-/** Records every query-builder call and resolves the query to `result`. */
-function fakeDb(result: Result) {
+const STREAK_OK: Result = { data: { current: 4, best: 9, current_start_date: "2026-11-05" }, error: null };
+
+/**
+ * Records every query-builder call. The day query resolves to `day`, the world_streak call to
+ * `streak`; each records its calls separately, since the two run side by side.
+ */
+function fakeDb(day: Result, streak: Result = STREAK_OK) {
   const calls: unknown[][] = [];
-  const query: object = new Proxy(
-    {},
-    {
-      get(_, method) {
-        if (method === "then") return (resolve: (value: Result) => void) => resolve(result);
-        return (...args: unknown[]) => {
-          calls.push([method, ...args]);
-          return query;
-        };
+  const streakCalls: unknown[][] = [];
+  const builder = (result: Result, log: unknown[][]): object => {
+    const query: object = new Proxy(
+      {},
+      {
+        get(_, method) {
+          if (method === "then") return (resolve: (value: Result) => void) => resolve(result);
+          return (...args: unknown[]) => {
+            log.push([method, ...args]);
+            return query;
+          };
+        },
       },
-    },
-  );
+    );
+    return query;
+  };
   const db = {
     from: (table: string) => {
       calls.push(["from", table]);
-      return query;
+      return builder(day, calls);
+    },
+    rpc: (name: string) => {
+      streakCalls.push(["rpc", name]);
+      return builder(streak, streakCalls);
     },
   } as unknown as SupabaseClient;
-  return { db, calls };
+  return { db, calls, streakCalls };
 }
 
 describe("readMeter", () => {
@@ -38,7 +51,7 @@ describe("readMeter", () => {
       survival_threshold: "0.60",
       game_day_counters: { attempts: 4, weighted_attempts: "4", weighted_passes: "3" },
     };
-    const { db, calls } = fakeDb({ data, error: null });
+    const { db, calls, streakCalls } = fakeDb({ data, error: null });
     expect(await readMeter(db, open)).toEqual({
       gameDate: "2026-11-08",
       status: "open",
@@ -46,8 +59,9 @@ describe("readMeter", () => {
       attempts: 4,
       threshold: 0.6,
       closesAt,
-      streak: null,
+      streak: { current: 4, best: 9 },
     });
+    expect(streakCalls).toEqual([["rpc", "world_streak"], ["single"]]);
     expect(calls).toEqual([
       ["from", "game_days"],
       ["select", "survival_threshold, game_day_counters(attempts, weighted_attempts, weighted_passes)"],
@@ -120,5 +134,28 @@ describe("readMeter", () => {
   it("throws on a database error, so the endpoint answers 500", async () => {
     const { db } = fakeDb({ data: null, error: { message: "connection refused" } });
     await expect(readMeter(db, open)).rejects.toThrow("Meter lookup failed: connection refused");
+  });
+
+  it("carries the world streak in the hidden final hours too: it is not secret", async () => {
+    const { db } = fakeDb({ data: null, error: null });
+    expect(await readMeter(db, new Date("2026-11-08T22:00:00Z"))).toMatchObject({
+      status: "hidden",
+      streak: { current: 4, best: 9 },
+    });
+  });
+
+  const day = { data: { survival_threshold: 0.6, game_day_counters: null }, error: null };
+  it.each([
+    ["current", { current: null, best: 9 }, /for current,/],
+    ["current", { current: 1.5, best: 9 }, /for current,/],
+    ["best", { current: 4, best: "x" }, /for best,/],
+  ])("throws on a malformed streak %s instead of showing NaN or 0", async (_, data, message) => {
+    const { db } = fakeDb(day, { data, error: null });
+    await expect(readMeter(db, open)).rejects.toThrow(message);
+  });
+
+  it("throws when the streak cannot be read", async () => {
+    const { db } = fakeDb(day, { data: null, error: { message: "timeout" } });
+    await expect(readMeter(db, open)).rejects.toThrow("World streak lookup failed: timeout");
   });
 });
