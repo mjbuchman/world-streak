@@ -11,10 +11,10 @@ const open = (over: Record<string, unknown> = {}) => ({
   attempts: 1234,
   threshold: 0.6,
   closesAt,
-  streak: null,
+  streak: { current: 4, best: 9 },
   ...over,
 });
-const hidden = { gameDate: "2026-11-08", status: "hidden", threshold: 0.6, closesAt };
+const hidden = { gameDate: "2026-11-08", status: "hidden", threshold: 0.6, closesAt, streak: { current: 4, best: 9 } };
 
 let fetchSpy: ReturnType<typeof vi.fn<typeof fetch>>;
 let visibility: DocumentVisibilityState = "visible";
