@@ -1,4 +1,5 @@
 import { gameDateAt } from "../../src/lib/gameDay";
+import { dayLabel } from "../../src/lib/streak/streak";
 import { expect, test } from "./support/fixtures";
 import { adminClient } from "./support/supabase";
 
@@ -49,9 +50,15 @@ test("the home page shows the world streak, and the history lists the closed day
 
   await page.goto("/");
   const streak = page.getByRole("region", { name: "World streak" });
-  await expect(streak.getByText("World streak: 0 days")).toBeVisible();
-  await expect(streak.getByText("Best: 2")).toBeVisible();
+  await expect(streak.getByText("0", { exact: true })).toBeVisible();
+  await expect(streak.getByText("days", { exact: true })).toBeVisible();
+  await expect(streak.getByText("Best 2")).toBeVisible();
   await expect(streak.getByText("Yesterday the streak broke at 52%")).toBeVisible();
+  // The 14-day chart ends with the three seeded days; screen readers get them as a list.
+  const days = streak.getByRole("list", { name: "The last 14 days" }).getByRole("listitem");
+  await expect(days).toHaveCount(14);
+  await expect(days.nth(11)).toHaveText(`${dayLabel(daysAgo(3))}: 81% passed, 60% needed, survived`);
+  await expect(days.nth(13)).toHaveText(`${dayLabel(daysAgo(1))}: 52% passed, 60% needed, broke the streak`);
 
   await streak.getByRole("link", { name: "Every day so far" }).click();
   await expect(page).toHaveURL("/history");

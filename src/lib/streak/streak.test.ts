@@ -9,7 +9,10 @@ import {
   passRateLabel,
   readHistory,
   readStreakSummary,
-  streakLabel,
+  recentDayLine,
+  streakUnit,
+  shapeRecentDays,
+  type ClosedDay,
   yesterdayLine,
 } from "./streak";
 
@@ -57,9 +60,26 @@ const day = (over: Record<string, unknown> = {}) => ({
 
 describe("wording", () => {
   it("counts the streak in days, singular for one", () => {
-    expect(streakLabel(0)).toBe("World streak: 0 days");
-    expect(streakLabel(1)).toBe("World streak: 1 day");
-    expect(streakLabel(12)).toBe("World streak: 12 days");
+    expect(streakUnit(0)).toBe("days");
+    expect(streakUnit(1)).toBe("day");
+    expect(streakUnit(12)).toBe("days");
+  });
+
+  it("describes each recent day for screen readers", () => {
+    const base = { gameDate: "2026-11-01", threshold: 0.6 };
+    expect(recentDayLine({ ...base, kind: "streak", passRate: 0.64, outcome: "survived" })).toBe(
+      "Nov 1, 2026: 64% passed, 60% needed, survived",
+    );
+    expect(recentDayLine({ ...base, kind: "broke", passRate: 0.52, outcome: "broken" })).toBe(
+      "Nov 1, 2026: 52% passed, 60% needed, broke the streak",
+    );
+    expect(recentDayLine({ ...base, kind: "closed", passRate: 0.4, outcome: "broken" })).toBe(
+      "Nov 1, 2026: 40% passed, 60% needed, broken",
+    );
+    expect(recentDayLine({ ...base, kind: "empty", passRate: null, outcome: "broken" })).toBe("Nov 1, 2026: nobody played, broken");
+    expect(recentDayLine({ gameDate: "2026-11-01", kind: "empty", passRate: null, threshold: null, outcome: null })).toBe(
+      "Nov 1, 2026: no result",
+    );
   });
 
   it("describes yesterday by its outcome and rate", () => {
@@ -95,17 +115,87 @@ describe("historyPageParam", () => {
   });
 });
 
-describe("readStreakSummary", () => {
-  it("reads the streak and yesterday's closed result", async () => {
-    const { db, queries } = fakeDb([
-      { data: { current: 3, best: 5, current_start_date: "2026-11-08" }, error: null },
-      { data: { outcome: "survived", final_pass_rate: "0.74" }, error: null },
+describe("shapeRecentDays", () => {
+  // Today is Nov 15: the 14 days shown are Nov 1 to Nov 14, and Oct 31 only says whether Nov 1 broke a run.
+  const today = "2026-11-15";
+  const closed = (gameDate: string, outcome: "survived" | "broken", passRate: number | null = outcome === "survived" ? 0.7 : 0.5): ClosedDay => ({
+    gameDate,
+    outcome,
+    finalPassRate: passRate,
+    threshold: 0.6,
+  });
+  const kinds = (days: ReturnType<typeof shapeRecentDays>) => days.map((d) => d.kind);
+
+  it("gives 14 slots, oldest first, ending yesterday, with empty slots for days with no result", () => {
+    const days = shapeRecentDays([], today, null);
+    expect(days).toHaveLength(14);
+    expect(days[0]).toEqual({ gameDate: "2026-11-01", kind: "empty", passRate: null, threshold: null, outcome: null });
+    expect(days[13].gameDate).toBe("2026-11-14");
+    expect(new Set(kinds(days))).toEqual(new Set(["empty"]));
+  });
+
+  it("marks the current run mint, the day that broke a run, and other closed days muted", () => {
+    const rows = [
+      closed("2026-11-08", "survived"),
+      closed("2026-11-09", "survived"),
+      closed("2026-11-10", "broken", 0.52),
+      closed("2026-11-11", "broken", 0.41),
+      closed("2026-11-12", "survived"),
+      closed("2026-11-13", "survived"),
+      closed("2026-11-14", "survived"),
+    ];
+    const days = shapeRecentDays(rows, today, "2026-11-12");
+    expect(kinds(days).slice(7)).toEqual(["closed", "closed", "broke", "closed", "streak", "streak", "streak"]);
+    expect(days[9]).toEqual({ gameDate: "2026-11-10", kind: "broke", passRate: 0.52, threshold: 0.6, outcome: "broken" });
+  });
+
+  it("uses the day before the window to tell whether the first day broke a run", () => {
+    expect(shapeRecentDays([closed("2026-10-31", "survived"), closed("2026-11-01", "broken")], today, null)[0].kind).toBe("broke");
+    expect(shapeRecentDays([closed("2026-10-31", "broken"), closed("2026-11-01", "broken")], today, null)[0].kind).toBe("closed");
+    expect(shapeRecentDays([closed("2026-11-01", "broken")], today, null)[0].kind).toBe("closed");
+  });
+
+  it("shows a day nobody played as an empty slot that keeps its outcome and threshold", () => {
+    const days = shapeRecentDays([closed("2026-11-13", "survived"), closed("2026-11-14", "broken", null)], today, null);
+    expect(days[13]).toEqual({ gameDate: "2026-11-14", kind: "empty", passRate: null, threshold: 0.6, outcome: "broken" });
+  });
+
+  it("treats a run of survived days as muted when it is not the current one", () => {
+    // With no current run (it broke), earlier survived days are history, not the streak.
+    expect(kinds(shapeRecentDays([closed("2026-11-13", "survived"), closed("2026-11-14", "broken")], today, null)).slice(12)).toEqual([
+      "closed",
+      "broke",
     ]);
-    expect(await readStreakSummary(db, new Date("2026-11-11T09:00:00Z"))).toEqual({
-      current: 3,
-      best: 5,
-      yesterday: { outcome: "survived", finalPassRate: 0.74 },
-    });
+  });
+
+  it("works with fewer than 14 days of history", () => {
+    const days = shapeRecentDays([closed("2026-11-14", "survived")], today, "2026-11-14");
+    expect(kinds(days)).toEqual([...Array(13).fill("empty"), "streak"]);
+  });
+});
+
+const NO_RECENT: Result = { data: [], error: null };
+
+describe("readStreakSummary", () => {
+  it("reads the streak, yesterday's closed result and the last 15 closed days", async () => {
+    const { db, queries } = fakeDb([
+      { data: { current: 1, best: 5, current_start_date: "2026-11-10" }, error: null },
+      { data: { outcome: "survived", final_pass_rate: "0.74" }, error: null },
+      {
+        data: [
+          { game_date: "2026-11-09", outcome: "broken", final_pass_rate: "0.5", survival_threshold: "0.6" },
+          { game_date: "2026-11-10", outcome: "survived", final_pass_rate: "0.74", survival_threshold: "0.6" },
+        ],
+        error: null,
+      },
+    ]);
+    const summary = await readStreakSummary(db, new Date("2026-11-11T09:00:00Z"));
+    expect(summary).toMatchObject({ current: 1, best: 5, yesterday: { outcome: "survived", finalPassRate: 0.74 } });
+    expect(summary.recent).toHaveLength(14);
+    expect(summary.recent.slice(12)).toEqual([
+      { gameDate: "2026-11-09", kind: "closed", passRate: 0.5, threshold: 0.6, outcome: "broken" },
+      { gameDate: "2026-11-10", kind: "streak", passRate: 0.74, threshold: 0.6, outcome: "survived" },
+    ]);
     expect(queries[1]).toEqual([
       ["from", "game_days"],
       ["select", "outcome, final_pass_rate"],
@@ -113,6 +203,26 @@ describe("readStreakSummary", () => {
       ["not", "closed_at", "is", null],
       ["maybeSingle"],
     ]);
+    // Public columns of closed days only, through the caller's own client (no service role).
+    expect(queries[2]).toEqual([
+      ["from", "game_days"],
+      ["select", "game_date, outcome, final_pass_rate, survival_threshold"],
+      ["gte", "game_date", "2026-10-27"],
+      ["lte", "game_date", "2026-11-10"],
+      ["not", "closed_at", "is", null],
+    ]);
+  });
+
+  it("throws when the recent days cannot be read or are malformed", async () => {
+    const streak = { data: { current: 0, best: 0, current_start_date: null }, error: null };
+    const failed = fakeDb([streak, { data: null, error: null }, { data: null, error: { message: "down" } }]);
+    await expect(readStreakSummary(failed.db, new Date("2026-11-11T09:00:00Z"))).rejects.toThrow("Recent days lookup failed: down");
+    const malformed = fakeDb([
+      streak,
+      { data: null, error: null },
+      { data: [{ game_date: "2026-11-10", outcome: "tied", final_pass_rate: null, survival_threshold: "0.6" }], error: null },
+    ]);
+    await expect(readStreakSummary(malformed.db, new Date("2026-11-11T09:00:00Z"))).rejects.toThrow(/outcome/);
   });
 
   it("finds yesterday across a month and a year boundary", async () => {
@@ -120,12 +230,10 @@ describe("readStreakSummary", () => {
       ["2026-12-01T00:30:00Z", "2026-11-30"],
       ["2027-01-01T08:00:00Z", "2026-12-31"],
     ]) {
-      const { db, queries } = fakeDb([
-        { data: { current: 0, best: 0 }, error: null },
-        { data: null, error: null },
-      ]);
+      const { db, queries } = fakeDb([{ data: { current: 0, best: 0 }, error: null }, { data: null, error: null }, NO_RECENT]);
       await readStreakSummary(db, new Date(now));
       expect(queries[1]).toContainEqual(["eq", "game_date", yesterday]);
+      expect(queries[2]).toContainEqual(["lte", "game_date", yesterday]);
     }
   });
 
@@ -133,6 +241,7 @@ describe("readStreakSummary", () => {
     const { db } = fakeDb([
       { data: { current: 0, best: 0, current_start_date: null }, error: null },
       { data: null, error: null },
+      NO_RECENT,
     ]);
     expect(await readStreakSummary(db, new Date("2026-11-11T00:00:10Z"))).toMatchObject({ yesterday: null });
   });
@@ -151,7 +260,7 @@ describe("readStreakSummary", () => {
       /outcome/,
     ],
   ])("throws on %s", async (_name, results, message) => {
-    const { db } = fakeDb(results as Result[]);
+    const { db } = fakeDb([...(results as Result[]), NO_RECENT]);
     await expect(readStreakSummary(db, new Date("2026-11-11T09:00:00Z"))).rejects.toThrow(message);
   });
 });

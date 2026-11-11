@@ -1,9 +1,112 @@
-.streak {
+/* The streak card (T105): option A's header over option C's bars. */
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: var(--fs-text-label);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fs-color-text-muted);
+}
+
+.count {
+  margin: var(--space-1) 0 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.number {
   font-family: var(--fs-font-display);
   font-weight: 800;
-  font-size: var(--fs-text-headline);
-  line-height: 1.05;
+  font-size: var(--fs-text-display);
+  line-height: 1;
   color: var(--fs-color-mint);
+  text-shadow: 0 0 32px var(--fs-glow-streak);
+}
+
+.unit {
+  font-size: var(--fs-text-body);
+  font-weight: 700;
+}
+
+.best {
+  margin: 0 0 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: var(--fs-text-small);
+  color: var(--fs-color-text-muted);
+}
+
+.bestNumber {
+  font-family: var(--fs-font-display);
+  font-weight: 600;
+  font-size: var(--fs-text-title);
+  color: var(--fs-color-text);
+}
+
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.bars {
+  height: 96px;
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 5px;
+  align-items: end;
+}
+
+.slot {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+/* A day with no bar keeps its place, drawn as an outline. */
+.slot[data-kind="empty"] {
+  border: 1px dashed var(--fs-color-surface-border);
+  border-radius: 5px 5px 3px 3px;
+  box-sizing: border-box;
+}
+
+.bar {
+  width: 100%;
+  border-radius: 5px 5px 3px 3px;
+  background: var(--fs-bar-closed);
+}
+
+.slot[data-kind="streak"] .bar {
+  background: var(--fs-gradient-mint);
+}
+
+.slot[data-kind="broke"] .bar {
+  background: var(--fs-bar-broke);
+}
+
+.line {
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  height: 2px;
+  background: var(--fs-color-tangerine);
+}
+
+.axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-text-label);
+  color: var(--fs-color-text-muted);
 }
 
 .muted {

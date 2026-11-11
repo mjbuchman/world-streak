@@ -34,6 +34,11 @@
   --fs-glow-tangerine: rgba(255,122,26,0.22);
   --fs-glow-tick: rgba(255,122,26,0.8);
 
+  /* The streak card (T105): the glowing streak number and the bars that are not in the run. */
+  --fs-glow-streak: rgba(52,245,181,0.45);
+  --fs-bar-broke: rgba(255,176,80,0.55);
+  --fs-bar-closed: rgba(255,255,255,0.18);
+
   /* Gradients and shadows */
   --fs-gradient-ground: linear-gradient(170deg, var(--fs-color-ground-top) 0%, var(--fs-color-ground-bottom) 55%, var(--fs-color-ground-deep) 100%);
   --fs-gradient-action: linear-gradient(160deg, var(--fs-color-tangerine-light), var(--fs-color-tangerine));
