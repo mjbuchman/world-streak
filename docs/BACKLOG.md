@@ -414,24 +414,33 @@ Goal: with a batch of fake local players, watch the live pass-rate meter move ag
 
 ### T24 World streak display and history list
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T19, T21
 - Acceptance criteria:
   - [ ] `/` shows "World streak: N days" (singular "1 day"), "Best: M", and yesterday's result ("Yesterday the world survived with 74% passing" / "Yesterday the streak broke at 52%"), all from server components reading public data.
   - [ ] `/history` lists closed game days newest first with date, challenge name, final pass rate (as %, or "no attempts"), threshold and outcome, paginated at 30 per page.
   - [ ] e2e (local Supabase): seed 3 closed days (2 survived, then 1 broken) via SQL fixtures. `/history` shows 3 rows in the right order, and `/` shows "World streak: 0 days" and "Best: 2".
 
-### T25 Admin access and game-day target editor
+### T25 Admin access and the game-day list
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T16, T24
 - Acceptance criteria:
   - [ ] `/admin` returns 404 for signed-out and non-admin users (checked server-side, not by hiding links).
-  - [ ] For admins, `/admin` lists today and the next 7 game days (creating missing rows via `ensure_game_day`). Each row has editable pass target and survival threshold (0 to 1, shown as %). Saving calls a server action that re-checks `is_admin` and validates with zod. Closed days are read-only.
-  - [ ] Changing today's survival threshold is reflected in `/api/meter` on the next cache refresh.
+  - [ ] For admins, `/admin` lists today and the next 7 game days (creating missing rows via `ensure_game_day`), each with its challenge, pass target and survival threshold (shown as %), and whether it is closed.
   - [ ] Local `supabase/seed.sql` creates an admin user `admin@local.test` (documented password in README, local only).
-  - [ ] Unit tests for the server action (non-admin is rejected, invalid threshold 1.5 is rejected, closed day is rejected). e2e: an admin changes tomorrow's threshold to 55% and sees it persisted; a normal user gets 404.
-- Notes: This is the MVP scope's "Admin controls to set pass targets and the survival threshold manually". Making the owner's real account an admin in production is a deployment step (see T50). From the T77 review: the Tower's pass target must stay within the board (1 to 15 rows; the HUD rounds a fractional target up), or the target line is drawn off the grid; validate that range for stacking days.
+  - [ ] A unit test for the page's admin check; e2e: the seeded admin sees the 8 days; a normal user and a signed-out visitor get 404.
+- Notes: Split on Nov 11 (size): editing moved to T99. This is the MVP scope's "Admin controls to set pass targets and the survival threshold manually". Making the owner's real account an admin in production is a deployment step (see T50).
+
+### T99 Admin game-day editor
+- Type: feature
+- Status: todo
+- Depends on: T25
+- Acceptance criteria:
+  - [ ] On `/admin`, each open day's pass target and survival threshold (0 to 1, entered as %) are editable. Saving calls a server action that re-checks `is_admin` and validates with zod. Closed days are read-only, in the database too (row-level security: admins may update only the two fields, only on open days).
+  - [ ] Changing today's survival threshold is reflected in `/api/meter` on the next cache refresh.
+  - [ ] Unit tests for the server action (non-admin is rejected, invalid threshold 1.5 is rejected, closed day is rejected); pgTAP for the policy. e2e: an admin changes tomorrow's threshold to 55% and sees it persisted.
+- Notes: Split from T25. Ask the human first about the "create the coming days early" item in NEEDS_HUMAN (DECISIONS, T25): recomputing unedited future days at the close may join this task. From the T77 review: the Tower's pass target must stay within the board (1 to 15 rows; the HUD rounds a fractional target up), or the target line is drawn off the grid; validate that range for stacking days.
 
 ## M3 More challenges and sharing
 

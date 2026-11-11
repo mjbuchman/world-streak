@@ -19,6 +19,11 @@ export function gameDateAt(now: Date, deadlineUtcHour: number = DEADLINE_UTC_HOU
   return new Date(now.getTime() - deadlineUtcHour * HOUR_MS).toISOString().slice(0, 10);
 }
 
+/** The game date `days` after `gameDate` (before, when negative). Game dates are UTC dates. */
+export function addDays(gameDate: string, days: number): string {
+  return new Date(Date.parse(`${gameDate}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
+}
+
 /** The instant game date `gameDate` closes: the next calendar day at the deadline hour, UTC. */
 export function deadlineFor(gameDate: string, deadlineUtcHour: number = DEADLINE_UTC_HOUR): Date {
   checkDeadlineHour(deadlineUtcHour);

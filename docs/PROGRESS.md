@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T24 World streak display and history
+- Active task: T25 Admin access and the game-day list
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T24, then T25 (admin editor), which ends M2 (play-test) daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
+- Next: T25, then T99 (admin editor, split from T25), which ends M2 (play-test) daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T24 World streak display and history (PR #55)
+- `/` streak panel (streak, best, yesterday's line, link) and `/history` (30 a page, newest first, 404 past the end) from `src/lib/streak/streak.ts`. The e2e rewrites the three days before today and the streak runs via the service role.
+- Review rounds: spec 1, quality 2, tests 2 (round 1: a page past the end gave a 500 from PostgREST's 416; paging edges and the page itself untested). Notes: never wrap `createSupabaseServerClient()` in a try/catch in a server component; it swallows Next's dynamic-rendering signal. Merges since the maintainer check after T93: 9.
 
 ### 2026-11-11 — T23 Scheduled close and catch-up (PR #54)
 - Migration `20261112020000_scheduled_close`: `close_due_game_days(at)` (advisory lock, closes due days oldest first, ensures today) on pg_cron at `0 0 * * *` and every 5 minutes. `npm run close-day -- --date` (local-only). README "The daily close".

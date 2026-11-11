@@ -12,6 +12,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Please confirm: should /admin create the coming days early? (blocks nothing; decide before T99)
+- What is needed: a choice. (a) Keep it: opening `/admin` creates the next 7 days at once, with today's values, and they keep those values unless you edit them. (b) Have T99 recompute unedited future days at each close, so they still pick up the streak and new scores.
+- Where to put it: reply in chat.
+- Why: the backlog asked for (a), but it means a day created early skips the streak-based rise. Details in `docs/DECISIONS.md` (T25).
+- Agent's recommendation: (b), done in T99. It is a small change, and edited days stay as you set them.
+
 ### Please confirm: a day nobody played breaks the streak (blocks nothing)
 - What is needed: a yes, or "it survives" / "it is skipped".
 - Where to put it: reply in chat.
