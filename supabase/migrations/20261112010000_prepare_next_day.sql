@@ -20,6 +20,10 @@ grant select on public.challenge_types to anon, authenticated;
 alter table public.game_days
   add constraint game_days_challenge_type_fkey foreign key (challenge_type) references public.challenge_types;
 
+-- The pass target reads a range of game dates; the unique (user_id, game_date) index leads with
+-- the user, so it cannot serve that.
+create index attempts_game_date_idx on public.attempts (game_date);
+
 -- The pass target for a day of `challenge` on date `d` with the world streak at `streak`. With at
 -- least percentile_min_sample scored attempts of that challenge in the percentile_lookback_days
 -- before `d`, it is the score a pass_target_percentile share of them reached: the k-th best score,
