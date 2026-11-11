@@ -17,12 +17,19 @@ const STREAK_OK: Result = { data: { current: 4, best: 9, current_start_date: "20
 function fakeDb(day: Result, streak: Result = STREAK_OK) {
   const calls: unknown[][] = [];
   const streakCalls: unknown[][] = [];
-  const builder = (result: Result, log: unknown[][]): object => {
+  // When each read starts and when it is first awaited, across both reads.
+  const order: string[] = [];
+  const builder = (result: Result, log: unknown[][], name: string): object => {
+    order.push(`start ${name}`);
     const query: object = new Proxy(
       {},
       {
         get(_, method) {
-          if (method === "then") return (resolve: (value: Result) => void) => resolve(result);
+          if (method === "then")
+            return (resolve: (value: Result) => void) => {
+              order.push(`await ${name}`);
+              resolve(result);
+            };
           return (...args: unknown[]) => {
             log.push([method, ...args]);
             return query;
@@ -35,14 +42,14 @@ function fakeDb(day: Result, streak: Result = STREAK_OK) {
   const db = {
     from: (table: string) => {
       calls.push(["from", table]);
-      return builder(day, calls);
+      return builder(day, calls, "day");
     },
     rpc: (name: string) => {
       streakCalls.push(["rpc", name]);
-      return builder(streak, streakCalls);
+      return builder(streak, streakCalls, "streak");
     },
   } as unknown as SupabaseClient;
-  return { db, calls, streakCalls };
+  return { db, calls, streakCalls, order };
 }
 
 describe("readMeter", () => {
@@ -134,6 +141,12 @@ describe("readMeter", () => {
   it("throws on a database error, so the endpoint answers 500", async () => {
     const { db } = fakeDb({ data: null, error: { message: "connection refused" } });
     await expect(readMeter(db, open)).rejects.toThrow("Meter lookup failed: connection refused");
+  });
+
+  it("starts the streak read alongside the day's, not after it", async () => {
+    const { db, order } = fakeDb({ data: null, error: null });
+    await readMeter(db, open);
+    expect(order.slice(0, 2).sort()).toEqual(["start day", "start streak"]);
   });
 
   it("carries the world streak in the hidden final hours too: it is not secret", async () => {

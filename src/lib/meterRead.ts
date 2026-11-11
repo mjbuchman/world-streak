@@ -35,6 +35,8 @@ export async function readMeter(db: Pick<SupabaseClient, "from" | "rpc">, now: D
   if (streakReply.error) throw new Error(`World streak lookup failed: ${streakReply.error.message}`);
 
   const day = dayReply.data as DayRow | null;
+  // world_streak() always returns exactly one row (zeros when there is no run), and .single()
+  // turns anything else into the error above, so the row is present here.
   const streak = streakReply.data as StreakRow;
   const embedded = day?.game_day_counters ?? null;
   const counters = Array.isArray(embedded) ? (embedded[0] ?? null) : embedded;
