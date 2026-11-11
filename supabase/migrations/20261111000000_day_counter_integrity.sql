@@ -9,7 +9,7 @@ update public.attempts a set counted_weight = p.weight
 alter table public.attempts alter column counted_weight set not null;
 
 -- 2. Stamping the weight needs no extra rights: only the server (service role) inserts attempts,
--- and a refused insert never gets as far as needing the weight.
+-- and it only reads profiles, which the service role can already read (pgTAP checks this).
 create or replace function public.stamp_attempt_weight()
 returns trigger
 language plpgsql

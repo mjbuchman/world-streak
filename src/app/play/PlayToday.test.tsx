@@ -224,6 +224,8 @@ describe("PlayToday", () => {
     expect((await screen.findByRole("alert")).textContent).toBe("Today's challenge just closed. Reload the page to play the next one.");
     expect(screen.queryByText(/You left today's attempt/)).toBeNull();
     expect(games).toHaveLength(0);
+    // Pressing Start again works out the new game date, so it starts the next day's attempt.
+    expect(screen.getByRole("button", { name: "Start" })).toHaveProperty("disabled", false);
   });
 
   it("lets the player try Start again if starting failed", async () => {

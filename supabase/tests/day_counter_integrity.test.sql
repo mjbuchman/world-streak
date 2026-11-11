@@ -1,5 +1,5 @@
 begin;
-select plan(12);
+select plan(15);
 
 -- Every attempt carries the weight it was counted with.
 select col_not_null('public', 'attempts', 'counted_weight', 'counted_weight is required');
@@ -18,13 +18,16 @@ insert into public.game_days (game_date, challenge_type, pass_target, survival_t
 values ('2000-01-01', 'stacking', 10, 0.6, '2000-01-02T00:00:05Z', 'survived');
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.test'),
-  ('00000000-0000-0000-0000-00000000000b', 'b@example.test');
-insert into public.profiles (id, birth_date, country) values
-  ('00000000-0000-0000-0000-00000000000a', '1990-01-01', 'US'),
-  ('00000000-0000-0000-0000-00000000000b', '1990-01-01', 'US');
+  ('00000000-0000-0000-0000-00000000000b', 'b@example.test'),
+  ('00000000-0000-0000-0000-00000000000c', 'c@example.test');
+insert into public.profiles (id, birth_date, country, weight) values
+  ('00000000-0000-0000-0000-00000000000a', '1990-01-01', 'US', 1),
+  ('00000000-0000-0000-0000-00000000000b', '1990-01-01', 'US', 1),
+  ('00000000-0000-0000-0000-00000000000c', '1990-01-01', 'US', 0.5);
 
 insert into public.attempts (id, user_id, game_date, seed) values
   ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000000a', (select d from today), 1);
+-- An insert cannot show this (the before-insert trigger always sets the weight), so an update does.
 select throws_ok(
   $$update public.attempts set counted_weight = null where id = '00000000-0000-0000-0000-0000000000a1'$$,
   '23502', null, 'an attempt cannot lose its counted weight'
@@ -61,6 +64,25 @@ select results_eq(
   $$select attempts from public.game_day_counters where game_date = (select d from today)$$,
   $$values (2)$$,
   'both open-day starts are counted'
+);
+
+-- The server inserts as service_role. With stamp_attempt_weight now security invoker, that role
+-- must still read the profile's weight, so the insert stamps 0.5 and counts it.
+set local role service_role;
+select lives_ok(
+  $$insert into public.attempts (id, user_id, game_date, seed)
+    values ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-00000000000c', public.game_date_at(now()), 5)$$,
+  'the server (service_role) can start an attempt'
+);
+reset role;
+select is(
+  (select counted_weight from public.attempts where id = '00000000-0000-0000-0000-0000000000c1'), 0.5::numeric,
+  'the service_role insert stamps the profile''s weight'
+);
+select results_eq(
+  $$select attempts, weighted_attempts from public.game_day_counters where game_date = (select d from today)$$,
+  $$values (3, 2.5::numeric)$$,
+  'and the start is counted with that weight'
 );
 
 -- A pass whose day has no counters row raises instead of recording a pass nobody counted.
