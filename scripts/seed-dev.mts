@@ -115,7 +115,7 @@ export async function runSeed(args: SeedArgs, runId: string, deps: SeedDeps): Pr
       const status = await deps.recordResult(attemptId, score, passed);
       if (status !== "recorded") throw new Error(`record_attempt_result answered "${status}" for player ${i + 1}.`);
     } else {
-      // Result and pass together, so a run that stops halfway leaves the counters in step.
+      // Each pass right after its result, so a run that stops halfway leaves at most one out of step.
       await deps.writePastResult(attemptId, score, passed);
       if (passed) await deps.addPastPass(date, attemptId);
     }
