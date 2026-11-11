@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak is COMPLETE and play-tested (Nov 11); its follow-ups T102-T105 are done (new home page: gauge meter and streak bars).
-- Active task: T108 Practice hub.
+- Active task: T108 Practice hub. Built and committed on branch `task/108-practice-hub` (verify green, full e2e 55/55); the three reviews were cut off by the usage limit on Nov 11. Next session: run the three reviewers again, then open the PR.
 - Blocked tasks: none
 - Waiting on the human: nothing now; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
