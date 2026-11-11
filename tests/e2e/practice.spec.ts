@@ -95,6 +95,23 @@ test("Second Sense practice: start, tap after about a second, and see how far of
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
 });
 
+test("Swift Sum practice: the dots flash, clear, and an answer shows the true count and the error", async ({ page }) => {
+  await gotoReady(page, "/practice/flash-count");
+  await page.getByRole("button", { name: "Start" }).click();
+  await expect(page.locator("canvas")).toHaveAttribute("data-showing", "dots");
+  await page.waitForTimeout(1500);
+  await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
+
+  const answer = page.getByRole("textbox", { name: "How many dots were there?" });
+  await expect(answer).toHaveAttribute("inputmode", "numeric");
+  await answer.fill("20");
+  await page.getByRole("button", { name: "Submit" }).click();
+
+  await expect(page.getByText(/^You said 20\. There were \d+ dots\.$/)).toBeVisible();
+  // 20 is exactly right only when the instance has 20 dots.
+  await expect(page.getByRole("heading", { level: 2 })).toHaveText(/^(\d+(\.\d+)?% off|Exactly right)$/);
+});
+
 test("the home page links to practice", async ({ page }) => {
   await gotoReady(page, "/");
   await page.getByRole("link", { name: "Practice first" }).click();

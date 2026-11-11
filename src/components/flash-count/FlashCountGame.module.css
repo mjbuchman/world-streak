@@ -1,0 +1,20 @@
+.game {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* A square board as wide as the page allows, up to 420 px. */
+.board {
+  display: block;
+  width: min(100%, 420px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: var(--fs-radius-surface);
+}
+
+.answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}

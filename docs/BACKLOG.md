@@ -470,7 +470,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T28 Flash Count (Swift Sum) engine
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/flash-count/engine.ts` implements `ChallengeModule` with `direction "lower-better"`. `paramsFromSeed(seed)` returns `{ dotCount, flashMs: 1000, dots: { x, y, r }[] }`, with `dotCount` within a documented range (default 15 to 45) and positions in a unit square, no two dots closer than the documented minimum spacing, and none clipped by the edges.
@@ -481,7 +481,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T29 Flash Count (Swift Sum) renderer and practice page
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T28
 - Acceptance criteria:
   - [ ] `/practice/flash-count` shows a Start control, then draws the dots on canvas for `flashMs`, clears them, and shows a numeric input (mobile `inputmode="numeric"`) with Submit. The answer reveals the true count and the error %.
@@ -497,6 +497,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] `/play` renders the component for today's `challenge_type`. Unit tests of the submit handler cover a passing and a failing attempt for each type (for example Inner Clock target 0.5: error 0.32 passes and 0.6 fails).
   - [ ] `/practice` lists the three challenges with a one-line description each and links to each practice page.
   - [ ] e2e: with today's game day set to `flash-count` via SQL fixture, the scored flow (start, enter count, result) works end to end.
+- Notes: From the T29 quality review: if the tab is hidden during Swift Sum's flash, animation frames pause and the dots may never show; for the scored version, restart or void the flash on `visibilitychange`. Second Sense's clock keeps running while hidden (decide whether that is fair).
 
 ### T31 Daily challenge rotation
 - Type: feature
