@@ -57,13 +57,14 @@ describe("Flash Count params", () => {
   });
 
   it.each([
-    [0, 23, { x: 0.233, y: 0.159, r: 0.018 }],
-    [1, 34, { x: 0.526, y: 0.964, r: 0.018 }],
-    [4_294_967_295, 42, { x: 0.707, y: 0.927, r: 0.02 }],
-  ])("golden: seed %i has %i dots, the first at %o (changing the PRNG or the layout changes these)", (seed, dotCount, first) => {
+    [0, 23, { x: 0.233, y: 0.159, r: 0.018 }, { x: 0.556, y: 0.855, r: 0.026 }],
+    [1, 34, { x: 0.526, y: 0.964, r: 0.018 }, { x: 0.751, y: 0.781, r: 0.023 }],
+    [4_294_967_295, 42, { x: 0.707, y: 0.927, r: 0.02 }, { x: 0.226, y: 0.473, r: 0.027 }],
+  ])("golden: seed %i has %i dots, first and last pinned (changing the PRNG or the layout changes these)", (seed, dotCount, first, last) => {
     const params = paramsFromSeed(seed);
     expect(params.dotCount).toBe(dotCount);
     expect(params.dots[0]).toEqual(first);
+    expect(params.dots.at(-1)).toEqual(last);
   });
 });
 
