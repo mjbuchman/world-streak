@@ -1204,7 +1204,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T104 Gauge meter at the top of the home page
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T103
 - Acceptance criteria:
   - [ ] Follows the "Chosen" artboard of https://claude.ai/artifact/MRXZU4jQW9RvVqLLDohXXQ (option A's meter). Home order: header, meter, today's challenge card, streak card. The countdown ("Closes in h:mm:ss") moves to the page header.
@@ -1216,7 +1216,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T105 Streak card with a 14-day bar chart
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T104
 - Acceptance criteria:
   - [ ] Follows the "Chosen" artboard (option A's header with option C's bars). Header: "World streak" eyebrow, the big glowing mint streak number with "days", and "Best N" on the right.
