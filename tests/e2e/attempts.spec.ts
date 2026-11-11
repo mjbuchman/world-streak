@@ -45,7 +45,7 @@ test("the server scores a submission itself and accepts it only once", async ({ 
   const email = accounts.uniqueEmail();
   await signUpViaForm(page, { email });
   await expect(page).toHaveURL("/");
-  const { attemptId, params } = await (await page.request.post("/api/attempts/start")).json();
+  const { attemptId, params, gameDate } = await (await page.request.post("/api/attempts/start")).json();
   // A short finished run on the issued instance. The server refuses taps later than the attempt
   // has really been running (its own clock, plus 2 s), so this test waits in real time until
   // the last tap is no longer in the future; a fake browser clock cannot help here.
@@ -71,9 +71,12 @@ test("the server scores a submission itself and accepts it only once", async ({ 
     data: { attemptId, inputs: { tapsMs }, score: 99, passed: true },
   });
   expect(submitted.status()).toBe(200);
-  // 10 is the placeholder target a new day takes from game_settings (see DECISIONS, T11, T16); a
-  // deliberate miss stacks far fewer rows.
-  expect(await submitted.json()).toEqual({ score, passed: false, passTarget: 10 });
+  // Judged against the day's stored target (it follows recent scores and admin edits, T22, T99);
+  // a deliberate miss stacks far fewer rows than any target the day can have.
+  const { data: day } = await adminClient().from("game_days").select("pass_target").eq("game_date", gameDate).single();
+  const passTarget = Number(day!.pass_target);
+  expect(score).toBeLessThan(passTarget);
+  expect(await submitted.json()).toEqual({ score, passed: false, passTarget });
 
   const { data: row, error } = await adminClient()
     .from("attempts")

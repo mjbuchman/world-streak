@@ -891,7 +891,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T78 e2e helpers wait for the page to be interactive
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T73
 - Acceptance criteria:
   - [ ] The sign-in helper in `tests/e2e/profile.spec.ts` (and any shared sign-in, sign-up or Google helper) waits until the page has hydrated before typing or clicking (for example wait for a hydration marker or for the submit button to be enabled by client code), so typed values are not wiped and clicks are not lost on a cold dev-server compile. No timeouts are simply raised.
@@ -1227,7 +1227,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T106 Patch-level dependency bump
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] Patch/minor bumps only: `next` and `eslint-config-next` 16.4.6, `react` and `react-dom` 19.3.1, `supabase` 3.1.0, `@testing-library/user-event` 14.6.9 (package.json and lockfile). Not `eslint` 10, `typescript` 7 or `@types/node` 26.
@@ -1236,7 +1236,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T107 attempts e2e reads today's real pass target
 - Type: maintenance
-- Status: todo
+- Status: done (folded into T78: its 3 clean runs needed it)
 - Depends on: T22
 - Acceptance criteria:
   - [ ] `tests/e2e/attempts.spec.ts` "scores a submission itself" compares `passTarget` with the stored game day's target (as the start check in the same file does), not the literal 10.

@@ -6,6 +6,8 @@ const isCI = Boolean(process.env.CI);
 
 export default defineConfig({
   testDir: "tests/e2e",
+  // Locally, opens every page once before the workers start (see the file).
+  globalSetup: "./tests/e2e/global-setup.ts",
   // Playwright empties its output folder on every run; a subfolder keeps other files in test-results/.
   outputDir: "test-results/playwright",
   fullyParallel: true,

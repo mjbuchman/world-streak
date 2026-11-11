@@ -1,21 +1,21 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/fixtures";
-import { E2E_PASSWORD, hasSessionCookie, signUpViaForm } from "./support/pages";
+import { E2E_PASSWORD, gotoReady, hasSessionCookie, signUpViaForm, submitAndWait } from "./support/pages";
 import { readSession, writeSession } from "./support/session";
 
 const header = (page: Page) => page.getByRole("banner");
 
 async function signOut(page: Page) {
-  await header(page).getByRole("button", { name: "Sign out" }).click();
+  await submitAndWait(page, header(page).getByRole("button", { name: "Sign out" }));
   await expect(header(page).getByRole("link", { name: "Sign in" })).toBeVisible();
 }
 
 async function submitSignIn(page: Page, email: string, password: string) {
-  await page.goto("/signin");
+  await gotoReady(page, "/signin");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   // The form's button, not the header's "Sign in" link.
-  await page.getByRole("main").getByRole("button", { name: "Sign in" }).click();
+  await submitAndWait(page, page.getByRole("main").getByRole("button", { name: "Sign in" }));
 }
 
 test("sign up, sign out, then sign in again and see the email in the header", async ({ page, accounts }) => {

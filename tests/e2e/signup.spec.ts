@@ -1,5 +1,5 @@
 import { expect, test } from "./support/fixtures";
-import { hasSessionCookie, oneDayShortOf18, signUpViaForm } from "./support/pages";
+import { gotoReady, hasSessionCookie, oneDayShortOf18, signUpViaForm } from "./support/pages";
 import { adminClient, findUserByEmail } from "./support/supabase";
 
 for (const path of ["/signin", "/signup", "/complete-profile", "/rules"]) {
@@ -47,7 +47,7 @@ test("a mismatched confirmation is caught before anything is sent", async ({ pag
     if (request.method() === "POST" && request.url().includes("/signup")) posted = true;
   });
   // Everything else is valid, so only the mismatch can stop this account being created.
-  await page.goto("/signup");
+  await gotoReady(page, "/signup");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password (at least 8 characters)").fill("e2e-password-123");
   await page.getByLabel("Confirm password").fill("e2e-password-124");

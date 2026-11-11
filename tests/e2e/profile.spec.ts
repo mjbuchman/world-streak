@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/fixtures";
-import { E2E_PASSWORD, oneDayShortOf18, signUpViaForm } from "./support/pages";
+import { E2E_PASSWORD, gotoReady, oneDayShortOf18, signUpViaForm, submitAndWait } from "./support/pages";
 import { adminClient, findUserByEmail } from "./support/supabase";
 
 async function profileOf(email: string) {
@@ -18,22 +18,22 @@ async function signedOutAccountWithoutProfile(page: Page, email: string) {
   const { userId } = await profileOf(email);
   const { error } = await adminClient().from("profiles").delete().eq("id", userId);
   if (error) throw error;
-  await page.getByRole("banner").getByRole("button", { name: "Sign out" }).click();
+  await submitAndWait(page, page.getByRole("banner").getByRole("button", { name: "Sign out" }));
   await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
 }
 
 async function signIn(page: Page, email: string) {
-  await page.goto("/signin");
+  await gotoReady(page, "/signin");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(E2E_PASSWORD);
-  await page.getByRole("main").getByRole("button", { name: "Sign in" }).click();
+  await submitAndWait(page, page.getByRole("main").getByRole("button", { name: "Sign in" }));
 }
 
 async function submitProfile(page: Page, birthDate: string) {
   await page.getByLabel("Date of birth").fill(birthDate);
   await page.getByLabel("Country of residence").selectOption("US");
   await page.getByRole("checkbox", { name: /I agree to the official rules/ }).check();
-  await page.getByRole("button", { name: "Save and continue" }).click();
+  await submitAndWait(page, page.getByRole("button", { name: "Save and continue" }));
 }
 
 test("sign-in and sign-up offer Continue with Google", async ({ page }) => {
@@ -46,7 +46,7 @@ test("sign-in and sign-up offer Continue with Google", async ({ page }) => {
 test("Continue with Google goes to Google through local Supabase, returning to our callback", async ({ page }) => {
   // Stop at Google's door: the test checks the hand-off, never contacts Google.
   await page.route("https://accounts.google.com/**", (route) => route.fulfill({ body: "Google" }));
-  await page.goto("/signin");
+  await gotoReady(page, "/signin");
   const toGoogle = page.waitForRequest((request) => request.url().startsWith("https://accounts.google.com/"));
   await page.getByRole("button", { name: "Continue with Google" }).click();
 
