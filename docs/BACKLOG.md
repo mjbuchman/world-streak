@@ -490,7 +490,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T30 All challenges in daily play and practice hub
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T14, T27, T29
 - Acceptance criteria:
   - [ ] `src/challenges/registry.ts` maps `stacking`, `inner-clock` and `flash-count` to their engine module and React component. `ChallengeType` covers all three. The start and submit endpoints work for every type with no type-specific branches.
@@ -500,7 +500,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T108 Practice hub
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T30
 - Acceptance criteria:
   - [ ] `/practice` lists the three challenges with a one-line description each and links to each practice page.
