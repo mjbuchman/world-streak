@@ -48,10 +48,17 @@ test("the home page shows the world streak, and the history lists the closed day
   await streak.getByRole("link", { name: "Every day so far" }).click();
   await expect(page).toHaveURL("/history");
   const rows = page.getByRole("row");
+  await expect(rows.nth(1)).toContainText("Teetering Tower");
+  await expect(rows.nth(1)).toContainText("60%");
   await expect(rows.nth(1)).toContainText("52%");
   await expect(rows.nth(1)).toContainText("Broke");
   await expect(rows.nth(2)).toContainText("74%");
   await expect(rows.nth(2)).toContainText("Survived");
   await expect(rows.nth(3)).toContainText("81%");
   await expect(rows.nth(3)).toContainText("Survived");
+});
+
+test("a history page past the last one is not found", async ({ page }) => {
+  const response = await page.goto("/history?page=9999");
+  expect(response?.status()).toBe(404);
 });

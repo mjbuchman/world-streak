@@ -37,6 +37,7 @@ describe("HistoryTable", () => {
   it("has no newer link on the first page and no older link on the last", () => {
     render(<HistoryTable history={{ days, page: 1, pageCount: 2 }} />);
     expect(screen.queryByRole("link", { name: "Newer days" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Older days" }).getAttribute("href")).toBe("/history?page=2");
     cleanup();
     render(<HistoryTable history={{ days, page: 3, pageCount: 3 }} />);
     expect(screen.queryByRole("link", { name: "Older days" })).toBeNull();

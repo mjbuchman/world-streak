@@ -74,8 +74,22 @@ export async function readStreakSummary(db: Pick<SupabaseClient, "from" | "rpc">
   };
 }
 
-/** One page (1-based) of closed days, newest first. */
-export async function readHistory(db: Pick<SupabaseClient, "from">, page: number): Promise<HistoryPage> {
+/** No history has anywhere near this many pages; a larger `?page` is treated as a bad one. */
+export const MAX_HISTORY_PAGE = 10_000;
+
+/** `?page=N` as a page number: anything but a whole number from 1 to MAX_HISTORY_PAGE is page 1. */
+export function historyPageParam(value: string | string[] | undefined): number {
+  const page = Number(Array.isArray(value) ? value[0] : value);
+  return Number.isInteger(page) && page >= 1 && page <= MAX_HISTORY_PAGE ? page : 1;
+}
+
+/** PostgREST's answer to a range that starts past the last row. */
+const RANGE_NOT_SATISFIABLE = "PGRST103";
+
+type HistoryRow = { game_date: string; challenge_type: string; final_pass_rate: unknown; survival_threshold: unknown; outcome: unknown };
+
+/** One page (1-based) of closed days, newest first; null when the page starts past the last day. */
+export async function readHistory(db: Pick<SupabaseClient, "from">, page: number): Promise<HistoryPage | null> {
   const from = (page - 1) * HISTORY_PAGE_SIZE;
   const { data, error, count } = await db
     .from("game_days")
@@ -83,10 +97,11 @@ export async function readHistory(db: Pick<SupabaseClient, "from">, page: number
     .not("closed_at", "is", null)
     .order("game_date", { ascending: false })
     .range(from, from + HISTORY_PAGE_SIZE - 1);
+  if (error?.code === RANGE_NOT_SATISFIABLE) return null;
   if (error) throw new Error(`History lookup failed: ${error.message}`);
   if (count === null) throw new Error("History lookup returned no count");
 
-  const rows = data as { game_date: string; challenge_type: string; final_pass_rate: unknown; survival_threshold: unknown; outcome: unknown }[];
+  const rows = data as HistoryRow[];
   return {
     days: rows.map((row) => ({
       gameDate: row.game_date,

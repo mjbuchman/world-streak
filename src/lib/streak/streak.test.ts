@@ -2,8 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import {
   HISTORY_PAGE_SIZE,
+  MAX_HISTORY_PAGE,
   challengeName,
   dayLabel,
+  historyPageParam,
   passRateLabel,
   readHistory,
   readStreakSummary,
@@ -11,7 +13,7 @@ import {
   yesterdayLine,
 } from "./streak";
 
-type Result = { data: unknown; error: { message: string } | null; count?: number | null };
+type Result = { data: unknown; error: { message: string; code?: string } | null; count?: number | null };
 
 /** A client whose queries answer `results` in order, recording each builder call per query. */
 function fakeDb(results: Result[]) {
@@ -81,6 +83,18 @@ describe("wording", () => {
   });
 });
 
+describe("historyPageParam", () => {
+  it("reads a whole page number, the first of several", () => {
+    expect(historyPageParam("3")).toBe(3);
+    expect(historyPageParam(["4", "9"])).toBe(4);
+    expect(historyPageParam(String(MAX_HISTORY_PAGE))).toBe(MAX_HISTORY_PAGE);
+  });
+
+  it.each([undefined, "", "abc", "0", "-1", "1.5", "1e21", String(MAX_HISTORY_PAGE + 1)])("reads %j as the first page", (value) => {
+    expect(historyPageParam(value)).toBe(1);
+  });
+});
+
 describe("readStreakSummary", () => {
   it("reads the streak and yesterday's closed result", async () => {
     const { db, queries } = fakeDb([
@@ -99,6 +113,20 @@ describe("readStreakSummary", () => {
       ["not", "closed_at", "is", null],
       ["maybeSingle"],
     ]);
+  });
+
+  it("finds yesterday across a month and a year boundary", async () => {
+    for (const [now, yesterday] of [
+      ["2026-12-01T00:30:00Z", "2026-11-30"],
+      ["2027-01-01T08:00:00Z", "2026-12-31"],
+    ]) {
+      const { db, queries } = fakeDb([
+        { data: { current: 0, best: 0 }, error: null },
+        { data: null, error: null },
+      ]);
+      await readStreakSummary(db, new Date(now));
+      expect(queries[1]).toContainEqual(["eq", "game_date", yesterday]);
+    }
   });
 
   it("has no yesterday line until yesterday has closed", async () => {
@@ -146,6 +174,27 @@ describe("readHistory", () => {
       ["order", "game_date", { ascending: false }],
       ["range", HISTORY_PAGE_SIZE, 2 * HISTORY_PAGE_SIZE - 1],
     ]);
+  });
+
+  it("reads the first page from the newest day", async () => {
+    const { db, queries } = fakeDb([{ data: [], error: null, count: 0 }]);
+    await readHistory(db, 1);
+    expect(queries[0].at(-1)).toEqual(["range", 0, HISTORY_PAGE_SIZE - 1]);
+  });
+
+  it.each([
+    [30, 1],
+    [31, 2],
+    [60, 2],
+    [61, 3],
+  ])("puts %i closed days on %i pages of 30", async (count, pageCount) => {
+    const { db } = fakeDb([{ data: [], error: null, count }]);
+    expect(await readHistory(db, 1)).toMatchObject({ pageCount });
+  });
+
+  it("has no page that starts past the last day (PostgREST answers that range with PGRST103)", async () => {
+    const { db } = fakeDb([{ data: null, error: { message: "Requested range not satisfiable", code: "PGRST103" }, count: null }]);
+    expect(await readHistory(db, 999)).toBeNull();
   });
 
   it("has one (empty) page when nothing has closed yet", async () => {

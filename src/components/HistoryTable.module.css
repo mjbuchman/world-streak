@@ -40,6 +40,14 @@
   min-height: 48px;
 }
 
+/* A 48 px touch target, like every other link and button. */
+.pages a {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+}
+
 .empty {
   color: var(--fs-color-text-muted);
 }
