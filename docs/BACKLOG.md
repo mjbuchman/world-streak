@@ -1216,7 +1216,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T105 Streak card with a 14-day bar chart
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T104
 - Acceptance criteria:
   - [ ] Follows the "Chosen" artboard (option A's header with option C's bars). Header: "World streak" eyebrow, the big glowing mint streak number with "days", and "Best N" on the right.
@@ -1227,9 +1227,18 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T106 Patch-level dependency bump
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] Patch/minor bumps only: `next` and `eslint-config-next` 16.4.6, `react` and `react-dom` 19.3.1, `supabase` 3.1.0, `@testing-library/user-event` 14.6.9 (package.json and lockfile). Not `eslint` 10, `typescript` 7 or `@types/node` 26.
   - [ ] `npm run verify` and `npm run test:e2e` pass; `npm audit` stays clean; README "Running the app" still matches the Supabase CLI.
-- Notes: From the end-of-M2 maintainer check. Its other proposal (flaky 6-worker sign-up e2e) is already T78; do T78 before M3.
+- Notes: From the end-of-M2 maintainer check. Its other proposal (flaky 6-worker sign-up e2e) is already T78; do T78 before M3. Done with `npm audit fix` (in-range lockfile updates); one dev-only moderate advisory remains (minimatch inside typescript-eslint, which `eslint-config-next` pins), production audit clean.
+
+### T107 attempts e2e reads today's real pass target
+- Type: maintenance
+- Status: todo
+- Depends on: T22
+- Acceptance criteria:
+  - [ ] `tests/e2e/attempts.spec.ts` "scores a submission itself" compares `passTarget` with the stored game day's target (as the start check in the same file does), not the literal 10.
+  - [ ] The spec passes locally when today's target is not 10 (for example after `npm run seed:dev` or an admin edit).
+- Notes: Seen in T104-T106: locally today's target was 8 (recent scores), so this one test failed on every full run; CI passes on a fresh database. About 5 lines.
