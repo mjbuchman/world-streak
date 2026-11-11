@@ -187,6 +187,7 @@ describe("Meter", () => {
       open({ closesAt: "soon" }),
       open({ attempts: "many" }),
       open({ attempts: -1 }),
+      open({ attempts: 1.5 }),
       open({ threshold: "x" }),
       open({ passRate: "x" }),
       null,
