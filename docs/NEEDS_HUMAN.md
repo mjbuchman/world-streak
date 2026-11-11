@@ -12,12 +12,6 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
-### CI e2e job cannot install the Playwright browser (blocks T102 / PR #58, and every later PR)
-- What is needed: re-run the e2e job once GitHub's runners recover (`gh run rerun 43056027537 --failed`, or "Re-run failed jobs" on the PR), or approve a workflow change.
-- Why: on Nov 11 the e2e job failed 4 times (about 15:15 to 17:00 UTC) at "Install Playwright browser". `npx playwright install --with-deps chromium` runs apt, and the runner could not resolve `azure.archive.ubuntu.com` ("Temporary failure resolving"). No test ran. The verify job passed every time, and all three reviewers approved T102. It looks like a GitHub runner network outage, not the code.
-- What I tried: two re-runs, the second after a 20-minute wait.
-- Agent's recommendation: re-run later. If it keeps happening, a workflow change I may not make on my own: install the browser without `--with-deps` (the runner image already has almost all of the libraries; only some fonts were missing), or retry apt. Auto-merge is still on, so PR #58 merges by itself once the e2e job passes.
-
 ### Accessibility pass (blocks nothing; before launch)
 - What is needed: one session testing the app with a screen reader and keyboard only (and reduced motion on), all at once, once the main screens exist.
 - Where to put it: reply in chat with anything that is hard to use.
@@ -43,6 +37,8 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: do it before the public launch. T52 works without the keys locally (it skips the CAPTCHA and logs a warning).
 
 ## Resolved
+
+- **CI could not install the Playwright browser** (Nov 11, 2026): the e2e job's apt step failed 4 times (runner could not resolve `azure.archive.ubuntu.com`), and a fifth re-run failed with no jobs. The human approved dropping `--with-deps` from `.github/workflows/ci.yml` (T102 branch).
 
 - **M2 play-test** (Nov 11, 2026): no issues beyond the look of the meter and streak card (T104). Empty days break the streak (as built). Coming days follow the settings until edited or started, and the pass target locks once a day has started (T102). Do not hide the meter for now (T103). The refused/not-sent wording is approved. Redesign: A's gauge meter and play card, with a streak card made of A's header and C's bar chart (T104, T105).
 

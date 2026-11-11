@@ -73,7 +73,10 @@ jobs:
 
       - name: Install Playwright browser
         if: steps.app.outputs.exists == 'true'
-        run: npx playwright install --with-deps chromium
+        # No --with-deps (human-approved, Nov 11, 2026): its apt step failed 4 times when the
+        # runner could not resolve the Ubuntu mirror, and the runner image already has
+        # Chromium's libraries.
+        run: npx playwright install chromium
 
       # Agents: when end-to-end tests need a database, ADD a step here that
       # starts local Supabase (for example with the Supabase CLI) before the

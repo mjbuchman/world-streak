@@ -1184,7 +1184,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T102 Today's pass target locks once the day has started
 - Type: feature
-- Status: blocked (PR #58: approved, CI runner cannot install the Playwright browser; see NEEDS_HUMAN)
+- Status: in-progress
 - Depends on: T99
 - Acceptance criteria:
   - [ ] A migration makes the database refuse a change to a game day's pass target once that day has any attempt (admins included); the threshold stays editable on any open day. pgTAP covers: target edit before any start allowed, refused after a start, threshold edit after a start allowed.
