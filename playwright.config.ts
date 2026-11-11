@@ -6,6 +6,8 @@ const isCI = Boolean(process.env.CI);
 
 export default defineConfig({
   testDir: "tests/e2e",
+  // Playwright empties its output folder on every run; a subfolder keeps other files in test-results/.
+  outputDir: "test-results/playwright",
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,

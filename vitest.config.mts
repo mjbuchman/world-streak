@@ -18,7 +18,8 @@ export default defineConfig({
         "src/app/**/page.tsx",
         "src/app/**/layout.tsx",
       ],
-      reporter: ["text", "html"],
+      // The summary only; the per-file table is in the HTML report. Missed thresholds still fail the run.
+      reporter: ["text-summary", "html"],
       thresholds: {
         lines: 70,
         branches: 70,

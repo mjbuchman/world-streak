@@ -839,16 +839,15 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `npm run test:e2e` passes locally and in CI; `npm run verify` passes; no product behavior changes.
 - Notes: From the maintainer check after T10. T14, T25, T30, T36, T43 and T49 all need a signed-in browser. The T60 maintainer check adds: `tests/e2e/attempts.spec.ts` repeats "sign up, then expect `/`" and `adminClient().from(...)` plus `if (error) throw error`; a `signedUpPlayer()` fixture would cover both.
 
-### T63 Component-test race audit and the Field key warning
+### T63 Component-test race audit
 - Type: maintenance
 - Status: todo
 - Depends on: T55
 - Acceptance criteria:
   - [ ] Every component test in `src/app/**` and `src/components/**` is checked for assertions made right after a submit whose result arrives asynchronously, with no `findBy*` or `waitFor` first (the pattern behind the `SignUpForm.test.tsx` flake fixed in T59). Each one found waits for the result; no assertion is removed or weakened.
   - [ ] `npx vitest run` passes 5 full runs in a row locally.
-  - [ ] The React warning "Each child in a list should have a unique key prop. Check the render method of `Field`", printed by the dev server during e2e runs, is fixed, with a component test that fails on the warning (for example a `console.error` spy).
   - [ ] `npm run verify` and `npm run test:e2e` pass; no product behavior changes.
-- Notes: From the maintainer check after T10, plus the warning seen during the T59 e2e runs.
+- Notes: From the maintainer check after T10, plus the warning seen during the T59 e2e runs. The Field key warning criterion was dropped: T80 fixed it.
 
 ### T64 Revoke TRUNCATE from client roles
 - Type: maintenance
@@ -933,11 +932,12 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T80 Fix the missing-key warning in form fields; quieter test output
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T75
 - Acceptance criteria:
   - [ ] The React warning "Each child in a list should have a unique key prop. Check the render method of `Field`" no longer appears on `/signup`, `/signin` or `/complete-profile` (a component test fails on that console error).
   - [ ] The Vitest coverage text reporter prints the summary only (for example `text-summary` plus `html`); every threshold stays as it is and still fails the run when missed.
+  - [ ] Playwright writes its results to a subfolder (for example `test-results/playwright`), so an e2e run no longer wipes other files kept in `test-results/` (the agents keep helper scripts and PR bodies there); CI's artifact paths, if any, follow.
 - Notes (added Nov 11): do right after T95. The human asked to cut usage; this warning repeats dozens of times in every e2e log, and the full coverage table prints on every test run.
 - Notes: Seen in every e2e run's server log since T55. In dev it also opens Next's error overlay, whose stack-frame lookups slow the dev server under parallel e2e (see T78). Overlaps T63's third criterion (maintainer check after T16): whichever lands first does the fix, and the other drops that criterion.
 
@@ -1009,7 +1009,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T95 One shared local-only toolkit for the dev scripts
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T20
 - Acceptance criteria:
   - [ ] One module (for example `scripts/lib/localSupabase.mts`) holds the only copy of the localhost check, the service-role client factory and the `check(operation, result)` error helper; `scripts/seed-dev.mts` and `scripts/e2e-local.mts` both use it, and neither keeps its own hostname comparison.

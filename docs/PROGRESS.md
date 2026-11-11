@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak (M1b and its follow-ups T87, T85, T79 are done)
-- Active task: T95 One shared local-only toolkit for the dev scripts
+- Active task: none (T95 merged as PR #47; next is T80; uncommitted doc notes on disk go in T80's branch)
 - Blocked tasks: none
 - Waiting on the human: please-confirm items (the 3-hour hidden meter, the refused/not-sent wording); later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T95, T80 (missing-key warning and quieter output, to cut usage), T96 (pgTAP fixtures), T97 (meter-reply check), then T21 daily close. T91 (approved wording) fits in when convenient.
+- Next: T80 (missing-key warning, quieter output, Playwright output in a subfolder), T96 (pgTAP fixtures), T97 (meter-reply check), then T21 daily close. Reviews follow the new CLAUDE.md step 8 (light review for maintenance) and the usage-saving memory note. T91 (approved wording) fits in when convenient.
 
 ## Log
 
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-11 — T95 One local-only toolkit for the dev scripts (PR #47)
+- `scripts/lib/localSupabase.mts`: the one localhost guard, service-role client and `check()`, used by `seed-dev` and `e2e-local`; `seed-dev` reads numerics with the app's `dbNumber`. `"type": "module"` in package.json and `allowImportingTsExtensions` in tsconfig so Node scripts can import app `.ts` files.
+- Review: light review (quality-reviewer), 1 round, the first under the human's new usage rules (Sonnet reviewers, light review for maintenance, no re-review for polish).
+- Notes: the human set `autoCompactWindow` to 200k and clears context between tasks. Merges since the maintainer check after T93: 1.
 
 ### 2026-11-11 — Maintainer check after T93
 - Health good (711 unit, 226 pgTAP, lint and typecheck clean; outdated packages all already in T51). New tasks T95 (one local-only toolkit for the dev scripts, strict numerics in seed-dev), T96 (shared pgTAP fixtures) and T97 (one meter-reply check tied to `MeterBody`), all before T21. Merges since this check: 0.
