@@ -77,6 +77,22 @@ describe("saveGameDayEdit", () => {
     expect(calls).toHaveLength(1);
   });
 
+  it("refuses a form with no fields at all, without touching the database", async () => {
+    const { db, calls } = fakeDb([ADMIN]);
+    expect(await saveGameDayEdit(db, new FormData())).toEqual({ ok: false, message: "Unknown game day." });
+    expect(calls).toHaveLength(1);
+  });
+
+  it.each([
+    ["the pass target", "passTarget", "Pass target is required."],
+    ["the threshold", "thresholdPercent", "Survival threshold is required."],
+  ])("refuses a form missing %s", async (_name, field, message) => {
+    const fields = { gameDate: "2026-11-12", passTarget: "9", thresholdPercent: "55" };
+    delete (fields as Record<string, string>)[field];
+    const { db } = fakeDb([ADMIN]);
+    expect(await saveGameDayEdit(db, form(fields))).toEqual({ ok: false, message });
+  });
+
   it("refuses a closed day", async () => {
     const { db, calls } = fakeDb([ADMIN, { data: { challenge_type: "stacking", closed_at: "2026-11-13T00:00:05Z" }, error: null }]);
     expect(await saveGameDayEdit(db, edit())).toEqual({ ok: false, message: "Nov 12, 2026 has closed, so it can no longer change." });
