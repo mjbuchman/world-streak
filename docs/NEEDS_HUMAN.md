@@ -13,8 +13,8 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 -->
 
 ### CI e2e job cannot install the Playwright browser (blocks T102 / PR #58, and every later PR)
-- What is needed: re-run the e2e job once GitHub's runners recover (`gh run rerun 43046550742 --failed`, or "Re-run failed jobs" on the PR), or approve a workflow change.
-- Why: on Nov 11 the e2e job failed 3 times (about 15:15 to 16:15 UTC) at "Install Playwright browser". `npx playwright install --with-deps chromium` runs apt, and the runner could not resolve `azure.archive.ubuntu.com` ("Temporary failure resolving"). No test ran. The verify job passed every time, and all three reviewers approved T102. It looks like a GitHub runner network outage, not the code.
+- What is needed: re-run the e2e job once GitHub's runners recover (`gh run rerun 43056027537 --failed`, or "Re-run failed jobs" on the PR), or approve a workflow change.
+- Why: on Nov 11 the e2e job failed 4 times (about 15:15 to 17:00 UTC) at "Install Playwright browser". `npx playwright install --with-deps chromium` runs apt, and the runner could not resolve `azure.archive.ubuntu.com` ("Temporary failure resolving"). No test ran. The verify job passed every time, and all three reviewers approved T102. It looks like a GitHub runner network outage, not the code.
 - What I tried: two re-runs, the second after a 20-minute wait.
 - Agent's recommendation: re-run later. If it keeps happening, a workflow change I may not make on my own: install the browser without `--with-deps` (the runner image already has almost all of the libraries; only some fonts were missing), or retry apt. Auto-merge is still on, so PR #58 merges by itself once the e2e job passes.
 
