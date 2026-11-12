@@ -37,6 +37,7 @@ In **Authentication**:
    1. In Google Cloud Console, create an OAuth client of type *Web application* (free).
    2. Add Supabase's callback, `https://<project ref>.supabase.co/auth/v1/callback`, as an authorised redirect URI.
    3. Paste the client ID and secret into **Providers → Google** in Supabase and enable it. (Locally these are `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`, read by `supabase/config.toml`; in the cloud they live only in the dashboard.)
+4. **JWT signing keys (T58):** in **Project Settings → JWT Keys**, switch to asymmetric keys: create an **ECC (P-256)** standby key, then **rotate** to it. Pages then verify sessions locally instead of asking the Auth server on every request. Without it everything still works, one Auth round trip slower per page.
 
 ## 5. Create the Vercel project
 

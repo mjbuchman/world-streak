@@ -87,6 +87,11 @@ jobs:
         if: steps.app.outputs.exists == 'true'
         run: npx supabase --version
 
+      # supabase/config.toml points at this git-ignored key (T58).
+      - name: Create the local JWT signing key
+        if: steps.app.outputs.exists == 'true'
+        run: npm run db:keys
+
       - name: Start local Supabase
         if: steps.app.outputs.exists == 'true'
         run: npx supabase start --exclude studio,imgproxy,edge-runtime,logflare,vector,supavisor

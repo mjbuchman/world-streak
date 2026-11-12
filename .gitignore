@@ -20,6 +20,7 @@ test-results/
 # supabase local state
 supabase/.temp/
 supabase/.branches/
+supabase/signing_keys.json
 
 # misc
 .DS_Store
