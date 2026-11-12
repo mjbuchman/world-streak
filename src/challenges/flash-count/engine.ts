@@ -11,8 +11,8 @@ import type { ChallengeModule } from "../shared/types";
  */
 
 /**
- * How many dots an instance has (inclusive). With FLASH_MS, tuned at the M3 play-test (was 15-45
- * in 1 s, a guess): too many to count one by one in time, few enough to estimate.
+ * How many dots an instance has (inclusive). With FLASH_MS, set after the M3 play-test (was 15-45
+ * in 1 s, which felt like a guess): too many to count one by one in time, few enough to estimate.
  */
 export const DOT_COUNT_RANGE = { min: 12, max: 30 } as const;
 /** Each dot's radius, in the unit square (inclusive), so dot size gives away nothing. */
