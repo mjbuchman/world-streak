@@ -878,7 +878,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T49 End-to-end coverage of the main flows
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T43, T46, T47
 - Acceptance criteria:
   - [ ] e2e "day survives": seed today with 10 fake attempts at 70% passing, then a new user signs up, plays and finishes. `/api/meter` (bypassing the cache via a test header that is only honoured outside production, or by waiting) shows 11 attempts. `close-day` makes `/` show the streak increased by 1 and `/history` list the day as survived.
@@ -890,7 +890,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T50 Deployment guide and launch checklist
 - Type: docs
-- Status: todo
+- Status: in-progress
 - Depends on: T49
 - Acceptance criteria:
   - [ ] `docs/DEPLOYMENT.md` lists, step by step for the human: create the Supabase cloud project (free plan); apply migrations (`supabase link` + `supabase db push`); confirm pg_cron is enabled and the jobs exist; set the auth settings (email confirmations off, site URL, redirect URLs, Google provider); create the Vercel project with every env var from `.env.example`; make the owner's account an admin (exact SQL: `update profiles set is_admin = true where id = (select id from auth.users where email = '<owner email>')`); and the pre-launch items (domain, custom email provider, Vercel Pro before ads, AdSense, legal review of the rules).

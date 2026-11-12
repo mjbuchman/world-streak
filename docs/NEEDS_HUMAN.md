@@ -12,6 +12,24 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Create the Supabase cloud project (T50; blocks deployment)
+- What is needed: a free-plan Supabase project with the migrations applied, pg_cron jobs checked and auth set up.
+- Where to put it: follow `docs/DEPLOYMENT.md` sections 1–4; the keys go into Vercel (section 5), never the repository.
+- Why: the agents never create accounts or touch production.
+- Agent's recommendation: do it when you are ready to put a preview online; nothing local depends on it.
+
+### Create the Vercel project (T50; blocks deployment)
+- What is needed: a Vercel project linked to the repository with every variable in the table of `docs/DEPLOYMENT.md` section 5.
+- Where to put it: Vercel → Settings → Environment Variables; then check `/api/health` on the deployment.
+- Why: hosting is a human step.
+- Agent's recommendation: start on Hobby; move to Pro before ads (section 8).
+
+### Make the production owner account an admin (T50; blocks using /admin in production)
+- What is needed: sign up on the deployed site, then run the SQL in `docs/DEPLOYMENT.md` section 6 with your email.
+- Where to put it: Supabase SQL editor.
+- Why: the local admin from `supabase/seed.sql` must never exist in production.
+- Agent's recommendation: do it right after the first deploy.
+
 ### Meter load test: p95 above the local target (T48; blocks nothing)
 - What is needed: decide whether the local p95 matters. On this machine, 200 connections for 30 s gave p95 403 ms (target under 200 ms), about 1,500 requests/s and no errors; the database is read once per 30 s, so the time is the single Node server. In production the CDN serves most requests.
 - Where to put it: reply in chat; or rerun `npm run load:meter` on a faster machine (README, "Meter load test").
