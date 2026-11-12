@@ -510,7 +510,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T109 One practice page shell for every challenge
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T108
 - Acceptance criteria:
   - [ ] The ready / playing / result / Play again scaffolding and its styles shared by `StackingPractice`, `InnerClockPractice` and `FlashCountPractice` live in one component and CSS module; each page keeps only its challenge-specific parts (how-to, game, result text).
@@ -548,7 +548,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T112 Remaining e2e link clicks wait for hydration
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T78
 - Acceptance criteria:
   - [ ] Every e2e spec that clicks a link or button right after `page.goto` uses `gotoReady` (or waits for the action's reply), for example `look.spec.ts` "the back button … goes home" and `auth.spec.ts` "sign up, sign out, then sign in again" (the header's Sign in link after sign-out).
@@ -564,6 +564,25 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] The share text uses emojis: ✅/❌ outcome, 🔥 world streak, a 10-square meter bar (🟩 at or above the line, 🟧 below, ⬜ empty) with the rate and the line, 🆘 on a call for help. Still no score, target or challenge (tests).
   - [ ] Unit tests for the text and the card; play e2e updated.
 - Notes: M3 play-test (Nov 12).
+
+### T118 Second Sense clock fades out; targets 7-13 s
+- Type: feature
+- Status: todo
+- Depends on: T113
+- Acceptance criteria:
+  - [ ] The first second's clock fades away gracefully instead of vanishing (no fade with reduced motion); the tap timing is unchanged.
+  - [ ] `TARGET_RANGE_MS` becomes 7,000-13,000 ms; golden tests updated.
+  - [ ] Unit test of the fade state; practice e2e still passes.
+- Notes: Second play-test of the M3 follow-ups (Nov 12). Build during M4; the human checks it at the M4 play-test (it does not block M4).
+
+### T119 Swift Sum countdown before the dots
+- Type: feature
+- Status: todo
+- Depends on: T29
+- Acceptance criteria:
+  - [ ] Before the dots flash, a "3, 2, 1" countdown animation builds up to it (daily play and practice); the flash itself is unchanged and starts right after "1". Reduced motion: the numbers without the animation.
+  - [ ] Unit test with mocked time: dots appear only after the countdown; e2e of Swift Sum practice still passes.
+- Notes: Second play-test of the M3 follow-ups (Nov 12): "really build it up and make it feel like more of an experience". Build during M4; checked at the M4 play-test.
 
 ### T113 Second Sense starts with a visible timer
 - Type: feature
