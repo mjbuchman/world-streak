@@ -13,7 +13,7 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 -->
 
 ### Asymmetric JWT keys at deployment (T58; blocks nothing)
-- What is needed: nothing locally (I already ran `npm run db:keys` and restarted Supabase; sign in again). At deployment, switch the project to an ECC (P-256) signing key (`docs/DEPLOYMENT.md` §4.4).
+- What is needed: locally, sign in again; if `npm run dev` then reports a bad key, replace the three lines in `.env.local` with what `npm run env:local` prints (local Supabase now signs its keys with the new ES256 key). At deployment, switch the project to an ECC (P-256) signing key (`docs/DEPLOYMENT.md` §4.4).
 - Where to put it: the Supabase dashboard.
 - Why: pages verify sessions locally instead of asking the Auth server each time. See DECISIONS (T58).
 - Agent's recommendation: do it with the rest of `docs/DEPLOYMENT.md` §4.

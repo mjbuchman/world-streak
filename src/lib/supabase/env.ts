@@ -1,7 +1,7 @@
 export function requireEnv(name: string, value: string | undefined): string {
   if (!value) {
     throw new Error(
-      `Missing environment variable ${name}. Copy .env.example to .env.local and fill it in from \`npx supabase status\`.`,
+      `Missing environment variable ${name}. Copy .env.example to .env.local and fill in the lines \`npm run env:local\` prints.`,
     );
   }
   return value;

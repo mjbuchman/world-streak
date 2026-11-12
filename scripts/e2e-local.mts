@@ -11,18 +11,18 @@ import { assertLocalSupabaseUrl } from "./lib/localSupabase.mts";
 
 const APP_VARIABLES = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
 
-type AppEnv = Record<(typeof APP_VARIABLES)[number], string>;
+export type AppEnv = Record<(typeof APP_VARIABLES)[number], string>;
 
-const STATUS_COMMAND =
+export const STATUS_COMMAND =
   "npx supabase status -o env" +
   " --override-name api.url=NEXT_PUBLIC_SUPABASE_URL" +
   " --override-name auth.anon_key=NEXT_PUBLIC_SUPABASE_ANON_KEY" +
   " --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY";
 
-const NOT_RUNNING = "Local Supabase is not running. Start it with `npm run db:start`, then try again.";
+export const NOT_RUNNING = "Local Supabase is not running. Start it with `npm run db:start`, then try again.";
 
 /** Picks the app's variables out of `supabase status -o env` output (with the overrides above). */
-export function localSupabaseEnv(statusOutput: string): AppEnv {
+export function localSupabaseEnv(statusOutput: string, purpose = "run e2e tests"): AppEnv {
   const values = new Map<string, string>();
   for (const line of statusOutput.split(/\r?\n/)) {
     const match = /^([A-Z_]+)="?(.*?)"?$/.exec(line.trim());
@@ -36,7 +36,7 @@ export function localSupabaseEnv(statusOutput: string): AppEnv {
 
   const env = Object.fromEntries(APP_VARIABLES.map((name) => [name, values.get(name)!])) as AppEnv;
   // The suite creates and deletes accounts, so it must never point at a real project.
-  assertLocalSupabaseUrl(env.NEXT_PUBLIC_SUPABASE_URL, "run e2e tests", "the Supabase URL");
+  assertLocalSupabaseUrl(env.NEXT_PUBLIC_SUPABASE_URL, purpose, "the Supabase URL");
   return env;
 }
 
