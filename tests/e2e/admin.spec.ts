@@ -152,7 +152,7 @@ test("an admin dismisses a player's only flag, and the player's entry is back in
   }
 });
 
-test("an admin draws the winner of a finished, won cycle, once", async ({ page, accounts }) => {
+test("an admin draws the winner of a finished, won cycle once, sees who won and marks the prize paid", async ({ page, accounts }) => {
   const db = adminClient();
   // A cycle of its own, long past, so it overlaps no real cycle and no test that moves cycle 1.
   const cycle = { number: 900, start_date: "1990-01-01", end_date: "1990-03-01", goal_reached_on: "1990-01-30" };
@@ -194,6 +194,14 @@ test("an admin draws the winner of a finished, won cycle, once", async ({ page, 
     if (stored.error) throw stored.error;
     expect(stored.data.winner_user_id).toBe(userId);
     expect(stored.data.drawn_at).not.toBeNull();
+
+    // T125: the winner's email (confirmed at creation), the payout deadline (end + 45 days), then paid.
+    const row = page.getByRole("row").filter({ has: draw });
+    await expect(row).toContainText(`${email} · Email verified`);
+    await expect(row).toContainText("Pay by Apr 15, 1990.");
+    await submitAndWait(page, row.getByRole("button", { name: "Mark cycle 900 paid" }));
+    await expect(row).toContainText("Paid on");
+    await expect(row.getByRole("button", { name: "Mark cycle 900 paid" })).toHaveCount(0);
   } finally {
     await db.from("cycles").update({ winner_user_id: null }).eq("number", cycle.number);
     await db.auth.admin.deleteUser(userId);

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { saveGameDayEdit, type EditState } from "@/lib/adminEdit";
 import { reviewFlag } from "@/lib/adminFlags";
 import { saveGameSettings } from "@/lib/adminSettings";
-import { drawCycle } from "@/lib/draw";
+import { drawCycle, markPaid } from "@/lib/draw";
 import { localToolsEnabled, runLocalTool, supabaseDevData, type ToolState } from "@/lib/localTools";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -34,6 +34,13 @@ export async function reviewFlagAction(_previous: EditState | null, form: FormDa
 /** Draws one cycle's winner as the signed-in caller (T43), with a cryptographically random ticket. */
 export async function drawCycleAction(_previous: EditState | null, form: FormData): Promise<EditState> {
   const state = await drawCycle(await createSupabaseServerClient(), form, (max) => randomInt(max));
+  if (state.ok) revalidatePath("/admin/draw");
+  return state;
+}
+
+/** Marks a drawn cycle's prize paid, as the signed-in caller (T125). */
+export async function markPaidAction(_previous: EditState | null, form: FormData): Promise<EditState> {
+  const state = await markPaid(await createSupabaseServerClient(), form);
   if (state.ok) revalidatePath("/admin/draw");
   return state;
 }

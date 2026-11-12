@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M4 (M3 and its extras are done).
-- Active task: T43 Prize draw tool (split: winner details and payout are T125). The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
+- Active task: T125 Prize winner details and payout. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
 - Blocked tasks: T37 (local simulation: how it may close days before their deadline; see NEEDS_HUMAN)
 - Waiting on the human: please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T125, then T44 onward (T37 and T39 wait on the human); maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
+- Next: the maintainer check (10 merges), then T44 onward (T37 and T39 wait on the human); maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T43 Prize draw tool (PR #90)
+- `/admin/draw`: Draw for a won, ended cycle; tickets from `drawable_entries`, `pickWinner` with `crypto.randomInt`, winner stored once by an admin-checked function. Split: winner details and payout are T125. e2e uses its own 1990 cycle (T37 is blocked).
+- Review rounds: spec 1, quality 1, tests 1. Merges since the check after T33: 9.
 
 ### 2026-11-12 — T124 Admin flags review (PR #89)
 - `/admin/flags`: open flags with email, reason, time, day and score; Dismiss and Confirm through admin-checked definer functions. Only open flags can be reviewed; the account clears only when no open or confirmed flag remains.

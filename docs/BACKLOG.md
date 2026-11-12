@@ -789,7 +789,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T43 Prize draw tool
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T42, T124
 - Acceptance criteria:
   - [ ] `src/lib/draw.ts` exports pure `pickWinner(entries: { userId, tickets }[], randomInt: (max) => number)`, which maps ticket index to user. With A:3, B:1, index 0 to 2 picks A and index 3 picks B. An empty list throws. At least 90% coverage.
@@ -799,7 +799,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T125 Prize winner details and payout
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T43
 - Acceptance criteria:
   - [ ] `/admin/draw` shows a drawn cycle's winner email, whether the email is verified (`auth.users.email_confirmed_at`), the payout deadline (end date + 45 days), and a "Mark paid" action that sets `paid_on`.
