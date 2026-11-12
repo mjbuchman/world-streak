@@ -11,6 +11,10 @@ set search_path = ''
 as $$
 begin
   perform 1 from public.game_days where game_date = d for update;
+  -- A closed day's counters are final (its outcome is fixed); a day with no row has none.
+  if not exists (select 1 from public.game_days where game_date = d and closed_at is null) then
+    return;
+  end if;
   -- A new statement, so it sees every start that committed before the lock.
   update public.game_day_counters c
      set attempts = s.attempts,

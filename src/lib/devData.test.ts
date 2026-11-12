@@ -93,6 +93,11 @@ describe("removeFakePlayers", () => {
     expect(calls[1]).toEqual([["rpc", "recount_game_day", { d: "2026-11-12" }]]);
   });
 
+  it("passes a failed recount on", async () => {
+    const { db } = fakeDb([ok([{ game_date: "2026-11-12" }]), { data: null, error: { message: "locked" } }], [[]]);
+    await expect(removeFakePlayers(db)).rejects.toThrow("Recount failed: locked");
+  });
+
   it("stops at the first failure", async () => {
     const { db, deleteUser } = fakeDb([], [[{ email: "seed-a-1@example.test", id: "fake" }]]);
     deleteUser.mockResolvedValueOnce({ data: {}, error: { message: "nope" } } as never);
