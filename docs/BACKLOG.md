@@ -613,6 +613,15 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] pgTAP: an overlapping insert is refused; `prepare_next_cycle`'s back-to-back cycles still go in.
 - Notes: From the T35 quality review. Cycles are only created back to back by the close job today, so this guards against a manual mistake.
 
+### T123 Cheat check tests: exact boundaries and flag lists
+- Type: maintenance
+- Status: todo
+- Depends on: T40
+- Acceptance criteria:
+  - [ ] `src/lib/cheat/detect.test.ts` pins the robotic-rhythm boundary (a standard deviation of exactly `STACKING_RHYTHM_MAX_SD_MS` is not flagged, just under is), and each rule's positive case asserts the whole flag list (`toEqual`), so an extra flag fails.
+  - [ ] Each challenge's rules do not fire for another challenge's attempts (one test per type).
+- Notes: Non-blocking points from the T40 test review.
+
 ### T113 Second Sense starts with a visible timer
 - Type: feature
 - Status: done
@@ -742,7 +751,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T40 Cheat detection rules
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T30
 - Acceptance criteria:
   - [ ] `src/lib/cheat/detect.ts` exports pure `detectFlags({ challengeType, inputs, score, params, serverElapsedMs, history })`, which returns a list of reason codes. Thresholds live in `src/config/cheat.ts`.
@@ -752,7 +761,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T41 Cheat flags wiring
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T40, T35
 - Acceptance criteria:
   - [ ] A migration creates `cheat_flags` (`id`, `user_id`, `attempt_id`, `reason`, `created_at`, `status` in `open|confirmed|dismissed`) with no client read or write policies (admin-only via functions).

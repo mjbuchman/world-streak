@@ -2,6 +2,7 @@ import { z } from "zod";
 import { challengeForGameDay } from "@/challenges/registry";
 import type { ChallengeModule } from "@/challenges/shared/types";
 import { INPUT_TIMING_SLACK_MS } from "@/config/attempts";
+import { detectFlags, type FlagReason } from "@/lib/cheat/detect";
 import { gameDateAt } from "@/lib/gameDay";
 import { passes } from "@/lib/scoring/pass";
 import type { GameDay } from "./types";
@@ -18,6 +19,10 @@ export type SubmitStore = {
   gameDay: (gameDate: string) => Promise<GameDay>;
   /** Writes the result atomically and only once; reports why not if it cannot. */
   recordResult: (result: { attemptId: string; inputs: unknown; score: number; passed: boolean }) => Promise<RecordStatus>;
+  /** The player's scored attempts before `gameDate`, newest first, for the cheat checks. */
+  recentScores: (userId: string, gameDate: string) => Promise<{ challengeType: string; score: number }[]>;
+  /** Stores one flag per reason and flags the player's account. */
+  recordFlags: (attemptId: string, reasons: FlagReason[]) => Promise<void>;
 };
 
 type ErrorCode = "invalid-body" | "invalid-inputs" | "not-found" | "already-submitted" | "day-closed" | "implausible-timing";
@@ -46,7 +51,32 @@ function replay<Params, Inputs>(module: ChallengeModule<Params, Inputs>, seed: n
   const params = module.paramsFromSeed(seed);
   // The game submits only finished runs; anything else is not a real submission.
   if (!module.finished(params, inputs)) return null;
-  return { inputs, score: module.score(params, inputs), lastInputMs: module.lastInputMs(inputs) };
+  return { inputs, params, score: module.score(params, inputs), lastInputMs: module.lastInputMs(inputs) };
+}
+
+/**
+ * Runs the cheat checks on a recorded result and stores any flags (T41). The result is already
+ * stored and the player's answer must not change, so a failure here is logged, not thrown.
+ */
+async function flagAttempt(
+  store: SubmitStore,
+  attempt: { id: string; userId: string; gameDate: string; challengeType: string; elapsedMs: number },
+  replayed: { inputs: unknown; params: unknown; score: number },
+): Promise<void> {
+  try {
+    const history = await store.recentScores(attempt.userId, attempt.gameDate);
+    const reasons = detectFlags({
+      challengeType: attempt.challengeType,
+      inputs: replayed.inputs,
+      score: replayed.score,
+      params: replayed.params,
+      serverElapsedMs: attempt.elapsedMs,
+      history,
+    });
+    if (reasons.length > 0) await store.recordFlags(attempt.id, reasons);
+  } catch (error) {
+    console.error("Cheat checks failed", error);
+  }
 }
 
 /**
@@ -92,5 +122,7 @@ export async function submitAttempt({
   const passed = passes(replayed.score, day.passTarget, challenge.direction);
   const recorded = await store.recordResult({ attemptId, inputs: replayed.inputs, score: replayed.score, passed });
   if (recorded !== "recorded") return FROM_RECORD_STATUS[recorded];
+  // After the result is stored, and never changing it: flags only guard prize entries.
+  await flagAttempt(store, { id: attemptId, userId, gameDate: attempt.gameDate, challengeType: day.challengeType, elapsedMs }, replayed);
   return { status: 200, body: { score: replayed.score, passed, passTarget: day.passTarget } };
 }

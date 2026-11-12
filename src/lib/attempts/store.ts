@@ -20,6 +20,9 @@ type DayAttemptRow = {
   game_days: { pass_target: number | string };
 };
 type AttemptRow = { user_id: string; game_date: string; seed: number; started_at: string; submitted_at: string | null };
+type RecentScoreRow = { score: number | string; game_days: { challenge_type: string } };
+
+const RECENT_SCORES = 20;
 
 /**
  * The attempt store over Supabase, for starting and submitting attempts. Pass the service-role
@@ -109,6 +112,28 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient, "from" | "rpc">): 
       if (error) throwDbError("record_attempt_result", error);
       if (!RECORD_STATUSES.includes(data as RecordStatus)) throw new Error(`record_attempt_result returned "${String(data)}"`);
       return data as RecordStatus;
+    },
+
+    async recentScores(userId, gameDate) {
+      // Enough to hold the latest five of any one challenge while the rotation mixes three.
+      const { data, error } = await db
+        .from("attempts")
+        .select("score, game_days(challenge_type)")
+        .eq("user_id", userId)
+        .lt("game_date", gameDate)
+        .not("score", "is", null)
+        .order("game_date", { ascending: false })
+        .limit(RECENT_SCORES);
+      if (error) throwDbError("Recent scores lookup", error);
+      return (data as unknown as RecentScoreRow[]).map((row) => ({
+        challengeType: row.game_days.challenge_type,
+        score: dbNumber(row.score, "score"),
+      }));
+    },
+
+    async recordFlags(attemptId, reasons) {
+      const { error } = await db.rpc("record_cheat_flags", { p_attempt_id: attemptId, p_reasons: reasons });
+      if (error) throwDbError("record_cheat_flags", error);
     },
   };
 }
