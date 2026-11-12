@@ -24,18 +24,29 @@ function parseCount(text: string): number | null {
   return /^\d{1,3}$/.test(trimmed) ? Number(trimmed) : null;
 }
 
-type FlashCountGameProps = { params: FlashCountParams; onFinish: (inputs: FlashCountInputs) => void };
+type FlashCountGameProps = {
+  params: FlashCountParams;
+  onFinish: (inputs: FlashCountInputs) => void;
+  /** How long the 3-2-1 lasts; 0 skips it (tests of the flash alone). */
+  countdownMs?: number;
+};
+
+/** Each number of the 3-2-1 before the dots (T119). */
+export const COUNTDOWN_STEP_MS = 800;
+const COUNTDOWN_FROM = 3;
 
 /**
- * A Swift Sum run: the dots appear in the first frame after the canvas is on screen, stay for
- * `flashMs` of elapsed time (whatever the frame rate), then the board clears and the player
- * enters how many there were. If the tab is hidden while the dots are shown, they are shown again
- * in full on return, so a scored player always gets the whole flash.
+ * A Swift Sum run: a 3-2-1 countdown builds up to the flash (T119), counted from the first frame
+ * after the canvas is on screen. Right after "1" the dots stay for `flashMs` of elapsed time
+ * (whatever the frame rate), then the board clears and the player enters how many there were. If
+ * the tab is hidden before the dots have cleared, the countdown and the flash start over on return,
+ * so a scored player always gets the whole flash.
  */
-export function FlashCountGame({ params, onFinish }: FlashCountGameProps) {
+export function FlashCountGame({ params, onFinish, countdownMs = COUNTDOWN_FROM * COUNTDOWN_STEP_MS }: FlashCountGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [showing, setShowing] = useState<"dots" | "clear" | null>(null);
+  const [showing, setShowing] = useState<"countdown" | "dots" | "clear" | null>(null);
+  const [countdownNumber, setCountdownNumber] = useState<number | null>(null);
   const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
@@ -66,7 +77,16 @@ export function FlashCountGame({ params, onFinish }: FlashCountGameProps) {
       }
       const now = performance.now();
       start ??= now;
-      const visible = dotsVisible(now - start, params.flashMs);
+      const elapsed = now - start;
+      if (elapsed < countdownMs) {
+        draw(false);
+        setShowing("countdown");
+        setCountdownNumber(Math.ceil((countdownMs - elapsed) / COUNTDOWN_STEP_MS));
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      setCountdownNumber(null);
+      const visible = dotsVisible(elapsed - countdownMs, params.flashMs);
       draw(visible);
       setShowing(visible ? "dots" : "clear");
       if (visible) frame = requestAnimationFrame(tick);
@@ -82,7 +102,7 @@ export function FlashCountGame({ params, onFinish }: FlashCountGameProps) {
       cancelAnimationFrame(frame);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [params]);
+  }, [params, countdownMs]);
 
   // The answer field appears once the board clears; put the cursor in it.
   useEffect(() => {
@@ -101,13 +121,22 @@ export function FlashCountGame({ params, onFinish }: FlashCountGameProps) {
 
   return (
     <div className={styles.game}>
-      <canvas
-        ref={canvasRef}
-        className={styles.board}
-        data-showing={showing ?? "waiting"}
-        aria-label={showing === "clear" ? "The dots are gone." : "Count the dots."}
-        role="img"
-      />
+      <div className={styles.stage}>
+        <canvas
+          ref={canvasRef}
+          className={styles.board}
+          data-showing={showing ?? "waiting"}
+          aria-label={showing === "countdown" ? "Get ready." : showing === "clear" ? "The dots are gone." : "Count the dots."}
+          role="img"
+        />
+        {/* Keyed on the number, so each one plays its pop again. Hidden from screen readers:
+            the board's label says "Get ready." */}
+        {countdownNumber !== null && (
+          <span key={countdownNumber} className={styles.countdown} data-countdown="" aria-hidden="true">
+            {countdownNumber}
+          </span>
+        )}
+      </div>
       {showing === "clear" && (
         <form className={styles.answer} onSubmit={submit} noValidate>
           <Field name="count" label="How many dots were there?" error={error}>
