@@ -256,6 +256,11 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - **Share:** no visible share text, just the button (the messaging app shows the prefilled text). Emojis are welcome in the share text only, for example as a progress bar, so it stands out (T115).
 - Confirmed by human: yes (these are the human's decisions).
 
+### 2026-11-12 — Second Sense clock and targets (T113)
+- Choice: a clock counts up in tenths (rounded down) for the first 1 s (`REVEAL_MS`), then hides and keeps its space; screen readers skip it. Targets are 5–12 s (were 3–9 s), so the timeout reaches 36 s. The placeholder pass target stays within 0.5 s: once 14 days give 50 scores, the percentile sets it (T22), and the admin page can change it.
+- How to change it later: `REVEAL_MS` and `TARGET_RANGE_MS` in `src/challenges/inner-clock/engine.ts`; the placeholder in `game_settings.default_pass_targets`.
+- Confirmed by human: pending (NEEDS_HUMAN, next play-test).
+
 ### 2026-11-12 — Share text emojis (T115)
 - Choice: ✅ or ❌ before the outcome, 🔥 before the world streak, and the meter as a 10-square bar (🟩 filled at or above the line, 🟧 filled below it, ⬜ empty) followed by "62% today, 60% needed"; a call for help adds 🆘. The card shows only the Share button; if copying fails, the text appears so it can be copied by hand.
 - How to change it later: `src/lib/share.ts`.

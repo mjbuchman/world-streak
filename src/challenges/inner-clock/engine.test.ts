@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TARGET_RANGE_MS, TIMEOUT_FACTOR, innerClock, paramsFromSeed, tapScore, type InnerClockParams } from "./engine";
+import { REVEAL_MS, TARGET_RANGE_MS, TIMEOUT_FACTOR, innerClock, paramsFromSeed, tapScore, type InnerClockParams } from "./engine";
 
 const at = (targetMs: number): InnerClockParams => ({ targetMs, timeoutMs: TIMEOUT_FACTOR * targetMs });
 
@@ -14,8 +14,11 @@ describe("Inner Clock params", () => {
     }
   });
 
-  it("documents the default range: 3,000 to 9,000 ms", () => {
-    expect(TARGET_RANGE_MS).toEqual({ min: 3000, max: 9000 });
+  it("documents the default range: 5,000 to 12,000 ms, with the clock shown for the first second", () => {
+    expect(TARGET_RANGE_MS).toEqual({ min: 5000, max: 12_000 });
+    expect(REVEAL_MS).toBe(1000);
+    // The shown second never gives the answer away.
+    expect(REVEAL_MS).toBeLessThan(TARGET_RANGE_MS.min);
   });
 
   it("are the same for the same seed and spread across the range", () => {
@@ -24,14 +27,14 @@ describe("Inner Clock params", () => {
       expect(paramsFromSeed(seed)).toEqual(paramsFromSeed(seed));
       targets.add(paramsFromSeed(seed).targetMs);
     }
-    // 61 possible targets; a thousand seeds reach every one, both ends included.
-    expect(targets.size).toBe(61);
+    // 71 possible targets; a thousand seeds reach every one, both ends included.
+    expect(targets.size).toBe(71);
   });
 
   it.each([
-    [0, 4600],
-    [1, 6800],
-    [4_294_967_295, 8400],
+    [0, 6800],
+    [1, 9400],
+    [4_294_967_295, 11_300],
   ])("golden: seed %i gives a target of %i ms (changing the PRNG or the range changes these)", (seed, targetMs) => {
     expect(paramsFromSeed(seed)).toEqual(at(targetMs));
   });

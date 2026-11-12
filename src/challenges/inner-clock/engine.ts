@@ -4,15 +4,25 @@ import type { ChallengeModule } from "../shared/types";
 
 /**
  * Second Sense (Inner Clock): the player taps when they think a target time has passed since the
- * start, with no visible timer. Score = how far off the tap was, in seconds (lower is better). No
- * tap before the timeout, or a tap after it, scores as far off as a tap right at the timeout.
+ * start, with a visible clock only for the first REVEAL_MS. Score = how far off the tap was, in
+ * seconds (lower is better). No tap before the timeout, or a tap after it, scores as far off as a
+ * tap right at the timeout.
  *
  * The tap is timed client-side (`performance.now()` from the start), so device and screen lag
  * add a little error for everyone (design watch-out).
  */
 
-/** The target is a whole multiple of 100 ms in this range (inclusive). */
-export const TARGET_RANGE_MS = { min: 3000, max: 9000 } as const;
+/**
+ * The target is a whole multiple of 100 ms in this range (inclusive). Raised from 3-9 s at the M3
+ * play-test, to make up for the second the clock is shown.
+ */
+export const TARGET_RANGE_MS = { min: 5000, max: 12_000 } as const;
+
+/**
+ * The game shows a running clock for this long from the start, then hides it, so the player has
+ * an exact starting point (M3 play-test). The target still counts from the start.
+ */
+export const REVEAL_MS = 1000;
 const TARGET_STEP_MS = 100;
 
 /** The run ends this many targets after the start. */
