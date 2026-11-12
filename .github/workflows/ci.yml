@@ -113,6 +113,11 @@ jobs:
         if: steps.app.outputs.exists == 'true'
         run: npm run test:db
 
+      # The committed database types must match the migrations (T65).
+      - name: Check the generated database types
+        if: steps.app.outputs.exists == 'true'
+        run: npm run db:types:check
+
       - name: Run end-to-end tests
         if: steps.app.outputs.exists == 'true'
         run: npm run test:e2e

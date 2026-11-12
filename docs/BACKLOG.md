@@ -1114,7 +1114,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T64 Revoke TRUNCATE from client roles
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T11
 - Acceptance criteria:
   - [ ] A migration revokes TRUNCATE on every table in `public` from `anon` and `authenticated` (RLS does not cover TRUNCATE, and Supabase's default grants include it), and changes the default privileges so tables created later are covered too.
@@ -1124,14 +1124,23 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T65 Generated Supabase database types
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T12
 - Acceptance criteria:
   - [ ] `npm run db:types` writes `src/lib/supabase/database.types.ts` from the local schema (`supabase gen types typescript --local`), and the server, admin and browser clients are typed with it.
-  - [ ] The `data as { ... }` casts in `src/lib/attempts/store.ts` (and any others) are removed.
+  - [ ] The `data as { ... }` casts in `src/lib/attempts/store.ts` are removed (the casts elsewhere: T134).
   - [ ] A unit test or CI step fails when the committed types are out of date with the migrations (for example regenerate and compare in the CI job that already starts Supabase, as an added step).
   - [ ] `npm run verify` passes; no product behavior changes.
-- Notes: From the T12 quality review. Worth doing before M2 adds more tables.
+- Notes: From the T12 quality review. Worth doing before M2 adds more tables. Split (Nov 12, 2026, to stay under ~400 lines): the other modules' casts are T134.
+
+### T134 Typed database reads outside the attempt store (from T65)
+- Type: maintenance
+- Status: todo
+- Depends on: T65
+- Acceptance criteria:
+  - [ ] The read helpers that take an untyped client (`draw.ts`, `prize.ts`, `adminFlags.ts`, `adminSettings.ts`, `meterRead.ts`, `admin.ts`, `localTools.ts`, `attempts/today.ts`, `streak/streak.ts`) take `SupabaseClient<Database>` (or a `Pick` of it), and their `data as ...` casts are removed; any cast that must stay has a one-line reason.
+  - [ ] Existing tests pass unchanged apart from fake-client typing; `npm run verify` passes; no behavior change.
+- Notes: Split from T65.
 
 ### T78 e2e helpers wait for the page to be interactive
 - Type: maintenance
