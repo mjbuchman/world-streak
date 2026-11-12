@@ -14,9 +14,9 @@ import type { ChallengeModule } from "../shared/types";
 
 /**
  * The target is a whole multiple of 100 ms in this range (inclusive). Raised from 3-9 s at the M3
- * play-test, to make up for the second the clock is shown.
+ * play-test, to make up for the second the clock is shown, then to 7-13 s (T118).
  */
-export const TARGET_RANGE_MS = { min: 5000, max: 12_000 } as const;
+export const TARGET_RANGE_MS = { min: 7000, max: 13_000 } as const;
 
 /**
  * The game shows a running clock for this long from the start, then hides it, so the player has

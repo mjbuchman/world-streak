@@ -567,7 +567,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T118 Second Sense clock fades out; targets 7-13 s
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T113
 - Acceptance criteria:
   - [ ] The first second's clock fades away gracefully instead of vanishing (no fade with reduced motion); the tap timing is unchanged.
@@ -848,7 +848,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T46 Account weighting
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T17, T16
 - Acceptance criteria:
   - [ ] `record_attempt_result` computes the weight at submit time: `1` if the account is at least `full_weight_after_days` old, otherwise `new_account_weight`, multiplied by `profiles.weight` (default 1, a manual override). The weight used is stored on the attempt (`attempts.weight`).
@@ -896,7 +896,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `docs/DEPLOYMENT.md` lists, step by step for the human: create the Supabase cloud project (free plan); apply migrations (`supabase link` + `supabase db push`); confirm pg_cron is enabled and the jobs exist; set the auth settings (email confirmations off, site URL, redirect URLs, Google provider); create the Vercel project with every env var from `.env.example`; make the owner's account an admin (exact SQL: `update profiles set is_admin = true where id = (select id from auth.users where email = '<owner email>')`); and the pre-launch items (domain, custom email provider, Vercel Pro before ads, AdSense, legal review of the rules).
   - [ ] Every env var in `.env.example` is mentioned in the guide (a unit test or script check compares the two lists).
   - [ ] `docs/NEEDS_HUMAN.md` gains entries for the Supabase cloud project, the Vercel project and the production admin account, each pointing at the relevant guide section.
-- Notes: The agents never run commands against production; deployment is a human step.
+- Notes: The agents never run commands against production; deployment is a human step. From the T118 review: the server replays each attempt with the engine it runs at submit, so the guide should say to deploy engine changes (target ranges, rules) when no attempt is open, for example just after the daily close.
 
 ## Maintenance
 

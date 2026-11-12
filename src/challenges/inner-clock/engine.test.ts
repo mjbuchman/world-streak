@@ -14,8 +14,8 @@ describe("Inner Clock params", () => {
     }
   });
 
-  it("documents the default range: 5,000 to 12,000 ms, with the clock shown for the first second", () => {
-    expect(TARGET_RANGE_MS).toEqual({ min: 5000, max: 12_000 });
+  it("documents the default range: 7,000 to 13,000 ms, with the clock shown for the first second", () => {
+    expect(TARGET_RANGE_MS).toEqual({ min: 7000, max: 13_000 });
     expect(REVEAL_MS).toBe(1000);
     // The shown second never gives the answer away.
     expect(REVEAL_MS).toBeLessThan(TARGET_RANGE_MS.min);
@@ -27,14 +27,14 @@ describe("Inner Clock params", () => {
       expect(paramsFromSeed(seed)).toEqual(paramsFromSeed(seed));
       targets.add(paramsFromSeed(seed).targetMs);
     }
-    // 71 possible targets; a thousand seeds reach every one, both ends included.
-    expect(targets.size).toBe(71);
+    // 61 possible targets; a thousand seeds reach every one, both ends included.
+    expect(targets.size).toBe(61);
   });
 
   it.each([
-    [0, 6800],
-    [1, 9400],
-    [4_294_967_295, 11_300],
+    [0, 8600],
+    [1, 10_800],
+    [4_294_967_295, 12_400],
   ])("golden: seed %i gives a target of %i ms (changing the PRNG or the range changes these)", (seed, targetMs) => {
     expect(paramsFromSeed(seed)).toEqual(at(targetMs));
   });

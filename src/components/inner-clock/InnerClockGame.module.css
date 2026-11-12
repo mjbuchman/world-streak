@@ -33,6 +33,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Stopped at one second, it fades away rather than vanishing (T118; CLOCK_FADE_MS). */
+.clock[data-clock="fading"] {
+  opacity: 0;
+  transition: opacity 400ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock[data-clock="fading"] {
+    transition: none;
+  }
+}
+
 .prompt {
   font-family: var(--fs-font-display);
   font-weight: 800;

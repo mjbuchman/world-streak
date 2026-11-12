@@ -2,6 +2,7 @@
 
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { type InnerClockInputs, type InnerClockParams, REVEAL_MS } from "@/challenges/inner-clock/engine";
+import { usePrefersReducedMotion } from "@/components/ui/useReducedMotion";
 import styles from "./InnerClockGame.module.css";
 
 /** "5 seconds"; targets are whole multiples of 100 ms, so at most one decimal. */
@@ -12,6 +13,11 @@ export function targetLabel(targetMs: number): string {
 
 /** "0.5": whole tenths of a second, rounded down, as a stopwatch shows them. */
 const clockLabel = (ms: number) => (Math.floor(ms / 100) / 10).toFixed(1);
+
+/** After the first second the clock stops and fades out over this long (T118), or just goes with reduced motion. */
+export const CLOCK_FADE_MS = 400;
+
+type ClockState = { phase: "shown"; ms: number } | { phase: "fading" } | { phase: "hidden" };
 
 type InnerClockGameProps = { params: InnerClockParams; onFinish: (inputs: InnerClockInputs) => void };
 
@@ -31,21 +37,30 @@ export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
     finishRef.current = onFinish;
   });
 
-  // The clock shown for the first REVEAL_MS, in ms from the start; null once it has hidden.
-  const [shownMs, setShownMs] = useState<number | null>(0);
+  // The clock: running for the first REVEAL_MS, then stopped at the reveal and fading, then gone.
+  const [clockState, setClockState] = useState<ClockState>({ phase: "shown", ms: 0 });
+  // Read in the frame loop, which must not restart when the preference arrives after hydration.
+  const reducedMotion = usePrefersReducedMotion();
+  const reducedRef = useRef(reducedMotion);
+  useEffect(() => {
+    reducedRef.current = reducedMotion;
+  });
 
   useEffect(() => {
     areaRef.current?.focus();
     let timer: ReturnType<typeof setTimeout> | undefined;
     let frame = 0;
-    // Each frame until the reveal ends moves the shown clock on.
+    // Each frame moves the clock on, until it has faded (elapsed time, not frames, decides).
     const tick = () => {
       const elapsed = performance.now() - startedAt.current!;
-      if (elapsed >= REVEAL_MS) {
-        setShownMs(null);
+      if (elapsed < REVEAL_MS) {
+        setClockState({ phase: "shown", ms: elapsed });
+      } else if (!reducedRef.current && elapsed < REVEAL_MS + CLOCK_FADE_MS) {
+        setClockState({ phase: "fading" });
+      } else {
+        setClockState({ phase: "hidden" });
         return;
       }
-      setShownMs(elapsed);
       frame = requestAnimationFrame(tick);
     };
     const timeOut = () => {
@@ -95,8 +110,8 @@ export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
       onKeyDown={onKeyDown}
     >
       {/* Hidden from screen readers: read every frame it would drown out the prompt. */}
-      <span className={styles.clock} data-clock={shownMs === null ? "hidden" : "shown"} aria-hidden="true">
-        {shownMs === null ? "" : clockLabel(shownMs)}
+      <span className={styles.clock} data-clock={clockState.phase} aria-hidden="true">
+        {clockState.phase === "shown" ? clockLabel(clockState.ms) : clockState.phase === "fading" ? clockLabel(REVEAL_MS) : ""}
       </span>
       <span className={styles.prompt}>Tap when you think {targetLabel(params.targetMs)} have passed</span>
       <span className={styles.hint}>Tap, click or press Space</span>
