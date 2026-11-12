@@ -314,6 +314,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - How to change it later: `close_game_day` in `supabase/migrations/20261113010000_cycle_close.sql` (a new migration).
 - Confirmed by human: pending (NEEDS_HUMAN).
 
+### 2026-11-12 — A new account's weight is fixed when the attempt starts (T46)
+- Choice: the account-age rule (`new_account_weight` until `full_weight_after_days`, times `profiles.weight`) is applied when the attempt starts and stored in `attempts.counted_weight`, not at submit as the backlog wrote.
+- Reason: attempts are counted when they start and their pass adds the same weight (T17, "Counters use the weight an attempt started with"); a weight computed at submit could differ from the one already counted. The launch values (1.0 after 0 days, approved Nov 10) count every account fully, so nothing changes at launch.
+- How to change it later: `stamp_attempt_weight` in `supabase/migrations/20261113070000_account_weighting.sql`; the values in `/admin/settings`.
+- Confirmed by human: not needed (the values were approved; this is how they apply).
+
 ### 2026-11-12 — Ads stay off by default (T44)
 - Choice: ad slots exist on `/`, `/history`, `/rules` and below the `/play` result, but render nothing unless `NEXT_PUBLIC_ADS_ENABLED=true` and a publisher ID are set; a development-only placeholder shows where they go. Never on practice pages or during a run.
 - Reason: the design says "AdSense from launch" but also no ads on Vercel Hobby during the soft launch (non-commercial only); the backlog flags the conflict.
