@@ -264,6 +264,10 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - **Plan:** T118 and T119 are built during M4 and checked at the M4 play-test; go straight into M4 without stopping.
 - Confirmed by human: yes (these are the human's decisions).
 
+### 2026-11-12 — How the simulation records results (T37)
+- Choice: beside `close_game_day_unchecked`, a service-role-only `record_attempt_result_unchecked` (every check but "today"), which `record_attempt_result` calls after its today check, so simulated passes update the counters and earn entries in one step. The same fake players play every simulated day. The draw needs a cycle that ended in the real past, so the README moves cycle 1 into the past by hand for that.
+- How to change it later: `supabase/migrations/20261114000000_simulation_unchecked.sql`, `scripts/simulate-days.mts`.
+
 ### 2026-11-12 — Human decisions after M4 (overrides)
 - **Confirmed as built:** ads off until Vercel Pro (T44); what the prize draw counts (T43); cheat check thresholds (T40); the streak and the prize cycle (T34); a hidden tab (T110); the share margin of 5 points (T32); the daily rotation (T31); gauge details (T104).
 - **T37:** option A, a service-role-only `close_game_day_unchecked(d)` beside the deadline-checked close; the simulation script stays local-only.

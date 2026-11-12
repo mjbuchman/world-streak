@@ -4,3 +4,10 @@ export function isCalendarDate(value: string): boolean {
   const parsed = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
+
+/** The date `days` after `date` (YYYY-MM-DD, UTC). */
+export function addDays(date: string, days: number): string {
+  const parsed = new Date(`${date}T00:00:00Z`);
+  parsed.setUTCDate(parsed.getUTCDate() + days);
+  return parsed.toISOString().slice(0, 10);
+}
