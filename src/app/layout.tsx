@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope, Unbounded } from "next/font/google";
 import { AccountHeader } from "@/components/AccountHeader";
+import { AdSenseScript } from "@/components/AdSlot";
 import { HydrationMarker } from "@/components/HydrationMarker";
 import { SiteFooter } from "@/components/SiteFooter";
 import { GAME_NAME, GAME_PITCH } from "@/config/game";
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <AccountHeader />
         {children}
         <SiteFooter />
+        <AdSenseScript />
       </body>
     </html>
   );

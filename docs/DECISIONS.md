@@ -314,6 +314,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - How to change it later: `close_game_day` in `supabase/migrations/20261113010000_cycle_close.sql` (a new migration).
 - Confirmed by human: pending (NEEDS_HUMAN).
 
+### 2026-11-12 — Ads stay off by default (T44)
+- Choice: ad slots exist on `/`, `/history`, `/rules` and below the `/play` result, but render nothing unless `NEXT_PUBLIC_ADS_ENABLED=true` and a publisher ID are set; a development-only placeholder shows where they go. Never on practice pages or during a run.
+- Reason: the design says "AdSense from launch" but also no ads on Vercel Hobby during the soft launch (non-commercial only); the backlog flags the conflict.
+- How to change it later: the two environment values (T45 wires the real ID).
+- Confirmed by human: pending (NEEDS_HUMAN).
+
 ### 2026-11-12 — Which entries the prize draw counts (T43)
 - Choice: every drawable entry of the cycle counts, including those earned after the goal day, one ticket each; the draw opens only after the cycle's last day. Flagged accounts' entries are out (T41), and an admin draws by hand from `/admin/draw`.
 - Reason: the backlog's judgment call; the cycle keeps running after the goal (T34), so later passes are earned the same way.

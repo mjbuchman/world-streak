@@ -126,6 +126,8 @@ test("the practice hub opens each challenge's practice page", async ({ page }) =
     await page.getByRole("list", { name: "Challenges" }).getByRole("link", { name }).click();
     await expect(page).toHaveURL(path);
     await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+    // Practice pages never show an ad (T44).
+    await expect(page.locator("[data-ad-slot]")).toHaveCount(0);
   }
 });
 

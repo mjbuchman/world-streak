@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { isChallengeType } from "@/challenges/registry";
 import type { ChallengeType } from "@/challenges/shared/types";
 import { challengeUi } from "@/components/challenges/challengeUi";
@@ -64,7 +64,16 @@ function initialPhase(status: PlayStatus): Phase {
  * then the server's verdict. The client only sends its inputs; the server scores them.
  * `challenge` is today's challenge as the page read it (for the how-to and the result).
  */
-export function PlayToday({ challenge, initial }: { challenge: ChallengeType; initial: PlayStatus }) {
+export function PlayToday({
+  challenge,
+  initial,
+  afterResult,
+}: {
+  challenge: ChallengeType;
+  initial: PlayStatus;
+  /** Shown below the result only, never during a run (the ad slot, T44). */
+  afterResult?: ReactNode;
+}) {
   const ui = challengeUi(challenge);
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>(() => initialPhase(initial));
@@ -161,6 +170,7 @@ export function PlayToday({ challenge, initial }: { challenge: ChallengeType; in
           <ShareCard passed={passed} />
           {/* How the world is doing today, below your own result. */}
           <Meter />
+          {afterResult}
         </>
       );
     }

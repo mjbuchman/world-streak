@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AdSlot } from "@/components/AdSlot";
 import { RulesContent } from "@/components/RulesContent";
 import { PageShell } from "@/components/ui/PageShell";
 import { GAME_NAME } from "@/config/game";
@@ -10,6 +11,7 @@ export default function RulesPage() {
   return (
     <PageShell title="Official rules" backHref="/">
       <RulesContent config={RULES_CONFIG} />
+      <AdSlot name="rules" />
     </PageShell>
   );
 }

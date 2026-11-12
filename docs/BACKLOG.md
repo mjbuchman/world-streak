@@ -613,6 +613,24 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] pgTAP: an overlapping insert is refused; `prepare_next_cycle`'s back-to-back cycles still go in.
 - Notes: From the T35 quality review. Cycles are only created back to back by the close job today, so this guards against a manual mistake.
 
+### T126 One date-label formatter for the UTC day labels
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] The long-date formatter (`month: "long"`) in `src/lib/prize.ts` and `src/lib/rules.ts`, the short one in `src/lib/share.ts` and `dayLabel` (`src/lib/streak/streak.ts`), and the flags page's `flaggedAt` move to one module (for example `src/lib/dates.ts`), each with a unit test of a fixed date and its exact string.
+  - [ ] `npm run verify` passes; every output string is unchanged.
+- Notes: From the maintainer check after T125: five copies of the same `Intl.DateTimeFormat("en-US", { timeZone: "UTC" … })`.
+
+### T127 One tested admin gate for the admin pages
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] The repeated `createSupabaseServerClient()` + `isAdmin` + `notFound()` in `/admin`, `/admin/settings`, `/admin/flags` and `/admin/draw` becomes one helper (for example `requireAdminPage()` in `src/lib/admin.ts`) that returns the client or calls `notFound()`; all four pages use it.
+  - [ ] Unit test: a non-admin and a signed-out caller reach `notFound`, an admin gets the client. `npm run verify` passes; non-admins still get a 404.
+- Notes: From the maintainer check after T125. The actions re-check admin status in their lib functions, so they are out of scope.
+
 ### T123 Cheat check tests: exact boundaries and flag lists
 - Type: maintenance
 - Status: todo
@@ -799,7 +817,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T125 Prize winner details and payout
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T43
 - Acceptance criteria:
   - [ ] `/admin/draw` shows a drawn cycle's winner email, whether the email is verified (`auth.users.email_confirmed_at`), the payout deadline (end date + 45 days), and a "Mark paid" action that sets `paid_on`.
@@ -809,7 +827,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T44 Ad slots outside the challenge
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T36
 - Acceptance criteria:
   - [ ] `src/components/AdSlot.tsx` renders nothing unless `NEXT_PUBLIC_ADS_ENABLED === "true"` and `NEXT_PUBLIC_ADSENSE_CLIENT` is set. In development, with `NEXT_PUBLIC_ADS_PLACEHOLDER=true`, it renders a labelled grey box of fixed size (no layout shift).

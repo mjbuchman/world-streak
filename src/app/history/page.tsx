@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { AdSlot } from "@/components/AdSlot";
 import { HistoryTable } from "@/components/HistoryTable";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
@@ -19,6 +20,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
       <Surface>
         <HistoryTable history={history} />
       </Surface>
+      <AdSlot name="history" />
     </PageShell>
   );
 }

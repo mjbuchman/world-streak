@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdSlot } from "@/components/AdSlot";
 import { Countdown } from "@/components/Countdown";
 import { Meter } from "@/components/Meter";
 import { PrizeCycle } from "@/components/PrizeCycle";
@@ -49,6 +50,7 @@ export default async function Home() {
       </Surface>
       <PrizeCycle />
       <WorldStreak />
+      <AdSlot name="home" />
     </PageShell>
   );
 }

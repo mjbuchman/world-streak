@@ -88,6 +88,28 @@ describe("PlayToday share card (T32)", () => {
   });
 });
 
+describe("PlayToday ad slot (T44)", () => {
+  const ad = <div data-ad-slot="play-result" />;
+
+  it("shows what comes after the result only once there is a result", () => {
+    render(<PlayToday challenge="stacking" initial={{ kind: "submitted", score: 7, passed: true, passTarget: 10 }} afterResult={ad} />);
+    expect(document.querySelector("[data-ad-slot]")).not.toBeNull();
+  });
+
+  it("never before the attempt or during the run", async () => {
+    respond(json(201, started), json(200, { score: 3, passed: false, passTarget: 12 }));
+    render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} afterResult={ad} />);
+    expect(document.querySelector("[data-ad-slot]")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    await screen.findByTestId("game");
+    expect(document.querySelector("[data-ad-slot]")).toBeNull();
+    // Once the run is scored, it shows.
+    await finish([900], 3);
+    await screen.findByRole("heading", { name: "Not this time" });
+    expect(document.querySelector("[data-ad-slot]")).not.toBeNull();
+  });
+});
+
 describe("PlayToday with another challenge (T30)", () => {
   it("shows that challenge's how-to and practice page", () => {
     render(<PlayToday challenge="inner-clock" initial={{ kind: "ready" }} />);
