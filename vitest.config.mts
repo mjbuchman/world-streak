@@ -50,6 +50,7 @@ export default defineConfig({
         "src/lib/admin.ts": { lines: 90, branches: 90 },
         "src/lib/adminEdit.ts": { lines: 90, branches: 90 },
         "src/lib/adminSettings.ts": { lines: 90, branches: 90 },
+        "src/lib/adminFlags.ts": { lines: 90, branches: 90 },
         // Gates account creation.
         "src/lib/signup.ts": { lines: 90, branches: 90 },
         "src/lib/signin.ts": { lines: 90, branches: 90 },

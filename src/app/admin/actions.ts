@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { saveGameDayEdit, type EditState } from "@/lib/adminEdit";
+import { reviewFlag } from "@/lib/adminFlags";
 import { saveGameSettings } from "@/lib/adminSettings";
 import { localToolsEnabled, runLocalTool, supabaseDevData, type ToolState } from "@/lib/localTools";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -18,6 +19,13 @@ export async function saveGameDayAction(_previous: EditState | null, form: FormD
 export async function saveSettingsAction(_previous: EditState | null, form: FormData): Promise<EditState> {
   const state = await saveGameSettings(await createSupabaseServerClient(), form);
   if (state.ok) revalidatePath("/admin/settings");
+  return state;
+}
+
+/** Dismisses or confirms one cheat flag as the signed-in caller (T124). */
+export async function reviewFlagAction(_previous: EditState | null, form: FormData): Promise<EditState> {
+  const state = await reviewFlag(await createSupabaseServerClient(), form);
+  if (state.ok) revalidatePath("/admin/flags");
   return state;
 }
 

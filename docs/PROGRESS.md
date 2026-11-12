@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M4 (M3 and its extras are done).
-- Active task: T42 Admin settings editor (T42 was split; the flags review is T124). The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
+- Active task: T124 Admin flags review. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
 - Blocked tasks: T37 (local simulation: how it may close days before their deadline; see NEEDS_HUMAN)
 - Waiting on the human: please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T124, then T43 onward (T37 and T39 wait on the human); maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
+- Next: T43 onward (T37 and T39 wait on the human); maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T42 Admin settings editor (PR #88)
+- `/admin/settings` edits every `game_settings` field (zod-checked, saved under the admin RLS policy). T42 was split: the flags review is T124.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the check after T33: 7.
 
 ### 2026-11-12 — T41 Cheat flags wiring (PR #87)
 - `cheat_flags` (no client access), `record_cheat_flags` sets `profiles.flagged`, `drawable_entries` leaves flagged accounts out. Submit runs the checks after recording the result; failures are logged, the response never changes.

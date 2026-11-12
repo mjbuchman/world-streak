@@ -106,8 +106,54 @@ test("an admin clears their own attempt today with the local tools, and can play
   }
 });
 
+test("an admin dismisses a player's only flag, and the player's entry is back in the draw", async ({ page, accounts }) => {
+  const db = adminClient();
+  // A day far ahead, so the attempt below touches no day another test plays or counts.
+  const day = addDays(gameDateAt(new Date()), 400);
+  const email = accounts.uniqueEmail();
+  const created = await db.auth.admin.createUser({ email, password: crypto.randomUUID(), email_confirm: true });
+  if (created.error) throw created.error;
+  const userId = created.data.user.id;
+  try {
+    const steps = [
+      await db.from("profiles").insert({ id: userId, birth_date: "1990-01-01", country: "US" }),
+      await db.rpc("ensure_game_day", { d: day }),
+    ];
+    for (const step of steps) if (step.error) throw step.error;
+    const attempt = await db.from("attempts").insert({ user_id: userId, game_date: day, seed: 1 }).select("id").single();
+    if (attempt.error) throw attempt.error;
+    const setup = [
+      await db.from("attempts").update({ submitted_at: new Date().toISOString(), score: 12, passed: true }).eq("id", attempt.data.id),
+      await db.from("entries").insert({ attempt_id: attempt.data.id, user_id: userId, cycle_number: 1, game_date: day }),
+      await db.rpc("record_cheat_flags", { p_attempt_id: attempt.data.id, p_reasons: ["timing-mismatch"] }),
+    ];
+    for (const step of setup) if (step.error) throw step.error;
+    const drawable = async () => {
+      const { count, error } = await db.from("drawable_entries").select("id", { count: "exact", head: true }).eq("user_id", userId);
+      if (error) throw error;
+      return count;
+    };
+    expect(await drawable()).toBe(0);
+
+    await signInAsAdmin(page);
+    await gotoReady(page, "/admin");
+    await page.getByRole("link", { name: "Cheat flags" }).click();
+    await expect(page).toHaveURL("/admin/flags");
+    const row = page.getByRole("row").filter({ hasText: email });
+    await submitAndWait(page, row.getByRole("button", { name: `Dismiss timing-mismatch for ${email}` }));
+    // The page refreshes after a review; a dismissed flag is no longer open, so its row goes.
+    await expect(row).toHaveCount(0);
+    await expect.poll(drawable).toBe(1);
+  } finally {
+    // Deleting the player removes the attempt, entry and flag; then the far day itself.
+    await db.auth.admin.deleteUser(userId);
+    await db.from("game_day_counters").delete().eq("game_date", day);
+    await db.from("game_days").delete().eq("game_date", day);
+  }
+});
+
 test("a signed-out visitor gets a 404", async ({ page }) => {
-  for (const path of ["/admin", "/admin/settings"]) {
+  for (const path of ["/admin", "/admin/settings", "/admin/flags"]) {
     const response = await page.goto(path);
     expect(response?.status()).toBe(404);
   }
@@ -116,7 +162,7 @@ test("a signed-out visitor gets a 404", async ({ page }) => {
 test("a signed-in player who is not an admin gets a 404", async ({ page, accounts }) => {
   await signUpViaForm(page, { email: accounts.uniqueEmail() });
   await expect(page).toHaveURL("/");
-  for (const path of ["/admin", "/admin/settings"]) {
+  for (const path of ["/admin", "/admin/settings", "/admin/flags"]) {
     const response = await page.goto(path);
     expect(response?.status()).toBe(404);
   }

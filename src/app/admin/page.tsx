@@ -27,7 +27,9 @@ export default async function AdminPage() {
   const days = await readAdminDays(createSupabaseAdminClient(), now);
   return (
     <PageShell title="Admin" backHref="/">
-      <Link href="/admin/settings">Game settings</Link>
+      <nav aria-label="Admin pages">
+        <Link href="/admin/settings">Game settings</Link> · <Link href="/admin/flags">Cheat flags</Link>
+      </nav>
       <Surface as="section" aria-label="Coming game days">
         <AdminDayList days={days} />
       </Surface>
