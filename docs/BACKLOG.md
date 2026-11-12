@@ -604,6 +604,15 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] Table-style unit tests cover every branch (401, 403, 409 `day-closed`, 409 submitted, other 409, other statuses, unknown challenge, `already-submitted`, both refusal codes, unknown error). Existing `PlayToday` tests pass unchanged; `npm run verify` passes.
 - Notes: From the maintainer check after T33. The scored-attempt flow's error branches are today reachable only through component and e2e tests.
 
+### T122 Cycles cannot overlap
+- Type: maintenance
+- Status: todo
+- Depends on: T35
+- Acceptance criteria:
+  - [ ] The database refuses a cycle whose dates overlap another's (an exclusion constraint on the date range, or a trigger if `btree_gist` is not wanted), so `cycle_for` can never match two cycles.
+  - [ ] pgTAP: an overlapping insert is refused; `prepare_next_cycle`'s back-to-back cycles still go in.
+- Notes: From the T35 quality review. Cycles are only created back to back by the close job today, so this guards against a manual mistake.
+
 ### T113 Second Sense starts with a visible timer
 - Type: feature
 - Status: done
@@ -671,7 +680,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T34 Close job: cycle-aware streak, goal and rollover
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T33
 - Acceptance criteria:
   - [ ] The first game day of a cycle starts a fresh streak run (any open run from before the cycle is ended), so the goal counts only streak days inside the cycle.
@@ -682,7 +691,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T35 Entries for passed days
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T34
 - Acceptance criteria:
   - [ ] A migration creates `entries` (`user_id`, `cycle_number`, `game_date`, **`unique (user_id, game_date)`**). `record_attempt_result` inserts one when the attempt passed and `cycle_for(game_date)` is not null.
