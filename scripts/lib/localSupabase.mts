@@ -24,8 +24,4 @@ export function createServiceClient(url: string, serviceRoleKey: string): Supaba
   return createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-/** The data of a Supabase reply, or a throw naming the step that failed. */
-export function check<T>(operation: string, result: { data: T; error: { message: string } | null }): T {
-  if (result.error) throw new Error(`${operation} failed: ${result.error.message}`);
-  return result.data;
-}
+export { check } from "../../src/lib/devData.ts";

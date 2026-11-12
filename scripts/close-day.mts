@@ -1,6 +1,7 @@
 /**
  * Closes one game day on the LOCAL database for play-testing, as the scheduled job would:
  * `npm run close-day -- --date YYYY-MM-DD`. Prints the day's outcome and the world streak.
+ * The admin page's local tools do the same (T117); the shared code is `src/lib/devData.ts`.
  *
  * It reads NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from .env.local (the npm script
  * loads it) and refuses to run unless the URL is localhost, because closing a day is final.
@@ -8,41 +9,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
-import { dbInteger } from "../src/lib/db/numeric.ts";
+import { runCloseDay, supabaseCloseDayDeps, type CloseDayDeps } from "../src/lib/devData.ts";
 import { isCalendarDate } from "./lib/dates.mts";
-import { assertLocalSupabaseUrl, check, createServiceClient } from "./lib/localSupabase.mts";
+import { assertLocalSupabaseUrl, createServiceClient } from "./lib/localSupabase.mts";
+
+export { runCloseDay, supabaseCloseDayDeps, type CloseDayDeps };
 
 /** Reads `--date YYYY-MM-DD`; throws a one-line message on bad input. */
 export function parseCloseDayArgs(argv: string[]): string {
   const { values } = parseArgs({ args: argv, strict: true, options: { date: { type: "string" } } });
   if (values.date === undefined || !isCalendarDate(values.date)) throw new Error("--date must be a real date as YYYY-MM-DD.");
   return values.date;
-}
-
-export type CloseDayDeps = {
-  closeDay(date: string): Promise<string>;
-  worldStreak(): Promise<{ current: number; best: number }>;
-};
-
-/** Closes `date` and returns the line to print. */
-export async function runCloseDay(date: string, deps: CloseDayDeps): Promise<string> {
-  const outcome = await deps.closeDay(date);
-  const streak = await deps.worldStreak();
-  return `${date} ${outcome}. World streak: ${streak.current} (best ${streak.best}).`;
-}
-
-export function supabaseCloseDayDeps(db: SupabaseClient): CloseDayDeps {
-  return {
-    async closeDay(date) {
-      const outcome = check("Close", await db.rpc("close_game_day", { d: date }));
-      if (outcome !== "survived" && outcome !== "broken") throw new Error(`Unexpected outcome ${JSON.stringify(outcome)}`);
-      return outcome;
-    },
-    async worldStreak() {
-      const row = check("World streak lookup", await db.rpc("world_streak").single()) as { current: unknown; best: unknown };
-      return { current: dbInteger(row.current, "current"), best: dbInteger(row.best, "best") };
-    },
-  };
 }
 
 type MakeClient = (url: string, serviceRoleKey: string) => SupabaseClient;

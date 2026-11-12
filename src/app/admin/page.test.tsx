@@ -2,6 +2,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AdminDay } from "@/lib/admin";
+import { addDays, gameDateAt } from "@/lib/gameDay";
 
 const isAdmin = vi.hoisted(() => vi.fn<() => Promise<boolean>>());
 const readAdminDays = vi.hoisted(() => vi.fn<() => Promise<AdminDay[]>>());
@@ -18,7 +19,7 @@ vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: vi.fn(() => 
 vi.mock("@/lib/admin", () => ({ isAdmin, readAdminDays }));
 vi.mock("@/app/admin/actions", () => ({ saveGameDayAction: vi.fn(), localToolAction: vi.fn() }));
 const localToolsEnabled = vi.hoisted(() => vi.fn(() => false));
-vi.mock("@/lib/localTools", () => ({ localToolsEnabled }));
+vi.mock("@/lib/localTools", () => ({ localToolsEnabled, MAX_SEED_PLAYERS: 500 }));
 
 import AdminPage from "./page";
 
@@ -87,8 +88,13 @@ describe("/admin", () => {
       ["inner-clock", "Second Sense"],
       ["flash-count", "Swift Sum"],
     ]);
-    for (const name of ["Clear my attempt today", "Reset day", "Restore the rotation"]) {
+    for (const name of ["Clear my attempt today", "Reset day", "Restore the rotation", "Seed players", "Close day", "Remove fake players"]) {
       expect(within(tools).getByRole("button", { name })).toBeTruthy();
     }
+    const seed = within(tools).getByRole("form", { name: "Seed fake players" });
+    expect(within(seed).getByRole<HTMLInputElement>("spinbutton", { name: "Players" }).max).toBe("500");
+    // Closing is for a day past its deadline: yesterday by default.
+    const close = within(tools).getByRole("form", { name: "Close a day" });
+    expect(within(close).getByLabelText<HTMLInputElement>("Day").value).toBe(addDays(gameDateAt(new Date()), -1));
   });
 });

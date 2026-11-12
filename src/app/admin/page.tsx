@@ -8,7 +8,8 @@ import { Surface } from "@/components/ui/Surface";
 import { CHALLENGE_NAMES } from "@/config/challenges";
 import { GAME_NAME } from "@/config/game";
 import { isAdmin, readAdminDays } from "@/lib/admin";
-import { localToolsEnabled } from "@/lib/localTools";
+import { addDays, gameDateAt } from "@/lib/gameDay";
+import { localToolsEnabled, MAX_SEED_PLAYERS } from "@/lib/localTools";
 import { dayLabel } from "@/lib/streak/streak";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -21,7 +22,8 @@ export const metadata: Metadata = { title: `Admin | ${GAME_NAME}`, robots: { ind
  */
 export default async function AdminPage() {
   if (!(await isAdmin(await createSupabaseServerClient()))) notFound();
-  const days = await readAdminDays(createSupabaseAdminClient(), new Date());
+  const now = new Date();
+  const days = await readAdminDays(createSupabaseAdminClient(), now);
   return (
     <PageShell title="Admin" backHref="/">
       <Surface as="section" aria-label="Coming game days">
@@ -33,6 +35,8 @@ export default async function AdminPage() {
           <LocalTools
             days={days.filter((day) => !day.closed).map((day) => ({ gameDate: day.gameDate, label: dayLabel(day.gameDate) }))}
             challenges={CHALLENGE_TYPES.map((type) => ({ type, name: CHALLENGE_NAMES[type] }))}
+            yesterday={addDays(gameDateAt(now), -1)}
+            maxPlayers={MAX_SEED_PLAYERS}
           />
         </Surface>
       )}

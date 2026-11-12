@@ -6,6 +6,7 @@ import { CHALLENGE_TYPES, type ChallengeType } from "@/challenges/shared/types";
 import { CHALLENGE_NAMES } from "@/config/challenges";
 import { isAdmin } from "@/lib/admin";
 import { dbInteger, dbNumber } from "@/lib/db/numeric";
+import { removeFakePlayers, runCloseDay, runSeed, supabaseCloseDayDeps, supabaseSeedDeps, type SeedArgs } from "@/lib/devData";
 import { gameDateAt } from "@/lib/gameDay";
 import { dayLabel } from "@/lib/streak/streak";
 import { isLocalSupabaseUrl } from "@/lib/supabase/local";
@@ -14,6 +15,9 @@ export type ToolState = { ok: boolean; message: string };
 
 type Db = Pick<SupabaseClient, "from" | "rpc">;
 type Caller = Pick<SupabaseClient, "rpc" | "auth">;
+
+/** Each fake player takes a moment to create, so one press seeds at most this many (T117). */
+export const MAX_SEED_PLAYERS = 500;
 
 /** The rotation a fresh database starts with (the migration's default). */
 export const DEFAULT_ROTATION: readonly ChallengeType[] = CHALLENGE_TYPES;
@@ -34,6 +38,18 @@ const toolSchema = z.discriminatedUnion("tool", [
   z.object({ tool: z.literal("clear-my-attempt") }),
   z.object({ tool: z.literal("reset-day"), gameDate }),
   z.object({ tool: z.literal("restore-rotation") }),
+  z.object({
+    tool: z.literal("seed"),
+    gameDate,
+    players: z.coerce
+      .number()
+      .int("Players must be a whole number.")
+      .min(1, `Players must be from 1 to ${MAX_SEED_PLAYERS}.`)
+      .max(MAX_SEED_PLAYERS, `Players must be from 1 to ${MAX_SEED_PLAYERS}.`),
+    passPercent: z.coerce.number().min(0, "The pass rate must be from 0% to 100%.").max(100, "The pass rate must be from 0% to 100%."),
+  }),
+  z.object({ tool: z.literal("close-day"), gameDate }),
+  z.object({ tool: z.literal("remove-fake-players") }),
 ]);
 
 /** A day's closed flag and whether anybody has started it; null if the day does not exist. */
@@ -152,7 +168,7 @@ async function restoreRotation(db: Db): Promise<ToolState> {
  * client, for the admin check and their user id; `db` is the service role, since the tools reach
  * past row-level security (and only ever run locally).
  */
-export async function runLocalTool(caller: Caller, db: Db, form: FormData, now: Date): Promise<ToolState> {
+export async function runLocalTool(caller: Caller, db: Db, form: FormData, now: Date, data: DevData): Promise<ToolState> {
   if (!localToolsEnabled()) return refuse("Local tools work only with the local Supabase.");
   if (!(await isAdmin(caller))) return refuse("Only admins can use local tools.");
 
@@ -168,5 +184,50 @@ export async function runLocalTool(caller: Caller, db: Db, form: FormData, now: 
       return resetDay(db, input.gameDate);
     case "restore-rotation":
       return restoreRotation(db);
+    case "seed":
+      return seedPlayers(input.gameDate, input.players, input.passPercent / 100, data);
+    case "close-day":
+      return closeDay(input.gameDate, data, now);
+    case "remove-fake-players":
+      return done(`Removed ${await data.removeFakePlayers()} fake players.`);
+  }
+}
+
+/** The fake-data steps (`src/lib/devData.ts`), injectable for tests. */
+export type DevData = {
+  seed(args: SeedArgs): Promise<string>;
+  closeDay(date: string): Promise<string>;
+  removeFakePlayers(): Promise<number>;
+};
+
+/** The real steps, over the service-role client. Each seed run gets fresh emails. */
+export function supabaseDevData(db: SupabaseClient): DevData {
+  return {
+    async seed(args) {
+      let line = "";
+      await runSeed(args, Date.now().toString(36), supabaseSeedDeps(db, (message) => (line = message)));
+      return line;
+    },
+    closeDay: (date) => runCloseDay(date, supabaseCloseDayDeps(db)),
+    removeFakePlayers: () => removeFakePlayers(db),
+  };
+}
+
+async function seedPlayers(date: string, players: number, passRate: number, data: DevData): Promise<ToolState> {
+  try {
+    return done(await data.seed({ players, passRate, date }));
+  } catch (error) {
+    // The seed's own refusals (a closed day) are worth showing as they are.
+    return refuse(error instanceof Error ? error.message : String(error));
+  }
+}
+
+async function closeDay(date: string, data: DevData, now: Date): Promise<ToolState> {
+  // The database refuses a day before its deadline too; this says why in plain words.
+  if (date >= gameDateAt(now)) return refuse(`${dayLabel(date)} has not reached its deadline yet, so it cannot close.`);
+  try {
+    return done(await data.closeDay(date));
+  } catch (error) {
+    return refuse(error instanceof Error ? error.message : String(error));
   }
 }

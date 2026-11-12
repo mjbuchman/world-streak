@@ -585,7 +585,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T116 Admin dev tools: days and attempts
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T25, T31
 - Acceptance criteria:
   - [ ] `/admin` gains a "Local tools" panel, shown and accepted only when the Supabase URL is local (the same guard as the scripts; the server actions refuse otherwise) and the user is an admin.
@@ -595,7 +595,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T117 Admin dev tools: seed and close
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T116
 - Acceptance criteria:
   - [ ] The "Local tools" panel can seed fake players (count, pass rate, date) and close a day, sharing the code of `npm run seed:dev` and `npm run close-day` (the scripts keep working); remove all fake players too.

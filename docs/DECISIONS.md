@@ -258,7 +258,8 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 
 ### 2026-11-12 — Admin local tools (T116)
 - Choice: a "Local tools" panel on /admin, shown and run only when the app's Supabase URL is localhost (the scripts' guard) and the caller is an admin. Set a day's challenge (open, unstarted days; it takes that challenge's pass target and is marked edited), clear my own attempt today (taking it back out of the counters), reset an open day (no attempts, zero counters, back on the rotation), restore the rotation. A closed day cannot be reset: the world streak already counts it, and undoing that is `npm run db:reset` territory.
-- How to change it later: `src/lib/localTools.ts`, `src/components/LocalTools.tsx`.
+- T117 adds seed fake players (at most 500 a press, since each takes a moment), close a day (past its deadline only; default yesterday) and remove fake players (`seed-…@example.test`; open days are recounted, closed days keep their final counters). The scripts and the panel share `src/lib/devData.ts`.
+- How to change it later: `src/lib/localTools.ts`, `src/lib/devData.ts`, `src/components/LocalTools.tsx`.
 - Confirmed by human: pending (next play-test).
 
 ### 2026-11-12 — Swift Sum dots and flash (T114)
