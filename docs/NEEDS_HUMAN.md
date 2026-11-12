@@ -26,6 +26,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: you asked for these after trying the M3 follow-ups (Nov 12); they are built during M4.
 - Agent's recommendation: judge the 0.5 s after a few scored-style tries in practice.
 
+### Please confirm: cheat check thresholds (T40; blocks nothing)
+- What is needed: OK, or other numbers, for the placeholders in `src/config/cheat.ts`. The one change from the backlog: the Tower's "perfect run" is 12 rows without losing a cell (the 15-row Tower can never reach the backlog's 20).
+- Where to put it: reply in chat.
+- Why: thresholds with no data behind them yet. See docs/DECISIONS.md (T40).
+- Agent's recommendation: keep them until real play data exists; a flag only puts entries on hold for review.
+
 ### Legal review of the draft official rules (blocks nothing; before public launch)
 - What is needed: have the text at `/rules` (T38) reviewed by someone qualified for US sweepstakes and contest rules before launch. The sponsor's name, address and contact email are still placeholders (T39), so the page shows a "Draft" banner.
 - Where to put it: reply in chat with changes; the wording lives in `src/lib/rules.ts`, the numbers in `src/config/`.

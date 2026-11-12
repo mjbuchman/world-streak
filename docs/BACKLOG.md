@@ -722,7 +722,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T38 Official rules page (draft)
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T33, T03
 - Acceptance criteria:
   - [ ] `/rules` states: free to enter, no purchase or payment of any kind; eligibility (US residents aged 18+, enforced at sign-up), with values from config; one account per person; how a day passes and how the world streak and cycles work (60 days, first cycle January 1, 2027, goal a 30-day streak); the prize is $200 per cycle, rolling over in full to the next cycle if the goal is not reached; one entry per passed day; one winner drawn at random from all entries; flagged accounts lose their entries; the winner must verify their email before payout; payment within 45 days of the cycle ending.
@@ -742,7 +742,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T40 Cheat detection rules
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T30
 - Acceptance criteria:
   - [ ] `src/lib/cheat/detect.ts` exports pure `detectFlags({ challengeType, inputs, score, params, serverElapsedMs, history })`, which returns a list of reason codes. Thresholds live in `src/config/cheat.ts`.
