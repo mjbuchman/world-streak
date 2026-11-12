@@ -12,6 +12,14 @@ describe("parseSimulateArgs", () => {
   });
 
   it.each([
+    ["366", "1000", "0"],
+    ["1", "1", "1"],
+  ])("accepts the boundaries --days %s --players %s --pass-rate %s", (days, players, rate) => {
+    const argv = ["--from", "2027-01-01", "--days", days, "--players", players, "--pass-rate", rate];
+    expect(parseSimulateArgs(argv)).toEqual({ from: "2027-01-01", days: Number(days), players: Number(players), passRate: Number(rate) });
+  });
+
+  it.each([
     [["--days", "30", "--players", "50", "--pass-rate", "0.8"], /--from/],
     [["--from", "2027-02-30", "--days", "30", "--players", "50", "--pass-rate", "0.8"], /--from/],
     [["--from", "2027-01-01", "--days", "0", "--players", "50", "--pass-rate", "0.8"], /--days/],
@@ -218,6 +226,15 @@ describe("main", () => {
     );
     await expect(main(local, ["--from", "soon"], makeClient)).rejects.toThrow(/--from/);
     expect(makeClient).not.toHaveBeenCalled();
+  });
+
+  it("makes the client from the local URL and key and runs the simulation on it", async () => {
+    // The first lookup fails, which shows the simulation ran against this client.
+    const { db, calls } = fakeClient([{ data: null, error: { message: "stop" } }]);
+    const makeClient = vi.fn(() => db);
+    await expect(main(local, args, makeClient)).rejects.toThrow("Closed day lookup failed: stop");
+    expect(makeClient).toHaveBeenCalledWith(local.NEXT_PUBLIC_SUPABASE_URL, "key");
+    expect(calls).toContainEqual(["game_days", "gte", "game_date", "2027-01-01"]);
   });
 
   it("exits non-zero with a one-line message when run against a real project", () => {

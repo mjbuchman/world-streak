@@ -12,6 +12,11 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Please confirm: the simulation's second unchecked function (T37; blocks nothing)
+- What is needed: OK that besides `close_game_day_unchecked`, T37 added a service-role-only `record_attempt_result_unchecked` (results on any open day), so simulated passes earn entries. Both exist in production too but only the service role can call them. See DECISIONS (T37).
+- Where to put it: reply in chat.
+- Agent's recommendation: keep it.
+
 ### Create the Supabase cloud project (T50; blocks deployment)
 - What is needed: a free-plan Supabase project with the migrations applied, pg_cron jobs checked and auth set up.
 - Where to put it: follow `docs/DEPLOYMENT.md` sections 1–4; the keys go into Vercel (section 5), never the repository.
