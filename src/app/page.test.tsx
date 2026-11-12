@@ -17,7 +17,10 @@ beforeEach(() => {
   todaysChallenge.mockResolvedValue("stacking");
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllEnvs();
+});
 
 describe("Home", () => {
   it("has the game name as its heading and the countdown in its header, before the meter", async () => {
@@ -50,6 +53,13 @@ describe("Home", () => {
     expect(screen.getByRole("region", { name: "Teetering Tower" })).toBeTruthy();
     expect(logged).toHaveBeenCalledWith(new Error("down"));
     logged.mockRestore();
+  });
+
+  it("has an ad slot at the end of the page (T44)", async () => {
+    vi.stubEnv("NEXT_PUBLIC_ADS_PLACEHOLDER", "true");
+    vi.stubEnv("NODE_ENV", "development");
+    const { container } = render(await Home());
+    expect(container.querySelector("main")?.lastElementChild?.getAttribute("data-ad-slot")).toBe("home");
   });
 
   it("follows today's challenge, and links to every practice game (T108)", async () => {

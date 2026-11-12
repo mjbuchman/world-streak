@@ -1,0 +1,16 @@
+/* A fixed-size box, so loading an ad never shifts the page. */
+.slot {
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+}
+
+.placeholder {
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--fs-color-text-muted);
+  border-radius: var(--fs-radius-field);
+  background: rgba(127, 127, 127, 0.2);
+  color: var(--fs-color-text-muted);
+  font-size: var(--fs-text-label);
+}

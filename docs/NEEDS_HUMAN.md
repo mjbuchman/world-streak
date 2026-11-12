@@ -12,6 +12,17 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Add the ad settings to .env.example (T44; blocks nothing)
+- What is needed: add these lines to `.env.example` (my permission settings deny me that file):
+  `# Ads (T44). Off unless both are set; real values come with T45 and Vercel Pro.`
+  `NEXT_PUBLIC_ADS_ENABLED=false`
+  `NEXT_PUBLIC_ADSENSE_CLIENT=`
+  `# Development only: grey boxes where the ads will go (never shown in production).`
+  `NEXT_PUBLIC_ADS_PLACEHOLDER=false`
+- Where to put it: `.env.example` (and `.env.local` set `NEXT_PUBLIC_ADS_PLACEHOLDER=true` if you want to see the slots locally).
+- Why: the task asks for the names in `.env.example`; ads are off by default either way.
+- Agent's recommendation: add them now.
+
 ### Add NEXT_PUBLIC_SITE_URL to .env.example (T32; blocks nothing)
 - What is needed: add these two lines to `.env.example` (my permission settings deny me that file):
   `# The site's public address, used in shared result cards (T32). Production: the real domain.`
@@ -25,6 +36,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Where to put it: reply in chat at the M4 play-test.
 - Why: you asked for these after trying the M3 follow-ups (Nov 12); they are built during M4.
 - Agent's recommendation: judge the 0.5 s after a few scored-style tries in practice.
+
+### Please confirm: ads off until you switch them on (T44; blocks nothing)
+- What is needed: OK that ads stay off by default (the soft launch on Vercel Hobby must be non-commercial) and come on with two environment values at the public launch on Vercel Pro (T45).
+- Where to put it: reply in chat.
+- Why: the design says both "AdSense from launch" and "no ads on Hobby". See docs/DECISIONS.md (T44).
+- Agent's recommendation: keep them off until Pro.
 
 ### Please confirm: what the prize draw counts (T43; blocks nothing)
 - What is needed: OK, or changes: one ticket per passed day in the cycle, including days after the goal was reached; the draw opens after the cycle's last day; flagged accounts are left out until an admin dismisses their flags.

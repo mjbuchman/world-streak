@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { AdSlot } from "@/components/AdSlot";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
@@ -44,7 +45,7 @@ export default async function PlayPage() {
   return (
     <PageShell title={title} backHref="/">
       {/* Keyed on the status, so a refresh after a submission elsewhere shows the new state. */}
-      <PlayToday key={status.kind} challenge={challenge} initial={status} />
+      <PlayToday key={status.kind} challenge={challenge} initial={status} afterResult={<AdSlot name="play-result" />} />
     </PageShell>
   );
 }

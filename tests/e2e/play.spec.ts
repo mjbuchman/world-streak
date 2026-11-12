@@ -66,6 +66,8 @@ test("a player plays today's attempt once and sees the server's result, also aft
   await expect(back).toBeHidden();
   // No header link one stray tap away either (UI rule 8; leaving would lose the attempt).
   await expect(page.getByRole("banner").getByRole("button", { name: "Sign out" })).toBeHidden();
+  // Never an ad while the challenge runs (T44).
+  await expect(page.locator("[data-ad-slot]")).toHaveCount(0);
 
   // A run that ends on a deliberate miss, worked out from the instance the server issued.
   const taps = tapsForAMiss(instance.params);
