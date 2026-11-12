@@ -12,6 +12,9 @@ describe("startOutcome", () => {
     ["409 day-closed", 409, { error: "day-closed" }, { name: "ready", error: START_DAY_CLOSED }],
     ["409 submitted", 409, { error: "already-started", submitted: true }, { name: "refresh" }],
     ["another 409", 409, { error: "already-started" }, { name: "abandoned" }],
+    ["409 day-closed wins over submitted", 409, { error: "day-closed", submitted: true }, { name: "ready", error: START_DAY_CLOSED }],
+    ["the status wins over the error", 401, { error: "day-closed" }, { name: "ready", error: "Your session has ended. Sign in again to play." }],
+    ["429", 429, { error: "busy" }, { name: "ready", error: START_FAILED }],
     ["another status", 500, { error: "server-error" }, { name: "ready", error: START_FAILED }],
   ] as const)("%s", (_, status, body, outcome) => {
     expect(startOutcome(status, body)).toEqual(outcome);
