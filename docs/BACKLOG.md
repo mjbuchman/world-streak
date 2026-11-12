@@ -922,7 +922,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T51 Dev dependency audit and e2e build timing
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T01
 - Acceptance criteria:
   - [ ] `npm audit` reports no moderate or higher vulnerabilities, or each remaining one is listed in the PR with why it can't be fixed yet (at T01: 0 in production dependencies, 8 moderate in dev tooling).
