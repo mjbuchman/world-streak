@@ -780,7 +780,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T124 Admin flags review
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T41, T42
 - Acceptance criteria:
   - [ ] `/admin/flags` lists open flags with user email, reason, date and attempt score. "Dismiss" sets the status to `dismissed` and, when the user has no remaining open or confirmed flags, clears `profiles.flagged`. "Confirm" keeps the account flagged.
@@ -789,13 +789,22 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T43 Prize draw tool
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T42, T124
 - Acceptance criteria:
   - [ ] `src/lib/draw.ts` exports pure `pickWinner(entries: { userId, tickets }[], randomInt: (max) => number)`, which maps ticket index to user. With A:3, B:1, index 0 to 2 picks A and index 3 picks B. An empty list throws. At least 90% coverage.
   - [ ] `/admin/draw` lists cycles. The Draw button is enabled only when the cycle has `goal_reached_on` and today is after `end_date`. It uses `drawable_entries` and `crypto.randomInt`, and stores `winner_user_id` and `drawn_at` in one transaction. A cycle cannot be drawn twice (second attempt rejected, with a pgTAP or unit test).
-  - [ ] It shows the winner's email, whether the email is verified (`auth.users.email_confirmed_at`), the payout deadline (end date + 45 days), and a "Mark paid" action that sets `paid_on`.
-  - [ ] e2e with `simulate:days` fixtures: an admin draws a winner for a finished, won cycle and sees the email and the deadline.
+  - [ ] e2e with SQL fixtures (T37's `simulate:days` is blocked): an admin draws a winner for a finished, won cycle.
+- Notes (split): the winner's details and "Mark paid" are T125 (Nov 12, over 400 lines).
+
+### T125 Prize winner details and payout
+- Type: feature
+- Status: todo
+- Depends on: T43
+- Acceptance criteria:
+  - [ ] `/admin/draw` shows a drawn cycle's winner email, whether the email is verified (`auth.users.email_confirmed_at`), the payout deadline (end date + 45 days), and a "Mark paid" action that sets `paid_on`.
+  - [ ] Unit tests for the action (admin check, a cycle not drawn yet refused); e2e: an admin sees the email and the deadline, and marks the prize paid.
+- Notes: Split from T43 (Nov 12).
 - Notes: Judgment call (record it): entries from the whole cycle count, including those earned after the goal day, and the draw happens after the cycle ends. Email verification before payout is a manual step for the owner (confirmations are off in the MVP). From the T41 reviews: if recording a flag fails at submit (logged, not thrown) or the server stops between the result and the flags, that attempt is never checked; consider re-running `detectFlags` over the cycle's passed attempts before the draw.
 
 ### T44 Ad slots outside the challenge

@@ -1,9 +1,11 @@
 "use server";
 
+import { randomInt } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { saveGameDayEdit, type EditState } from "@/lib/adminEdit";
 import { reviewFlag } from "@/lib/adminFlags";
 import { saveGameSettings } from "@/lib/adminSettings";
+import { drawCycle } from "@/lib/draw";
 import { localToolsEnabled, runLocalTool, supabaseDevData, type ToolState } from "@/lib/localTools";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -26,6 +28,13 @@ export async function saveSettingsAction(_previous: EditState | null, form: Form
 export async function reviewFlagAction(_previous: EditState | null, form: FormData): Promise<EditState> {
   const state = await reviewFlag(await createSupabaseServerClient(), form);
   if (state.ok) revalidatePath("/admin/flags");
+  return state;
+}
+
+/** Draws one cycle's winner as the signed-in caller (T43), with a cryptographically random ticket. */
+export async function drawCycleAction(_previous: EditState | null, form: FormData): Promise<EditState> {
+  const state = await drawCycle(await createSupabaseServerClient(), form, (max) => randomInt(max));
+  if (state.ok) revalidatePath("/admin/draw");
   return state;
 }
 
