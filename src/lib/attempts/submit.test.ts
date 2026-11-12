@@ -24,6 +24,8 @@ function fakeStore(overrides: Partial<SubmitStore> = {}): SubmitStore {
     findAttemptById: vi.fn(async () => ({ userId, gameDate: "2026-11-08", seed, startedAt, submitted: false })),
     gameDay: vi.fn(async () => ({ challengeType: "stacking", passTarget: 2, closed: false })),
     recordResult: vi.fn(async () => "recorded" as const),
+    recentScores: vi.fn(async () => []),
+    recordFlags: vi.fn(async () => {}),
     ...overrides,
   };
 }
@@ -196,6 +198,52 @@ describe("submitAttempt", () => {
       const store = fakeStore({ recordResult: vi.fn(async () => status) });
       expect(await submit({ attemptId, inputs: { tapsMs: shortRun } }, store)).toEqual({ status: error, body: { error: status } });
     }
+  });
+
+  describe("cheat checks (T41)", () => {
+    // goodTaps end at 2,577 ms: 3 s after the start is ordinary, 30 s is far behind the server's clock.
+    const soon = new Date(startedAt.getTime() + 3_000);
+
+    it("records the reasons the checks find, and answers exactly as it would without them", async () => {
+      const flaggedStore = fakeStore();
+      const flagged = await submit({ attemptId, inputs: { tapsMs: goodTaps } }, flaggedStore, now);
+      expect(flaggedStore.recordFlags).toHaveBeenCalledExactlyOnceWith(attemptId, ["timing-mismatch"]);
+
+      const cleanStore = fakeStore();
+      const clean = await submit({ attemptId, inputs: { tapsMs: goodTaps } }, cleanStore, soon);
+      expect(cleanStore.recordFlags).not.toHaveBeenCalled();
+      // Same status, same fields, same values: a flag is invisible to the player.
+      expect(flagged).toEqual(clean);
+    });
+
+    it("checks against the player's earlier scores", async () => {
+      const target = innerClock.paramsFromSeed(seed).targetMs;
+      const near = { challengeType: "inner-clock", score: 0.002 };
+      const store = fakeStore({
+        gameDay: vi.fn(async () => ({ challengeType: "inner-clock", passTarget: 0.5, closed: false })),
+        recentScores: vi.fn(async () => [near, near]),
+      });
+      const at = new Date(startedAt.getTime() + target + 1_000);
+      expect(await submit({ attemptId, inputs: { tapMs: target } }, store, at)).toMatchObject({ status: 200, body: { passed: true } });
+      expect(store.recentScores).toHaveBeenCalledWith(userId, "2026-11-08");
+      expect(store.recordFlags).toHaveBeenCalledWith(attemptId, ["inner-clock-implausible"]);
+    });
+
+    it("still answers with the result if recording a flag fails (the result is already stored)", async () => {
+      const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+      const store = fakeStore({ recordFlags: vi.fn(async () => Promise.reject(new Error("down"))) });
+      const result = await submit({ attemptId, inputs: { tapsMs: goodTaps } }, store, now);
+      expect(result.status).toBe(200);
+      expect(logged).toHaveBeenCalled();
+      logged.mockRestore();
+    });
+
+    it("checks nothing when the result was not recorded", async () => {
+      const store = fakeStore({ recordResult: vi.fn(async () => "already-submitted" as const) });
+      await submit({ attemptId, inputs: { tapsMs: goodTaps } }, store, now);
+      expect(store.recentScores).not.toHaveBeenCalled();
+      expect(store.recordFlags).not.toHaveBeenCalled();
+    });
   });
 
   it("fails loudly on a game day whose challenge type the server does not know", async () => {

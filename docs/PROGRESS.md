@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M4 (M3 and its extras are done).
-- Active task: T40 Cheat detection rules. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
+- Active task: T41 Cheat flags wiring. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
 - Blocked tasks: T37 (local simulation: how it may close days before their deadline; see NEEDS_HUMAN)
 - Waiting on the human: please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T41 onward (T37 and T39 wait on the human); maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
+- Next: T42 onward (T37 and T39 wait on the human); maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T40 Cheat detection rules (PR #86)
+- Pure `detectFlags` (`src/lib/cheat/detect.ts`) with six rules and thresholds in `src/config/cheat.ts` (placeholders, flagged). Perfect run is 12 rows without a lost cell (the 15-row Tower cannot reach 20). T123 added from review.
+- Review rounds: spec 1, quality 1, tests 2. Merges since the check after T33: 5.
 
 ### 2026-11-12 — T38 Official rules page, draft (PR #85)
 - `/rules` built from `src/config/*` with a Draft banner while the sponsor placeholders (`src/config/sponsor.ts`) remain; a site footer links it. T37 marked blocked (options in NEEDS_HUMAN); legal review requested.

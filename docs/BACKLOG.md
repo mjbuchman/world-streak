@@ -613,6 +613,15 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] pgTAP: an overlapping insert is refused; `prepare_next_cycle`'s back-to-back cycles still go in.
 - Notes: From the T35 quality review. Cycles are only created back to back by the close job today, so this guards against a manual mistake.
 
+### T123 Cheat check tests: exact boundaries and flag lists
+- Type: maintenance
+- Status: todo
+- Depends on: T40
+- Acceptance criteria:
+  - [ ] `src/lib/cheat/detect.test.ts` pins the robotic-rhythm boundary (a standard deviation of exactly `STACKING_RHYTHM_MAX_SD_MS` is not flagged, just under is), and each rule's positive case asserts the whole flag list (`toEqual`), so an extra flag fails.
+  - [ ] Each challenge's rules do not fire for another challenge's attempts (one test per type).
+- Notes: Non-blocking points from the T40 test review.
+
 ### T113 Second Sense starts with a visible timer
 - Type: feature
 - Status: done
@@ -742,7 +751,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T40 Cheat detection rules
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T30
 - Acceptance criteria:
   - [ ] `src/lib/cheat/detect.ts` exports pure `detectFlags({ challengeType, inputs, score, params, serverElapsedMs, history })`, which returns a list of reason codes. Thresholds live in `src/config/cheat.ts`.
@@ -752,7 +761,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T41 Cheat flags wiring
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T40, T35
 - Acceptance criteria:
   - [ ] A migration creates `cheat_flags` (`id`, `user_id`, `attempt_id`, `reason`, `created_at`, `status` in `open|confirmed|dismissed`) with no client read or write policies (admin-only via functions).
@@ -778,7 +787,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `/admin/draw` lists cycles. The Draw button is enabled only when the cycle has `goal_reached_on` and today is after `end_date`. It uses `drawable_entries` and `crypto.randomInt`, and stores `winner_user_id` and `drawn_at` in one transaction. A cycle cannot be drawn twice (second attempt rejected, with a pgTAP or unit test).
   - [ ] It shows the winner's email, whether the email is verified (`auth.users.email_confirmed_at`), the payout deadline (end date + 45 days), and a "Mark paid" action that sets `paid_on`.
   - [ ] e2e with `simulate:days` fixtures: an admin draws a winner for a finished, won cycle and sees the email and the deadline.
-- Notes: Judgment call (record it): entries from the whole cycle count, including those earned after the goal day, and the draw happens after the cycle ends. Email verification before payout is a manual step for the owner (confirmations are off in the MVP).
+- Notes: Judgment call (record it): entries from the whole cycle count, including those earned after the goal day, and the draw happens after the cycle ends. Email verification before payout is a manual step for the owner (confirmations are off in the MVP). From the T41 reviews: if recording a flag fails at submit (logged, not thrown) or the server stops between the result and the flags, that attempt is never checked; consider re-running `detectFlags` over the cycle's passed attempts before the draw.
 
 ### T44 Ad slots outside the challenge
 - Type: feature

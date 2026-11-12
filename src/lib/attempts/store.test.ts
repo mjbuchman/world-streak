@@ -163,6 +163,35 @@ describe("supabaseAttemptStore", () => {
     ]);
   });
 
+  it("recentScores reads the player's scored attempts before that day, newest first, with their challenge", async () => {
+    const { store, calls } = fakeDb({
+      data: [
+        { score: "0.004", game_days: { challenge_type: "inner-clock" } },
+        { score: 7, game_days: { challenge_type: "stacking" } },
+      ],
+      error: null,
+    });
+    expect(await store.recentScores("u1", "2026-11-08")).toEqual([
+      { challengeType: "inner-clock", score: 0.004 },
+      { challengeType: "stacking", score: 7 },
+    ]);
+    expect(calls).toEqual([
+      ["from", "attempts"],
+      ["select", "score, game_days(challenge_type)"],
+      ["eq", "user_id", "u1"],
+      ["lt", "game_date", "2026-11-08"],
+      ["not", "score", "is", null],
+      ["order", "game_date", { ascending: false }],
+      ["limit", 20],
+    ]);
+  });
+
+  it("recordFlags calls record_cheat_flags", async () => {
+    const { store, calls } = fakeDb({ data: null, error: null });
+    await store.recordFlags("a1", ["timing-mismatch"]);
+    expect(calls).toEqual([["rpc", "record_cheat_flags", { p_attempt_id: "a1", p_reasons: ["timing-mismatch"] }]]);
+  });
+
   it("refuses a status word it does not know, rather than guessing", async () => {
     const { store } = fakeDb({ data: "maybe", error: null });
     await expect(store.recordResult({ attemptId: "a1", inputs: {}, score: 0, passed: false })).rejects.toThrow(/maybe/);
@@ -181,5 +210,7 @@ describe("supabaseAttemptStore", () => {
     await expect(store.recordResult({ attemptId: "a1", inputs: {}, score: 0, passed: false })).rejects.toThrow(
       "record_attempt_result failed: connection refused",
     );
+    await expect(store.recentScores("u1", "2026-11-08")).rejects.toThrow("Recent scores lookup failed: connection refused");
+    await expect(store.recordFlags("a1", ["timing-mismatch"])).rejects.toThrow("record_cheat_flags failed: connection refused");
   });
 });
