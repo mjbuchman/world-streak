@@ -625,7 +625,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T127 One tested admin gate for the admin pages
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] The repeated `createSupabaseServerClient()` + `isAdmin` + `notFound()` in `/admin`, `/admin/settings`, `/admin/flags` and `/admin/draw` becomes one helper (for example `requireAdminPage()` in `src/lib/admin.ts`) that returns the client or calls `notFound()`; all four pages use it.
@@ -653,7 +653,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T123 Cheat check tests: exact boundaries and flag lists
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T40
 - Acceptance criteria:
   - [ ] `src/lib/cheat/detect.test.ts` pins the robotic-rhythm boundary (a standard deviation of exactly `STACKING_RHYTHM_MAX_SD_MS` is not flagged, just under is), and each rule's positive case asserts the whole flag list (`toEqual`), so an extra flag fails.
