@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M4 (M3 and its extras are done).
-- Active task: T48 Meter performance under load. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
+- Active task: T49 End-to-end coverage of the main flows. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
 - Blocked tasks: T37 (local simulation: how it may close days before their deadline; see NEEDS_HUMAN)
 - Waiting on the human: please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: T47 onward (T45 needs AdSense from the human) (T37 and T39 wait on the human); maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T48 Meter performance under load (PR #97)
+- The meter endpoint keeps one reading per cache window (one database read, one in flight), serves the last good one as `stale` for up to 5 minutes on failure, then 503. `npm run load:meter`: p95 403 ms locally, above the 200 ms target (flagged in NEEDS_HUMAN).
+- Review rounds: spec 1, quality 2, tests 1. CI: the meter e2e needed to allow for the cache window (1 fix). Merges since the check after T125: 6.
 
 ### 2026-11-12 — T47 Mobile checks (PR #96)
 - Two Chromium phone projects (Pixel 7, 390 x 844 touch) run `tests/e2e/mobile/**`: no sideways scroll, 44 px controls, boards fit, practice by touch, no tap zoom. Only fix: Swift Sum's board `touch-action`.

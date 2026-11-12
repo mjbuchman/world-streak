@@ -868,7 +868,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T48 Meter performance under load
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T18
 - Acceptance criteria:
   - [ ] The meter handler adds a module-level cache with a single in-flight request (`METER_CACHE_SECONDS`): 500 concurrent calls within one window trigger exactly 1 database read, and a call after the window triggers 1 more (unit test with a fake clock and a counting mock).
@@ -878,7 +878,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T49 End-to-end coverage of the main flows
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T43, T46, T47
 - Acceptance criteria:
   - [ ] e2e "day survives": seed today with 10 fake attempts at 70% passing, then a new user signs up, plays and finishes. `/api/meter` (bypassing the cache via a test header that is only honoured outside production, or by waiting) shows 11 attempts. `close-day` makes `/` show the streak increased by 1 and `/history` list the day as survived.
