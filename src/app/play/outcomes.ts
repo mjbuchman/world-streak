@@ -2,13 +2,18 @@
 // branch of the one scored attempt is unit-tested. PlayToday only fetches and applies them.
 import { isChallengeType } from "@/challenges/registry";
 import type { ChallengeType } from "@/challenges/shared/types";
+import type { StartResult } from "@/lib/attempts/start";
+import type { SubmitResult } from "@/lib/attempts/submit";
+// Type-only imports: no server code reaches the browser bundle.
 
-export type Verdict = { score: number; passed: boolean; passTarget: number };
+export type Verdict = Extract<SubmitResult, { status: 200 }>["body"];
 
-// The parts of the endpoints' JSON this page reads (see src/lib/attempts/start.ts and submit.ts).
-export type StartBody =
-  | { attemptId: string; challengeType: string; params: unknown; passTarget: number }
-  | { error: string; submitted?: boolean };
+type Started = Extract<StartResult, { status: 200 }>["body"];
+
+// The parts of the endpoints' JSON this page reads, picked from the server's own types (T86), so
+// a renamed or added field shows up here. Refusals stay loose (`submitted` may be missing): the
+// route handler adds its own (sign-in, bad request, outage), and the page must cope with any.
+export type StartBody = Pick<Started, "attemptId" | "challengeType" | "params" | "passTarget"> | { error: string; submitted?: boolean };
 export type SubmitBody = Verdict | { error: string };
 
 export const START_FAILED = "Today's attempt could not be started. Please try again.";
