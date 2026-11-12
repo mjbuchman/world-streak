@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
-import { canDraw, drawCycle, pickWinner, readDrawCycles } from "./draw";
+import { canDraw, drawCycle, markPaid, payoutDeadline, pickWinner, readDrawCycles, readWinners } from "./draw";
 
 describe("pickWinner", () => {
   const entries = [
@@ -138,14 +138,64 @@ describe("drawCycle", () => {
 
 describe("readDrawCycles", () => {
   it("lists every cycle, newest first", async () => {
-    const row = { number: 1, start_date: "2027-01-01", end_date: "2027-03-01", goal_reached_on: null, drawn_at: null };
+    const row = { number: 1, start_date: "2027-01-01", end_date: "2027-03-01", goal_reached_on: null, drawn_at: null, paid_on: null };
     const { db, calls } = fakeDb([{ data: [row], error: null }]);
-    expect(await readDrawCycles(db)).toEqual([{ number: 1, startDate: "2027-01-01", endDate: "2027-03-01", goalReachedOn: null, drawnAt: null }]);
+    expect(await readDrawCycles(db)).toEqual([
+      { number: 1, startDate: "2027-01-01", endDate: "2027-03-01", goalReachedOn: null, drawnAt: null, paidOn: null },
+    ]);
     expect(calls[0]).toEqual([
       ["from", "cycles_public"],
-      ["select", "number, start_date, end_date, goal_reached_on, drawn_at"],
+      ["select", "number, start_date, end_date, goal_reached_on, drawn_at, paid_on"],
       ["order", "number", { ascending: false }],
     ]);
     await expect(readDrawCycles(fakeDb([{ data: null, error: { message: "down" } }]).db)).rejects.toThrow("Cycle lookup failed: down");
+  });
+});
+
+describe("payoutDeadline", () => {
+  it("is 45 days after the cycle's last day", () => {
+    expect(payoutDeadline("2027-03-01")).toBe("2027-04-15");
+  });
+});
+
+describe("readWinners (T125)", () => {
+  it("maps each drawn cycle to its winner's email and verification", async () => {
+    const { db, calls } = fakeDb([{ data: [{ cycle_number: 1, email: "w@example.com", email_verified: false }], error: null }]);
+    expect(await readWinners(db)).toEqual(new Map([[1, { email: "w@example.com", verified: false }]]));
+    expect(calls[0]).toEqual([["rpc", "admin_cycle_winners", undefined]]);
+    const noEmail = fakeDb([{ data: [{ cycle_number: 2, email: null, email_verified: false }], error: null }]);
+    expect((await readWinners(noEmail.db)).get(2)).toEqual({ email: "(no email)", verified: false });
+    await expect(readWinners(fakeDb([{ data: null, error: { message: "down" } }]).db)).rejects.toThrow("Winner lookup failed: down");
+  });
+});
+
+describe("markPaid (T125)", () => {
+  it("marks a drawn cycle paid", async () => {
+    const { db, calls } = fakeDb([ADMIN, { data: "paid", error: null }]);
+    expect(await markPaid(db, form("1"))).toEqual({ ok: true, message: "Cycle 1 marked paid." });
+    expect(calls[1]).toEqual([["rpc", "admin_mark_paid", { p_cycle: 1 }]]);
+  });
+
+  it("refuses anyone who is not an admin, and a malformed cycle", async () => {
+    const notAdmin = fakeDb([{ data: false, error: null }]);
+    expect(await markPaid(notAdmin.db, form("1"))).toEqual({ ok: false, message: "Only admins can mark a prize paid." });
+    expect(notAdmin.calls).toHaveLength(1);
+    const bad = fakeDb([ADMIN]);
+    expect(await markPaid(bad.db, form("x"))).toEqual({ ok: false, message: "Unknown cycle." });
+    expect(bad.calls).toHaveLength(1);
+  });
+
+  it.each([
+    ["not-drawn", "Cycle 1 has no winner yet."],
+    ["already-paid", "Cycle 1 is already marked paid."],
+    ["maybe", "Unexpected answer: maybe"],
+  ])("reports %s", async (status, message) => {
+    expect(await markPaid(fakeDb([ADMIN, { data: status, error: null }]).db, form("1"))).toEqual({ ok: false, message });
+  });
+
+  it("throws on a database error", async () => {
+    await expect(markPaid(fakeDb([ADMIN, { data: null, error: { message: "down" } }]).db, form("1"))).rejects.toThrow(
+      "Marking the prize paid failed: down",
+    );
   });
 });

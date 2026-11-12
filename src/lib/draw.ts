@@ -3,9 +3,11 @@
 // cycle may be drawn and stores the winner once. Server only.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { PAYOUT_WITHIN_DAYS } from "@/config/prize";
 import { isAdmin } from "@/lib/admin";
 import type { EditState } from "@/lib/adminEdit";
 import { dbInteger } from "@/lib/db/numeric";
+import { addDays } from "@/lib/gameDay";
 
 /** The player holding ticket `randomInt(total)`, counting tickets in the order given. */
 export function pickWinner(entries: readonly { userId: string; tickets: number }[], randomInt: (max: number) => number): string {
@@ -20,7 +22,14 @@ export function pickWinner(entries: readonly { userId: string; tickets: number }
   throw new Error(`Ticket ${drawn} is out of range`);
 }
 
-export type DrawCycle = { number: number; startDate: string; endDate: string; goalReachedOn: string | null; drawnAt: string | null };
+export type DrawCycle = {
+  number: number;
+  startDate: string;
+  endDate: string;
+  goalReachedOn: string | null;
+  drawnAt: string | null;
+  paidOn: string | null;
+};
 
 /** Whether a cycle may be drawn on `today` (a game date): won, ended and not drawn yet. */
 export function canDraw(cycle: Pick<DrawCycle, "endDate" | "goalReachedOn" | "drawnAt">, today: string): boolean {
@@ -31,17 +40,54 @@ export function canDraw(cycle: Pick<DrawCycle, "endDate" | "goalReachedOn" | "dr
 export async function readDrawCycles(db: Pick<SupabaseClient, "from">): Promise<DrawCycle[]> {
   const { data, error } = await db
     .from("cycles_public")
-    .select("number, start_date, end_date, goal_reached_on, drawn_at")
+    .select("number, start_date, end_date, goal_reached_on, drawn_at, paid_on")
     .order("number", { ascending: false });
   if (error) throw new Error(`Cycle lookup failed: ${error.message}`);
-  type Row = { number: unknown; start_date: string; end_date: string; goal_reached_on: string | null; drawn_at: string | null };
+  type Row = { number: unknown; start_date: string; end_date: string; goal_reached_on: string | null; drawn_at: string | null; paid_on: string | null };
   return (data as Row[]).map((row) => ({
     number: dbInteger(row.number, "number"),
     startDate: row.start_date,
     endDate: row.end_date,
     goalReachedOn: row.goal_reached_on,
     drawnAt: row.drawn_at,
+    paidOn: row.paid_on,
   }));
+}
+
+/** The winner must be paid by this game date (DESIGN.md: within 45 days of the cycle ending). */
+export const payoutDeadline = (endDate: string) => addDays(endDate, PAYOUT_WITHIN_DAYS);
+
+export type Winner = { email: string; verified: boolean };
+
+/** Each drawn cycle's winner, by cycle number (admins only; the database checks). */
+export async function readWinners(db: Pick<SupabaseClient, "rpc">): Promise<Map<number, Winner>> {
+  const { data, error } = await db.rpc("admin_cycle_winners");
+  if (error) throw new Error(`Winner lookup failed: ${error.message}`);
+  type Row = { cycle_number: unknown; email: string | null; email_verified: boolean };
+  return new Map(
+    (data as Row[]).map((row) => [
+      dbInteger(row.cycle_number, "cycle_number"),
+      // An account need not have an email (auth allows phone sign-in); keep the row readable.
+      { email: row.email ?? "(no email)", verified: row.email_verified },
+    ]),
+  );
+}
+
+const PAID_MESSAGES: Record<string, (cycle: number) => string> = {
+  "not-drawn": (cycle) => `Cycle ${cycle} has no winner yet.`,
+  "already-paid": (cycle) => `Cycle ${cycle} is already marked paid.`,
+};
+
+/** Marks cycle `form.cycle`'s prize paid today, as the signed-in admin. */
+export async function markPaid(db: Pick<SupabaseClient, "rpc">, form: FormData): Promise<EditState> {
+  if (!(await isAdmin(db))) return { ok: false, message: "Only admins can mark a prize paid." };
+  const parsed = cycleSchema.safeParse(form.get("cycle") || undefined);
+  if (!parsed.success) return { ok: false, message: "Unknown cycle." };
+  const cycle = parsed.data;
+  const { data, error } = await db.rpc("admin_mark_paid", { p_cycle: cycle });
+  if (error) throw new Error(`Marking the prize paid failed: ${error.message}`);
+  if (data === "paid") return { ok: true, message: `Cycle ${cycle} marked paid.` };
+  return { ok: false, message: (PAID_MESSAGES[data as string] ?? (() => `Unexpected answer: ${String(data)}`))(cycle) };
 }
 
 const cycleSchema = z.coerce.number().int().positive();
