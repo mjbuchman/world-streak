@@ -79,9 +79,11 @@ begin
     values (d, v_type, v_target, v_threshold)
     on conflict (game_date) do nothing;
   else
+    -- Only when something changed: this runs on every attempt start.
     update public.game_days
        set challenge_type = v_type, pass_target = v_target, survival_threshold = v_threshold
-     where game_date = d and not edited and closed_at is null;
+     where game_date = d and not edited and closed_at is null
+       and (challenge_type, pass_target, survival_threshold) is distinct from (v_type, v_target, v_threshold);
   end if;
 end;
 $$;
