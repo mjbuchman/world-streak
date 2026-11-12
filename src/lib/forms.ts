@@ -6,6 +6,7 @@ export const emailSchema = z.string().trim().toLowerCase().pipe(z.email("Enter a
 
 /** Reads the named fields, with undefined for a missing one, ready for a zod schema. */
 export function readFields<N extends string>(formData: FormData, names: readonly N[]): Record<N, unknown> {
+  // fromEntries types its keys as string; every name in `names` is set, so the cast holds.
   return Object.fromEntries(names.map((name) => [name, formData.get(name) ?? undefined])) as Record<N, unknown>;
 }
 
