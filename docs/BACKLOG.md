@@ -607,7 +607,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T122 Cycles cannot overlap
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T35
 - Acceptance criteria:
   - [ ] The database refuses a cycle whose dates overlap another's (an exclusion constraint on the date range, or a trigger if `btree_gist` is not wanted), so `cycle_for` can never match two cycles.
@@ -616,7 +616,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T126 One date-label formatter for the UTC day labels
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] The long-date formatter (`month: "long"`) in `src/lib/prize.ts` and `src/lib/rules.ts`, the short one in `src/lib/share.ts` and `dayLabel` (`src/lib/streak/streak.ts`), and the flags page's `flaggedAt` move to one module (for example `src/lib/dates.ts`), each with a unit test of a fixed date and its exact string.

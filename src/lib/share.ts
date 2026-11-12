@@ -1,6 +1,7 @@
 // The spoiler-free share text (T32). Client-safe: the result screen builds it in the browser.
 import { GAME_NAME } from "@/config/game";
 import { NEAR_THRESHOLD_MARGIN } from "@/config/share";
+import { dayLabel as dateLabel } from "@/lib/dates";
 import type { MeterBody } from "@/lib/meter";
 
 export type ShareInput = {
@@ -27,9 +28,6 @@ export function meterBar(passRate: number, threshold: number): string {
   return fill.repeat(filled) + "⬜".repeat(BAR_SQUARES - filled);
 }
 
-/** "Nov 12, 2026": game dates are UTC dates. */
-const dateLabel = (gameDate: string) =>
-  new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" }).format(new Date(`${gameDate}T00:00:00Z`));
 
 /** How the world is doing, plus a call for help when it is near (or under) the line; none if unknown. */
 function worldLines(meter: MeterBody | null): string[] {

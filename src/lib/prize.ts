@@ -2,6 +2,7 @@
 // home page says about it (T36).
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { STREAK_GOAL_DAYS } from "@/config/prize";
+import { longDayLabel as longDate } from "@/lib/dates";
 import { dbInteger } from "@/lib/db/numeric";
 import { gameDateAt } from "@/lib/gameDay";
 import { dayLabel } from "@/lib/streak/streak";
@@ -44,9 +45,6 @@ export const GOAL_LINE = `Goal: a ${STREAK_GOAL_DAYS}-day world streak`;
 export const goalReachedLine = (date: string) => `Goal reached on ${dayLabel(date)}. A winner will be drawn after the cycle ends.`;
 export const entriesLine = (count: number) => `Your entries this cycle: ${count}`;
 
-/** "January 1, 2027", in UTC like every game date. */
-const longDate = (date: string) =>
-  new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "long", day: "numeric", year: "numeric" }).format(new Date(`${date}T00:00:00Z`));
 
 export const preseasonLine = (firstStart: string, prizeCents: number) =>
   `The first cycle starts ${longDate(firstStart)}. Prize: ${dollars(prizeCents)}.`;

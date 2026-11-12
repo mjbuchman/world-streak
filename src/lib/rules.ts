@@ -6,6 +6,7 @@ import { COUNTRY_OPTIONS } from "@/config/countries";
 import { CYCLE_LENGTH_DAYS, FIRST_CYCLE_START, PAYOUT_WITHIN_DAYS, PRIZE_PER_CYCLE_CENTS, STREAK_GOAL_DAYS } from "@/config/prize";
 import { DEADLINE_UTC_HOUR } from "@/config/schedule";
 import { SPONSOR, type Sponsor } from "@/config/sponsor";
+import { longDayLabel as longDate } from "@/lib/dates";
 import { dollars } from "@/lib/prize";
 
 export type RulesConfig = {
@@ -46,8 +47,6 @@ export function deadlineLabel(hour: number): string {
   return `${String(hour).padStart(2, "0")}:00 UTC`;
 }
 
-const longDate = (date: string) =>
-  new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "long", day: "numeric", year: "numeric" }).format(new Date(`${date}T00:00:00Z`));
 
 const isPlaceholder = (value: string) => /^\[.*\]$/.test(value.trim());
 
