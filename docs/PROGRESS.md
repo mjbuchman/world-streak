@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M4 (M3 and its extras are done).
-- Active task: T36 Prize and cycle display. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
-- Blocked tasks: none
+- Active task: T38 Official rules page (draft). The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
+- Blocked tasks: T37 (local simulation: how it may close days before their deadline; see NEEDS_HUMAN)
 - Waiting on the human: please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T37 onward; maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
+- Next: T38 onward (T37 waits on the human); maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T36 Prize and cycle display (PR #84)
+- A prize card on the home page: prize with rollover, day of the cycle, goal or goal reached, the player's entries; preseason line before 2027. Left out between cycles or on a failed read.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the check after T33: 3.
 
 ### 2026-11-12 — T35 Entries for passed days (PR #83)
 - `entries` (one per passed day in a cycle; cascades with its attempt and player), added by `record_attempt_result`; `my_entry_count(cycle)`. T122 (cycles cannot overlap) added from review.

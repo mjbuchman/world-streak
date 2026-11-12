@@ -1,0 +1,13 @@
+.footer {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-4) var(--space-4) var(--space-6);
+}
+
+.link {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--fs-color-text-muted);
+  font-size: var(--fs-text-label);
+}
