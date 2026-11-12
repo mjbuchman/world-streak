@@ -587,6 +587,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 ### T120 One error helper and one error rule for the local tools
 - Type: maintenance
 - Status: in-progress
+- Follow-up (not in scope): the `recountDay` single-statement recount from the notes goes to T129.
 - Depends on: none
 - Acceptance criteria:
   - [ ] `src/lib/localTools.ts` drops its private `failed(step, error)` and reuses `check` from `src/lib/devData.ts` (or both share one helper); message wording unchanged and covered by the existing tests.
@@ -640,6 +641,15 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] The README "Running the app" section uses the same variable names and commands as `.env.example`, `package.json` and `docs/DEPLOYMENT.md`; fix any mismatch.
   - [ ] `npm run verify` passes; no product behaviour changes.
 - Notes: From the maintainer check after M4. Agents cannot edit `.env.example` (permission settings), so the test lands once the human has added `NEXT_PUBLIC_SITE_URL` and the three ad variables; until then it would fail.
+
+### T129 Recount a day's counters in one statement
+- Type: maintenance
+- Status: todo
+- Depends on: T120
+- Acceptance criteria:
+  - [ ] `recountDay` in `src/lib/devData.ts` sets a day's counters from its attempts in one SQL statement (a small service-role function), so an attempt started meanwhile cannot lose its count; pgTAP covers it.
+  - [ ] `npm run verify` and `npm run test:db` pass; no product behaviour changes.
+- Notes: Split from T120 (T49 review).
 
 ### T123 Cheat check tests: exact boundaries and flag lists
 - Type: maintenance

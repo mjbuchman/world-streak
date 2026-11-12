@@ -30,7 +30,6 @@ export function localToolsEnabled(url = process.env.NEXT_PUBLIC_SUPABASE_URL): b
 const refuse = (message: string): ToolState => ({ ok: false, message });
 const done = (message: string): ToolState => ({ ok: true, message });
 
-
 const gameDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Unknown game day.");
 const toolSchema = z.discriminatedUnion("tool", [
   z.object({ tool: z.literal("set-challenge"), gameDate, challenge: z.enum(CHALLENGE_TYPES, "Unknown challenge.") }),

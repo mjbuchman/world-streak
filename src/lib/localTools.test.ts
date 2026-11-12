@@ -86,6 +86,8 @@ describe("every tool shows a failed step as a refusal (T120)", () => {
       ok: false,
       message: "Listing users failed: boom",
     });
+    const plain = fakeData({ removeFakePlayers: vi.fn(async () => Promise.reject("plain")) });
+    expect(await runLocalTool(caller(), fakeDb([]).db, form({ tool: "remove-fake-players" }), NOW, plain)).toEqual({ ok: false, message: "plain" });
   });
 });
 
