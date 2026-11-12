@@ -1,27 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { columnAt, simulate, type StackingParams } from "@/challenges/stacking/engine";
+import { COLUMNS, columnAt, simulate, type StackingParams } from "@/challenges/stacking/engine";
 import { createRng } from "@/challenges/shared/prng";
 import { detectFlags, type DetectArgs } from "./detect";
 
 const PARAMS: StackingParams = { startStepMs: 160, stepDecayMs: 7, startColumn: 2, direction: "right" };
 
 /**
- * Taps that lock each of `rows` rows exactly on the one below (no cell lost), each at least
- * `gapMs` plus a seeded jitter after the last, as a very good player might.
+ * Taps that lock each row exactly on the one below (no cell lost), except the rows listed in
+ * `losing`, which hang one cell off the edge. Each tap is at least `gapMs` plus a seeded jitter
+ * after the last, as a very good player might.
  */
-function perfectTaps(rows: number, gapMs = 300, jitterMs = 200, seed = 1): number[] {
+function towerTaps(rows: number, losing: readonly number[] = [], gapMs = 300, jitterMs = 200, seed = 1): number[] {
   const rng = createRng(seed);
   const taps: number[] = [];
-  for (let r = 0; r < rows; r++) {
+  for (let r = 1; r <= rows; r++) {
     const run = simulate(PARAMS, taps);
     const moving = run.moving!;
-    const target = run.rows.at(-1)?.left ?? moving.startColumn;
+    const below = run.rows.at(-1);
+    let target = below?.left ?? moving.startColumn;
+    if (below && losing.includes(r)) {
+      // One column past fully supported, on whichever side has room.
+      const right = below.left + below.width - moving.width + 1;
+      target = right + moving.width <= COLUMNS ? right : below.left - 1;
+    }
     let t = (taps.at(-1) ?? 0) + gapMs + rng.int(0, jitterMs);
     while (columnAt(PARAMS, moving, t) !== target) t++;
     taps.push(t);
   }
   return taps;
 }
+const perfectTaps = (rows: number) => towerTaps(rows);
 
 /** Human-like taps: 350-750 ms apart, landing wherever they land. */
 function humanTaps(count: number, seed = 7): number[] {
@@ -108,6 +116,15 @@ describe("stacking-perfect-run", () => {
 
   it("allows 11", () => {
     expect(detectFlags(tower(perfectTaps(11)))).not.toContain("stacking-perfect-run");
+  });
+
+  it("counts only rows in a row: 14 perfect rows broken by one that loses a cell is not a run of 12", () => {
+    const taps = towerTaps(15, [7]);
+    const rows = simulate(PARAMS, taps).rows;
+    // Setup: row 7 lost a cell but kept going; the other 14 lost none.
+    expect(rows.map((row) => row.lostColumns.length)).toEqual([0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(rows.every((row) => row.width > 0)).toBe(true);
+    expect(detectFlags(tower(taps))).not.toContain("stacking-perfect-run");
   });
 });
 

@@ -40,6 +40,7 @@ export type DetectArgs = {
 
 const intervals = (taps: readonly number[]) => taps.slice(1).map((tap, i) => tap - taps[i]);
 
+/** NaN for no values: callers check for enough taps first. */
 function standardDeviation(values: readonly number[]): number {
   const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
   return Math.sqrt(values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length);
