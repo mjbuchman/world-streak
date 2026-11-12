@@ -34,4 +34,9 @@ describe("requireAdminPage", () => {
     await expect(requireAdminPage()).rejects.toThrow("NEXT_NOT_FOUND");
     expect(mocks.notFound).toHaveBeenCalledOnce();
   });
+
+  it("fails closed when the check itself fails", async () => {
+    mocks.rpc.mockResolvedValue({ data: null, error: { message: "down" } });
+    await expect(requireAdminPage()).rejects.toThrow("Admin check failed: down");
+  });
 });
