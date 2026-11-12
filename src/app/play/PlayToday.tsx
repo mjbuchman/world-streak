@@ -129,7 +129,11 @@ export function PlayToday({
     case "abandoned":
       return (
         <Surface>
-          <p>You left today&apos;s attempt before finishing, so it counted as not passed. Come back tomorrow.</p>
+          {/* Since T87 a run has no time limit, so it may still be open in another tab (T91). */}
+          <p>
+            You started today&apos;s attempt but haven&apos;t finished it here. If it&apos;s still open in another tab,
+            finish it there before the day ends. Otherwise it counts as not passed. Come back tomorrow.
+          </p>
           {backHome}
         </Surface>
       );

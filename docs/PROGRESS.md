@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T90 ResultHero owns focus and the note (PR #126)
+- ResultHero focuses its heading on mount and has a `note` slot; the pages' focus code and `.note` copies are gone.
+- Review rounds: quality 1 (light). Merges since the check: 4.
+
 ### 2026-11-12 — T89 game_settings checks and drift guard (PR #125)
 - Streak steps refuse NaN/Infinity; `gameSettings.fixture.json` checked by pgTAP and zod; named-column select.
 - Review rounds: spec 1, quality 1, tests 1. Auto-merge stalled once (toggled). Merges since the check: 3.
