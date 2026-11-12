@@ -4,12 +4,6 @@ import styles from "./ui.module.css";
 
 export type ResultTone = "pass" | "practice" | "plain";
 
-const TONE_CLASSES: Record<ResultTone, string> = {
-  pass: `${styles.resultMint} ${styles.resultGlow}`,
-  practice: styles.resultMint,
-  plain: "",
-};
-
 type ResultHeroProps = {
   /** The big number; repeated for the eye only, so the heading or text must say it too. */
   score?: number;
@@ -33,16 +27,16 @@ type ResultHeroProps = {
  * second play-test), then the heading, the text and the actions, popping in together.
  */
 export function ResultHero({ score, heading, headingRef, tone = "plain", confetti = false, actions, children }: ResultHeroProps) {
-  const toneClass = TONE_CLASSES[tone];
   return (
-    <section className={styles.result}>
+    // The stylesheet colours the score and heading by data-tone, which tests can read as well.
+    <section className={styles.result} data-tone={tone}>
       {confetti && <Confetti />}
       {score !== undefined && (
-        <p data-big-score aria-hidden="true" className={`${styles.resultScore} ${toneClass}`}>
+        <p data-big-score aria-hidden="true" className={styles.resultScore}>
           {score}
         </p>
       )}
-      <h2 ref={headingRef} tabIndex={-1} className={`${styles.resultHeading} ${toneClass}`}>
+      <h2 ref={headingRef} tabIndex={-1} className={styles.resultHeading}>
         {heading}
       </h2>
       {children}

@@ -1206,7 +1206,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T86 Share the attempt response types with /play; enforce test-only player.ts
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T81
 - Acceptance criteria:
   - [ ] `src/lib/attempts/start.ts` and `submit.ts` export their response body types, and `PlayToday.tsx` builds its `StartBody` and `SubmitBody` from them with type-only imports (narrowing `params` to `StackingParams` until T30).
@@ -1237,7 +1237,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T88 Sturdier ResultHero test hooks
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T79
 - Acceptance criteria:
   - [ ] `ResultHero` exposes its tone as a `data-tone` attribute, and the tone tests (`ui.test.tsx`, `PlayToday.test.tsx`, `StackingPractice.test.tsx`) check that attribute instead of matching CSS-module class names with a regex.

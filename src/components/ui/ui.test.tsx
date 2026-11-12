@@ -227,16 +227,18 @@ describe("ResultHero", () => {
   });
 
   it.each([
-    // tone, mint, glow
-    [undefined, false, false], // the default is plain: celebration is opt-in
-    ["plain", false, false],
-    ["practice", true, false],
-    ["pass", true, true],
-  ] as const)("styles the score and heading for tone %s (mint %s, glow %s)", (tone, mint, glow) => {
+    // tone, the data-tone the stylesheet colours by
+    [undefined, "plain"], // the default is plain: celebration is opt-in
+    ["plain", "plain"],
+    ["practice", "practice"],
+    ["pass", "pass"],
+  ] as const)("marks the result with tone %s", (tone, expected) => {
     const { container } = render(<ResultHero score={7} heading="Result" tone={tone} actions={null} />);
+    expect(container.querySelector("section")?.dataset.tone).toBe(expected);
+    // The score and heading carry no tone classes of their own (so no stray spaces either).
     for (const element of [container.querySelector("[data-big-score]")!, screen.getByRole("heading", { name: "Result" })]) {
-      expect(/resultMint/.test(element.className)).toBe(mint);
-      expect(/resultGlow/.test(element.className)).toBe(glow);
+      expect(element.className).toBe(element.className.trim());
+      expect(element.className.split(" ")).toHaveLength(1);
     }
   });
 });

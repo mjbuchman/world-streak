@@ -73,8 +73,11 @@ test("the back button hides during a run and returns with the result", async ({ 
   await page.keyboard.press("Space");
   await playTaps(page, taps.map((tap) => tap - taps[0]).slice(1));
   await page.clock.runFor(FALL_MS + 50);
-  await expect(page.getByRole("heading", { name: /^You reached row/ })).toBeVisible();
+  const heading = page.getByRole("heading", { name: /^You reached row/ });
+  await expect(heading).toBeVisible();
   await expect(back).toBeVisible();
+  // The stylesheet colours a practice result mint by its data-tone (T88).
+  await expect(heading).toHaveCSS("color", "rgb(52, 245, 181)");
 });
 
 test("the game canvas finds its colour tokens", async ({ page }) => {

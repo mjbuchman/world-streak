@@ -191,19 +191,18 @@ describe("PlayToday", () => {
 
   it("makes a pass glow mint, and leaves a fail or a refused submission plain", async () => {
     render(<PlayToday challenge="stacking" initial={{ kind: "submitted", score: 11, passed: true, passTarget: 10 }} />);
-    const passed = screen.getByRole("heading", { name: "Passed" });
-    expect(passed.className).toMatch(/resultMint/);
-    expect(passed.className).toMatch(/resultGlow/);
+    const tone = (heading: HTMLElement) => heading.closest("section")?.dataset.tone;
+    expect(tone(screen.getByRole("heading", { name: "Passed" }))).toBe("pass");
     cleanup();
 
     render(<PlayToday challenge="stacking" initial={{ kind: "submitted", score: 3, passed: false, passTarget: 10 }} />);
-    expect(screen.getByRole("heading", { name: "Not this time" }).className).not.toMatch(/resultMint|resultGlow/);
+    expect(tone(screen.getByRole("heading", { name: "Not this time" }))).toBe("plain");
     cleanup();
 
     respond(json(200, started), json(409, { error: "day-closed" }));
     await startRun();
     await finish([900], 1);
-    expect((await screen.findByRole("heading", { name: "Counted as not passed" })).className).not.toMatch(/resultMint|resultGlow/);
+    expect(tone(await screen.findByRole("heading", { name: "Counted as not passed" }))).toBe("plain");
   });
 
   it("shows the live meter below the result, and not before or during the run", async () => {

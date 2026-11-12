@@ -50,8 +50,8 @@ describe("StackingPractice", () => {
     finish(7);
     expect(container.querySelector("[data-big-score]")?.textContent).toBe("7");
     const heading = screen.getByRole("heading", { name: "You reached row 7" });
-    expect(heading.className).toMatch(/resultMint/);
-    expect(heading.className).not.toMatch(/resultGlow/);
+    // Mint without the glow: practice never counts.
+    expect(heading.closest("section")?.dataset.tone).toBe("practice");
   });
 
   it("explains the game and waits for Start", () => {
