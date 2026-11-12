@@ -1,5 +1,5 @@
 begin;
-select plan(17);
+select plan(19);
 
 -- The table: a flat prize with rollover, and no revenue share, floor or cap (human's instruction).
 select has_table('public', 'cycles', 'cycles exists');
@@ -22,12 +22,16 @@ select is(('2027-03-01'::date - '2027-01-01'::date) + 1, 60, 'which is 60 days')
 -- cycle_for: the cycle containing a date, or null.
 select is(public.cycle_for('2026-12-31'), null, 'the day before is preseason');
 select is(public.cycle_for('2027-01-01'), 1, 'the first day is cycle 1');
+select is(public.cycle_for('2027-02-01'), 1, 'a day in the middle is cycle 1');
 select is(public.cycle_for('2027-03-01'), 1, 'the last day is cycle 1');
 select is(public.cycle_for('2027-03-02'), null, 'the day after is in no cycle until cycle 2 exists');
 insert into public.cycles (number, start_date, end_date) values (2, '2027-03-02', '2027-04-30');
 select is(public.cycle_for('2027-03-02'), 2, 'and then it is cycle 2');
 
 -- Everyone may read cycles, but not who won.
+select columns_are('public', 'cycles_public', array[
+  'number', 'start_date', 'end_date', 'base_prize_cents', 'rollover_in_cents', 'goal_reached_on', 'drawn_at', 'paid_on'
+], 'the public view has every column but the winner');
 \ir fixtures/fixtures.psql
 select tests.make_player('00000000-0000-0000-0000-0000000000b0');
 update public.cycles set winner_user_id = '00000000-0000-0000-0000-0000000000b0' where number = 1;

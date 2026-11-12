@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CYCLE_LENGTH_DAYS, FIRST_CYCLE_START, PAYOUT_WITHIN_DAYS, PRIZE_PER_CYCLE_CENTS, STREAK_GOAL_DAYS } from "@/config/prize";
+import { addDays } from "@/lib/gameDay";
 import { type Cycle, currentPrizeCents, nextRolloverCents } from "./prize";
 
 const cycle = (over: Partial<Cycle> = {}): Cycle => ({ baseCents: PRIZE_PER_CYCLE_CENTS, rolloverInCents: 0, goalReachedOn: null, ...over });
@@ -16,6 +18,13 @@ describe("prize config", () => {
       FIRST_CYCLE_START: "2027-01-01",
       PAYOUT_WITHIN_DAYS: 45,
     });
+  });
+
+  it("matches the cycles migration, which repeats the prize and cycle 1's dates", () => {
+    const migration = readFileSync("supabase/migrations/20261113000000_cycles.sql", "utf8");
+    expect(migration).toContain(`base_prize_cents integer not null default ${PRIZE_PER_CYCLE_CENTS} `);
+    const lastDay = addDays(FIRST_CYCLE_START, CYCLE_LENGTH_DAYS - 1);
+    expect(migration).toContain(`values (1, '${FIRST_CYCLE_START}', '${lastDay}')`);
   });
 });
 
