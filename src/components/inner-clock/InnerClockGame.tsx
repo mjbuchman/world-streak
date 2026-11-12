@@ -37,6 +37,7 @@ export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
   useEffect(() => {
     areaRef.current?.focus();
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let frame = 0;
     // Each frame until the reveal ends moves the shown clock on.
     const tick = () => {
       const elapsed = performance.now() - startedAt.current!;
@@ -47,7 +48,7 @@ export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
       setShownMs(elapsed);
       frame = requestAnimationFrame(tick);
     };
-    let frame = requestAnimationFrame(() => {
+    frame = requestAnimationFrame(() => {
       startedAt.current = performance.now();
       timer = setTimeout(() => {
         if (done.current) return;

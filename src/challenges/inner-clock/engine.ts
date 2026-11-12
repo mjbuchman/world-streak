@@ -4,8 +4,9 @@ import type { ChallengeModule } from "../shared/types";
 
 /**
  * Second Sense (Inner Clock): the player taps when they think a target time has passed since the
- * start, with a visible clock only for the first REVEAL_MS. Score = how far off the tap was, in seconds (lower is better). No
- * tap before the timeout, or a tap after it, scores as far off as a tap right at the timeout.
+ * start, with a visible clock only for the first REVEAL_MS. Score = how far off the tap was, in
+ * seconds (lower is better). No tap before the timeout, or a tap after it, scores as far off as a
+ * tap right at the timeout.
  *
  * The tap is timed client-side (`performance.now()` from the start), so device and screen lag
  * add a little error for everyone (design watch-out).

@@ -11,10 +11,13 @@ const clock = () => vi.spyOn(performance, "now");
 
 beforeEach(() => {
   frame = null;
-  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
-    frame = callback;
-    return 1;
-  });
+  vi.stubGlobal(
+    "requestAnimationFrame",
+    vi.fn((callback: FrameRequestCallback) => {
+      frame = callback;
+      return 1;
+    }),
+  );
   vi.stubGlobal("cancelAnimationFrame", vi.fn());
 });
 
@@ -115,6 +118,8 @@ describe("InnerClockGame", () => {
     act(() => frame!(0));
     expect(shownClock()?.getAttribute("data-clock")).toBe("hidden");
     expect(shownClock()?.textContent).toBe("");
+    // The frame loop stops once hidden: the start, then one frame per shown tick, and no more.
+    expect(requestAnimationFrame).toHaveBeenCalledTimes(4);
   });
 
   it("shows the instruction and nothing that tells the time once the clock has hidden", () => {
