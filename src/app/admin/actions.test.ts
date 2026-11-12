@@ -3,6 +3,7 @@ import type { EditState } from "@/lib/adminEdit";
 import type { ToolState } from "@/lib/localTools";
 
 const saveGameDayEdit = vi.hoisted(() => vi.fn<(db: unknown, form: FormData) => Promise<EditState>>());
+const markPaid = vi.hoisted(() => vi.fn<(db: unknown, form: FormData) => Promise<EditState>>());
 const runLocalTool = vi.hoisted(() =>
   vi.fn<(caller: unknown, db: unknown, form: FormData, now: Date, data: unknown) => Promise<ToolState>>(),
 );
@@ -17,9 +18,10 @@ vi.mock("next/cache", () => ({ revalidatePath }));
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: vi.fn(async () => sessionClient) }));
 vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient }));
 vi.mock("@/lib/adminEdit", () => ({ saveGameDayEdit }));
+vi.mock("@/lib/draw", () => ({ drawCycle: vi.fn(), markPaid }));
 vi.mock("@/lib/localTools", () => ({ localToolsEnabled, runLocalTool, supabaseDevData }));
 
-import { localToolAction, saveGameDayAction } from "./actions";
+import { localToolAction, markPaidAction, saveGameDayAction } from "./actions";
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -38,6 +40,22 @@ describe("saveGameDayAction", () => {
   it("passes a refusal on without refreshing", async () => {
     saveGameDayEdit.mockResolvedValue({ ok: false, message: "Only admins can edit game days." });
     expect(await saveGameDayAction(null, new FormData())).toEqual({ ok: false, message: "Only admins can edit game days." });
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe("markPaidAction", () => {
+  it("marks paid as the signed-in caller and refreshes /admin/draw", async () => {
+    markPaid.mockResolvedValue({ ok: true, message: "Cycle 1 marked paid." });
+    const form = new FormData();
+    expect(await markPaidAction(null, form)).toEqual({ ok: true, message: "Cycle 1 marked paid." });
+    expect(markPaid).toHaveBeenCalledWith(sessionClient, form);
+    expect(revalidatePath).toHaveBeenCalledWith("/admin/draw");
+  });
+
+  it("passes a failed result on without refreshing", async () => {
+    markPaid.mockResolvedValue({ ok: false, message: "Unknown cycle." });
+    expect(await markPaidAction(null, new FormData())).toEqual({ ok: false, message: "Unknown cycle." });
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 });

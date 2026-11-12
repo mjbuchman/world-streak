@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T132 One set of admin form helpers (PR #131)
+- `src/lib/adminForm.ts`: `EditState`, `refuse`, `numberField` and the Tower range, shared by the admin saves.
+- Review rounds: quality 1 (light). Merges since the check: 9.
+
 ### 2026-11-12 — T72 Unit test for the /play server page (PR #130)
 - `play/page.test.tsx` covers signed out, no profile, with a profile and a failing lookup.
 - Merges since the check: 8.
