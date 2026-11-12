@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T120 One error rule for the local tools (PR #103)
+- The local tools reuse `check`; any failed step shows as a refused message. T129 added (recount in one statement).
+- Review rounds: quality 1 (light). Merges since the M4 check: 2.
+
 ### 2026-11-12 — T37 Local multi-day simulation (PR #102)
 - `npm run simulate:days`: local-only; service-role `close_game_day_unchecked` and `record_attempt_result_unchecked` (the checked versions call them). README: play-testing a cycle and the draw.
 - Review rounds: spec 1, quality 1, tests 1. CI: the pgTAP test assumed an earlier open day (1 fix). Merges since the M4 check: 1.
