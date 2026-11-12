@@ -12,14 +12,17 @@ vi.mock("@/lib/supabase/server", () => ({
   },
 }));
 
-import { GET } from "./route";
+let GET: () => Promise<Response>;
 
-const hiddenBody = { gameDate: "2026-11-08", status: "hidden", threshold: 0.6, closesAt: "2026-11-09T00:00:00.000Z" };
+const hiddenBody = { gameDate: "2026-11-08", status: "hidden", threshold: 0.6, closesAt: "2026-11-09T00:00:00.000Z", streak: { current: 0, best: 0 } };
 
-beforeEach(() => {
+beforeEach(async () => {
   readMeter.mockReset();
   vi.spyOn(console, "error").mockImplementation(() => undefined);
   vi.useFakeTimers({ toFake: ["Date"] });
+  // A fresh module per test, so the endpoint's own cache starts empty.
+  vi.resetModules();
+  ({ GET } = await import("./route"));
 });
 
 afterEach(() => {
@@ -55,12 +58,35 @@ describe("GET /api/meter", () => {
     expect((await GET()).headers.get("cache-control")).toBe("no-store");
   });
 
-  it("answers 500 without details, and uncached, when the read fails", async () => {
+  it("reads the database once for many requests in one window (T48)", async () => {
+    vi.setSystemTime(new Date("2026-11-08T22:00:00Z"));
+    readMeter.mockResolvedValue(hiddenBody);
+    await Promise.all(Array.from({ length: 50 }, () => GET()));
+    expect(readMeter).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers the last good reading as stale, uncached, while the database fails, then 503", async () => {
+    vi.setSystemTime(new Date("2026-11-08T12:00:00Z"));
+    readMeter.mockResolvedValueOnce(hiddenBody).mockRejectedValue(new Error("connection refused"));
+    await GET();
+    vi.setSystemTime(new Date("2026-11-08T12:01:00Z"));
+    const stale = await GET();
+    expect(stale.status).toBe(200);
+    expect(await stale.json()).toEqual({ ...hiddenBody, stale: true });
+    expect(stale.headers.get("cache-control")).toBe("no-store");
+
+    vi.setSystemTime(new Date("2026-11-08T12:05:01Z"));
+    const gone = await GET();
+    expect(gone.status).toBe(503);
+    expect(gone.headers.get("cache-control")).toBe("no-store");
+    expect(await gone.json()).toEqual({ error: "unavailable" });
+  });
+
+  it("answers 503 without details when the very first read fails", async () => {
     vi.setSystemTime(new Date("2026-11-08T12:00:00Z"));
     readMeter.mockRejectedValue(new Error("connection refused"));
     const response = await GET();
-    expect(response.status).toBe(500);
-    expect(response.headers.get("cache-control")).toBe("no-store");
-    expect(await response.json()).toEqual({ error: "server-error" });
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: "unavailable" });
   });
 });

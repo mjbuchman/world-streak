@@ -858,7 +858,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T47 Mobile checks
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T32, T44
 - Acceptance criteria:
   - [ ] Playwright gains Chromium-based mobile projects (`Pixel 7` and an iPhone-sized viewport, 390×844 with `hasTouch` and `isMobile`) without adding new browsers to CI.
@@ -868,7 +868,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T48 Meter performance under load
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T18
 - Acceptance criteria:
   - [ ] The meter handler adds a module-level cache with a single in-flight request (`METER_CACHE_SECONDS`): 500 concurrent calls within one window trigger exactly 1 database read, and a call after the window triggers 1 more (unit test with a fake clock and a counting mock).

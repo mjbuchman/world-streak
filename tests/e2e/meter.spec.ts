@@ -1,4 +1,4 @@
-import { METER_HIDE_HOURS } from "../../src/config/meter";
+import { METER_CACHE_SECONDS, METER_HIDE_HOURS } from "../../src/config/meter";
 import { expect, test } from "./support/fixtures";
 import { signUpViaForm } from "./support/pages";
 
@@ -57,6 +57,7 @@ test.describe("on a 390 x 844 phone", () => {
 });
 
 test("a signed-in player's meter request carries no cookie, and a started attempt shows in it", async ({ page, accounts }) => {
+  test.setTimeout(60_000);
   await signUpViaForm(page, { email: accounts.uniqueEmail() });
   await expect(page).toHaveURL("/");
   // page.request sends the player's session cookies; the shared answer must not set any.
@@ -67,13 +68,19 @@ test("a signed-in player's meter request carries no cookie, and a started attemp
   expect(response.headers()["set-cookie"]).toBeUndefined();
   expect(response.headers()["cache-control"]).toMatch(PUBLIC_CACHE);
 
-  const body = await response.json();
-  // The start created today's game day, so its threshold is known either way.
-  expect(body.threshold).toBeGreaterThan(0);
-  if (ALWAYS_OPEN) expect(body.status).toBe("open");
-  if (body.status === "open") {
-    // The counters reach the meter through the server, although players cannot read them.
-    expect(body.attempts).toBeGreaterThanOrEqual(1);
-    expect(body.passRate).not.toBeNull();
-  }
+  // The endpoint keeps each reading for one cache window (T48), so a reading taken before this
+  // start (by another test) may still be served for up to METER_CACHE_SECONDS.
+  await expect
+    .poll(
+      async () => {
+        const body = await (await page.request.get("/api/meter")).json();
+        if (ALWAYS_OPEN && body.status !== "open") return "hidden";
+        // The start created today's game day, so its threshold is known either way; and the
+        // counters reach the meter through the server, although players cannot read them.
+        const counted = body.status !== "open" || (body.attempts >= 1 && body.passRate !== null);
+        return body.threshold > 0 && counted ? "shows the start" : "not yet";
+      },
+      { timeout: (METER_CACHE_SECONDS + 10) * 1000, intervals: [1000] },
+    )
+    .toBe("shows the start");
 });

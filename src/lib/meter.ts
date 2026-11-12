@@ -81,13 +81,17 @@ export function meterBody(now: Date, gameDate: string, row: MeterRow): MeterBody
   return { gameDate, status: "open", passRate, attempts: row.attempts, threshold: row.threshold, closesAt, streak: row.streak };
 }
 
+/** When `body` stops being true: the hidden window starting (an open reading), or the deadline. */
+export function meterOutOfDateAt(body: MeterBody): Date {
+  return body.status === "open" ? meterHiddenFrom(body.closesAt) : new Date(body.closesAt);
+}
+
 /**
  * How long a CDN may keep `body`: METER_CACHE_SECONDS, but never past the moment the reading
  * goes out of date (the hidden window starting, or the deadline). The cache may also serve a
  * stale copy for as long again while it refreshes, so both periods must fit before that moment.
  */
 export function meterCacheSeconds(body: MeterBody, now: Date): number {
-  const outOfDateAt = body.status === "open" ? meterHiddenFrom(body.closesAt) : new Date(body.closesAt);
-  const secondsLeft = Math.floor((outOfDateAt.getTime() - now.getTime()) / 1000);
+  const secondsLeft = Math.floor((meterOutOfDateAt(body).getTime() - now.getTime()) / 1000);
   return Math.max(0, Math.min(METER_CACHE_SECONDS, Math.floor(secondsLeft / 2)));
 }
