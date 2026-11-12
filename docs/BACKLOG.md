@@ -1060,7 +1060,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T135 One canvas helper for sizing and reading colour tokens
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T84
 - Acceptance criteria:
   - [ ] A shared client helper (for example `src/components/canvas.ts`) sizes a canvas's backing store to its CSS box times the device pixel ratio (only when it changes, returning `{ width, height, devicePixelRatio }`) and reads a map of CSS custom properties off an element, trimmed.
@@ -1146,7 +1146,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T134 Typed database reads outside the attempt store (from T65)
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T65
 - Acceptance criteria:
   - [ ] The read helpers that take an untyped client (`draw.ts`, `prize.ts`, `adminFlags.ts`, `adminSettings.ts`, `meterRead.ts`, `admin.ts`, `localTools.ts`, `attempts/today.ts`, `streak/streak.ts`) take `SupabaseClient<Database>` (or a `Pick` of it), and their `data as ...` casts are removed; any cast that must stay has a one-line reason.

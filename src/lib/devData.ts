@@ -6,7 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { dbInteger, dbNumber } from "./db/numeric.ts";
 
 /** The data of a Supabase reply, or a throw naming the step that failed. */
-export function check<T>(operation: string, result: { data: T; error: { message: string } | null }): T {
+export function check<T>(operation: string, result: { data: T; error: null } | { data: unknown; error: { message: string } }): T {
   if (result.error) throw new Error(`${operation} failed: ${result.error.message}`);
   return result.data;
 }

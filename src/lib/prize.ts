@@ -6,6 +6,7 @@ import { longDayLabel as longDate } from "@/lib/dates";
 import { dbInteger } from "@/lib/db/numeric";
 import { gameDateAt } from "@/lib/gameDay";
 import { dayLabel } from "@/lib/streak/streak";
+import type { Database } from "@/lib/supabase/database.types";
 
 /** The prize-relevant part of a `cycles` row. */
 export type Cycle = {
@@ -67,18 +68,12 @@ export type PrizeSummary =
 const DAY_MS = 86_400_000;
 const daysBetween = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_MS);
 
-type CycleRow = Record<"number" | "base_prize_cents" | "rollover_in_cents", unknown> & {
-  start_date: string;
-  end_date: string;
-  goal_reached_on: string | null;
-};
-
 /**
  * Today's cycle, or preseason before the first one; null between cycles (the next is created when
  * the last day closes) or with none at all. Read with the caller's own client: cycles are public
  * and the entry count is the caller's own.
  */
-export async function readPrizeSummary(db: Pick<SupabaseClient, "from" | "rpc">, now: Date, signedIn: boolean): Promise<PrizeSummary | null> {
+export async function readPrizeSummary(db: Pick<SupabaseClient<Database>, "from" | "rpc">, now: Date, signedIn: boolean): Promise<PrizeSummary | null> {
   const today = gameDateAt(now);
   const current = await db
     .from("cycles_public")
@@ -89,7 +84,7 @@ export async function readPrizeSummary(db: Pick<SupabaseClient, "from" | "rpc">,
   if (current.error) throw new Error(`Cycle lookup failed: ${current.error.message}`);
 
   if (current.data) {
-    const row = current.data as CycleRow;
+    const row = current.data;
     const number = dbInteger(row.number, "number");
     let entries: number | null = null;
     if (signedIn) {
@@ -112,7 +107,7 @@ export async function readPrizeSummary(db: Pick<SupabaseClient, "from" | "rpc">,
 
   const first = await db.from("cycles_public").select("start_date, base_prize_cents, rollover_in_cents").order("number").limit(1).maybeSingle();
   if (first.error) throw new Error(`First cycle lookup failed: ${first.error.message}`);
-  const row = first.data as Omit<CycleRow, "number" | "end_date" | "goal_reached_on"> | null;
+  const row = first.data;
   if (!row || today >= row.start_date) return null;
   return {
     kind: "preseason",

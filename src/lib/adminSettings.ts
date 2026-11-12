@@ -8,6 +8,7 @@ import { CHALLENGE_NAMES } from "@/config/challenges";
 import { isAdmin } from "@/lib/admin";
 import { inTowerRange, numberField as number, refuse, towerRowMessage, type EditState } from "@/lib/adminForm";
 import { parseGameSettings } from "@/lib/settings";
+import type { Database } from "@/lib/supabase/database.types";
 
 const between = (label: string, min: number, max: number) => {
   const message = `${label} must be from ${min} to ${max}.`;
@@ -126,11 +127,11 @@ export async function saveGameSettings(db: Pick<SupabaseClient, "from" | "rpc">,
 }
 
 /** The settings as the form's starting values. */
-export async function readSettingsForm(db: Pick<SupabaseClient, "from">): Promise<SettingsForm> {
+export async function readSettingsForm(db: Pick<SupabaseClient<Database>, "from">): Promise<SettingsForm> {
   const { data, error } = await db.from("game_settings").select("*").single();
   if (error) throw new Error(`game_settings lookup failed: ${error.message}`);
   const settings = parseGameSettings(data);
-  const rotation = z.array(z.string()).parse((data as { rotation: unknown }).rotation);
+  const rotation = z.array(z.string()).parse(data.rotation);
   const values: SettingsForm = {
     default_survival_threshold: String(settings.defaultSurvivalThreshold),
     pass_target_percentile: String(settings.passTargetPercentile),

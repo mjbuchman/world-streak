@@ -5,6 +5,7 @@ import { CHALLENGE_NAMES } from "@/config/challenges";
 import { dayLabel } from "@/lib/dates";
 import { dbInteger, dbNumber } from "@/lib/db/numeric";
 import { addDays, gameDateAt } from "@/lib/gameDay";
+import type { Database } from "@/lib/supabase/database.types";
 
 export const HISTORY_PAGE_SIZE = 30;
 
@@ -91,13 +92,11 @@ function dbOutcome(value: unknown): Outcome {
 
 const dbRate = (value: unknown, field: string) => (value === null ? null : dbNumber(value, field));
 
-type RecentRow = { game_date: string; outcome: unknown; final_pass_rate: unknown; survival_threshold: unknown };
-
 /**
  * The streak, yesterday's result once yesterday has closed (null just after midnight), and the
  * last RECENT_DAYS days for the bar chart. All public data, read with the caller's own client.
  */
-export async function readStreakSummary(db: Pick<SupabaseClient, "from" | "rpc">, now: Date): Promise<StreakSummary> {
+export async function readStreakSummary(db: Pick<SupabaseClient<Database>, "from" | "rpc">, now: Date): Promise<StreakSummary> {
   const today = gameDateAt(now);
   const yesterdayDate = addDays(today, -1);
   const [streakReply, dayReply, recentReply] = await Promise.all([
@@ -115,13 +114,14 @@ export async function readStreakSummary(db: Pick<SupabaseClient, "from" | "rpc">
   if (dayReply.error) throw new Error(`Yesterday lookup failed: ${dayReply.error.message}`);
   if (recentReply.error) throw new Error(`Recent days lookup failed: ${recentReply.error.message}`);
 
-  const streak = streakReply.data as { current: unknown; best: unknown; current_start_date?: string | null };
-  const day = dayReply.data as { outcome: unknown; final_pass_rate: unknown } | null;
+  const streak = streakReply.data;
+  const day = dayReply.data;
   const current = dbInteger(streak.current, "current");
   if (current < 0) throw new Error(`Expected a streak length for current, got ${current}`);
-  const currentStart = current > 0 ? streak.current_start_date : null;
+  // Widened: the generated type cannot promise a running streak's start date is there.
+  const currentStart: string | null | undefined = current > 0 ? streak.current_start_date : null;
   if (currentStart === undefined || currentStart === "") throw new Error("A running streak came without its start date");
-  const closed = (recentReply.data as RecentRow[]).map((row) => ({
+  const closed = recentReply.data.map((row) => ({
     gameDate: row.game_date,
     outcome: dbOutcome(row.outcome),
     finalPassRate: dbRate(row.final_pass_rate, "final_pass_rate"),
@@ -147,10 +147,8 @@ export function historyPageParam(value: string | string[] | undefined): number {
 /** PostgREST's answer to a range that starts past the last row. */
 const RANGE_NOT_SATISFIABLE = "PGRST103";
 
-type HistoryRow = { game_date: string; challenge_type: string; final_pass_rate: unknown; survival_threshold: unknown; outcome: unknown };
-
 /** One page (1-based) of closed days, newest first; null when the page starts past the last day. */
-export async function readHistory(db: Pick<SupabaseClient, "from">, page: number): Promise<HistoryPage | null> {
+export async function readHistory(db: Pick<SupabaseClient<Database>, "from">, page: number): Promise<HistoryPage | null> {
   const from = (page - 1) * HISTORY_PAGE_SIZE;
   const { data, error, count } = await db
     .from("game_days")
@@ -162,9 +160,8 @@ export async function readHistory(db: Pick<SupabaseClient, "from">, page: number
   if (error) throw new Error(`History lookup failed: ${error.message}`);
   if (count === null) throw new Error("History lookup returned no count");
 
-  const rows = data as HistoryRow[];
   return {
-    days: rows.map((row) => ({
+    days: data.map((row) => ({
       gameDate: row.game_date,
       challengeType: row.challenge_type,
       finalPassRate: dbRate(row.final_pass_rate, "final_pass_rate"),
