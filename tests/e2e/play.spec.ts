@@ -1,20 +1,20 @@
 import { simulate, type StackingParams } from "../../src/challenges/stacking/engine";
 import { FALL_MS } from "../../src/challenges/stacking/render";
 import { expect, test } from "./support/fixtures";
-import { signUpViaForm } from "./support/pages";
+import { gotoReady, signUpViaForm } from "./support/pages";
 import { reachedRow, targetRow } from "../../src/components/stacking/rows";
 import { playTaps, tapsForAMiss } from "./support/tower";
 import { adminClient, findUserByEmail } from "./support/supabase";
 
 test("the home page offers today's challenge and practice", async ({ page }) => {
-  await page.goto("/");
+  await gotoReady(page, "/");
   await expect(page.getByRole("region", { name: "Teetering Tower" }).getByText("Your part today")).toBeVisible();
   await page.getByRole("link", { name: "Play today's challenge" }).click();
   await expect(page).toHaveURL("/play");
 });
 
 test("a signed-out visitor is asked to sign in, or to practice", async ({ page }) => {
-  await page.goto("/play");
+  await gotoReady(page, "/play");
   const main = page.getByRole("main");
   await expect(main.getByText("Sign in to play today's scored attempt.")).toBeVisible();
   await expect(main.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/signin");
@@ -31,7 +31,7 @@ test("a signed-in player without a profile is sent to complete it", async ({ pag
   const { error } = await adminClient().from("profiles").delete().eq("id", user!.id);
   if (error) throw error;
 
-  await page.goto("/play");
+  await gotoReady(page, "/play");
   await expect(page).toHaveURL("/complete-profile");
 });
 
@@ -49,7 +49,7 @@ test("a player plays today's attempt once and sees the server's result, also aft
       (window as unknown as { sharedText?: string }).sharedText = data?.text;
     };
   });
-  await page.goto("/play");
+  await gotoReady(page, "/play");
   await expect(page.getByText(/one scored attempt today/)).toBeVisible();
   // A way back before the run, none during it (leaving mid-run would lose the attempt).
   const back = page.getByRole("main").getByRole("link", { name: "Back", exact: true });
@@ -119,7 +119,7 @@ test("a player who left an attempt unfinished cannot start again", async ({ page
   await expect(page).toHaveURL("/");
   expect((await page.request.post("/api/attempts/start")).status()).toBe(200);
 
-  await page.goto("/play");
+  await gotoReady(page, "/play");
   await expect(
     page.getByText("You left today's attempt before finishing, so it counted as not passed. Come back tomorrow."),
   ).toBeVisible();

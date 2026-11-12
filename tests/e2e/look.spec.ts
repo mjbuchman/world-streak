@@ -1,14 +1,14 @@
 import { paramsFromSeed } from "../../src/challenges/stacking/engine";
 import { FALL_MS } from "../../src/challenges/stacking/render";
 import { expect, test } from "./support/fixtures";
-import { signUpViaForm } from "./support/pages";
+import { gotoReady, signUpViaForm } from "./support/pages";
 import { pinSeed, playTaps, tapsForAMiss } from "./support/tower";
 
 // Checks only a real browser can make (jsdom has no layout, CSS or canvas): focus visibility,
 // busy buttons, touch-target size and the game's colour tokens.
 
 test("the main button shows the mint focus ring when reached with the keyboard", async ({ page }) => {
-  await page.goto("/practice/stacking");
+  await gotoReady(page, "/practice/stacking");
   const start = page.getByRole("button", { name: "Start" });
   // Tab until Start has focus (the header and back button come first).
   for (let i = 0; i < 10 && !(await start.evaluate((el) => el === document.activeElement)); i++) {
@@ -31,7 +31,7 @@ test("a busy Start keeps its name and its focus while the request is in flight",
     await route.continue();
   });
 
-  await page.goto("/play");
+  await gotoReady(page, "/play");
   const start = page.getByRole("button", { name: "Start" });
   await start.focus();
   await page.keyboard.press("Enter");
@@ -44,7 +44,7 @@ test("a busy Start keeps its name and its focus while the request is in flight",
 });
 
 test("the back button is at least 44 by 44 px and goes home", async ({ page }) => {
-  await page.goto("/practice/stacking");
+  await gotoReady(page, "/practice/stacking");
   const back = page.getByRole("main").getByRole("link", { name: "Back", exact: true });
   const box = await back.boundingBox();
   expect(box!.width).toBeGreaterThanOrEqual(44);
@@ -57,7 +57,7 @@ test("the back button hides during a run and returns with the result", async ({ 
   const seed = 4242;
   await pinSeed(page, seed);
   await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
-  await page.goto("/practice/stacking");
+  await gotoReady(page, "/practice/stacking");
   const back = page.getByRole("main").getByRole("link", { name: "Back", exact: true });
   await expect(back).toBeVisible();
   await page.clock.pauseAt(new Date("2026-01-01T00:00:30Z"));
@@ -77,7 +77,7 @@ test("the back button hides during a run and returns with the result", async ({ 
 });
 
 test("the game canvas finds its colour tokens", async ({ page }) => {
-  await page.goto("/practice/stacking");
+  await gotoReady(page, "/practice/stacking");
   await page.getByRole("button", { name: "Start" }).click();
   const canvas = page.getByRole("img", { name: /Teetering Tower game area/ });
   await expect(canvas).toBeVisible();

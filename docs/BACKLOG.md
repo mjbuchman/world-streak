@@ -548,7 +548,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T112 Remaining e2e link clicks wait for hydration
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T78
 - Acceptance criteria:
   - [ ] Every e2e spec that clicks a link or button right after `page.goto` uses `gotoReady` (or waits for the action's reply), for example `look.spec.ts` "the back button … goes home" and `auth.spec.ts` "sign up, sign out, then sign in again" (the header's Sign in link after sign-out).
@@ -595,7 +595,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T117 Admin dev tools: seed and close
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T116
 - Acceptance criteria:
   - [ ] The "Local tools" panel can seed fake players (count, pass rate, date) and close a day, sharing the code of `npm run seed:dev` and `npm run close-day` (the scripts keep working); remove all fake players too.

@@ -15,7 +15,7 @@ test("practice tower works signed out, ends with a score and offers another go",
   const seed = 777;
   await pinSeed(page, seed);
   await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
-  await page.goto("/practice/stacking");
+  await gotoReady(page, "/practice/stacking");
   await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
   await page.clock.pauseAt(new Date("2026-01-01T00:00:30Z"));
 
@@ -51,7 +51,7 @@ test("a deliberate miss in practice ends the run with the score the engine gives
   const seed = 12345;
   await pinSeed(page, seed);
   await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
-  await page.goto("/practice/stacking");
+  await gotoReady(page, "/practice/stacking");
   await page.clock.pauseAt(new Date("2026-01-01T00:00:30Z"));
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByRole("status")).toHaveText("Row 1");
