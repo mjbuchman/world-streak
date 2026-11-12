@@ -2,7 +2,7 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { FlashCountGame } from "./FlashCountGame";
+import { COUNTDOWN_STEP_MS, FlashCountGame } from "./FlashCountGame";
 
 const params = {
   dotCount: 2,
@@ -41,9 +41,65 @@ function frameAt(now: number) {
 
 const canvas = () => document.querySelector("canvas")!;
 
+describe("FlashCountGame countdown (T119)", () => {
+  const countdown = () => document.querySelector("[data-countdown]");
+
+  it("counts 3, 2, 1 by elapsed time, then flashes the dots for the whole flash", () => {
+    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+    frameAt(1000);
+    expect(canvas().dataset.showing).toBe("countdown");
+    expect(countdown()?.textContent).toBe("3");
+    expect(canvas().getAttribute("aria-label")).toBe("Get ready.");
+    frameAt(1000 + COUNTDOWN_STEP_MS);
+    expect(countdown()?.textContent).toBe("2");
+    frameAt(1000 + 3 * COUNTDOWN_STEP_MS - 1);
+    expect(countdown()?.textContent).toBe("1");
+    // No dot is drawn before the countdown ends.
+    expect(ctx.arc).not.toHaveBeenCalled();
+
+    frameAt(1000 + 3 * COUNTDOWN_STEP_MS);
+    expect(canvas().dataset.showing).toBe("dots");
+    expect(countdown()).toBeNull();
+    expect(ctx.arc).toHaveBeenCalledTimes(2);
+    // The flash is as long as ever, counted from the end of the countdown.
+    frameAt(1000 + 3 * COUNTDOWN_STEP_MS + params.flashMs - 1);
+    expect(canvas().dataset.showing).toBe("dots");
+    frameAt(1000 + 3 * COUNTDOWN_STEP_MS + params.flashMs);
+    expect(canvas().dataset.showing).toBe("clear");
+  });
+
+  it("gives the whole flash even when a slow frame lands past the end of the countdown", () => {
+    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+    frameAt(1000);
+    // The dots first show 300 ms late; the flash counts from then.
+    const first = 1000 + 3 * COUNTDOWN_STEP_MS + 300;
+    frameAt(first);
+    expect(canvas().dataset.showing).toBe("dots");
+    frameAt(first + params.flashMs - 1);
+    expect(canvas().dataset.showing).toBe("dots");
+    frameAt(first + params.flashMs);
+    expect(canvas().dataset.showing).toBe("clear");
+  });
+
+  it("starts the countdown again at 3 if the tab is hidden during it", () => {
+    let hidden = false;
+    vi.spyOn(document, "hidden", "get").mockImplementation(() => hidden);
+    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+    frameAt(1000);
+    frameAt(1000 + COUNTDOWN_STEP_MS);
+    expect(countdown()?.textContent).toBe("2");
+    hidden = true;
+    act(() => void document.dispatchEvent(new Event("visibilitychange")));
+    hidden = false;
+    act(() => void document.dispatchEvent(new Event("visibilitychange")));
+    frameAt(9000);
+    expect(countdown()?.textContent).toBe("3");
+  });
+});
+
 describe("FlashCountGame", () => {
   it("draws nothing until the first frame after it is on screen", () => {
-    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+    render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
     expect(ctx.arc).not.toHaveBeenCalled();
     frameAt(1000);
     expect(ctx.arc).toHaveBeenCalledTimes(2);
@@ -51,7 +107,7 @@ describe("FlashCountGame", () => {
   });
 
   it("clears the dots by elapsed time, not by frames, then asks for the count", () => {
-    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+    render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
     frameAt(1000);
     // Many frames, but under a second: still shown.
     for (const now of [1016, 1033, 1500, 1999]) frameAt(now);
@@ -65,7 +121,7 @@ describe("FlashCountGame", () => {
   });
 
   it("clears after one long frame too (a slow device still sees the dots for about flashMs)", () => {
-    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+    render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
     frameAt(1000);
     frameAt(2400);
     expect(canvas().dataset.showing).toBe("clear");
@@ -74,7 +130,7 @@ describe("FlashCountGame", () => {
   it("reports the entered count", async () => {
     const onFinish = vi.fn();
     const user = userEvent.setup();
-    render(<FlashCountGame params={params} onFinish={onFinish} />);
+    render(<FlashCountGame params={params} countdownMs={0} onFinish={onFinish} />);
     frameAt(1000);
     frameAt(2000);
     const input = screen.getByRole("textbox", { name: "How many dots were there?" });
@@ -85,7 +141,7 @@ describe("FlashCountGame", () => {
   });
 
   it("takes at most three digits", () => {
-    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+    render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
     frameAt(1000);
     frameAt(2000);
     expect(screen.getByRole("textbox").getAttribute("maxlength")).toBe("3");
@@ -94,7 +150,7 @@ describe("FlashCountGame", () => {
   it.each(["", "abc", "2.5", "-3", "1e3"])("refuses %j with a message, reporting nothing", async (typed) => {
     const onFinish = vi.fn();
     const user = userEvent.setup();
-    render(<FlashCountGame params={params} onFinish={onFinish} />);
+    render(<FlashCountGame params={params} countdownMs={0} onFinish={onFinish} />);
     frameAt(1000);
     frameAt(2000);
     if (typed) await user.type(screen.getByRole("textbox"), typed);
@@ -104,7 +160,7 @@ describe("FlashCountGame", () => {
   });
 
   it("stops its frames when it leaves the screen", () => {
-    const { unmount } = render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+    const { unmount } = render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
     unmount();
     expect(cancelAnimationFrame).toHaveBeenCalled();
   });
@@ -121,7 +177,7 @@ describe("FlashCountGame", () => {
     };
 
     it("shows the dots again in full when the tab returns, if it was hidden while they were shown", () => {
-      render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+      render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
       frameAt(1000);
       frameAt(1900);
       setHidden(true);
@@ -136,7 +192,7 @@ describe("FlashCountGame", () => {
     });
 
     it("does not count a frame that runs while the tab is hidden as the start of the flash", () => {
-      render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+      render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
       frameAt(1000);
       setHidden(true);
       frameAt(1100);
@@ -150,7 +206,7 @@ describe("FlashCountGame", () => {
     });
 
     it("changes nothing once the dots have cleared", () => {
-      render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+      render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
       frameAt(1000);
       frameAt(2000);
       setHidden(true);
@@ -162,7 +218,7 @@ describe("FlashCountGame", () => {
 
     it("stops listening when it leaves the screen", () => {
       const remove = vi.spyOn(document, "removeEventListener");
-      const { unmount } = render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+      const { unmount } = render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
       unmount();
       expect(remove).toHaveBeenCalledWith("visibilitychange", expect.any(Function));
     });

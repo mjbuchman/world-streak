@@ -567,7 +567,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T118 Second Sense clock fades out; targets 7-13 s
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T113
 - Acceptance criteria:
   - [ ] The first second's clock fades away gracefully instead of vanishing (no fade with reduced motion); the tap timing is unchanged.
@@ -577,7 +577,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T119 Swift Sum countdown before the dots
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T29
 - Acceptance criteria:
   - [ ] Before the dots flash, a "3, 2, 1" countdown animation builds up to it (daily play and practice); the flash itself is unchanged and starts right after "1". Reduced motion: the numbers without the animation.
