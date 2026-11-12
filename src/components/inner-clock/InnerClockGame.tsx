@@ -50,6 +50,7 @@ export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
   useEffect(() => {
     areaRef.current?.focus();
     let timer: ReturnType<typeof setTimeout> | undefined;
+    // This effect's own start; the ref is what tap() reads, and outlives a re-run of the effect.
     let start: number | null = null;
     // The first frame starts the run; each later one moves the clock on, until it has faded
     // (elapsed time, not frames, decides).
