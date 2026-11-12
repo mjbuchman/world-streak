@@ -81,6 +81,66 @@ async function startRun() {
   await screen.findByTestId("game");
 }
 
+// The page re-renders PlayToday with a fresh `initial` whenever the server refreshes it (T69).
+describe("PlayToday across server refreshes (T69)", () => {
+  const RELOAD = "Your attempt's latest state could not be loaded. Reload the page to see it.";
+  const page = (initial: Parameters<typeof PlayToday>[0]["initial"]) => <PlayToday challenge="stacking" initial={initial} />;
+
+  it("keeps a running game when a refresh reports the attempt as started", async () => {
+    respond(json(200, started));
+    const { rerender } = render(page({ kind: "ready" }));
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    await screen.findByTestId("game");
+    rerender(page({ kind: "abandoned" }));
+    expect(screen.getByTestId("game")).toBeTruthy();
+    expect(screen.queryByText(/haven't finished it here/)).toBeNull();
+  });
+
+  it("keeps checking the result when a refresh arrives meanwhile", async () => {
+    respond(json(200, started));
+    fetchSpy.mockReturnValueOnce(new Promise(() => {}));
+    const { rerender } = render(page({ kind: "ready" }));
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    await screen.findByTestId("game");
+    await finish([900], 1);
+    rerender(page({ kind: "abandoned" }));
+    expect(screen.getByText("Checking your result")).toBeTruthy();
+  });
+
+  it("shows the stored result the refresh brings after a submission elsewhere", async () => {
+    respond(json(409, { error: "already-started", submitted: true }));
+    const { rerender } = render(page({ kind: "ready" }));
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    await vi.waitFor(() => expect(refresh).toHaveBeenCalled());
+    rerender(page({ kind: "submitted", score: 4, passed: false, passTarget: 10 }));
+    expect(await screen.findByRole("heading", { name: "Not this time" })).toBeTruthy();
+  });
+
+  it("asks for a reload, rather than staying on Starting, when the refresh brings nothing new", async () => {
+    respond(json(409, { error: "already-started", submitted: true }));
+    render(page({ kind: "ready" }));
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    expect((await screen.findByRole("alert")).textContent).toBe(RELOAD);
+    expect(screen.getByRole("heading", { name: "Reload the page" })).toBeTruthy();
+  });
+
+  it("asks for a reload when the refresh still says ready, which would only offer Start again", async () => {
+    respond(json(200, started), json(409, { error: "already-submitted" }));
+    const { rerender } = render(page({ kind: "ready" }));
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    await screen.findByTestId("game");
+    refresh.mockImplementationOnce(() => rerender(page({ kind: "ready" })));
+    await finish([900], 1);
+    expect((await screen.findByRole("alert")).textContent).toBe(RELOAD);
+  });
+
+  it("follows a refresh outside a run", () => {
+    const { rerender } = render(page({ kind: "ready" }));
+    rerender(page({ kind: "submitted", score: 12, passed: true, passTarget: 10 }));
+    expect(screen.getByRole("heading", { name: "Passed" })).toBeTruthy();
+  });
+});
+
 describe("PlayToday share card (T32)", () => {
   it.each([true, false])("offers the spoiler-free card under the result (passed: %s)", (passed) => {
     render(<PlayToday challenge="stacking" initial={{ kind: "submitted", score: 7, passed, passTarget: 10 }} />);

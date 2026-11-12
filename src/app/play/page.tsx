@@ -43,8 +43,8 @@ export default async function PlayPage() {
 
   return (
     <PageShell title={title} backHref="/">
-      {/* Keyed on the status, so a refresh after a submission elsewhere shows the new state. */}
-      <PlayToday key={status.kind} challenge={challenge} initial={status} afterResult={<AdSlot name="play-result" />} />
+      {/* Not keyed: PlayToday follows a refreshed status itself, and never mid-run (T69). */}
+      <PlayToday challenge={challenge} initial={status} afterResult={<AdSlot name="play-result" />} />
     </PageShell>
   );
 }

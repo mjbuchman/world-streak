@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, useTransition } from "react";
 import type { ChallengeType } from "@/challenges/shared/types";
 import { challengeUi } from "@/components/challenges/challengeUi";
 import { Meter } from "@/components/Meter";
@@ -26,7 +26,24 @@ type Phase =
   // challengeType: the challenge played, when this visit played it (the page's may be a day old).
   | { name: "result"; verdict: Verdict; fresh: boolean; challengeType?: ChallengeType }
   | { name: "abandoned" }
+  // The server reported a state this page cannot know (a 409); router.refresh() is fetching it.
+  | { name: "refreshing" }
   | { name: "failed"; heading: string; message: string };
+
+// The refresh brought nothing new (or only "ready", which would just offer Start again).
+const STALE: Phase = {
+  name: "failed",
+  heading: "Reload the page",
+  message: "Your attempt's latest state could not be loaded. Reload the page to see it.",
+};
+
+/** What a fresh `initial` from the server means for the phase on screen (T69). */
+function afterServerUpdate(phase: Phase, status: PlayStatus): Phase {
+  // A refresh must never unmount a run or a result being checked.
+  if (phase.name === "playing" || phase.name === "checking") return phase;
+  const next = initialPhase(status);
+  return phase.name === "refreshing" && next.name === "ready" ? STALE : next;
+}
 
 function initialPhase(status: PlayStatus): Phase {
   if (status.kind === "submitted") return { name: "result", verdict: status, fresh: false };
@@ -51,14 +68,31 @@ export function PlayToday({
 }) {
   const ui = challengeUi(challenge);
   const router = useRouter();
-  const [phase, setPhase] = useState<Phase>(() => initialPhase(initial));
+  const [current, setPhase] = useState<Phase>(() => initialPhase(initial));
+  const [refreshPending, startRefresh] = useTransition();
+
+  // Each server refresh passes a new `initial`: follow it, except mid-run (T69; the page used to
+  // remount on a changed status, which could end a run).
+  const [seen, setSeen] = useState(initial);
+  if (initial !== seen) {
+    setSeen(initial);
+    setPhase(afterServerUpdate(current, initial));
+  }
+
+  // The refresh finished without a new `initial`: say so rather than spin forever.
+  const phase = current.name === "refreshing" && !refreshPending ? STALE : current;
+
+  function refreshFromServer() {
+    setPhase({ name: "refreshing" });
+    startRefresh(() => router.refresh());
+  }
 
   async function start() {
     setPhase({ name: "starting" });
     try {
       const response = await fetch("/api/attempts/start", { method: "POST" });
       const outcome = startOutcome(response.status, (await response.json()) as StartBody);
-      if (outcome.name === "refresh") return router.refresh();
+      if (outcome.name === "refresh") return refreshFromServer();
       setPhase(outcome);
     } catch {
       // Offline, or not JSON: offer Start again.
@@ -75,7 +109,7 @@ export function PlayToday({
         body: JSON.stringify({ attemptId, inputs }),
       });
       const outcome = submitOutcome((await response.json()) as SubmitBody);
-      if (outcome.name === "refresh") return router.refresh();
+      if (outcome.name === "refresh") return refreshFromServer();
       setPhase(outcome.name === "result" ? { ...outcome, fresh: true, challengeType } : outcome);
     } catch {
       setPhase({ name: "failed", ...SUBMIT_FAILED });
@@ -97,9 +131,10 @@ export function PlayToday({
       });
 
     case "checking":
+    case "refreshing":
       return (
         <div className={styles.checking}>
-          <Spinner label="Checking your result" visibleLabel />
+          <Spinner label={phase.name === "checking" ? "Checking your result" : "Loading your attempt"} visibleLabel />
         </div>
       );
 

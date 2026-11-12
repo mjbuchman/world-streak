@@ -1338,7 +1338,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T91 An unfinished attempt is not necessarily abandoned (wording after T87)
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T87
 - Acceptance criteria:
   - [ ] When today's attempt has started but not been submitted, `/play` shows wording that stays true now that runs have no time limit (the human approves the exact text; see NEEDS_HUMAN).
@@ -1383,7 +1383,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T69 Play page polish: shared button styles, error page, stable run
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T14
 - Acceptance criteria:
   - [ ] (Superseded by T73, which builds the shared `Button`; drop this item.)
