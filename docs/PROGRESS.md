@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T70 Local setup accuracy (PR #129)
+- `npm run env:local` prints the `.env.local` lines; `db:stop`; README play-testing notes; leftover .gitkeep files gone.
+- Review rounds: quality 1 (light). Merges since the check: 7.
+
 ### 2026-11-12 — T69 Stable /play across refreshes (PR #128)
 - No `key` remount: PlayToday follows refreshed status except mid-run; a stale refresh shows "Reload the page"; `play/error.tsx`.
 - Review rounds: spec 1, quality 1, tests 1. Merges since the check: 6.
