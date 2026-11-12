@@ -586,7 +586,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T120 One error helper and one error rule for the local tools
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] `src/lib/localTools.ts` drops its private `failed(step, error)` and reuses `check` from `src/lib/devData.ts` (or both share one helper); message wording unchanged and covered by the existing tests.
@@ -748,7 +748,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T37 Local multi-day simulation script
 - Type: infra
-- Status: in-progress
+- Status: done
 - Depends on: T34, T20
 - Acceptance criteria:
   - [ ] `npm run simulate:days -- --from 2027-01-01 --days 30 --players 50 --pass-rate 0.8` creates the game days, fake attempts (via `record_attempt_result`, so counters and entries update) and closes each day in order (local-only guard).

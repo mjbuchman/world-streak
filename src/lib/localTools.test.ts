@@ -69,6 +69,26 @@ const NOBODY = ok({ attempts: 0 });
 beforeEach(() => vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321"));
 afterEach(() => vi.unstubAllEnvs());
 
+describe("every tool shows a failed step as a refusal (T120)", () => {
+  const boom = { data: null, error: { message: "boom" } };
+  it.each([
+    ["clear-my-attempt", {}, "Attempt lookup failed: boom"],
+    ["reset-day", { gameDate: "2026-11-12" }, "Game day lookup failed: boom"],
+    ["restore-rotation", {}, "Saving the rotation failed: boom"],
+  ])("%s", async (tool, fields, message) => {
+    const { db } = fakeDb([boom, boom]);
+    expect(await runLocalTool(caller(), db, form({ tool, ...fields }), NOW, fakeData())).toEqual({ ok: false, message });
+  });
+
+  it("remove-fake-players", async () => {
+    const data = fakeData({ removeFakePlayers: vi.fn(async () => Promise.reject(new Error("Listing users failed: boom"))) });
+    expect(await runLocalTool(caller(), fakeDb([]).db, form({ tool: "remove-fake-players" }), NOW, data)).toEqual({
+      ok: false,
+      message: "Listing users failed: boom",
+    });
+  });
+});
+
 describe("localToolsEnabled", () => {
   it("is on only for the local Supabase", () => {
     expect(localToolsEnabled("http://127.0.0.1:54321")).toBe(true);
@@ -150,9 +170,12 @@ describe("set-challenge", () => {
     expect(await runLocalTool(caller(), db, setTo("stacking"), NOW, fakeData())).toEqual({ ok: false, message: "Unknown game day." });
   });
 
-  it("throws when the database fails, rather than claiming success", async () => {
+  it("shows a database failure as a refusal, rather than claiming success", async () => {
     const { db } = fakeDb([{ data: null, error: { message: "boom" } }]);
-    await expect(runLocalTool(caller(), db, setTo("stacking"), NOW, fakeData())).rejects.toThrow("Preparing the game day failed: boom");
+    expect(await runLocalTool(caller(), db, setTo("stacking"), NOW, fakeData())).toEqual({
+      ok: false,
+      message: "Preparing the game day failed: boom",
+    });
   });
 });
 

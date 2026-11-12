@@ -6,7 +6,7 @@ import { CHALLENGE_TYPES, type ChallengeType } from "@/challenges/shared/types";
 import { CHALLENGE_NAMES } from "@/config/challenges";
 import { isAdmin } from "@/lib/admin";
 import { dbInteger, dbNumber } from "@/lib/db/numeric";
-import { removeFakePlayers, runCloseDay, runSeed, supabaseCloseDayDeps, supabaseSeedDeps, type SeedArgs } from "@/lib/devData";
+import { check, removeFakePlayers, runCloseDay, runSeed, supabaseCloseDayDeps, supabaseSeedDeps, type SeedArgs } from "@/lib/devData";
 import { gameDateAt } from "@/lib/gameDay";
 import { dayLabel } from "@/lib/streak/streak";
 import { isLocalSupabaseUrl } from "@/lib/supabase/local";
@@ -30,7 +30,6 @@ export function localToolsEnabled(url = process.env.NEXT_PUBLIC_SUPABASE_URL): b
 const refuse = (message: string): ToolState => ({ ok: false, message });
 const done = (message: string): ToolState => ({ ok: true, message });
 
-const failed = (step: string, error: { message: string }) => new Error(`${step} failed: ${error.message}`);
 
 const gameDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Unknown game day.");
 const toolSchema = z.discriminatedUnion("tool", [
@@ -58,8 +57,8 @@ async function dayStatus(db: Db, date: string): Promise<{ closed: boolean; start
     db.from("game_days").select("closed_at").eq("game_date", date).maybeSingle(),
     db.from("game_day_counters").select("attempts").eq("game_date", date).maybeSingle(),
   ]);
-  if (day.error) throw failed("Game day lookup", day.error);
-  if (counters.error) throw failed("Counters lookup", counters.error);
+  check("Game day lookup", day);
+  check("Counters lookup", counters);
   if (!day.data) return null;
   const attempts = counters.data ? dbInteger((counters.data as { attempts: unknown }).attempts, "attempts") : 0;
   return { closed: (day.data as { closed_at: string | null }).closed_at !== null, started: attempts > 0 };
@@ -68,17 +67,17 @@ async function dayStatus(db: Db, date: string): Promise<{ closed: boolean; start
 /** Gives an open day nobody has started another challenge, with that challenge's pass target. */
 async function setChallenge(db: Db, date: string, challenge: ChallengeType): Promise<ToolState> {
   const ensured = await db.rpc("ensure_game_day", { d: date });
-  if (ensured.error) throw failed("Preparing the game day", ensured.error);
+  check("Preparing the game day", ensured);
   const status = await dayStatus(db, date);
   if (!status) return refuse("Unknown game day.");
   if (status.closed) return refuse(`${dayLabel(date)} has closed, so its challenge can no longer change.`);
   if (status.started) return refuse(`${dayLabel(date)} has started. Reset it first, then change its challenge.`);
 
   const streak = await db.rpc("world_streak").single();
-  if (streak.error) throw failed("World streak lookup", streak.error);
+  check("World streak lookup", streak);
   const current = dbInteger((streak.data as { current: unknown }).current, "current");
   const target = await db.rpc("pass_target_for", { challenge, d: date, streak: current });
-  if (target.error) throw failed("Pass target lookup", target.error);
+  check("Pass target lookup", target);
 
   // Edited, so the rotation leaves it alone.
   const saved = await db
@@ -86,7 +85,7 @@ async function setChallenge(db: Db, date: string, challenge: ChallengeType): Pro
     .update({ challenge_type: challenge, pass_target: dbNumber(target.data, "pass_target"), edited: true })
     .eq("game_date", date)
     .is("closed_at", null);
-  if (saved.error) throw failed("Saving the challenge", saved.error);
+  check("Saving the challenge", saved);
   return done(`${dayLabel(date)} is now ${CHALLENGE_NAMES[challenge]}.`);
 }
 
@@ -102,7 +101,7 @@ async function clearMyAttempt(caller: Caller, db: Db, now: Date): Promise<ToolSt
     .eq("user_id", auth.user.id)
     .eq("game_date", today)
     .maybeSingle();
-  if (found.error) throw failed("Attempt lookup", found.error);
+  check("Attempt lookup", found);
   if (!found.data) return refuse("You have no attempt today.");
   const attempt = found.data as { id: string; passed: boolean | null; counted_weight: unknown };
 
@@ -111,14 +110,14 @@ async function clearMyAttempt(caller: Caller, db: Db, now: Date): Promise<ToolSt
     .select("attempts, passes, weighted_attempts, weighted_passes")
     .eq("game_date", today)
     .single();
-  if (counters.error) throw failed("Counters lookup", counters.error);
+  check("Counters lookup", counters);
   const row = counters.data as Record<"attempts" | "passes" | "weighted_attempts" | "weighted_passes", unknown>;
   // Rows from before weights were stamped count as weight 0 (T17), so they take nothing back.
   const weight = attempt.counted_weight === null ? 0 : dbNumber(attempt.counted_weight, "counted_weight");
   const passed = attempt.passed === true;
 
   const deleted = await db.from("attempts").delete().eq("id", attempt.id);
-  if (deleted.error) throw failed("Deleting the attempt", deleted.error);
+  check("Deleting the attempt", deleted);
   // Local only, one person at a time: this read-then-write cannot race another change.
   const updated = await db
     .from("game_day_counters")
@@ -129,7 +128,7 @@ async function clearMyAttempt(caller: Caller, db: Db, now: Date): Promise<ToolSt
       weighted_passes: Math.max(0, dbNumber(row.weighted_passes, "weighted_passes") - (passed ? weight : 0)),
     })
     .eq("game_date", today);
-  if (updated.error) throw failed("Updating the counters", updated.error);
+  check("Updating the counters", updated);
   return done("Your attempt today is gone. You can play again.");
 }
 
@@ -143,23 +142,23 @@ async function resetDay(db: Db, date: string): Promise<ToolState> {
   if (status.closed) return refuse(`${dayLabel(date)} has closed and the streak counts it, so it cannot be reset.`);
 
   const deleted = await db.from("attempts").delete().eq("game_date", date);
-  if (deleted.error) throw failed("Deleting the attempts", deleted.error);
+  check("Deleting the attempts", deleted);
   const zeroed = await db
     .from("game_day_counters")
     .update({ attempts: 0, passes: 0, weighted_attempts: 0, weighted_passes: 0 })
     .eq("game_date", date);
-  if (zeroed.error) throw failed("Clearing the counters", zeroed.error);
+  check("Clearing the counters", zeroed);
   const unedited = await db.from("game_days").update({ edited: false }).eq("game_date", date).is("closed_at", null);
-  if (unedited.error) throw failed("Clearing the edit", unedited.error);
+  check("Clearing the edit", unedited);
   // Now untouched, so this sets the rotation's challenge and target again.
   const ensured = await db.rpc("ensure_game_day", { d: date });
-  if (ensured.error) throw failed("Preparing the game day", ensured.error);
+  check("Preparing the game day", ensured);
   return done(`${dayLabel(date)} is reset: no attempts, and it follows the rotation again.`);
 }
 
 async function restoreRotation(db: Db): Promise<ToolState> {
   const saved = await db.from("game_settings").update({ rotation: DEFAULT_ROTATION }).eq("id", true);
-  if (saved.error) throw failed("Saving the rotation", saved.error);
+  check("Saving the rotation", saved);
   return done(`The rotation is back to ${DEFAULT_ROTATION.map((type) => CHALLENGE_NAMES[type]).join(", ")}.`);
 }
 
@@ -174,7 +173,15 @@ export async function runLocalTool(caller: Caller, db: Db, form: FormData, now: 
 
   const parsed = toolSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return refuse(parsed.error.issues[0].message);
-  const input = parsed.data;
+  // One rule for every tool: a failed step comes back as a message, never an error page.
+  try {
+    return await runTool(caller, db, parsed.data, now, data);
+  } catch (error) {
+    return refuse(error instanceof Error ? error.message : String(error));
+  }
+}
+
+async function runTool(caller: Caller, db: Db, input: z.infer<typeof toolSchema>, now: Date, data: DevData): Promise<ToolState> {
   switch (input.tool) {
     case "set-challenge":
       return setChallenge(db, input.gameDate, input.challenge);
@@ -214,20 +221,11 @@ export function supabaseDevData(db: SupabaseClient): DevData {
 }
 
 async function seedPlayers(date: string, players: number, passRate: number, data: DevData): Promise<ToolState> {
-  try {
-    return done(await data.seed({ players, passRate, date }));
-  } catch (error) {
-    // The seed's own refusals (a closed day) are worth showing as they are.
-    return refuse(error instanceof Error ? error.message : String(error));
-  }
+  return done(await data.seed({ players, passRate, date }));
 }
 
 async function closeDay(date: string, data: DevData, now: Date): Promise<ToolState> {
   // The database refuses a day before its deadline too; this says why in plain words.
   if (date >= gameDateAt(now)) return refuse(`${dayLabel(date)} has not reached its deadline yet, so it cannot close.`);
-  try {
-    return done(await data.closeDay(date));
-  } catch (error) {
-    return refuse(error instanceof Error ? error.message : String(error));
-  }
+  return done(await data.closeDay(date));
 }
