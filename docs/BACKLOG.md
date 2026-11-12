@@ -1039,7 +1039,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T132 One set of admin form helpers
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] The zod `number(label)` field helper is defined once (for example `src/lib/adminForm.ts`) and used by `adminEdit.ts` and `adminSettings.ts`.
@@ -1050,7 +1050,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T133 One helper for the admin server actions
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T132
 - Acceptance criteria:
   - [ ] The five `EditState` actions in `src/app/admin/actions.ts` are built from one helper (for example `adminAction(path, run)`) that makes the caller's server client, runs the save and revalidates the path only when `state.ok`.
