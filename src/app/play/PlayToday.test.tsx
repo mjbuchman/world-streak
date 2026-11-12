@@ -28,6 +28,10 @@ vi.mock("@/components/flash-count/FlashCountGame", () => ({
 }));
 // The meter polls on its own (Meter.test.tsx); here it must not take the start and submit replies.
 vi.mock("@/components/Meter", () => ({ Meter: () => <section data-testid="meter" /> }));
+// The share card fetches the meter itself (ShareCard.test.tsx); here a stand-in shows what it got.
+vi.mock("@/components/ShareCard", () => ({
+  ShareCard: ({ passed }: { passed: boolean }) => <section aria-label="Share your day" data-passed={String(passed)} />,
+}));
 const refresh = vi.hoisted(() => vi.fn());
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 
@@ -71,6 +75,18 @@ async function startRun() {
   await userEvent.click(screen.getByRole("button", { name: "Start" }));
   await screen.findByTestId("game");
 }
+
+describe("PlayToday share card (T32)", () => {
+  it.each([true, false])("offers the spoiler-free card under the result (passed: %s)", (passed) => {
+    render(<PlayToday challenge="stacking" initial={{ kind: "submitted", score: 7, passed, passTarget: 10 }} />);
+    expect(screen.getByRole("region", { name: "Share your day" }).dataset.passed).toBe(String(passed));
+  });
+
+  it("offers no card before the attempt has a result", () => {
+    render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
+    expect(screen.queryByRole("region", { name: "Share your day" })).toBeNull();
+  });
+});
 
 describe("PlayToday with another challenge (T30)", () => {
   it("shows that challenge's how-to and practice page", () => {

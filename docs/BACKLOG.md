@@ -528,7 +528,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T31 Daily challenge rotation
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T22, T30
 - Acceptance criteria:
   - [ ] `game_settings` gains `rotation text[]`, default `{stacking,inner-clock,flash-count}`. The next day's type is `rotation[(next_date - date '2027-01-01') mod array_length + 1]` (positive modulo, so dates before 2027 work).
@@ -546,9 +546,18 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] Unit tests for the action (unknown type refused, started day refused); pgTAP for the policy.
 - Notes: Split from T31 (Nov 12).
 
+### T112 Remaining e2e link clicks wait for hydration
+- Type: maintenance
+- Status: todo
+- Depends on: T78
+- Acceptance criteria:
+  - [ ] Every e2e spec that clicks a link or button right after `page.goto` uses `gotoReady` (or waits for the action's reply), for example `look.spec.ts` "the back button … goes home" and `auth.spec.ts` "sign up, sign out, then sign in again" (the header's Sign in link after sign-out).
+  - [ ] `npm run test:e2e:local` passes 3 full runs in a row at the default workers.
+- Notes: Seen once each during T32 (a click lost under 6-worker load; both passed on a re-run). T78 covered the shared helpers only. About 20 lines.
+
 ### T32 Spoiler-free share card with call for help
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T24, T30
 - Acceptance criteria:
   - [ ] `src/config/share.ts` exports `NEAR_THRESHOLD_MARGIN = 0.05`. `src/lib/share.ts` exports pure `buildShareText({ passed, gameDate, streak, meter, siteUrl })`.
