@@ -644,7 +644,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T129 Recount a day's counters in one statement
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T120
 - Acceptance criteria:
   - [ ] `recountDay` in `src/lib/devData.ts` sets a day's counters from its attempts in one SQL statement (a small service-role function), so an attempt started meanwhile cannot lose its count; pgTAP covers it.
@@ -653,7 +653,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T123 Cheat check tests: exact boundaries and flag lists
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T40
 - Acceptance criteria:
   - [ ] `src/lib/cheat/detect.test.ts` pins the robotic-rhythm boundary (a standard deviation of exactly `STACKING_RHYTHM_MAX_SD_MS` is not flagged, just under is), and each rule's positive case asserts the whole flag list (`toEqual`), so an extra flag fails.

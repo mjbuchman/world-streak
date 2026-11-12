@@ -202,25 +202,7 @@ export async function removeFakePlayers(db: SupabaseClient): Promise<number> {
   }
 
   const open = check("Open day lookup", await db.from("game_days").select("game_date").is("closed_at", null)) as { game_date: string }[];
-  for (const { game_date } of open) await recountDay(db, game_date);
+  // One database call per day, so a start in progress cannot lose its count (T129).
+  for (const { game_date } of open) check("Recount", await db.rpc("recount_game_day", { d: game_date }));
   return fake.length;
-}
-
-/** Sets a day's counters from its attempts, as the start trigger and results would have. */
-async function recountDay(db: SupabaseClient, date: string): Promise<void> {
-  const rows = check(
-    "Attempts lookup",
-    await db.from("attempts").select("passed, counted_weight").eq("game_date", date),
-  ) as { passed: boolean | null; counted_weight: unknown }[];
-  const counters = { attempts: 0, passes: 0, weighted_attempts: 0, weighted_passes: 0 };
-  for (const row of rows) {
-    const weight = row.counted_weight === null ? 0 : dbNumber(row.counted_weight, "counted_weight");
-    counters.attempts += 1;
-    counters.weighted_attempts += weight;
-    if (row.passed === true) {
-      counters.passes += 1;
-      counters.weighted_passes += weight;
-    }
-  }
-  check("Counters update", await db.from("game_day_counters").update(counters).eq("game_date", date));
 }
