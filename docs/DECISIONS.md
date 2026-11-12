@@ -249,6 +249,18 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - No other issues found in the play-test.
 - Confirmed by human: yes (these are the human's decisions).
 
+### 2026-11-12 — Human decisions at the M3 play-test (overrides)
+- **Second Sense:** start with a visible timer that hides very quickly, so the player has an exact starting point; raise the targets to make up for the visible second or two (T113).
+- **Swift Sum:** works, but feels like a crapshoot. Balance it so you cannot quite count every dot in time but can make an educated guess: fewer dots or more time (T114).
+- **Admin page:** controls for everything that is done on the command line today (seed attempts, change or reset a game day, and the rest), so no commands need remembering (T116, T117).
+- **Share:** no visible share text, just the button (the messaging app shows the prefilled text). Emojis are welcome in the share text only, for example as a progress bar, so it stands out (T115).
+- Confirmed by human: yes (these are the human's decisions).
+
+### 2026-11-12 — Share text emojis (T115)
+- Choice: ✅ or ❌ before the outcome, 🔥 before the world streak, and the meter as a 10-square bar (🟩 filled at or above the line, 🟧 filled below it, ⬜ empty) followed by "62% today, 60% needed"; a call for help adds 🆘. The card shows only the Share button; if copying fails, the text appears so it can be copied by hand.
+- How to change it later: `src/lib/share.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, next play-test).
+
 ### 2026-11-12 — Share card wording and margin (T32)
 - Choice: a share becomes a call for help when the open meter's pass rate is under the threshold plus `NEAR_THRESHOLD_MARGIN` = 0.05 (also when it is under the threshold itself). The card has the game, the date, the outcome, the world streak, the world's line and the site; no score, target or challenge. If the meter cannot be read, the streak and world lines are left out. The link is `NEXT_PUBLIC_SITE_URL`, else the page's own address.
 - Reason: the backlog's placeholder; the design has no number for "near the threshold".

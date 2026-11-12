@@ -39,11 +39,14 @@ function useMeterOnce(): { meter: MeterBody | null; loaded: boolean } {
 
 /**
  * The spoiler-free card under today's result (T32): the outcome, the world streak and how the
- * world is doing, never the score. Share uses the device's share sheet, else copies the text.
+ * world is doing, never the score. Share uses the device's share sheet, else copies the text; the
+ * page shows only the button (M3 play-test), and the text only when copying failed.
  */
 export function ShareCard({ passed, siteUrl, now }: ShareCardProps) {
   const { meter, loaded } = useMeterOnce();
   const [status, setStatus] = useState<string | null>(null);
+  // The text stays off the page (the share sheet shows it) unless it has to be copied by hand.
+  const [showText, setShowText] = useState(false);
   // Nothing until the meter read settles, which only happens in the browser (so `window` is there).
   if (!loaded) return null;
 
@@ -59,22 +62,23 @@ export function ShareCard({ passed, siteUrl, now }: ShareCardProps) {
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({ text });
-      } catch {
-        // Closing the share sheet is not an error worth showing.
+        return;
+      } catch (error) {
+        // Closing the share sheet is not an error worth showing; any other failure falls back to copying.
+        if (error instanceof DOMException && error.name === "AbortError") return;
       }
-      return;
     }
     try {
       await navigator.clipboard.writeText(text);
       setStatus("Copied");
     } catch {
-      setStatus("Could not copy. Select the text and copy it.");
+      setStatus("Could not copy. Select the text below and copy it.");
+      setShowText(true);
     }
   }
 
   return (
     <Surface as="section" aria-label="Share your day">
-      <pre className={styles.text}>{text}</pre>
       <Button variant="secondary" onClick={share}>
         Share
       </Button>
@@ -83,6 +87,7 @@ export function ShareCard({ passed, siteUrl, now }: ShareCardProps) {
           {status}
         </p>
       )}
+      {showText && <pre className={styles.text}>{text}</pre>}
     </Surface>
   );
 }

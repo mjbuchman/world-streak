@@ -15,19 +15,33 @@ export type ShareInput = {
 
 const percent = (fraction: number) => `${Math.round(fraction * 100)}%`;
 
+const BAR_SQUARES = 10;
+
+/**
+ * The meter as 10 emoji squares: filled to the pass rate, green at or above the line and orange
+ * below it (by the real comparison, so a rate just under the line is orange however it rounds).
+ */
+export function meterBar(passRate: number, threshold: number): string {
+  const filled = Math.round(passRate * BAR_SQUARES);
+  const fill = passRate >= threshold ? "🟩" : "🟧";
+  return fill.repeat(filled) + "⬜".repeat(BAR_SQUARES - filled);
+}
+
 /** "Nov 12, 2026": game dates are UTC dates. */
 const dateLabel = (gameDate: string) =>
   new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" }).format(new Date(`${gameDate}T00:00:00Z`));
 
-/** How the world is doing, as a call for help when it is near (or under) the line; null if unknown. */
-function worldLine(meter: MeterBody | null): string | null {
-  if (!meter) return null;
-  if (meter.status === "hidden") return "The meter is hidden. Every attempt counts!";
-  if (meter.passRate === null || meter.threshold === null) return null;
-  if (meter.passRate < meter.threshold + NEAR_THRESHOLD_MARGIN) {
-    return `The world is close to the line at ${percent(meter.passRate)}. We need you: play before the deadline!`;
+/** How the world is doing, plus a call for help when it is near (or under) the line; none if unknown. */
+function worldLines(meter: MeterBody | null): string[] {
+  if (!meter) return [];
+  if (meter.status === "hidden") return ["🙈 The meter is hidden. Every attempt counts!"];
+  const { passRate, threshold } = meter;
+  if (passRate === null || threshold === null) return [];
+  const status = `${meterBar(passRate, threshold)} ${percent(passRate)} today, ${percent(threshold)} needed`;
+  if (passRate < threshold + NEAR_THRESHOLD_MARGIN) {
+    return [status, "🆘 The world is close to the line. We need you: play before the deadline!"];
   }
-  return `The world is at ${percent(meter.passRate)} today, ${percent(meter.threshold)} needed.`;
+  return [status];
 }
 
 /**
@@ -38,9 +52,9 @@ function worldLine(meter: MeterBody | null): string | null {
 export function buildShareText({ passed, gameDate, streak, meter, siteUrl }: ShareInput): string {
   const lines = [
     `${GAME_NAME} · ${dateLabel(gameDate)}`,
-    passed ? "I passed today's challenge." : "I didn't make it today.",
-    streak === null ? null : `World streak: ${streak} ${streak === 1 ? "day" : "days"}.`,
-    worldLine(meter),
+    passed ? "✅ I passed today's challenge." : "❌ I didn't make it today.",
+    streak === null ? null : `🔥 World streak: ${streak} ${streak === 1 ? "day" : "days"}`,
+    ...worldLines(meter),
     siteUrl,
   ];
   return lines.filter((line): line is string => line !== null).join("\n");

@@ -43,6 +43,12 @@ test("a player plays today's attempt once and sees the server's result, also aft
   // A paused clock drives the game, so the taps land at exactly known times however long the
   // start request takes (an installed clock otherwise keeps running in real time).
   await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+  // A stand-in share sheet that keeps what it was given.
+  await page.addInitScript(() => {
+    navigator.share = async (data) => {
+      (window as unknown as { sharedText?: string }).sharedText = data?.text;
+    };
+  });
   await page.goto("/play");
   await expect(page.getByText(/one scored attempt today/)).toBeVisible();
   // A way back before the run, none during it (leaving mid-run would lose the attempt).
@@ -82,11 +88,14 @@ test("a player plays today's attempt once and sees the server's result, also aft
   const scoreTop = (await page.locator("[data-big-score]").boundingBox())!.y;
   expect(scoreTop).toBeLessThan((await verdict.boundingBox())!.y);
   await expect(page.getByRole("banner").getByRole("button", { name: "Sign out" })).toBeVisible();
-  // The share card (T32): the outcome, never the score or the target.
+  // The share card (T32, T115): just the button; the text it shares has the outcome, never the
+  // score or the target.
   const share = page.getByRole("region", { name: "Share your day" });
-  await expect(share).toContainText("I didn't make it today.");
-  await expect(share).not.toContainText(/row|score|target/i);
-  await expect(share.getByRole("button", { name: "Share" })).toBeVisible();
+  await expect(share).toHaveText("Share");
+  await share.getByRole("button", { name: "Share" }).click();
+  const sharedText = () => page.evaluate(() => (window as unknown as { sharedText?: string }).sharedText ?? "");
+  await expect.poll(sharedText).toContain("I didn't make it today.");
+  expect(await sharedText()).not.toMatch(/row|score|target/i);
   // What was shown is what the server stored: the engine's score for exactly those taps.
   const { data: stored } = await adminClient().from("attempts").select("score, passed").eq("id", instance.attemptId).single();
   expect(stored).toEqual({ score, passed: false });
