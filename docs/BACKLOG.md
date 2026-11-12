@@ -854,7 +854,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `record_attempt_result` computes the weight at submit time: `1` if the account is at least `full_weight_after_days` old, otherwise `new_account_weight`, multiplied by `profiles.weight` (default 1, a manual override). The weight used is stored on the attempt (`attempts.weight`).
   - [ ] pgTAP: with settings `new_account_weight 0.5, full_weight_after_days 7`, a 2-day-old account adds 0.5 to the weighted counters and an 8-day-old account adds 1; with the defaults (1.0, 0), every account adds 1.
   - [ ] The admin settings page (T42) shows both fields with help text.
-- Notes: Depends on **Open** "How much new accounts count, and after how many days they count fully". Per the human's instruction, the default is full weight from day one (1.0 after 0 days), configurable. Record it and flag it.
+- Notes: Depends on **Open** "How much new accounts count, and after how many days they count fully". Per the human's instruction, the default is full weight from day one (1.0 after 0 days), configurable. Record it and flag it. As built: the weight is stamped when the attempt starts, in `attempts.counted_weight` (DECISIONS, T46), since attempts are counted at start.
 
 ### T47 Mobile checks
 - Type: feature
