@@ -103,7 +103,7 @@ test("Swift Sum practice: the dots flash, clear, and an answer shows the true co
   await gotoReady(page, "/practice/flash-count");
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.locator("canvas")).toHaveAttribute("data-showing", "dots");
-  await page.waitForTimeout(1500);
+  // The flash lasts FLASH_MS (1.5 s); the check keeps looking until the board clears.
   await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
 
   const answer = page.getByRole("textbox", { name: "How many dots were there?" });

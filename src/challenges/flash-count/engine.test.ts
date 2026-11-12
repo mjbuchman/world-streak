@@ -28,9 +28,9 @@ function expectValidLayout(dots: Dot[]) {
 }
 
 describe("Flash Count params", () => {
-  it("documents its ranges: 15 to 45 dots, flashed for 1 s, spaced so none touch", () => {
-    expect(DOT_COUNT_RANGE).toEqual({ min: 15, max: 45 });
-    expect(FLASH_MS).toBe(1000);
+  it("documents its ranges: 12 to 30 dots, flashed for 1.5 s, spaced so none touch", () => {
+    expect(DOT_COUNT_RANGE).toEqual({ min: 12, max: 30 });
+    expect(FLASH_MS).toBe(1500);
     // The widest two dots still leave a gap between them.
     expect(MIN_SPACING).toBeGreaterThan(2 * DOT_RADIUS_RANGE.max);
   });
@@ -39,15 +39,15 @@ describe("Flash Count params", () => {
     const counts = new Set<number>();
     for (let seed = 0; seed < 1000; seed++) {
       const params = paramsFromSeed(seed);
-      expect(params.flashMs).toBe(1000);
+      expect(params.flashMs).toBe(1500);
       expect(params.dots).toHaveLength(params.dotCount);
       expect(params.dotCount).toBeGreaterThanOrEqual(DOT_COUNT_RANGE.min);
       expect(params.dotCount).toBeLessThanOrEqual(DOT_COUNT_RANGE.max);
       expectValidLayout(params.dots);
       counts.add(params.dotCount);
     }
-    // Every count from 15 to 45 occurs, the maximum included.
-    expect(counts.size).toBe(31);
+    // Every count from 12 to 30 occurs, the maximum included.
+    expect(counts.size).toBe(19);
   });
 
   it("gives identical dots for the same seed and different layouts for different seeds", () => {
@@ -57,9 +57,9 @@ describe("Flash Count params", () => {
   });
 
   it.each([
-    [0, 23, { x: 0.233, y: 0.159, r: 0.018 }, { x: 0.556, y: 0.855, r: 0.026 }],
-    [1, 34, { x: 0.526, y: 0.964, r: 0.018 }, { x: 0.751, y: 0.781, r: 0.023 }],
-    [4_294_967_295, 42, { x: 0.707, y: 0.927, r: 0.02 }, { x: 0.226, y: 0.473, r: 0.027 }],
+    [0, 17, { x: 0.233, y: 0.159, r: 0.018 }, { x: 0.181, y: 0.018, r: 0.018 }],
+    [1, 23, { x: 0.526, y: 0.964, r: 0.018 }, { x: 0.095, y: 0.794, r: 0.023 }],
+    [4_294_967_295, 29, { x: 0.707, y: 0.927, r: 0.02 }, { x: 0.717, y: 0.375, r: 0.024 }],
   ])("golden: seed %i has %i dots, first and last pinned (changing the PRNG or the layout changes these)", (seed, dotCount, first, last) => {
     const params = paramsFromSeed(seed);
     expect(params.dotCount).toBe(dotCount);
@@ -74,7 +74,7 @@ describe("placeDots", () => {
   });
 
   it("falls back to a fixed grid when random tries run out, so it always ends with a valid layout", () => {
-    // One try per dot cannot place 45 dots at random; the grid can.
+    // One try per dot cannot place 30 dots at random; the grid can.
     const dots = placeDots(createRng(7), DOT_COUNT_RANGE.max, 1);
     expect(dots).toHaveLength(DOT_COUNT_RANGE.max);
     expectValidLayout(dots);
@@ -96,8 +96,8 @@ describe("Flash Count score", () => {
 
   it("rounds the error percentage to 2 decimals", () => {
     expect(countScore(at(33), 30)).toBe(9.09);
-    expect(countScore(at(45), 44)).toBe(2.22);
-    expect(countScore(at(15), 999)).toBe(6560);
+    expect(countScore(at(30), 29)).toBe(3.33);
+    expect(countScore(at(12), 999)).toBe(8225);
   });
 
   it("is lower-better, always finished, and has no timed input", () => {

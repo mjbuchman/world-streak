@@ -3,21 +3,24 @@ import { createRng, type Rng } from "../shared/prng";
 import type { ChallengeModule } from "../shared/types";
 
 /**
- * Swift Sum (Flash Count): dots flash for a second; the player enters how many there were.
+ * Swift Sum (Flash Count): dots flash for FLASH_MS; the player enters how many there were.
  * Score = the error as a percentage of the true count (lower is better).
  *
  * Positions are in a unit square (the renderer scales them), in whole thousandths so they are
  * exact in JSON and the spacing checks hold for the stored numbers.
  */
 
-/** How many dots an instance has (inclusive). */
-export const DOT_COUNT_RANGE = { min: 15, max: 45 } as const;
+/**
+ * How many dots an instance has (inclusive). With FLASH_MS, set after the M3 play-test (was 15-45
+ * in 1 s, which felt like a guess): too many to count one by one in time, few enough to estimate.
+ */
+export const DOT_COUNT_RANGE = { min: 12, max: 30 } as const;
 /** Each dot's radius, in the unit square (inclusive), so dot size gives away nothing. */
 export const DOT_RADIUS_RANGE = { min: 0.018, max: 0.028 } as const;
 /** Least distance between two dots' centres: more than two of the largest radii, so none touch. */
 export const MIN_SPACING = 0.08;
 /** How long the dots are shown. */
-export const FLASH_MS = 1000;
+export const FLASH_MS = 1500;
 /** Random tries per dot before the layout falls back to the grid. */
 const MAX_TRIES_PER_DOT = 200;
 
