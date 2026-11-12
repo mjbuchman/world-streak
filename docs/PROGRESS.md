@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T127 One admin gate (PR #107)
+- `requireAdminPage()` in `src/lib/adminPage.ts`, used by the four admin pages; fails closed.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the M4 check: 6.
+
 ### 2026-11-12 — T126 One module for the UTC date labels (PR #106)
 - `src/lib/dates.ts`: `dayLabel`, `longDayLabel`, `instantLabel`; strings unchanged.
 - Review rounds: quality 1 (light). Merges since the M4 check: 5.
