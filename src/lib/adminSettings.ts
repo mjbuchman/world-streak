@@ -6,17 +6,8 @@ import { z } from "zod";
 import { CHALLENGE_TYPES } from "@/challenges/shared/types";
 import { CHALLENGE_NAMES } from "@/config/challenges";
 import { isAdmin } from "@/lib/admin";
-import { STACKING_TARGET_RANGE, type EditState } from "@/lib/adminEdit";
+import { inTowerRange, numberField as number, refuse, towerRowMessage, type EditState } from "@/lib/adminForm";
 import { parseGameSettings } from "@/lib/settings";
-
-/** A trimmed, required number field, with messages naming the field. */
-const number = (label: string) =>
-  z
-    .string()
-    .trim()
-    .min(1, `${label} is required.`)
-    .transform(Number)
-    .pipe(z.number({ message: `${label} must be a number.` }).finite(`${label} must be a number.`));
 
 const between = (label: string, min: number, max: number) => {
   const message = `${label} must be from ${min} to ${max}.`;
@@ -87,9 +78,7 @@ const targetField = (type: string) => `target-${type}`;
 function targetSchema(type: (typeof CHALLENGE_TYPES)[number]) {
   const label = `${CHALLENGE_NAMES[type]}'s default pass target`;
   if (type !== "stacking") return atLeastZero(label);
-  const { min, max } = STACKING_TARGET_RANGE;
-  const message = `${label} must be a row from ${min} to ${max}.`;
-  return number(label).pipe(z.number().min(min, message).max(max, message));
+  return number(label).refine(inTowerRange, towerRowMessage(label));
 }
 
 const rotationSchema = z
@@ -102,8 +91,6 @@ const rotationSchema = z
       ctx.addIssue({ code: "custom", message: `The rotation can only name ${CHALLENGE_TYPES.join(", ")}; "${unknown}" is not one.` });
     }
   });
-
-const refuse = (message: string): EditState => ({ ok: false, message });
 
 /** The first problem with a value, or its parsed value. */
 function check<T>(schema: z.ZodType<T, string>, raw: FormDataEntryValue | null): { value: T } | { error: string } {

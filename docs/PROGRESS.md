@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T72 Unit test for the /play server page (PR #130)
+- `play/page.test.tsx` covers signed out, no profile, with a profile and a failing lookup.
+- Merges since the check: 8.
+
 ### 2026-11-12 — T70 Local setup accuracy (PR #129)
 - `npm run env:local` prints the `.env.local` lines; `db:stop`; README play-testing notes; leftover .gitkeep files gone.
 - Review rounds: quality 1 (light). Merges since the check: 7.

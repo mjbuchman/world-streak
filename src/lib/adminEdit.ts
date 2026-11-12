@@ -6,25 +6,15 @@ import { z } from "zod";
 import { CHALLENGE_TYPES } from "@/challenges/shared/types";
 import { CHALLENGE_NAMES } from "@/config/challenges";
 import { isAdmin } from "@/lib/admin";
+import { inTowerRange, numberField as number, refuse, towerRowMessage, type EditState } from "@/lib/adminForm";
 import { dayLabel } from "@/lib/streak/streak";
 
-/** The Tower's board has 15 rows: a target outside 1-15 would be drawn off the grid (T77). */
-export const STACKING_TARGET_RANGE = { min: 1, max: 15 } as const;
-
-export type EditState = { ok: boolean; message: string };
+export type { EditState } from "@/lib/adminForm";
 
 /** The database's refusal to move a started day's pass target (T102). */
 const TARGET_LOCKED = "WS002";
 /** The database's refusal to change a started day's challenge (T111). */
 const CHALLENGE_LOCKED = "WS003";
-
-const number = (label: string) =>
-  z
-    .string()
-    .trim()
-    .min(1, `${label} is required.`)
-    .transform(Number)
-    .pipe(z.number({ message: `${label} must be a number.` }).finite(`${label} must be a number.`));
 
 const editSchema = z.object({
   gameDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Unknown game day."),
@@ -36,8 +26,6 @@ const editSchema = z.object({
     z.number().min(0, "Survival threshold must be from 0% to 100%.").max(100, "Survival threshold must be from 0% to 100%."),
   ),
 });
-
-const refuse = (message: string): EditState => ({ ok: false, message });
 
 /**
  * Checks and saves an edit from the admin form. `db` is the caller's own (cookie) client, so the
@@ -66,9 +54,8 @@ export async function saveGameDayEdit(db: Pick<SupabaseClient, "from" | "rpc">, 
   // With a new type and the old target left as it was, the database gives the day the new type's
   // default target (T111), so there is no typed target to check.
   const defaultTarget = newType !== null && passTarget === Number(day.data.pass_target);
-  const { min, max } = STACKING_TARGET_RANGE;
-  if ((newType ?? day.data.challenge_type) === "stacking" && !defaultTarget && (passTarget < min || passTarget > max)) {
-    return refuse(`The Teetering Tower's pass target must be a row from ${min} to ${max}.`);
+  if ((newType ?? day.data.challenge_type) === "stacking" && !defaultTarget && !inTowerRange(passTarget)) {
+    return refuse(towerRowMessage("The Teetering Tower's pass target"));
   }
 
   const saved = await db
