@@ -264,6 +264,13 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - **Plan:** T118 and T119 are built during M4 and checked at the M4 play-test; go straight into M4 without stopping.
 - Confirmed by human: yes (these are the human's decisions).
 
+### 2026-11-12 — Human decisions after M4 (overrides)
+- **Confirmed as built:** ads off until Vercel Pro (T44); what the prize draw counts (T43); cheat check thresholds (T40); the streak and the prize cycle (T34); a hidden tab (T110); the share margin of 5 points (T32); the daily rotation (T31); gauge details (T104).
+- **T37:** option A, a service-role-only `close_game_day_unchecked(d)` beside the deadline-checked close; the simulation script stays local-only.
+- **Meter p95:** 403 ms locally is accepted for launch; recheck on the deployed preview with the CDN in front.
+- **Second Sense pass target:** keep "within 0.5 s" with the 7–13 s targets.
+- Confirmed by human: yes (these are the human's decisions).
+
 ### 2026-11-12 — Admin local tools (T116)
 - Choice: a "Local tools" panel on /admin, shown and run only when the app's Supabase URL is localhost (the scripts' guard) and the caller is an admin. Set a day's challenge (open, unstarted days; it takes that challenge's pass target and is marked edited), clear my own attempt today (taking it back out of the counters), reset an open day (no attempts, zero counters, back on the rotation), restore the rotation. A closed day cannot be reset: the world streak already counts it, and undoing that is `npm run db:reset` territory.
 - T117 adds seed fake players (at most 500 a press, since each takes a moment), close a day (past its deadline only; default yesterday) and remove fake players (`seed-…@example.test`; open days are recounted, closed days keep their final counters). The scripts and the panel share `src/lib/devData.ts`.
@@ -289,30 +296,30 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Choice: a share becomes a call for help when the open meter's pass rate is under the threshold plus `NEAR_THRESHOLD_MARGIN` = 0.05 (also when it is under the threshold itself). The card has the game, the date, the outcome, the world streak, the world's line and the site; no score, target or challenge. If the meter cannot be read, the streak and world lines are left out. The link is `NEXT_PUBLIC_SITE_URL`, else the page's own address.
 - Reason: the backlog's placeholder; the design has no number for "near the threshold".
 - How to change it later: `src/config/share.ts`; the wording in `src/lib/share.ts`.
-- Confirmed by human: pending (NEEDS_HUMAN).
+- Confirmed by human: yes (Nov 12, 2026).
 
 ### 2026-11-12 — Daily rotation (T31)
 - Choice: every day's challenge is `game_settings.rotation[(date - 2027-01-01) mod n]`, default Teetering Tower, Second Sense, Swift Sum in turn (the MVP's three; the Open item "which challenges join the rotation after the first three" stays open). A day nobody has edited or started follows the rotation, so a day created early (by `/admin`) changes with it. Nov 12, 2026 is a Second Sense day.
 - Reason: the backlog's formula; a plain cycle is easy to predict and to change.
 - How to change it later: update `game_settings.rotation` (any known challenge types, at least one); an admin choosing one day's challenge is T111.
-- Confirmed by human: pending (NEEDS_HUMAN).
+- Confirmed by human: yes (Nov 12, 2026).
 
 ### 2026-11-11 — Gauge details (T104)
 - Choice: the pill compares the rounded numbers on screen, but its colour follows the real comparison; a day that rounds to the line while below it says "Just below the line", never "Right on the line". The mint glow is 0.16 (the mockup's 0.22 left muted text at 4.3:1). The home page drops the big title and pitch, as the chosen artboard does (the h1 stays for screen readers).
 - How to change it later: `standing()` in `src/components/Meter.tsx`; `--fs-glow-mint` in `tokens.css` (and `METER_TINTS`); `src/app/page.tsx`.
-- Confirmed by human: pending (NEEDS_HUMAN).
+- Confirmed by human: yes (Nov 12, 2026).
 
 ### 2026-11-12 — A hidden tab during Second Sense and Swift Sum (T110)
 - Choice: Second Sense's clock keeps running while the tab is hidden; if the timeout passed while hidden, the run ends with no tap on return. Swift Sum shows the dots again for the full 1.5 s if the tab was hidden while they were shown.
 - Reason: Second Sense measures real time, and the server's start-to-submit check uses real time too; pausing would let a player stop the clock. Swift Sum's re-show can be repeated by switching tabs over and over (more looks); the cheat checks (T40) can flag that later if it matters.
 - How to change it later: the `visibilitychange` handlers in `src/components/inner-clock/InnerClockGame.tsx` and `src/components/flash-count/FlashCountGame.tsx`.
-- Confirmed by human: pending (NEEDS_HUMAN).
+- Confirmed by human: yes (Nov 12, 2026).
 
 ### 2026-11-12 — The streak and the prize cycle (T34)
 - Choice: the world streak resets at each cycle's first day (a run from before it ends there), so the goal counts only days inside the cycle. Once the goal is reached the cycle runs on to day 60 and entries keep accruing; `goal_reached_on` keeps the first date. Preseason days (before 2027-01-01) count for the streak display but award no entries (T35). A cycle's first day is still prepared with the streak as it stood the day before; with the launch step of 0 that changes nothing.
 - Reason: the backlog's notes (the data model ties the streak to a cycle). The design says the world "can try again while time remains", which this keeps.
 - How to change it later: `close_game_day` in `supabase/migrations/20261113010000_cycle_close.sql` (a new migration).
-- Confirmed by human: pending (NEEDS_HUMAN).
+- Confirmed by human: yes (Nov 12, 2026).
 
 ### 2026-11-12 — A new account's weight is fixed when the attempt starts (T46)
 - Choice: the account-age rule (`new_account_weight` until `full_weight_after_days`, times `profiles.weight`) is applied when the attempt starts and stored in `attempts.counted_weight`, not at submit as the backlog wrote.
@@ -324,16 +331,16 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Choice: ad slots exist on `/`, `/history`, `/rules` and below the `/play` result, but render nothing unless `NEXT_PUBLIC_ADS_ENABLED=true` and a publisher ID are set; a development-only placeholder shows where they go. Never on practice pages or during a run.
 - Reason: the design says "AdSense from launch" but also no ads on Vercel Hobby during the soft launch (non-commercial only); the backlog flags the conflict.
 - How to change it later: the two environment values (T45 wires the real ID).
-- Confirmed by human: pending (NEEDS_HUMAN).
+- Confirmed by human: yes (Nov 12, 2026).
 
 ### 2026-11-12 — Which entries the prize draw counts (T43)
 - Choice: every drawable entry of the cycle counts, including those earned after the goal day, one ticket each; the draw opens only after the cycle's last day. Flagged accounts' entries are out (T41), and an admin draws by hand from `/admin/draw`.
 - Reason: the backlog's judgment call; the cycle keeps running after the goal (T34), so later passes are earned the same way.
 - How to change it later: `admin_draw_tickets` in `supabase/migrations/20261113050000_prize_draw.sql` (a new migration).
-- Confirmed by human: pending (NEEDS_HUMAN).
+- Confirmed by human: yes (Nov 12, 2026).
 
 ### 2026-11-12 — Cheat check thresholds (T40)
 - Choice: the backlog's placeholders (taps under 120 ms apart; 10+ taps with interval SD under 5 ms; Second Sense error under 0.01 s on 3 of the latest 5; Swift Sum answer under 800 ms when reported; a last input more than 2 s behind the server clock beyond a 15 s allowance), except the Tower's perfect run: 12 rows in a row locked without losing a cell, since the 15-row grid Tower (T76) can never reach the backlog's 20. Swift Sum's untimed answer and a Second Sense timeout skip the timing check.
 - Reason: a flag only holds an account's entries for an admin to review (T41, T42); it never changes a result, so a cautious placeholder costs little. Tune with real data before launch.
 - How to change it later: `src/config/cheat.ts`.
-- Confirmed by human: pending (NEEDS_HUMAN).
+- Confirmed by human: yes (Nov 12, 2026).

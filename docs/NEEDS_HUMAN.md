@@ -30,12 +30,6 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: the local admin from `supabase/seed.sql` must never exist in production.
 - Agent's recommendation: do it right after the first deploy.
 
-### Meter load test: p95 above the local target (T48; blocks nothing)
-- What is needed: decide whether the local p95 matters. On this machine, 200 connections for 30 s gave p95 403 ms (target under 200 ms), about 1,500 requests/s and no errors; the database is read once per 30 s, so the time is the single Node server. In production the CDN serves most requests.
-- Where to put it: reply in chat; or rerun `npm run load:meter` on a faster machine (README, "Meter load test").
-- Why: the task records the target; it was not met here.
-- Agent's recommendation: accept it for launch (the CDN carries the load), and recheck on the deployed preview with the CDN in front.
-
 ### Add the ad settings to .env.example (T44; blocks nothing)
 - What is needed: add these lines to `.env.example` (my permission settings deny me that file):
   `# Ads (T44). Off unless both are set; real values come with T45 and Vercel Pro.`
@@ -56,73 +50,16 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: add it now; set the real value at deployment (T50). Next.js builds `NEXT_PUBLIC_` values into the page, so set it before the production build.
 
 ### At the M4 play-test: Second Sense fade and pass target, Swift Sum countdown (T118, T119; blocks nothing)
-- What is needed: try the clock's fade and the 7–13 s targets (T118) and the 3-2-1 countdown (T119). Also say whether the placeholder pass target "within 0.5 s" is too hard with longer targets (0.8 s is an option).
+- What is needed: try the clock's fade and the 7–13 s targets (T118) and the 3-2-1 countdown (T119). (The 0.5 s pass target stays: decided Nov 12.)
 - Where to put it: reply in chat at the M4 play-test.
 - Why: you asked for these after trying the M3 follow-ups (Nov 12); they are built during M4.
-- Agent's recommendation: judge the 0.5 s after a few scored-style tries in practice.
-
-### Please confirm: ads off until you switch them on (T44; blocks nothing)
-- What is needed: OK that ads stay off by default (the soft launch on Vercel Hobby must be non-commercial) and come on with two environment values at the public launch on Vercel Pro (T45).
-- Where to put it: reply in chat.
-- Why: the design says both "AdSense from launch" and "no ads on Hobby". See docs/DECISIONS.md (T44).
-- Agent's recommendation: keep them off until Pro.
-
-### Please confirm: what the prize draw counts (T43; blocks nothing)
-- What is needed: OK, or changes: one ticket per passed day in the cycle, including days after the goal was reached; the draw opens after the cycle's last day; flagged accounts are left out until an admin dismisses their flags.
-- Where to put it: reply in chat.
-- Why: the backlog asked for this judgment call to be recorded. See docs/DECISIONS.md (T43).
-- Agent's recommendation: keep it; it matches what the rules page says.
-
-### Please confirm: cheat check thresholds (T40; blocks nothing)
-- What is needed: OK, or other numbers, for the placeholders in `src/config/cheat.ts`. The one change from the backlog: the Tower's "perfect run" is 12 rows without losing a cell (the 15-row Tower can never reach the backlog's 20).
-- Where to put it: reply in chat.
-- Why: thresholds with no data behind them yet. See docs/DECISIONS.md (T40).
-- Agent's recommendation: keep them until real play data exists; a flag only puts entries on hold for review.
+- Agent's recommendation: a few tries of each in practice.
 
 ### Legal review of the draft official rules (blocks nothing; before public launch)
 - What is needed: have the text at `/rules` (T38) reviewed by someone qualified for US sweepstakes and contest rules before launch. The sponsor's name, address and contact email are still placeholders (T39), so the page shows a "Draft" banner.
 - Where to put it: reply in chat with changes; the wording lives in `src/lib/rules.ts`, the numbers in `src/config/`.
 - Why: a prize game needs official rules that hold up; the agents drafted them from the design doc.
 - Agent's recommendation: review once T39's sponsor details are in, so the reviewer sees the final page. Ask them in particular about the draw happening only after a cycle that reached the goal (otherwise the prize rolls over, and nobody wins that cycle).
-
-### T37 blocked: how the local simulation may close days that have not ended (blocks T37)
-- What is needed: pick one way for `npm run simulate:days -- --from 2027-01-01 --days 30` to close days in 2027, which `close_game_day` refuses today in two ways: a day before its deadline, and any day while an earlier day (today, and the rest of 2026) is still open.
-  - A (recommended): split `close_game_day` into the deadline check plus `close_game_day_unchecked(d)`, service-role only (the service role can already change every table, so no new power). The script refuses any non-local URL and first closes every open day before `--from` with no attempts (broken). Your local "today" is then closed too, so play-testing needs `npm run db:reset` afterwards (the README will say so).
-  - B: no database change. The simulation moves cycle 1 into the past on the local database (for example 2000-01-01), simulates there, and prints the goal date in that window. The real 2027 dates are not exercised.
-  - C: drop T37; the pgTAP tests (T34) already cover a full cycle.
-- Where to put it: reply in chat with A, B or C.
-- Why: A touches the close path that guards the streak in production, so I did not choose it on my own.
-- Agent's recommendation: A. It exercises the real close job on the real 2027 dates.
-
-### Please confirm: the streak and the prize cycle (T34; blocks nothing)
-- What is needed: OK, or changes: the streak resets to 0 on each cycle's first day (Jan 1, 2027 included); after a 30-day streak the cycle still runs to day 60 and passes keep earning entries; preseason days show in the streak but earn no entries.
-- Where to put it: reply in chat.
-- Why: the backlog asked for these judgment calls to be flagged. See docs/DECISIONS.md (T34).
-- Agent's recommendation: keep all three.
-
-### Please confirm: a hidden tab in Second Sense and Swift Sum (T110; blocks nothing)
-- What is needed: OK, or pause instead: Second Sense's clock keeps running if the player switches tabs; Swift Sum shows the dots again in full when they come back.
-- Where to put it: reply in chat.
-- Why: the task asked for a decision. See docs/DECISIONS.md (T110).
-- Agent's recommendation: keep it running; pausing would let a player stop the clock.
-
-### Please confirm: the share card's "near the line" margin (blocks nothing)
-- What is needed: OK or another number for when a share becomes a call for help: below the threshold plus 5 points (60% needed: under 65%). `NEAR_THRESHOLD_MARGIN` in `src/config/share.ts`.
-- Where to put it: reply in chat.
-- Why: the design gives no number. See docs/DECISIONS.md (T32).
-- Agent's recommendation: 5 points.
-
-### Please confirm: the daily rotation (blocks nothing)
-- What is needed: OK, or a different order, for the rotation: Teetering Tower, Second Sense, Swift Sum, one each day in turn (T31). Locally, today (Nov 12) is now a Second Sense day.
-- Where to put it: reply in chat.
-- Why: the design leaves later challenges Open; this is the MVP's three. See docs/DECISIONS.md (T31).
-- Agent's recommendation: keep the plain cycle.
-
-### Please confirm: gauge details (blocks nothing)
-- What is needed: OK or changes to three small calls in T104: the home page no longer shows the big title and pitch line (the chosen artboard has neither); the mint glow is a little softer than the mockup (contrast); a day that rounds to the line while below it says "Just below the line".
-- Where to put it: reply in chat.
-- Why: details the mockup did not settle. See docs/DECISIONS.md (T104).
-- Agent's recommendation: keep all three; if new players need the pitch, put one short line under the meter.
 
 ### Accessibility pass (blocks nothing; before launch)
 - What is needed: one session testing the app with a screen reader and keyboard only (and reduced motion on), all at once, once the main screens exist.
@@ -149,6 +86,8 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: do it before the public launch. T52 works without the keys locally (it skips the CAPTCHA and logs a warning).
 
 ## Resolved
+
+- **Decisions after M4** (Nov 12, 2026): all eight please-confirms accepted as built (T44 ads off, T43 draw, T40 cheat thresholds, T34 streak and cycle, T110 hidden tab, T32 share margin, T31 rotation, T104 gauge); T37 goes ahead with option A; the meter's local p95 is accepted, to be rechecked on the preview; Second Sense keeps the 0.5 s pass target.
 
 - **M3 follow-ups tried** (Nov 12, 2026): admin local tools, Swift Sum balance and the share emojis are good. New: Second Sense clock fades, targets 7–13 s (T118); Swift Sum 3-2-1 countdown (T119); both built during M4 and checked at its play-test. Go straight into M4.
 
