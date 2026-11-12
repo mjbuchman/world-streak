@@ -8,7 +8,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Active task: none.
 - Blocked tasks: none
 - Waiting on the human: the M4 play-test (incl. T118, T119); T39 sponsor details; T45 AdSense; deployment (docs/DEPLOYMENT.md); please-confirms and `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: T135, T134, T100, T136, T137 (maintenance), then T39/T45/T52/T128 as the human unblocks them.
+- Next: no eligible tasks. T39, T45, T52 and T128 wait on the human; then the M4 play-test follow-ups.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T137 One frame loop for the challenges (PR #137)
+- `runFrames(step)` in `src/components/frameLoop.ts`, used by all three games. A plain function, not a hook: each game keeps its own start time (Tower at mount, Second Sense at its first frame, Swift Sum restarts after a hidden tab).
+- Review rounds: quality 1 (light). Merges since the check: 5.
 
 ### 2026-11-12 — T136 Coverage thresholds for the auth and request gates (PR #136)
 - 90/90 for `src/lib/http/**`, `session.ts`, `profiles.ts`, `profileCompletion.ts`, `dates.ts` (all already met); stale streak comment fixed.

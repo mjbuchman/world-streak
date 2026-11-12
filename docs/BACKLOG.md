@@ -1519,7 +1519,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T137 One frame-loop hook for the challenge components
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T135
 - Acceptance criteria:
   - [ ] A small hook (for example `src/components/useFrameLoop.ts`) owns `requestAnimationFrame` start and cancel and the elapsed-ms bookkeeping from `performance.now()`, with unit tests including cancel on unmount.
