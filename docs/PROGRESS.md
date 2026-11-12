@@ -8,7 +8,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Active task: none.
 - Blocked tasks: none
 - Waiting on the human: the M4 play-test (incl. T118, T119); T39 sponsor details; T45 AdSense; deployment (docs/DEPLOYMENT.md); please-confirms and `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: after the play-test, the maintenance tasks (T120 onward, and the two from the M4 check), then T37/T39/T45 as the human unblocks them.
+- Next: T37 and T120–T129 are done (T128 waits for the `.env.example` lines). Remaining: the older maintenance tasks (T58 onward in backlog order), then T39/T45 as the human unblocks them. The maintainer check is due after 2 more merges.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T129 Recount a day in one locked call (PR #109)
+- `recount_game_day(d)` (service role): locks the day, skips closed days, recounts from attempts; `removeFakePlayers` uses it.
+- Review rounds: spec 1, quality 1, tests 2. Merges since the M4 check: 8.
 
 ### 2026-11-12 — T123 Cheat check test boundaries (PR #108)
 - The rhythm boundary pinned, whole flag lists, one isolation test per challenge. Tests only.

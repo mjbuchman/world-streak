@@ -644,7 +644,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T129 Recount a day's counters in one statement
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T120
 - Acceptance criteria:
   - [ ] `recountDay` in `src/lib/devData.ts` sets a day's counters from its attempts in one SQL statement (a small service-role function), so an attempt started meanwhile cannot lose its count; pgTAP covers it.
