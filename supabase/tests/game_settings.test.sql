@@ -1,5 +1,5 @@
 begin;
-select plan(59);
+select plan(63);
 -- These tests prepare Tower days; the rotation (T31) has its own tests in rotation.test.sql.
 update public.game_settings set rotation = '{stacking}';
 
@@ -91,6 +91,62 @@ select lives_ok(
   'default pass targets may list more challenges'
 );
 update public.game_settings set default_pass_targets = '{"stacking": 10}';
+
+-- Boundary rows shared with parseGameSettings (T89): the dollar-quoted fixture below must equal
+-- src/lib/gameSettings.fixture.json (src/lib/settings.test.ts checks this). Each update is undone
+-- by a custom error, so the settings are unchanged afterwards; any row that comes out wrong is listed.
+create temporary table settings_boundary_misses (miss text);
+do $$
+declare
+  b jsonb;
+  accepted boolean;
+begin
+  for b in select * from jsonb_array_elements($fixture$[
+  { "column": "default_survival_threshold", "value": 0, "accepted": true },
+  { "column": "default_survival_threshold", "value": 1, "accepted": true },
+  { "column": "default_survival_threshold", "value": -0.01, "accepted": false },
+  { "column": "default_survival_threshold", "value": 1.01, "accepted": false },
+  { "column": "default_survival_threshold", "value": "NaN", "accepted": false },
+  { "column": "pass_target_percentile", "value": 0, "accepted": true },
+  { "column": "pass_target_percentile", "value": 1, "accepted": true },
+  { "column": "pass_target_percentile", "value": 1.01, "accepted": false },
+  { "column": "pass_target_streak_step", "value": 0, "accepted": true },
+  { "column": "pass_target_streak_step", "value": 2.5, "accepted": true },
+  { "column": "pass_target_streak_step", "value": -0.01, "accepted": false },
+  { "column": "pass_target_streak_step", "value": "NaN", "accepted": false },
+  { "column": "pass_target_streak_step", "value": "Infinity", "accepted": false },
+  { "column": "threshold_streak_step", "value": 0, "accepted": true },
+  { "column": "threshold_streak_step", "value": 0.05, "accepted": true },
+  { "column": "threshold_streak_step", "value": -0.01, "accepted": false },
+  { "column": "threshold_streak_step", "value": "NaN", "accepted": false },
+  { "column": "threshold_streak_step", "value": "Infinity", "accepted": false },
+  { "column": "percentile_lookback_days", "value": 1, "accepted": true },
+  { "column": "percentile_lookback_days", "value": 0, "accepted": false },
+  { "column": "percentile_min_sample", "value": 1, "accepted": true },
+  { "column": "percentile_min_sample", "value": 0, "accepted": false },
+  { "column": "new_account_weight", "value": 0, "accepted": true },
+  { "column": "new_account_weight", "value": 1, "accepted": true },
+  { "column": "new_account_weight", "value": 1.01, "accepted": false },
+  { "column": "full_weight_after_days", "value": 0, "accepted": true },
+  { "column": "full_weight_after_days", "value": -1, "accepted": false }
+]$fixture$::jsonb) loop
+    begin
+      execute format('update public.game_settings set %I = %L', b ->> 'column', b ->> 'value');
+      raise exception using errcode = 'WS999'; -- accepted: undo it
+    exception
+      when sqlstate 'WS999' then accepted := true;
+      when check_violation then accepted := false;
+    end;
+    if accepted is distinct from (b ->> 'accepted')::boolean then
+      insert into settings_boundary_misses values (format('%s = %s', b ->> 'column', b ->> 'value'));
+    end if;
+  end loop;
+end
+$$;
+select is(
+  (select string_agg(miss, ', ') from settings_boundary_misses), null,
+  'every row of the shared boundary fixture is accepted or refused as parseGameSettings expects'
+);
 
 -- Without its row, ensure_game_day fails loudly instead of creating no day.
 delete from public.game_settings;
@@ -192,6 +248,21 @@ select is((select count(*)::int from public.game_settings), 1, 'an admin''s dele
 select throws_ok(
   $$insert into public.game_settings (id) values (true)$$,
   '42501', null, 'even an admin cannot insert settings'
+);
+
+-- Act as a signed-in user with no profile row yet (for example straight after Google sign-in).
+reset role;
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000c', 'c@example.test');
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}', true);
+set local role authenticated;
+select is(public.is_admin(), false, 'is_admin is false for a signed-in user without a profile');
+select lives_ok(
+  $$update public.game_settings set default_survival_threshold = 0.10$$,
+  'setup: a user without a profile tries to lower the survival threshold'
+);
+select is(
+  (select default_survival_threshold from public.game_settings), 0.65::numeric,
+  'a user without a profile''s update affected 0 rows'
 );
 
 -- Act as an anonymous visitor.

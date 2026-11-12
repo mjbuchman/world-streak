@@ -36,6 +36,8 @@ const rowSchema = z.object({
   full_weight_after_days: z.number().int().min(0),
 });
 
+const SETTINGS_COLUMNS = Object.keys(rowSchema.shape).join(", ");
+
 /** Parses a `game_settings` row; throws if it is missing or out of range. */
 export function parseGameSettings(row: unknown): GameSettings {
   const parsed = rowSchema.safeParse(row);
@@ -56,7 +58,8 @@ export function parseGameSettings(row: unknown): GameSettings {
 
 /** Reads the game settings. Any client works: everyone may read them under RLS. */
 export async function loadGameSettings(db: Pick<SupabaseClient, "from">): Promise<GameSettings> {
-  const { data, error } = await db.from("game_settings").select("*").single();
+  // By name, not "*", so a new column is read only once the parser knows it (T89).
+  const { data, error } = await db.from("game_settings").select(SETTINGS_COLUMNS).single();
   if (error) throw new Error(`game_settings lookup failed: ${error.message}`);
   return parseGameSettings(data);
 }
