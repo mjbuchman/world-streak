@@ -538,7 +538,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T111 Admin picks a future day's challenge
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T31, T99
 - Acceptance criteria:
   - [ ] The admin editor (T25, T99) gains a challenge type select for open days nobody has started, validated against `challenge_types` (server action and the database: the column-level grant and policy allow `challenge_type` only on unstarted open days).
@@ -639,7 +639,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T33 Cycles table and prize amount
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T21
 - Acceptance criteria:
   - [ ] `src/config/prize.ts` exports `PRIZE_PER_CYCLE_CENTS = 20000`, `CYCLE_LENGTH_DAYS = 60`, `STREAK_GOAL_DAYS = 30`, `FIRST_CYCLE_START = "2027-01-01"` and `PAYOUT_WITHIN_DAYS = 45`.
