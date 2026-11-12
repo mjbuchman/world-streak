@@ -4,11 +4,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M4 (M3 and its extras are done).
-- Active task: T50 Deployment guide and launch checklist. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
+- Milestone: M4 complete (Nov 12); waiting for the human's M4 play-test.
+- Active task: none.
 - Blocked tasks: T37 (local simulation: how it may close days before their deadline; see NEEDS_HUMAN)
-- Waiting on the human: please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T47 onward (T45 needs AdSense from the human) (T37 and T39 wait on the human); maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
+- Waiting on the human: the M4 play-test (incl. T118, T119); T39 sponsor details; T45 AdSense; deployment (docs/DEPLOYMENT.md); please-confirms and `.env.example` lines. See docs/NEEDS_HUMAN.md.
+- Next: after the play-test, the maintenance tasks (T120 onward, and the two from the M4 check), then T37/T39/T45 as the human unblocks them.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T50 Deployment guide and launch checklist (PR #99)
+- `docs/DEPLOYMENT.md` for the human, a test that every env var is in it, and NEEDS_HUMAN entries for Supabase, Vercel and the production admin. M4 complete.
+- Review rounds: quality 1 (light). CI passed first time. Merges since the check after T125: 8; the M4 maintainer check resets the count.
 
 ### 2026-11-12 — T49 End-to-end coverage of the main flows (PR #98)
 - A day survives (70%) and breaks (50%) through the real close, on a reopened yesterday; today's play counts in the meter; practice makes no scored requests. Fixed the Swift Sum day spec's cleanup (T111 lock).

@@ -631,6 +631,16 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] Unit test: a non-admin and a signed-out caller reach `notFound`, an admin gets the client. `npm run verify` passes; non-admins still get a 404.
 - Notes: From the maintainer check after T125. The actions re-check admin status in their lib functions, so they are out of scope.
 
+### T128 Keep .env.example in step with the code
+- Type: maintenance
+- Status: todo
+- Depends on: T50, and the human adding the pending `.env.example` lines (NEEDS_HUMAN: T32, T44)
+- Acceptance criteria:
+  - [ ] A unit test fails when non-test `src/` reads a `process.env.X` (other than `NODE_ENV`) that `.env.example` does not list, and names the missing variables.
+  - [ ] The README "Running the app" section uses the same variable names and commands as `.env.example`, `package.json` and `docs/DEPLOYMENT.md`; fix any mismatch.
+  - [ ] `npm run verify` passes; no product behaviour changes.
+- Notes: From the maintainer check after M4. Agents cannot edit `.env.example` (permission settings), so the test lands once the human has added `NEXT_PUBLIC_SITE_URL` and the three ad variables; until then it would fail.
+
 ### T123 Cheat check tests: exact boundaries and flag lists
 - Type: maintenance
 - Status: todo
@@ -890,7 +900,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T50 Deployment guide and launch checklist
 - Type: docs
-- Status: in-progress
+- Status: done
 - Depends on: T49
 - Acceptance criteria:
   - [ ] `docs/DEPLOYMENT.md` lists, step by step for the human: create the Supabase cloud project (free plan); apply migrations (`supabase link` + `supabase db push`); confirm pg_cron is enabled and the jobs exist; set the auth settings (email confirmations off, site URL, redirect URLs, Google provider); create the Vercel project with every env var from `.env.example`; make the owner's account an admin (exact SQL: `update profiles set is_admin = true where id = (select id from auth.users where email = '<owner email>')`); and the pre-launch items (domain, custom email provider, Vercel Pro before ads, AdSense, legal review of the rules).
@@ -907,7 +917,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Acceptance criteria:
   - [ ] `npm audit` reports no moderate or higher vulnerabilities, or each remaining one is listed in the PR with why it can't be fixed yet (at T01: 0 in production dependencies, 8 moderate in dev tooling).
   - [ ] If the CI e2e job spends more than 2 minutes building the app inside Playwright's `webServer`, move the build into its own workflow step before `npm run test:e2e` (an addition only) and make `webServer` just run `npm run start`.
-- Notes: Suggested in T01 review (quality-reviewer). Also take the patch updates for `react` and `react-dom` (19.3.0 to 19.3.1, from the T05 maintainer check). Do not take the major bumps (TypeScript 7, ESLint 10): `eslint-config-next` 16.4.5 targets ESLint 9 and TypeScript 5. `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing. From the T10 maintainer check: also take the Supabase CLI 3.0.0 to 3.1.0 update; (the `@material/material-color-utilities` hold is moot: T73 removed it). After T77, `npm outdated` also lists `@testing-library/user-event` 14.6.9 (patch); hold `@types/node` 26, which should track the Node 22+ runtime in `engines`. From the end-of-M1 check: also take `next` and `eslint-config-next` 16.4.6 (patch); if its release notes include security fixes, do this task first.
+- Notes: Suggested in T01 review (quality-reviewer). Also take the patch updates for `react` and `react-dom` (19.3.0 to 19.3.1, from the T05 maintainer check). Do not take the major bumps (TypeScript 7, ESLint 10): `eslint-config-next` 16.4.5 targets ESLint 9 and TypeScript 5. `npm audit fix --force` is not acceptable if it makes breaking major upgrades without tests passing. From the T10 maintainer check: also take the Supabase CLI 3.0.0 to 3.1.0 update; (the `@material/material-color-utilities` hold is moot: T73 removed it). After T77, `npm outdated` also lists `@testing-library/user-event` 14.6.9 (patch); hold `@types/node` 26, which should track the Node 22+ runtime in `engines`. From the end-of-M1 check: also take `next` and `eslint-config-next` 16.4.6 (patch); if its release notes include security fixes, do this task first. From the end-of-M4 check: record the held majors (ESLint 10, TypeScript 7, autocannon 9) with the reason and when to revisit in `docs/DECISIONS.md`.
 
 ### T52 Sign-up abuse protection
 - Type: maintenance
