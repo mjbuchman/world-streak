@@ -1,5 +1,5 @@
 import { paramsFromSeed, simulate } from "../../src/challenges/stacking/engine";
-import { tapsForAMiss } from "../../src/challenges/stacking/player";
+import { tapsForAMiss } from "./support/tower";
 import { gameDateAt } from "../../src/lib/gameDay";
 import { expect, test } from "./support/fixtures";
 import { signUpViaForm } from "./support/pages";

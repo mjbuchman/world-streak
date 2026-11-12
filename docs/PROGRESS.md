@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T84 Design-token guard (PR #122)
+- Every `var(--name)` must be defined; `CANVAS_COLOR_TOKENS` shared with look.spec; cell radius pinned.
+- Review rounds: quality 1 (light). Maintainer check done (10 merges): T135 added (the other proposal repeated T51's DECISIONS entry). Merges since: 0.
+
 ### 2026-11-12 — T83 One source for the password rules (PR #121)
 - `MIN/MAX_PASSWORD_LENGTH`; a test pins `minimum_password_length` in config.toml.
 - Review rounds: spec 1, quality 1, tests 1. CI: e2e hit an ECR pull rate limit, passed on one re-run. Merges since the check: 9.

@@ -1058,6 +1058,17 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `npm run verify` passes; no behavior change.
 - Notes: From the maintainer check after T58 (lines 14-46 repeat the same three lines per action).
 
+### T135 One canvas helper for sizing and reading colour tokens
+- Type: maintenance
+- Status: todo
+- Depends on: T84
+- Acceptance criteria:
+  - [ ] A shared client helper (for example `src/components/canvas.ts`) sizes a canvas's backing store to its CSS box times the device pixel ratio (only when it changes, returning `{ width, height, devicePixelRatio }`) and reads a map of CSS custom properties off an element, trimmed.
+  - [ ] `StackingGame.tsx` and `FlashCountGame.tsx` use it; their copies of the sizing block and the colour reading are gone.
+  - [ ] Flash Count's tokens (`--fs-color-meter-surface`, `--fs-color-mint`) move to a plain token-list module beside `CANVAS_COLOR_TOKENS`, covered by the e2e look check.
+  - [ ] Unit test: resizes only on change, falls back to a ratio of 1, trims values. `npm run verify` passes; no behavior change.
+- Notes: From the maintainer check after T84 (sizing copied at FlashCountGame 62-71 and StackingGame 91-98; Flash Count hard-codes its token names).
+
 ### T59 One-command local e2e runs
 - Type: maintenance
 - Status: done
@@ -1174,7 +1185,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T84 Guard the design tokens; one source for the canvas colours
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T81
 - Acceptance criteria:
   - [ ] A unit test fails if any `var(--name)` under `src/` is neither defined in `src/app/tokens.css`, a `next/font` variable, nor declared in the same file.
@@ -1195,7 +1206,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T86 Share the attempt response types with /play; enforce test-only player.ts
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T81
 - Acceptance criteria:
   - [ ] `src/lib/attempts/start.ts` and `submit.ts` export their response body types, and `PlayToday.tsx` builds its `StartBody` and `SubmitBody` from them with type-only imports (narrowing `params` to `StackingParams` until T30).

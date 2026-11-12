@@ -39,3 +39,33 @@ describe("challenge purity lint rules", () => {
     expect(await ruleIds("src/lib/clock.ts", "export const x = Date.now();")).toEqual([]);
   }, 30_000);
 });
+
+// player.ts plays the Tower for tests; it must never reach the app (T86).
+describe("test-only Tower player", () => {
+  const aliasImport = 'import { tapsForAMiss } from "@/challenges/stacking/player";\nexport const x = tapsForAMiss;';
+  const relativeImport = 'import { tapsForAMiss } from "../../src/challenges/stacking/player";\nexport const x = tapsForAMiss;';
+
+  it.each(["src/app/play/PlayToday.tsx", "src/lib/attempts/submit.ts", "src/components/stacking/StackingGame.tsx"])(
+    "cannot be imported by app code (%s)",
+    async (file) => {
+      expect(await ruleIds(file, aliasImport)).toContain("no-restricted-imports");
+    },
+    30_000,
+  );
+
+  it("cannot be imported straight into an e2e spec, which goes through support/tower.ts", async () => {
+    expect(await ruleIds("tests/e2e/attempts.spec.ts", relativeImport)).toContain("no-restricted-imports");
+  }, 30_000);
+
+  it.each(["src/lib/attempts/submit.test.ts", "src/components/stacking/StackingGame.test.tsx"])(
+    "can be imported by a unit test (%s)",
+    async (file) => {
+      expect(await ruleIds(file, aliasImport)).toEqual([]);
+    },
+    30_000,
+  );
+
+  it("can be re-exported by the e2e support module", async () => {
+    expect(await ruleIds("tests/e2e/support/tower.ts", 'export { tapsForAMiss } from "../../../src/challenges/stacking/player";')).toEqual([]);
+  }, 30_000);
+});

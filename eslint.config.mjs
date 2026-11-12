@@ -53,6 +53,18 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // player.ts plays the Tower for tests (simulated taps): never part of the app (T86). E2e specs
+  // reach it through tests/e2e/support/tower.ts, so there is one allowed path.
+  {
+    files: ["**/*.{ts,tsx,mts}"],
+    ignores: ["**/*.test.{ts,tsx}", "tests/e2e/support/**", "src/challenges/stacking/player.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        { patterns: [{ group: ["**/challenges/stacking/player"], message: "Test-only: use it from unit tests or tests/e2e/support/tower.ts." }] },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
