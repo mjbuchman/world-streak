@@ -168,7 +168,9 @@ npm run db:start                 # create the local JWT signing key, then start 
 cp .env.example .env.local       # then fill in the values, see below
 ```
 
-Fill in `.env.local` from the output of `npx supabase status`: copy **API URL** to `NEXT_PUBLIC_SUPABASE_URL`, the **anon key** to `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and the **service_role key** to `SUPABASE_SERVICE_ROLE_KEY`. These are local-only development keys.
+Fill in `.env.local` with the three lines `npm run env:local` prints (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`; it only prints, never writes a file, and refuses anything but local Supabase). These are local-only development keys. Run it again and update the file if Supabase is ever started with a new signing key. (By hand: `npx supabase status -o env` fields `API_URL`, `ANON_KEY` and `SERVICE_ROLE_KEY`, not the publishable or secret keys.)
+
+If Studio (http://127.0.0.1:54323) does not open, or after changing the Google values below, run `npm run db:stop` then `npm run db:start`.
 
 Local Supabase signs sessions with a git-ignored ES256 key, `supabase/signing_keys.json`, so pages verify them without asking the Auth server. `npm run db:start` creates it once. Every `npx supabase` command needs the file, so on a fresh clone run `npm run db:keys` (or `npm run db:start`) first. After pulling this change: `npm run db:keys`, `npx supabase stop`, `npm run db:start`, then sign in again.
 
@@ -202,6 +204,8 @@ npm run dev                      # start the app at http://localhost:3000
 ```
 
 http://localhost:3000/api/health should return `{"db":"ok"}`. Local Supabase Studio (a database browser) is at http://127.0.0.1:54323. `npm run db:reset` wipes the local database and re-applies every migration in `supabase/migrations/`.
+
+**Play-testing:** each account gets one scored attempt per game day, and the day changes at midnight UTC (7 pm US Eastern, 8 pm during daylight saving). For another go the same day, sign up with a new email, or delete your row in the `attempts` table in Studio (the admin page's local tools can clear it too). `npm run db:reset` wipes everything, accounts included.
 
 **Fake players (to watch the meter move):**
 

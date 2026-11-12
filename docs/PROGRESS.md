@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T69 Stable /play across refreshes (PR #128)
+- No `key` remount: PlayToday follows refreshed status except mid-run; a stale refresh shows "Reload the page"; `play/error.tsx`.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the check: 6.
+
 ### 2026-11-12 — T91 Unfinished-attempt wording (PR #127)
 - /play shows the approved "haven't finished it here… another tab" text.
 - Review rounds: quality 1 (light). Merges since the check: 5.

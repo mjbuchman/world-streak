@@ -1383,7 +1383,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T69 Play page polish: shared button styles, error page, stable run
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T14
 - Acceptance criteria:
   - [ ] (Superseded by T73, which builds the shared `Button`; drop this item.)
@@ -1396,7 +1396,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T70 Local setup accuracy: env helper, db:stop and play-test notes
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T59
 - Acceptance criteria:
   - [ ] `npm run env:local` prints the three `.env.local` lines (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`), reusing `localSupabaseEnv` and the status command from `scripts/e2e-local.mts`. It never writes a file, refuses non-localhost URLs, and prints the one-line message when Supabase is stopped. Unit tests cover the output and both refusals.
