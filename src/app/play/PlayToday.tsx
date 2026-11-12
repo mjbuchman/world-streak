@@ -39,8 +39,10 @@ const STALE: Phase = {
 
 /** What a fresh `initial` from the server means for the phase on screen (T69). */
 function afterServerUpdate(phase: Phase, status: PlayStatus): Phase {
-  // A refresh must never unmount a run or a result being checked.
-  if (phase.name === "playing" || phase.name === "checking") return phase;
+  // A refresh must never unmount a run, a result being checked or a start in flight.
+  if (phase.name === "playing" || phase.name === "checking" || phase.name === "starting") return phase;
+  // Nor replace this visit's result (with its confetti) by the same result, stored.
+  if (phase.name === "result" && status.kind === "submitted") return phase;
   const next = initialPhase(status);
   return phase.name === "refreshing" && next.name === "ready" ? STALE : next;
 }

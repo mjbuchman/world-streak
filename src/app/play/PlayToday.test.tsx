@@ -134,6 +134,18 @@ describe("PlayToday across server refreshes (T69)", () => {
     expect((await screen.findByRole("alert")).textContent).toBe(RELOAD);
   });
 
+  it("keeps this visit's fresh result when a later refresh brings the stored one", async () => {
+    respond(json(200, started), json(200, { score: 12, passed: true, passTarget: 10 }));
+    const { rerender } = render(page({ kind: "ready" }));
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    await screen.findByTestId("game");
+    await finish([900, 1700], 2);
+    await screen.findByRole("heading", { name: "Passed" });
+    expect(document.querySelector("[data-confetti]")).not.toBeNull();
+    rerender(page({ kind: "submitted", score: 12, passed: true, passTarget: 10 }));
+    expect(document.querySelector("[data-confetti]")).not.toBeNull();
+  });
+
   it("follows a refresh outside a run", () => {
     const { rerender } = render(page({ kind: "ready" }));
     rerender(page({ kind: "submitted", score: 12, passed: true, passTarget: 10 }));
