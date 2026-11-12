@@ -63,8 +63,14 @@ export type Winner = { email: string; verified: boolean };
 export async function readWinners(db: Pick<SupabaseClient, "rpc">): Promise<Map<number, Winner>> {
   const { data, error } = await db.rpc("admin_cycle_winners");
   if (error) throw new Error(`Winner lookup failed: ${error.message}`);
-  type Row = { cycle_number: unknown; email: string; email_verified: boolean };
-  return new Map((data as Row[]).map((row) => [dbInteger(row.cycle_number, "cycle_number"), { email: row.email, verified: row.email_verified }]));
+  type Row = { cycle_number: unknown; email: string | null; email_verified: boolean };
+  return new Map(
+    (data as Row[]).map((row) => [
+      dbInteger(row.cycle_number, "cycle_number"),
+      // An account need not have an email (auth allows phone sign-in); keep the row readable.
+      { email: row.email ?? "(no email)", verified: row.email_verified },
+    ]),
+  );
 }
 
 const PAID_MESSAGES: Record<string, (cycle: number) => string> = {

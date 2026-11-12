@@ -163,6 +163,8 @@ describe("readWinners (T125)", () => {
     const { db, calls } = fakeDb([{ data: [{ cycle_number: 1, email: "w@example.com", email_verified: false }], error: null }]);
     expect(await readWinners(db)).toEqual(new Map([[1, { email: "w@example.com", verified: false }]]));
     expect(calls[0]).toEqual([["rpc", "admin_cycle_winners", undefined]]);
+    const noEmail = fakeDb([{ data: [{ cycle_number: 2, email: null, email_verified: false }], error: null }]);
+    expect((await readWinners(noEmail.db)).get(2)).toEqual({ email: "(no email)", verified: false });
     await expect(readWinners(fakeDb([{ data: null, error: { message: "down" } }]).db)).rejects.toThrow("Winner lookup failed: down");
   });
 });
