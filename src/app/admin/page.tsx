@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CHALLENGE_TYPES } from "@/challenges/shared/types";
 import { AdminDayList } from "@/components/AdminDayList";
@@ -26,6 +27,7 @@ export default async function AdminPage() {
   const days = await readAdminDays(createSupabaseAdminClient(), now);
   return (
     <PageShell title="Admin" backHref="/">
+      <Link href="/admin/settings">Game settings</Link>
       <Surface as="section" aria-label="Coming game days">
         <AdminDayList days={days} />
       </Surface>

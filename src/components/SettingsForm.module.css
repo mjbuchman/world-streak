@@ -1,0 +1,18 @@
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.hint {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-text-label);
+  color: var(--fs-color-text-muted);
+}
+
+.saved {
+  color: var(--fs-color-mint);
+}
+
+.refused {
+  color: var(--fs-color-error);
+}

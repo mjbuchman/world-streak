@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { saveGameDayEdit, type EditState } from "@/lib/adminEdit";
+import { saveGameSettings } from "@/lib/adminSettings";
 import { localToolsEnabled, runLocalTool, supabaseDevData, type ToolState } from "@/lib/localTools";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -10,6 +11,13 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function saveGameDayAction(_previous: EditState | null, form: FormData): Promise<EditState> {
   const state = await saveGameDayEdit(await createSupabaseServerClient(), form);
   if (state.ok) revalidatePath("/admin");
+  return state;
+}
+
+/** Saves the game settings as the signed-in caller (T42); their admin status is checked again here. */
+export async function saveSettingsAction(_previous: EditState | null, form: FormData): Promise<EditState> {
+  const state = await saveGameSettings(await createSupabaseServerClient(), form);
+  if (state.ok) revalidatePath("/admin/settings");
   return state;
 }
 
