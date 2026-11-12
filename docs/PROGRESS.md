@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M4 (M3 and its extras are done).
-- Active task: T33 Cycles table and prize amount. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
+- Active task: T34 Close job: cycle-aware streak, goal and rollover. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
 - Blocked tasks: none
 - Waiting on the human: please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T34 onward. T91, T100 and the other maintenance tasks fit in when convenient.
+- Next: T35 onward; maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T33 Cycles table and prize amount (PR #81)
+- `cycles` (flat $200 plus rollover) with cycle 1, `cycle_for`, the winner hidden from clients; `src/config/prize.ts` and `src/lib/prize.ts`, with a test that the migrations match the config.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the end-of-M3 check: 10, so the maintainer ran: T120, T121 added. Merges since that check: 0.
 
 ### 2026-11-12 — T111 Admin picks a coming day's challenge (PR #80)
 - A challenge select in the admin editor for unstarted open days. A trigger locks a started day's challenge (WS003) and gives a new challenge its default target unless the same update sets one.

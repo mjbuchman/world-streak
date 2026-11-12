@@ -584,6 +584,26 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] Unit test with mocked time: dots appear only after the countdown; e2e of Swift Sum practice still passes.
 - Notes: Second play-test of the M3 follow-ups (Nov 12): "really build it up and make it feel like more of an experience". Build during M4; checked at the M4 play-test.
 
+### T120 One error helper and one error rule for the local tools
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `src/lib/localTools.ts` drops its private `failed(step, error)` and reuses `check` from `src/lib/devData.ts` (or both share one helper); message wording unchanged and covered by the existing tests.
+  - [ ] All seven tools follow one rule: a database error comes back as a refused `ToolState` with its message (as `seed` and `close-day` already do), including `remove-fake-players` and the four database tools. Unit tests cover the throwing cases.
+  - [ ] `npm run verify` passes; no product behaviour changes beyond errors showing as a message.
+- Notes: From the maintainer check after T33. Local play-testing only, so low risk; today some tools throw to a generic error page.
+
+### T121 PlayToday: start and submit outcomes as tested pure functions
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] A new module (for example `src/app/play/outcomes.ts`) maps a start response `(status, body)` to the next step (playing, ready with an error, abandoned, refresh) and a submit response to result, refresh or failed (heading and message); the error-message constants move with them.
+  - [ ] `PlayToday.tsx` only fetches and applies the mapped result; the repeated "Back to home" button is shared.
+  - [ ] Table-style unit tests cover every branch (401, 403, 409 `day-closed`, 409 submitted, other 409, other statuses, unknown challenge, `already-submitted`, both refusal codes, unknown error). Existing `PlayToday` tests pass unchanged; `npm run verify` passes.
+- Notes: From the maintainer check after T33. The scored-attempt flow's error branches are today reachable only through component and e2e tests.
+
 ### T113 Second Sense starts with a visible timer
 - Type: feature
 - Status: done
@@ -639,7 +659,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T33 Cycles table and prize amount
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T21
 - Acceptance criteria:
   - [ ] `src/config/prize.ts` exports `PRIZE_PER_CYCLE_CENTS = 20000`, `CYCLE_LENGTH_DAYS = 60`, `STREAK_GOAL_DAYS = 30`, `FIRST_CYCLE_START = "2027-01-01"` and `PAYOUT_WITHIN_DAYS = 45`.
@@ -651,7 +671,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T34 Close job: cycle-aware streak, goal and rollover
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T33
 - Acceptance criteria:
   - [ ] The first game day of a cycle starts a fresh streak run (any open run from before the cycle is ended), so the goal counts only streak days inside the cycle.
