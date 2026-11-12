@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T136 Coverage thresholds for the auth and request gates (PR #136)
+- 90/90 for `src/lib/http/**`, `session.ts`, `profiles.ts`, `profileCompletion.ts`, `dates.ts` (all already met); stale streak comment fixed.
+- Review rounds: quality 1 (light). Merges since the check: 4.
+
 ### 2026-11-12 — T100 One fake Supabase client for unit tests (PR #135)
 - `src/lib/testing/fakeSupabase.ts`; seven test files use it (store, today and devData keep their own).
 - Review rounds: quality 1 (light). Merges since the check: 3.

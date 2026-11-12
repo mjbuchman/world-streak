@@ -1509,7 +1509,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T136 Coverage thresholds for the auth and request-gate modules
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] `vitest.config.mts` gets per-path thresholds (at least 90% lines and branches, or the highest the files already meet) for `src/lib/http/**`, `src/lib/supabase/session.ts`, `src/lib/profiles.ts`, `src/lib/profileCompletion.ts` and `src/lib/dates.ts`; any file short of it gets the missing tests.
@@ -1519,7 +1519,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T137 One frame-loop hook for the challenge components
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T135
 - Acceptance criteria:
   - [ ] A small hook (for example `src/components/useFrameLoop.ts`) owns `requestAnimationFrame` start and cancel and the elapsed-ms bookkeeping from `performance.now()`, with unit tests including cancel on unmount.
