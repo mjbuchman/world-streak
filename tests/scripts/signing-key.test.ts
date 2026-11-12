@@ -1,11 +1,18 @@
 import { createPrivateKey, createPublicKey, sign, verify } from "node:crypto";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { ensureSigningKeys, newSigningKey } from "../../scripts/signing-key.mts";
 
+const dirs: string[] = [];
+afterEach(() => {
+  for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
 function tempFile() {
-  const dir = mkdtempSync(path.join("test-results", "signing-key-"));
+  const dir = mkdtempSync(path.join(tmpdir(), "signing-key-"));
+  dirs.push(dir);
   return path.join(dir, "signing_keys.json");
 }
 
@@ -25,7 +32,9 @@ describe("newSigningKey", () => {
   });
 
   it("is new every time", () => {
-    expect(newSigningKey().kid).not.toBe(newSigningKey().kid);
+    const [a, b] = [newSigningKey(), newSigningKey()];
+    expect(a.kid).not.toBe(b.kid);
+    expect(a.d).not.toBe(b.d);
   });
 });
 
@@ -33,9 +42,12 @@ describe("ensureSigningKeys", () => {
   it("writes a one-key array when the file is missing", () => {
     const file = tempFile();
     expect(ensureSigningKeys(file)).toBe("created");
-    const keys = JSON.parse(readFileSync(file, "utf8")) as { alg: string }[];
+    const text = readFileSync(file, "utf8");
+    expect(text.endsWith("\n")).toBe(true);
+    const keys = JSON.parse(text) as { alg: string; d?: string }[];
     expect(keys).toHaveLength(1);
     expect(keys[0].alg).toBe("ES256");
+    expect(keys[0].d).toBeTruthy();
   });
 
   it("leaves an existing file alone, so sessions signed with it stay valid", () => {
