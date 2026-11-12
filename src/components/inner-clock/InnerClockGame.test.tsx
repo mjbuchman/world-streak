@@ -150,6 +150,64 @@ describe("InnerClockGame", () => {
     unmount();
     expect(cancelAnimationFrame).toHaveBeenCalledWith(1);
   });
+
+  // Decided (T110): the clock keeps running while the tab is hidden; it measures real time.
+  describe("when the tab is hidden", () => {
+    let hidden: boolean;
+    beforeEach(() => {
+      hidden = false;
+      vi.spyOn(document, "hidden", "get").mockImplementation(() => hidden);
+    });
+    const setHidden = (value: boolean) => {
+      hidden = value;
+      act(() => void document.dispatchEvent(new Event("visibilitychange")));
+    };
+
+    it("keeps counting: a tap after the tab returns includes the time it was hidden", () => {
+      const onFinish = vi.fn();
+      render(<InnerClockGame params={params} onFinish={onFinish} />);
+      clock().mockReturnValue(1000);
+      showStart();
+      clock().mockReturnValue(2000);
+      setHidden(true);
+      clock().mockReturnValue(5000);
+      setHidden(false);
+      expect(onFinish).not.toHaveBeenCalled();
+      clock().mockReturnValue(6300);
+      fireEvent.pointerDown(tapArea());
+      expect(onFinish).toHaveBeenCalledExactlyOnceWith({ tapMs: 5300 });
+    });
+
+    it("ends the run with no tap when the tab returns after the timeout, even if the timer has not fired", () => {
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      const onFinish = vi.fn();
+      render(<InnerClockGame params={params} onFinish={onFinish} />);
+      clock().mockReturnValue(1000);
+      showStart();
+      setHidden(true);
+      clock().mockReturnValue(16_000);
+      setHidden(false);
+      expect(onFinish).toHaveBeenCalledExactlyOnceWith({ tapMs: null });
+      fireEvent.pointerDown(tapArea());
+      expect(onFinish).toHaveBeenCalledOnce();
+    });
+
+    it("does nothing on return when the run has not started", () => {
+      const onFinish = vi.fn();
+      render(<InnerClockGame params={params} onFinish={onFinish} />);
+      clock().mockReturnValue(99_000);
+      setHidden(true);
+      setHidden(false);
+      expect(onFinish).not.toHaveBeenCalled();
+    });
+
+    it("stops listening when it leaves the screen", () => {
+      const remove = vi.spyOn(document, "removeEventListener");
+      const { unmount } = render(<InnerClockGame params={params} onFinish={vi.fn()} />);
+      unmount();
+      expect(remove).toHaveBeenCalledWith("visibilitychange", expect.any(Function));
+    });
+  });
 });
 
 describe("targetLabel", () => {

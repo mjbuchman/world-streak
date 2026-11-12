@@ -108,4 +108,63 @@ describe("FlashCountGame", () => {
     unmount();
     expect(cancelAnimationFrame).toHaveBeenCalled();
   });
+
+  describe("when the tab is hidden", () => {
+    let hidden: boolean;
+    beforeEach(() => {
+      hidden = false;
+      vi.spyOn(document, "hidden", "get").mockImplementation(() => hidden);
+    });
+    const setHidden = (value: boolean) => {
+      hidden = value;
+      act(() => void document.dispatchEvent(new Event("visibilitychange")));
+    };
+
+    it("shows the dots again in full when the tab returns, if it was hidden while they were shown", () => {
+      render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+      frameAt(1000);
+      frameAt(1900);
+      setHidden(true);
+      setHidden(false);
+      // Long after the original flash ended: the dots come back for a whole flashMs.
+      frameAt(5000);
+      expect(canvas().dataset.showing).toBe("dots");
+      frameAt(5999);
+      expect(canvas().dataset.showing).toBe("dots");
+      frameAt(6000);
+      expect(canvas().dataset.showing).toBe("clear");
+    });
+
+    it("does not count a frame that runs while the tab is hidden as the start of the flash", () => {
+      render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+      frameAt(1000);
+      setHidden(true);
+      frameAt(1100);
+      expect(canvas().dataset.showing).toBe("dots");
+      setHidden(false);
+      frameAt(5000);
+      frameAt(5999);
+      expect(canvas().dataset.showing).toBe("dots");
+      frameAt(6000);
+      expect(canvas().dataset.showing).toBe("clear");
+    });
+
+    it("changes nothing once the dots have cleared", () => {
+      render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+      frameAt(1000);
+      frameAt(2000);
+      setHidden(true);
+      setHidden(false);
+      expect(canvas().dataset.showing).toBe("clear");
+      expect(screen.getByRole("textbox")).toBeTruthy();
+      expect(frames).toHaveLength(0);
+    });
+
+    it("stops listening when it leaves the screen", () => {
+      const remove = vi.spyOn(document, "removeEventListener");
+      const { unmount } = render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+      unmount();
+      expect(remove).toHaveBeenCalledWith("visibilitychange", expect.any(Function));
+    });
+  });
 });
