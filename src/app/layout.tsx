@@ -13,7 +13,8 @@ const displayFont = Unbounded({ variable: "--fs-typeface-display", subsets: ["la
 const bodyFont = Manrope({ variable: "--fs-typeface-body", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: GAME_NAME,
+  // Pages set only their own part, for example "Sign in" becomes "Sign in | World Streak".
+  title: { default: GAME_NAME, template: `%s | ${GAME_NAME}` },
   description: GAME_PITCH,
 };
 

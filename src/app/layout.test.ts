@@ -34,18 +34,18 @@ describe("root layout fonts", () => {
 });
 
 describe("root layout metadata", () => {
-  it("uses GAME_NAME as the page title", async () => {
+  it("uses GAME_NAME as the page title, and after each page's own part", async () => {
     const { GAME_NAME } = await import("@/config/game");
     const { metadata } = await import("./layout");
     expect(GAME_NAME).toBe("World Streak");
-    expect(metadata.title).toBe(GAME_NAME);
+    expect(metadata.title).toEqual({ default: "World Streak", template: "%s | World Streak" });
   });
 
   it("follows the constants when the name or pitch changes", async () => {
     vi.resetModules();
     vi.doMock("@/config/game", () => ({ GAME_NAME: "Renamed Game", GAME_PITCH: "A new pitch." }));
     const { metadata } = await import("./layout");
-    expect(metadata.title).toBe("Renamed Game");
+    expect(metadata.title).toEqual({ default: "Renamed Game", template: "%s | Renamed Game" });
     expect(metadata.description).toBe("A new pitch.");
   });
 });

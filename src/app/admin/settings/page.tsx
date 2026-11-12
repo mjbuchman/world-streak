@@ -4,11 +4,10 @@ import { SettingsForm } from "@/components/SettingsForm";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
 import { CHALLENGE_NAMES } from "@/config/challenges";
-import { GAME_NAME } from "@/config/game";
 import { requireAdminPage } from "@/lib/adminPage";
 import { readSettingsForm, SETTINGS_FIELDS } from "@/lib/adminSettings";
 
-export const metadata: Metadata = { title: `Settings | ${GAME_NAME}`, robots: { index: false } };
+export const metadata: Metadata = { title: "Settings", robots: { index: false } };
 
 /** The game settings editor (T42). Like /admin, anyone but a signed-in admin gets a 404. */
 export default async function SettingsPage() {

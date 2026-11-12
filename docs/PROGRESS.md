@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T65 Generated database types (PR #119)
+- `npm run db:types` / `db:types:check` (CI step); typed clients and attempt store. Other modules' casts: T134. Run `npm run db:types` after every new migration.
+- Review rounds: spec 1, quality 1, tests 1. Auto-merge stalled once (toggled). Merges since the check: 7.
+
 ### 2026-11-12 — T64 Revoke TRUNCATE (PR #118)
 - Client roles lose TRUNCATE on every public table, now and by default; pgTAP checks it.
 - Review rounds: spec 1, quality 1, tests 1. Merges since the check: 6.

@@ -4,14 +4,13 @@ import { WinnerPayout } from "@/components/WinnerPayout";
 import table from "@/components/ui/DataTable.module.css";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
-import { GAME_NAME } from "@/config/game";
 import { STREAK_GOAL_DAYS } from "@/config/prize";
 import { requireAdminPage } from "@/lib/adminPage";
 import { canDraw, payoutDeadline, readDrawCycles, readWinners, type DrawCycle, type Winner } from "@/lib/draw";
 import { gameDateAt } from "@/lib/gameDay";
 import { dayLabel } from "@/lib/streak/streak";
 
-export const metadata: Metadata = { title: `Prize draw | ${GAME_NAME}`, robots: { index: false } };
+export const metadata: Metadata = { title: "Prize draw", robots: { index: false } };
 
 function notReadyReason(cycle: DrawCycle, today: string): string {
   if (cycle.drawnAt !== null) return "Drawn.";

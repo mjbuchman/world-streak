@@ -3,12 +3,11 @@ import Link from "next/link";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
-import { GAME_NAME } from "@/config/game";
 import { eligibilitySummary } from "@/lib/eligibility";
 import { SignUpForm } from "./SignUpForm";
 import styles from "@/app/auth/authPage.module.css";
 
-export const metadata: Metadata = { title: `Create account | ${GAME_NAME}` };
+export const metadata: Metadata = { title: "Create account" };
 
 export default function SignUpPage() {
   return (

@@ -5,14 +5,13 @@ import { LinkButton } from "@/components/ui/LinkButton";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
 import { CHALLENGE_NAMES, practicePath } from "@/config/challenges";
-import { GAME_NAME } from "@/config/game";
 import { todaysAttempt, todaysChallenge } from "@/lib/attempts/today";
 import { landingPath } from "@/lib/profiles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PlayToday } from "./PlayToday";
 import styles from "./play.module.css";
 
-export const metadata: Metadata = { title: `Today's challenge | ${GAME_NAME}` };
+export const metadata: Metadata = { title: "Today's challenge" };
 
 /** Today's scored attempt, of whichever challenge today is. Signed-out visitors are pointed to sign-in and practice. */
 export default async function PlayPage() {

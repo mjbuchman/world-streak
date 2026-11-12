@@ -4,11 +4,10 @@ import { AdSlot } from "@/components/AdSlot";
 import { HistoryTable } from "@/components/HistoryTable";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
-import { GAME_NAME } from "@/config/game";
 import { historyPageParam, readHistory } from "@/lib/streak/streak";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: `Every day | ${GAME_NAME}` };
+export const metadata: Metadata = { title: "Every day" };
 
 /** Every closed game day, newest first, 30 to a page. A page past the last is a 404. */
 export default async function HistoryPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {

@@ -6,7 +6,6 @@ import { LocalTools } from "@/components/LocalTools";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
 import { CHALLENGE_NAMES } from "@/config/challenges";
-import { GAME_NAME } from "@/config/game";
 import { readAdminDays } from "@/lib/admin";
 import { requireAdminPage } from "@/lib/adminPage";
 import { addDays, gameDateAt } from "@/lib/gameDay";
@@ -14,7 +13,7 @@ import { localToolsEnabled, MAX_SEED_PLAYERS } from "@/lib/localTools";
 import { dayLabel } from "@/lib/streak/streak";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-export const metadata: Metadata = { title: `Admin | ${GAME_NAME}`, robots: { index: false } };
+export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 
 /**
  * The admin page. Anyone who is not a signed-in admin gets the same 404 as a page that does not
