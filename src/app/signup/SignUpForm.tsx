@@ -4,7 +4,7 @@ import { type ChangeEvent, type FormEvent, useActionState, useLayoutEffect, useR
 import { BirthDateInput, CountrySelect, RulesAgreement } from "@/components/form/EligibilityFields";
 import { Field, TextInput } from "@/components/form/Field";
 import { FormAlert, SubmitButton } from "@/components/form/FormParts";
-import { PASSWORD_MISMATCH } from "@/lib/passwords";
+import { MIN_PASSWORD_LENGTH, PASSWORD_MISMATCH } from "@/lib/passwords";
 import type { SignUpState } from "@/lib/signup";
 import { signUpAction } from "./actions";
 import styles from "@/app/auth/authPage.module.css";
@@ -71,14 +71,14 @@ export function SignUpForm() {
         )}
       </Field>
 
-      <Field name="password" label="Password (at least 8 characters)" error={errors.password}>
+      <Field name="password" label={`Password (at least ${MIN_PASSWORD_LENGTH} characters)`} error={errors.password}>
         {(control) => (
           <TextInput
             {...control}
             ref={passwordRef}
             type="password"
             autoComplete="new-password"
-            minLength={8}
+            minLength={MIN_PASSWORD_LENGTH}
             required
             onChange={onPasswordChange}
           />

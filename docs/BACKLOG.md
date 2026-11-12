@@ -1154,7 +1154,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T82 One page-title template in the root layout
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] `src/app/layout.tsx` metadata uses `title: { default: GAME_NAME, template: "%s | " + GAME_NAME }`, and the six pages that build `` `X | ${GAME_NAME}` `` by hand set only their own part.
@@ -1164,7 +1164,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T83 One source for the password rules
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] `src/lib/passwords.ts` exports `MIN_PASSWORD_LENGTH` (8) and `MAX_PASSWORD_LENGTH` (72), used by the zod schema in `src/lib/signup.ts` (both messages) and by `SignUpForm.tsx` (`minLength` and the label).
