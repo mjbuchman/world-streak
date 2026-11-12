@@ -592,7 +592,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] `src/lib/localTools.ts` drops its private `failed(step, error)` and reuses `check` from `src/lib/devData.ts` (or both share one helper); message wording unchanged and covered by the existing tests.
   - [ ] All seven tools follow one rule: a database error comes back as a refused `ToolState` with its message (as `seed` and `close-day` already do), including `remove-fake-players` and the four database tools. Unit tests cover the throwing cases.
   - [ ] `npm run verify` passes; no product behaviour changes beyond errors showing as a message.
-- Notes: From the maintainer check after T33. Local play-testing only, so low risk; today some tools throw to a generic error page.
+- Notes: From the maintainer check after T33. Local play-testing only, so low risk; today some tools throw to a generic error page. Also (T49 review): `recountDay` in `src/lib/devData.ts` reads then writes, so an attempt started meanwhile (a parallel e2e spec) can lose its count; consider one SQL statement for the recount.
 
 ### T121 PlayToday: start and submit outcomes as tested pure functions
 - Type: maintenance
