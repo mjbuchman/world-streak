@@ -843,6 +843,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 - Acceptance criteria:
   - [ ] With the human's publisher ID set in the deployment environment, the AdSense script and slot markup use it, and `public/ads.txt` contains the correct `google.com, pub-XXXXXXXX, DIRECT, f08c47fec0942fa0` line.
   - [ ] README documents enabling ads (env values, ads.txt) and the reminder that ads require Vercel Pro (commercial use).
+- Notes (from the T44 reviews): the AdSense script loads on every page once ads are live, practice included (no slots there), so keep AdSense auto-ads off in the account or load the script only on pages with slots; the per-slot inline push script may not re-run on client-side navigation, so check slots fill after navigating back; `NEXT_PUBLIC_` values need a rebuild and redeploy to change.
 - needs-human: An approved Google AdSense account for the site's domain, its publisher ID (`ca-pub-...`) for `NEXT_PUBLIC_ADSENSE_CLIENT`, ad unit slot IDs if using manual units, and the decision to switch to Vercel Pro before ads go live.
 
 ### T46 Account weighting

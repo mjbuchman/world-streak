@@ -1,7 +1,8 @@
 /**
  * Ads (T44). The design wants AdSense from launch but no ads on Vercel Hobby during the soft
  * launch (non-commercial only), so ads stay off unless both values are set (T45 wires the real
- * publisher ID). Read on the server, at request time.
+ * publisher ID). Read in server components only. `NEXT_PUBLIC_` values can be built into
+ * pages, so changing them needs a rebuild and redeploy (T45).
  */
 export type AdsSettings = {
   /** Real AdSense units and script. */

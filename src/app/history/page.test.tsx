@@ -31,6 +31,15 @@ const oneDay: History = {
 const visit = (search: Record<string, string | string[] | undefined>) => HistoryPage({ searchParams: Promise.resolve(search) });
 
 describe("/history", () => {
+  it("has an ad slot below the table (T44)", async () => {
+    vi.stubEnv("NEXT_PUBLIC_ADS_PLACEHOLDER", "true");
+    vi.stubEnv("NODE_ENV", "development");
+    readHistory.mockResolvedValue(oneDay);
+    const { container } = render(await visit({}));
+    expect(container.querySelector('[data-ad-slot="history"]')).not.toBeNull();
+    vi.unstubAllEnvs();
+  });
+
   it("shows the requested page of closed days", async () => {
     readHistory.mockResolvedValue({ ...oneDay, page: 2, pageCount: 2 });
     render(await visit({ page: "2" }));

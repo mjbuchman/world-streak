@@ -54,6 +54,15 @@ describe("AdSlot", () => {
     expect(markup).toContain('data-ad-slot="history"');
     expect(markup).toContain('class="adsbygoogle"');
     expect(markup).toContain('data-ad-client="ca-pub-123"');
+    expect(markup).not.toContain("Ad placeholder");
+  });
+
+  it("shows the real unit, not the placeholder, when both are set", () => {
+    env({ NEXT_PUBLIC_ADS_ENABLED: "true", NEXT_PUBLIC_ADSENSE_CLIENT: "ca-pub-123", NEXT_PUBLIC_ADS_PLACEHOLDER: "true" });
+    vi.stubEnv("NODE_ENV", "development");
+    const markup = html(<AdSlot name="home" />);
+    expect(markup).toContain('class="adsbygoogle"');
+    expect(markup).not.toContain("Ad placeholder");
   });
 });
 

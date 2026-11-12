@@ -52,6 +52,14 @@ describe("Home", () => {
     logged.mockRestore();
   });
 
+  it("has an ad slot at the end of the page (T44)", async () => {
+    vi.stubEnv("NEXT_PUBLIC_ADS_PLACEHOLDER", "true");
+    vi.stubEnv("NODE_ENV", "development");
+    const { container } = render(await Home());
+    expect(container.querySelector("main")?.lastElementChild?.getAttribute("data-ad-slot")).toBe("home");
+    vi.unstubAllEnvs();
+  });
+
   it("follows today's challenge, and links to every practice game (T108)", async () => {
     todaysChallenge.mockResolvedValue("inner-clock");
     render(await Home());
