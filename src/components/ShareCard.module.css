@@ -1,0 +1,16 @@
+/* The text exactly as it will be shared: kept on its lines, in the body font. */
+.text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--fs-font-body);
+  font-size: var(--fs-text-body);
+  line-height: 1.5;
+  color: var(--fs-color-text);
+}
+
+.status {
+  margin: 0;
+  font-size: var(--fs-text-small);
+  color: var(--fs-color-text-muted);
+}

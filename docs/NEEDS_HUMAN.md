@@ -12,6 +12,20 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Add NEXT_PUBLIC_SITE_URL to .env.example (T32; blocks nothing)
+- What is needed: add these two lines to `.env.example` (my permission settings deny me that file):
+  `# The site's public address, used in shared result cards (T32). Production: the real domain.`
+  `NEXT_PUBLIC_SITE_URL=http://localhost:3000`
+- Where to put it: `.env.example` (and later the Vercel project settings, with the real domain).
+- Why: the share card links to the site. Until it is set, the card uses the page's own address, which is right locally.
+- Agent's recommendation: add it now; set the real value at deployment (T50).
+
+### Please confirm: the share card's "near the line" margin (blocks nothing)
+- What is needed: OK or another number for when a share becomes a call for help: below the threshold plus 5 points (60% needed: under 65%). `NEAR_THRESHOLD_MARGIN` in `src/config/share.ts`.
+- Where to put it: reply in chat.
+- Why: the design gives no number. See docs/DECISIONS.md (T32).
+- Agent's recommendation: 5 points.
+
 ### Please confirm: the daily rotation (blocks nothing)
 - What is needed: OK, or a different order, for the rotation: Teetering Tower, Second Sense, Swift Sum, one each day in turn (T31). Locally, today (Nov 12) is now a Second Sense day.
 - Where to put it: reply in chat.

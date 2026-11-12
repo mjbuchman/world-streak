@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak is COMPLETE and play-tested (Nov 11); its follow-ups T102-T105 are done (new home page: gauge meter and streak bars).
-- Active task: T31 Daily challenge rotation.
+- Active task: T32 Spoiler-free share card (last M3 feature; then the M3 play-test).
 - Blocked tasks: none
 - Waiting on the human: nothing now; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T31 Daily challenge rotation (PR #70)
+- Migration `20261112070000_daily_rotation`: `game_settings.rotation` (checked), public `challenge_for(d)` from 2027-01-01, `ensure_game_day` by the rotation (re-aligns untouched days, writes only on change). `todaysChallenge` asks `challenge_for` before the day exists. Admin type select split off as T111.
+- Review rounds: spec 1, quality 1, tests 1. Notes: pgTAP files testing Tower days pin `rotation = '{stacking}'`; the e2e global setup pins it for the run (CI too) and restores it; specs that set today's challenge must mark the day edited. Merges since the maintainer check after T29: 3.
 
 ### 2026-11-12 — T108 Practice hub (PR #69)
 - `/practice` lists the three challenges (`CHALLENGE_TAGLINES`); the home card follows today's challenge (falls back to the default on a failed read) and links to its practice page and the hub.

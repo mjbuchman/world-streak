@@ -82,6 +82,11 @@ test("a player plays today's attempt once and sees the server's result, also aft
   const scoreTop = (await page.locator("[data-big-score]").boundingBox())!.y;
   expect(scoreTop).toBeLessThan((await verdict.boundingBox())!.y);
   await expect(page.getByRole("banner").getByRole("button", { name: "Sign out" })).toBeVisible();
+  // The share card (T32): the outcome, never the score or the target.
+  const share = page.getByRole("region", { name: "Share your day" });
+  await expect(share).toContainText("I didn't make it today.");
+  await expect(share).not.toContainText(/row|score|target/i);
+  await expect(share.getByRole("button", { name: "Share" })).toBeVisible();
   // What was shown is what the server stored: the engine's score for exactly those taps.
   const { data: stored } = await adminClient().from("attempts").select("score, passed").eq("id", instance.attemptId).single();
   expect(stored).toEqual({ score, passed: false });

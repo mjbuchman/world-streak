@@ -249,6 +249,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - No other issues found in the play-test.
 - Confirmed by human: yes (these are the human's decisions).
 
+### 2026-11-12 — Share card wording and margin (T32)
+- Choice: a share becomes a call for help when the open meter's pass rate is under the threshold plus `NEAR_THRESHOLD_MARGIN` = 0.05 (also when it is under the threshold itself). The card has the game, the date, the outcome, the world streak, the world's line and the site; no score, target or challenge. If the meter cannot be read, the streak and world lines are left out. The link is `NEXT_PUBLIC_SITE_URL`, else the page's own address.
+- Reason: the backlog's placeholder; the design has no number for "near the threshold".
+- How to change it later: `src/config/share.ts`; the wording in `src/lib/share.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN).
+
 ### 2026-11-12 — Daily rotation (T31)
 - Choice: every day's challenge is `game_settings.rotation[(date - 2027-01-01) mod n]`, default Teetering Tower, Second Sense, Swift Sum in turn (the MVP's three; the Open item "which challenges join the rotation after the first three" stays open). A day nobody has edited or started follows the rotation, so a day created early (by `/admin`) changes with it. Nov 12, 2026 is a Second Sense day.
 - Reason: the backlog's formula; a plain cycle is easy to predict and to change.

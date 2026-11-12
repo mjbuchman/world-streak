@@ -7,6 +7,7 @@ import { isChallengeType } from "@/challenges/registry";
 import type { ChallengeType } from "@/challenges/shared/types";
 import { challengeUi } from "@/components/challenges/challengeUi";
 import { Meter } from "@/components/Meter";
+import { ShareCard } from "@/components/ShareCard";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { ResultHero } from "@/components/ui/ResultHero";
@@ -156,6 +157,8 @@ export function PlayToday({ challenge, initial }: { challenge: ChallengeType; in
               {passed ? "You helped keep the streak alive. " : ""}Come back tomorrow for the next challenge.
             </p>
           </ResultHero>
+          {/* Spoiler-free, so sharing it gives nothing away (T32). */}
+          <ShareCard passed={passed} />
           {/* How the world is doing today, below your own result. */}
           <Meter />
         </>
