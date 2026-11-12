@@ -34,6 +34,7 @@ export function AdminDayList({ days }: { days: AdminDay[] }) {
                   day={{
                     gameDate: day.gameDate,
                     label,
+                    challengeType: day.challengeType,
                     challenge,
                     passTarget: day.passTarget,
                     thresholdPercent: asPercent(day.threshold),

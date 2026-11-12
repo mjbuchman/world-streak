@@ -519,7 +519,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T110 Scored timing challenges and a hidden tab
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T30
 - Acceptance criteria:
   - [ ] Swift Sum: if the tab is hidden while the dots are shown, the dots are shown again in full when it returns (or the run says so and lets the player see them), so a scored player always gets the whole flash. Unit test with a mocked `visibilitychange` and time.
@@ -538,7 +538,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T111 Admin picks a future day's challenge
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T31, T99
 - Acceptance criteria:
   - [ ] The admin editor (T25, T99) gains a challenge type select for open days nobody has started, validated against `challenge_types` (server action and the database: the column-level grant and policy allow `challenge_type` only on unstarted open days).
