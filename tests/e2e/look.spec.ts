@@ -82,7 +82,7 @@ test("the back button hides during a run and returns with the result", async ({ 
 
 for (const { game, path, canvasName, names } of [
   { game: "Teetering Tower", path: "/practice/stacking", canvasName: /Teetering Tower game area/, names: Object.values(CANVAS_COLOR_TOKENS) },
-  { game: "Swift Sum", path: "/practice/flash-count", canvasName: "Get ready.", names: Object.values(FLASH_COUNT_COLOR_TOKENS) },
+  { game: "Swift Sum", path: "/practice/flash-count", canvasName: /Get ready|Count the dots|The dots are gone/, names: Object.values(FLASH_COUNT_COLOR_TOKENS) },
 ]) {
   test(`the ${game} canvas finds its colour tokens`, async ({ page }) => {
     await gotoReady(page, path);
