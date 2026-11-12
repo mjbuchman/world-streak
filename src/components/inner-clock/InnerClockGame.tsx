@@ -2,6 +2,7 @@
 
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { type InnerClockInputs, type InnerClockParams, REVEAL_MS } from "@/challenges/inner-clock/engine";
+import { runFrames } from "@/components/frameLoop";
 import { usePrefersReducedMotion } from "@/components/ui/useReducedMotion";
 import styles from "./InnerClockGame.module.css";
 
@@ -49,19 +50,26 @@ export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
   useEffect(() => {
     areaRef.current?.focus();
     let timer: ReturnType<typeof setTimeout> | undefined;
-    let frame = 0;
-    // Each frame moves the clock on, until it has faded (elapsed time, not frames, decides).
-    const tick = () => {
-      const elapsed = performance.now() - startedAt.current!;
+    // This effect's own start; the ref is what tap() reads, and outlives a re-run of the effect.
+    let start: number | null = null;
+    // The first frame starts the run; each later one moves the clock on, until it has faded
+    // (elapsed time, not frames, decides).
+    const tick = (now: number) => {
+      if (start === null) {
+        start = startedAt.current = now;
+        timer = setTimeout(timeOut, params.timeoutMs);
+        return true;
+      }
+      const elapsed = now - start;
       if (elapsed < REVEAL_MS) {
         setClockState({ phase: "shown", ms: elapsed });
       } else if (!reducedRef.current && elapsed < REVEAL_MS + CLOCK_FADE_MS) {
         setClockState({ phase: "fading" });
       } else {
         setClockState({ phase: "hidden" });
-        return;
+        return false;
       }
-      frame = requestAnimationFrame(tick);
+      return true;
     };
     const timeOut = () => {
       if (done.current) return;
@@ -75,13 +83,9 @@ export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
       if (performance.now() - startedAt.current >= params.timeoutMs) timeOut();
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
-    frame = requestAnimationFrame(() => {
-      startedAt.current = performance.now();
-      timer = setTimeout(timeOut, params.timeoutMs);
-      frame = requestAnimationFrame(tick);
-    });
+    const stop = runFrames(tick);
     return () => {
-      cancelAnimationFrame(frame);
+      stop();
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };

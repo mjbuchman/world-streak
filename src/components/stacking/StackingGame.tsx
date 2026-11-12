@@ -5,6 +5,7 @@ import { MAX_TAPS, type StackingParams, type StackingResult } from "@/challenges
 import { drawStacking, FALL_MS } from "@/challenges/stacking/render";
 import { fitCanvas, readColorTokens } from "@/components/canvas";
 import { CANVAS_COLOR_TOKENS } from "@/components/canvasTokens";
+import { runFrames } from "@/components/frameLoop";
 import { usePrefersReducedMotion } from "@/components/ui/useReducedMotion";
 import { CHALLENGE_NAMES } from "@/config/challenges";
 import { targetRowNumber } from "./rows";
@@ -51,7 +52,6 @@ export function StackingGame({ params, onFinish, passTarget: target, best = 0 }:
     let finished = false;
     // Set when the run ends: the run as it ended, and when, so the last fall can play out.
     let ended: { run: FinishedRun; atMs: number } | null = null;
-    let frameId = 0;
 
     // While the run is going, record only taps the engine counts: each must come after the row
     // in play appeared (row 1 at 0 ms, then each row at the previous tap), at most MAX_TAPS of
@@ -78,8 +78,8 @@ export function StackingGame({ params, onFinish, passTarget: target, best = 0 }:
       tap();
     };
 
-    const frame = () => {
-      const elapsedMs = performance.now() - start;
+    const frame = (now: number) => {
+      const elapsedMs = now - start;
       const { result, finished: done } = frameAt(params, taps, elapsedMs);
       const { passTarget, reducedMotion } = latest.current;
       drawStacking(ctx, { params, result, elapsedMs, ...fitCanvas(canvas), colors, passTarget, reducedMotion });
@@ -93,17 +93,17 @@ export function StackingGame({ params, onFinish, passTarget: target, best = 0 }:
       // motion), then hand over the run as it ended.
       if (ended && (reducedMotion || elapsedMs - ended.atMs >= FALL_MS)) {
         latest.current.onFinish(ended.run);
-        return;
+        return false;
       }
-      frameId = requestAnimationFrame(frame);
+      return true;
     };
 
     window.addEventListener("keydown", onKeyDown);
     canvas.addEventListener("pointerdown", onPointerDown);
-    frameId = requestAnimationFrame(frame);
+    const stop = runFrames(frame);
     return () => {
       finished = true;
-      cancelAnimationFrame(frameId);
+      stop();
       window.removeEventListener("keydown", onKeyDown);
       canvas.removeEventListener("pointerdown", onPointerDown);
     };

@@ -5,6 +5,7 @@ import type { FlashCountInputs, FlashCountParams } from "@/challenges/flash-coun
 import { dotsVisible, drawFlashCount } from "@/challenges/flash-count/render";
 import { fitCanvas, readColorTokens } from "@/components/canvas";
 import { FLASH_COUNT_COLOR_TOKENS } from "@/components/canvasTokens";
+import { runFrames } from "@/components/frameLoop";
 import { Field, TextInput } from "@/components/form/Field";
 import { Button } from "@/components/ui/Button";
 import styles from "./FlashCountGame.module.css";
@@ -50,29 +51,25 @@ export function FlashCountGame({ params, onFinish, countdownMs = COUNTDOWN_FROM 
     // The countdown counts from `start`; the flash from the first frame that drew the dots.
     let start: number | null = null;
     let flashStart: number | null = null;
-    let frame = 0;
 
     const draw = (showDots: boolean) => {
       drawFlashCount(ctx, { dots: params.dots, showDots, ...fitCanvas(canvas), colors });
     };
 
-    const tick = () => {
+    const tick = (now: number) => {
       // A hidden tab shows nothing, so the flash starts over in the first frame back (T110).
       if (document.hidden) {
         start = null;
         flashStart = null;
-        frame = requestAnimationFrame(tick);
-        return;
+        return true;
       }
-      const now = performance.now();
       start ??= now;
       const elapsed = now - start;
       if (elapsed < countdownMs) {
         draw(false);
         setShowing("countdown");
         setCountdownNumber(Math.ceil((countdownMs - elapsed) / COUNTDOWN_STEP_MS));
-        frame = requestAnimationFrame(tick);
-        return;
+        return true;
       }
       setCountdownNumber(null);
       // From the first frame that shows the dots, so a slow frame at the switch takes no time off the flash.
@@ -80,8 +77,8 @@ export function FlashCountGame({ params, onFinish, countdownMs = COUNTDOWN_FROM 
       const visible = dotsVisible(now - flashStart, params.flashMs);
       draw(visible);
       setShowing(visible ? "dots" : "clear");
-      if (visible) frame = requestAnimationFrame(tick);
-      else document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (!visible) document.removeEventListener("visibilitychange", onVisibilityChange);
+      return visible;
     };
     // Browsers usually run no frames while hidden, so the hide itself restarts the flash.
     const onVisibilityChange = () => {
@@ -90,9 +87,9 @@ export function FlashCountGame({ params, onFinish, countdownMs = COUNTDOWN_FROM 
       flashStart = null;
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
-    frame = requestAnimationFrame(tick);
+    const stop = runFrames(tick);
     return () => {
-      cancelAnimationFrame(frame);
+      stop();
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [params, countdownMs]);
