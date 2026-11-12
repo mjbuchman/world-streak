@@ -5,7 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { PAYOUT_WITHIN_DAYS } from "@/config/prize";
 import { isAdmin } from "@/lib/admin";
-import type { EditState } from "@/lib/adminEdit";
+import { refuse, type EditState } from "@/lib/adminForm";
 import { dbInteger } from "@/lib/db/numeric";
 import { addDays } from "@/lib/gameDay";
 
@@ -80,14 +80,14 @@ const PAID_MESSAGES: Record<string, (cycle: number) => string> = {
 
 /** Marks cycle `form.cycle`'s prize paid today, as the signed-in admin. */
 export async function markPaid(db: Pick<SupabaseClient, "rpc">, form: FormData): Promise<EditState> {
-  if (!(await isAdmin(db))) return { ok: false, message: "Only admins can mark a prize paid." };
+  if (!(await isAdmin(db))) return refuse("Only admins can mark a prize paid.");
   const parsed = cycleSchema.safeParse(form.get("cycle") || undefined);
-  if (!parsed.success) return { ok: false, message: "Unknown cycle." };
+  if (!parsed.success) return refuse("Unknown cycle.");
   const cycle = parsed.data;
   const { data, error } = await db.rpc("admin_mark_paid", { p_cycle: cycle });
   if (error) throw new Error(`Marking the prize paid failed: ${error.message}`);
   if (data === "paid") return { ok: true, message: `Cycle ${cycle} marked paid.` };
-  return { ok: false, message: (PAID_MESSAGES[data as string] ?? (() => `Unexpected answer: ${String(data)}`))(cycle) };
+  return refuse((PAID_MESSAGES[data as string] ?? (() => `Unexpected answer: ${String(data)}`))(cycle));
 }
 
 const cycleSchema = z.coerce.number().int().positive();
@@ -101,9 +101,9 @@ const STATUS_MESSAGES: Record<string, (cycle: number) => string> = {
 
 /** Draws cycle `form.cycle` as the signed-in admin (their own client). */
 export async function drawCycle(db: Pick<SupabaseClient, "rpc">, form: FormData, randomInt: (max: number) => number): Promise<EditState> {
-  if (!(await isAdmin(db))) return { ok: false, message: "Only admins can draw a winner." };
+  if (!(await isAdmin(db))) return refuse("Only admins can draw a winner.");
   const parsed = cycleSchema.safeParse(form.get("cycle") || undefined);
-  if (!parsed.success) return { ok: false, message: "Unknown cycle." };
+  if (!parsed.success) return refuse("Unknown cycle.");
   const cycle = parsed.data;
 
   const tickets = await db.rpc("admin_draw_tickets", { p_cycle: cycle });
@@ -113,12 +113,12 @@ export async function drawCycle(db: Pick<SupabaseClient, "rpc">, form: FormData,
     tickets: dbInteger(row.tickets, "tickets"),
   }));
   if (entries.length === 0) {
-    return { ok: false, message: `Cycle ${cycle} cannot be drawn: it has not ended with the goal reached, or it has no entries left.` };
+    return refuse(`Cycle ${cycle} cannot be drawn: it has not ended with the goal reached, or it has no entries left.`);
   }
 
   const winner = pickWinner(entries, randomInt);
   const recorded = await db.rpc("admin_record_winner", { p_cycle: cycle, p_user: winner });
   if (recorded.error) throw new Error(`Recording the winner failed: ${recorded.error.message}`);
   if (recorded.data === "drawn") return { ok: true, message: `Cycle ${cycle} drawn.` };
-  return { ok: false, message: (STATUS_MESSAGES[recorded.data as string] ?? (() => `Unexpected answer: ${String(recorded.data)}`))(cycle) };
+  return refuse((STATUS_MESSAGES[recorded.data as string] ?? (() => `Unexpected answer: ${String(recorded.data)}`))(cycle));
 }

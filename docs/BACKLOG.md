@@ -1039,7 +1039,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T132 One set of admin form helpers
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] The zod `number(label)` field helper is defined once (for example `src/lib/adminForm.ts`) and used by `adminEdit.ts` and `adminSettings.ts`.
@@ -1420,7 +1420,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T72 Unit test for the /play server page
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T14
 - Acceptance criteria:
   - [ ] `src/app/play/page.test.tsx`, following `src/app/complete-profile/page.test.tsx` (mocked server client, `landingPath`, `todaysAttempt`, `redirect`, a stub `PlayToday`), covers: signed out (sign-in text and both links, no lookups); no profile (redirect, no `todaysAttempt`); with a profile (`todaysAttempt` called with the user id and a Date, its status passed on); a `todaysAttempt` failure is not swallowed.

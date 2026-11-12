@@ -3,7 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { isAdmin } from "@/lib/admin";
-import type { EditState } from "@/lib/adminEdit";
+import { refuse, type EditState } from "@/lib/adminForm";
 import { dbInteger, dbNumber } from "@/lib/db/numeric";
 
 export type OpenFlag = { id: number; email: string; reason: string; createdAt: string; gameDate: string; score: number | null };
@@ -37,13 +37,13 @@ const MESSAGES = {
 
 /** Dismisses or confirms one flag from the review form. */
 export async function reviewFlag(db: Pick<SupabaseClient, "rpc">, form: FormData): Promise<EditState> {
-  if (!(await isAdmin(db))) return { ok: false, message: "Only admins can review flags." };
+  if (!(await isAdmin(db))) return refuse("Only admins can review flags.");
   const parsed = reviewSchema.safeParse({ flagId: form.get("flagId") ?? "", decision: form.get("decision") });
-  if (!parsed.success) return { ok: false, message: "Unknown flag or decision." };
+  if (!parsed.success) return refuse("Unknown flag or decision.");
   const { flagId, decision } = parsed.data;
 
   const { data, error } = await db.rpc("review_cheat_flag", { p_flag_id: flagId, p_decision: decision });
   if (error) throw new Error(`Reviewing the flag failed: ${error.message}`);
-  if (data === "not-found") return { ok: false, message: "That flag is gone or already reviewed. Reload the page." };
+  if (data === "not-found") return refuse("That flag is gone or already reviewed. Reload the page.");
   return { ok: true, message: MESSAGES[decision] };
 }
