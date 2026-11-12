@@ -15,8 +15,8 @@ select throws_ok(
   '23P01', null, 'a cycle inside another is refused'
 );
 select throws_ok(
-  $$update public.cycles set end_date = '2027-03-05' where number = 1;
-    insert into public.cycles (number, start_date, end_date) values (90, '2027-03-02', '2027-04-30')$$,
+  $$insert into public.cycles (number, start_date, end_date) values (90, '2027-03-02', '2027-04-30');
+    update public.cycles set end_date = '2027-03-05' where number = 1$$,
   '23P01', null, 'and so is moving a cycle onto the next'
 );
 
