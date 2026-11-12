@@ -557,7 +557,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T115 Share is a button with an emoji share text
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T32
 - Acceptance criteria:
   - [ ] The result's share card shows the Share button but not the text. If neither sharing nor copying works, it shows the text so the player can copy it by hand.
@@ -567,7 +567,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T113 Second Sense starts with a visible timer
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T27
 - Acceptance criteria:
   - [ ] Daily play and practice show a running seconds timer from the start for `REVEAL_MS` (1000 ms), then hide it; the target still counts from the start.

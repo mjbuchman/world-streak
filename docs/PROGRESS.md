@@ -4,11 +4,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M3 More challenges and sharing is COMPLETE (Nov 12), waiting for the human's play-test. (M2 was play-tested Nov 11.)
-- Active task: none. The doc updates on disk (T32 done, M3 complete, the end-of-M3 maintainer check) go in the next task's branch.
+- Milestone: M3 play-tested (Nov 12); doing its follow-ups (T113-T117) before M4.
+- Active task: T113 Second Sense starts with a visible timer.
 - Blocked tasks: none
-- Waiting on the human: the M3 play-test; please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: after the M3 play-test, its follow-ups, then T109-T112 and M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
+- Waiting on the human: please-confirms (share emojis, rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
+- Next: T114, T116, T117, then T109-T112 and M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T115 Share is a button with an emoji share text (PR #72)
+- M3 play-test recorded (DECISIONS, T113-T117). The card shows only Share; the text (✅/❌, 🔥, a 🟩/🟧 meter bar, 🆘) appears only if sharing and copying fail. Emojis stay in `src/lib/share*` (guidelines test), so card tests build the expected text with `buildShareText`.
+- Review rounds: spec 2, quality 1, tests 1. Merges since the end-of-M3 check: 1.
 
 ### 2026-11-12 — Maintainer check at the end of M3
 - Health good (production audit clean). Its two ideas: shared per-challenge wording between daily play and practice (folded into T109), and a spoiler guard for the share text (already in `share.test.ts`). Merges since this check: 0.

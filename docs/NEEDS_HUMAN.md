@@ -20,6 +20,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: the share card links to the site. Until it is set, the card uses the page's own address, which is right locally.
 - Agent's recommendation: add it now; set the real value at deployment (T50). Next.js builds `NEXT_PUBLIC_` values into the page, so set it before the production build.
 
+### Please confirm: Second Sense clock and targets (T113; blocks nothing)
+- What is needed: OK or other numbers: the clock shows for 1 s, targets are 5–12 s, and the placeholder pass target stays within 0.5 s (it may now be hard, since longer targets give bigger errors; 0.8 s is an option). See docs/DECISIONS.md (T113).
+- Where to put it: reply in chat after trying `/practice/inner-clock`.
+- Why: your M3 play-test asked for a visible start and higher targets; the numbers are my call.
+- Agent's recommendation: keep 1 s and 5–12 s; judge the 0.5 s after a few tries.
+
 ### Please confirm: the share text's emojis (T115; blocks nothing)
 - What is needed: OK or changes to the share text: ✅/❌ outcome, 🔥 world streak, a 10-square meter bar (🟩 at or above the line, 🟧 below) with the rate and the line, 🆘 when near the line, 🙈 when the meter is hidden. See docs/DECISIONS.md (T115).
 - Where to put it: reply in chat (try Share after a scored attempt).

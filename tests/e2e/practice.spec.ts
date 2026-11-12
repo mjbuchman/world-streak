@@ -77,19 +77,23 @@ test("a deliberate miss in practice ends the run with the score the engine gives
   await expect(page.getByText(`Best: row ${score}`)).toBeVisible();
 });
 
-test("Second Sense practice: start, tap after about a second, and see how far off it was", async ({ page }) => {
+test("Second Sense practice: start, see the clock for a second, tap, and see how far off it was", async ({ page }) => {
   await gotoReady(page, "/practice/inner-clock");
   await expect(page.getByText(/^Your target: \d+(\.\d)? seconds$/)).toBeVisible();
   await page.getByRole("button", { name: "Start" }).click();
 
   const tapArea = page.getByRole("button", { name: /Tap when you think [\d.]+ seconds have passed/ });
   await expect(tapArea).toBeFocused();
-  // Nothing on screen tells the time while it runs.
+  // A clock runs for the first second as a starting point, then hides.
+  const shownClock = page.locator("[data-clock]");
+  await expect(shownClock).toHaveAttribute("data-clock", "shown");
+  await expect(shownClock).toHaveText(/^0\.\d$/);
+  await expect(shownClock).toHaveAttribute("data-clock", "hidden");
+  await expect(shownClock).toHaveText("");
   await expect(page.getByRole("timer")).toHaveCount(0);
-  await page.waitForTimeout(1000);
   await tapArea.click();
 
-  // Targets are at least 3 s, so a tap after about 1 s is early by roughly 2 s or more.
+  // Targets are at least 5 s, so a tap after a second or two is early by 3 s or more.
   await expect(page.getByRole("heading", { level: 2 })).toHaveText(/^\d+(\.\d+)? s early$/);
   await expect(page.getByText(/^You tapped at \d+(\.\d+)? s\. The target was \d+(\.\d)? s\.$/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();

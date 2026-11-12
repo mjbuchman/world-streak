@@ -1,4 +1,4 @@
-/* One big tap target, the whole width; no clock, no progress (T27). */
+/* One big tap target, the whole width; a clock for the first second only, no progress (T27, T113). */
 .area {
   width: 100%;
   min-height: 320px;
@@ -21,6 +21,16 @@
 .area:focus-visible {
   outline: none;
   box-shadow: var(--fs-focus-ring);
+}
+
+/* The first second's clock; it keeps its space once hidden, so the prompt does not move. */
+.clock {
+  min-height: 1.1em;
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-display);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .prompt {

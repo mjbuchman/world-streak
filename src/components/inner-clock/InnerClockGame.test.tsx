@@ -96,13 +96,43 @@ describe("InnerClockGame", () => {
     expect(onFinish).not.toHaveBeenCalled();
   });
 
-  it("shows the instruction and nothing that tells the time while running", () => {
+  it("shows a running clock from the start for the first second, then hides it", () => {
     render(<InnerClockGame params={params} onFinish={vi.fn()} />);
+    const shownClock = () => document.querySelector("[data-clock]");
+    // Before the start frame, the clock waits at zero.
+    expect(shownClock()?.textContent).toBe("0.0");
+    clock().mockReturnValue(1000);
     showStart();
+    expect(shownClock()?.textContent).toBe("0.0");
+    clock().mockReturnValue(1540);
+    act(() => frame!(0));
+    expect(shownClock()?.textContent).toBe("0.5");
+    clock().mockReturnValue(1999);
+    act(() => frame!(0));
+    expect(shownClock()?.textContent).toBe("0.9");
+    expect(shownClock()?.getAttribute("data-clock")).toBe("shown");
+    clock().mockReturnValue(2000);
+    act(() => frame!(0));
+    expect(shownClock()?.getAttribute("data-clock")).toBe("hidden");
+    expect(shownClock()?.textContent).toBe("");
+  });
+
+  it("shows the instruction and nothing that tells the time once the clock has hidden", () => {
+    render(<InnerClockGame params={params} onFinish={vi.fn()} />);
+    clock().mockReturnValue(1000);
+    showStart();
+    clock().mockReturnValue(2000);
+    act(() => frame!(0));
     expect(tapArea()).toBeTruthy();
     expect(screen.queryByRole("timer")).toBeNull();
     expect(screen.queryByRole("progressbar")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/\d+(\.\d+)?\s*s\b|\d:\d\d/);
+    expect(document.body.textContent).not.toMatch(/\d+(\.\d+)?\s*s\b|\d:\d\d|\d\.\d/);
+  });
+
+  it("keeps the shown clock out of the tap area's name, so it is announced once, not every frame", () => {
+    render(<InnerClockGame params={params} onFinish={vi.fn()} />);
+    expect(screen.getByRole("button").getAttribute("aria-hidden")).toBeNull();
+    expect(document.querySelector("[data-clock]")?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("puts focus on the tap area, so Space works at once", () => {
