@@ -4,11 +4,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M2 The world streak is COMPLETE and play-tested (Nov 11); its follow-ups T102-T105 are done (new home page: gauge meter and streak bars).
-- Active task: T32 Spoiler-free share card (last M3 feature; then the M3 play-test).
+- Milestone: M3 More challenges and sharing is COMPLETE (Nov 12), waiting for the human's play-test. (M2 was play-tested Nov 11.)
+- Active task: none. The doc updates on disk (T32 done, M3 complete, the end-of-M3 maintainer check) go in the next task's branch.
 - Blocked tasks: none
-- Waiting on the human: nothing now; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
+- Waiting on the human: the M3 play-test; please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
+- Next: after the M3 play-test, its follow-ups, then T109-T112 and M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,13 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — Maintainer check at the end of M3
+- Health good (production audit clean). Its two ideas: shared per-challenge wording between daily play and practice (folded into T109), and a spoiler guard for the share text (already in `share.test.ts`). Merges since this check: 0.
+
+### 2026-11-12 — T32 Spoiler-free share card (PR #71); M3 complete
+- `buildShareText` (`src/lib/share.ts`, margin in `src/config/share.ts`) and `ShareCard` under the `/play` result (reads `/api/meter`, `navigator.share` or clipboard). The `.env.example` line for `NEXT_PUBLIC_SITE_URL` is a NEEDS_HUMAN request (the file is denied to the agent).
+- Review rounds: spec 1, quality 1, tests 1. New T112 (two flaky link clicks). Merges since the maintainer check after T29: 4.
 
 ### 2026-11-12 — T31 Daily challenge rotation (PR #70)
 - Migration `20261112070000_daily_rotation`: `game_settings.rotation` (checked), public `challenge_for(d)` from 2027-01-01, `ensure_game_day` by the rotation (re-aligns untouched days, writes only on change). `todaysChallenge` asks `challenge_for` before the day exists. Admin type select split off as T111.

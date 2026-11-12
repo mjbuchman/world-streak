@@ -64,6 +64,8 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 
 ## Resolved
 
+- **M3 play-test** (Nov 12, 2026): Second Sense gets a visible timer that hides quickly, with higher targets (T113); Swift Sum gets fewer dots and more time (T114); share is just a button with an emoji text (T115); the admin page gets controls for the command-line tools (T116, T117).
+
 - **CI could not install the Playwright browser** (Nov 11, 2026): the e2e job's apt step failed 4 times (runner could not resolve `azure.archive.ubuntu.com`), and a fifth re-run failed with no jobs. The human approved dropping `--with-deps` from `.github/workflows/ci.yml` (T102 branch).
 
 - **M2 play-test** (Nov 11, 2026): no issues beyond the look of the meter and streak card (T104). Empty days break the streak (as built). Coming days follow the settings until edited or started, and the pass target locks once a day has started (T102). Do not hide the meter for now (T103). The refused/not-sent wording is approved. Redesign: A's gauge meter and play card, with a streak card made of A's header and C's bar chart (T104, T105).

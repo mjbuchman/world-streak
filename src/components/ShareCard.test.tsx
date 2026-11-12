@@ -2,6 +2,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { MeterBody } from "@/lib/meter";
+import { buildShareText } from "@/lib/share";
 import { ShareCard } from "./ShareCard";
 
 const meter = {
@@ -37,19 +39,30 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const expectedText = [
-  "World Streak · Nov 12, 2026",
-  "I passed today's challenge.",
-  "World streak: 3 days.",
-  "The world is close to the line at 63%. We need you: play before the deadline!",
-  "http://localhost:3000",
-].join("\n");
+// The wording is share.test.ts's job (emojis may appear only under src/lib/share); this checks
+// that the card builds it from the right inputs.
+const expectedText = buildShareText({
+  passed: true,
+  gameDate: "2026-11-12",
+  streak: 3,
+  meter: meter as MeterBody,
+  siteUrl: "http://localhost:3000",
+});
+
+/** The text the card hands to the share sheet. */
+async function sharedText(props: { passed: boolean; siteUrl?: string; now?: Date }) {
+  const user = setUpUser();
+  render(<ShareCard {...props} />);
+  await user.click(await screen.findByRole("button", { name: "Share" }));
+  return (share!.mock.calls[0][0] as { text: string }).text;
+}
 
 describe("ShareCard", () => {
-  it("shows the share text built from today's meter, and nothing about the score", async () => {
+  it("is just a Share button: the text is not shown on the page", async () => {
     render(<ShareCard passed siteUrl="http://localhost:3000" />);
     const card = await screen.findByRole("region", { name: "Share your day" });
-    expect(card.querySelector("pre")?.textContent).toBe(expectedText);
+    expect(card.querySelector("pre")).toBeNull();
+    expect(card.textContent).toBe("Share");
     expect(fetch).toHaveBeenCalledWith("/api/meter");
   });
 
@@ -68,17 +81,18 @@ describe("ShareCard", () => {
     await user.click(await screen.findByRole("button", { name: "Share" }));
     expect(writeText).toHaveBeenCalledExactlyOnceWith(expect.stringContaining("I didn't make it today."));
     expect(await screen.findByRole("status")).toHaveProperty("textContent", "Copied");
+    expect(document.querySelector("pre")).toBeNull();
   });
 
-  it("says when the copy failed", async () => {
+  it("shows the text to copy by hand when the copy failed", async () => {
     share = undefined;
     writeText.mockRejectedValue(new Error("denied"));
     const user = setUpUser();
     render(<ShareCard passed siteUrl="http://localhost:3000" />);
     await user.click(await screen.findByRole("button", { name: "Share" }));
-    expect(await screen.findByRole("status")).toHaveProperty("textContent", "Could not copy. Select the text and copy it.");
+    expect(await screen.findByRole("status")).toHaveProperty("textContent", "Could not copy. Select the text below and copy it.");
+    expect(document.querySelector("pre")?.textContent).toBe(expectedText);
   });
-
   it("stays quiet when the player closes the share sheet", async () => {
     share = vi.fn(async () => Promise.reject(new DOMException("cancelled", "AbortError")));
     const user = setUpUser();
@@ -89,17 +103,13 @@ describe("ShareCard", () => {
   });
 
   it("links to this site's own address when no site URL is set", async () => {
-    render(<ShareCard passed />);
-    const card = await screen.findByRole("region", { name: "Share your day" });
-    expect(card.querySelector("pre")?.textContent?.split("\n").at(-1)).toBe(window.location.origin);
+    expect((await sharedText({ passed: true })).split("\n").at(-1)).toBe(window.location.origin);
   });
 
-  it("still offers a card for today when the meter cannot be read, without the world's line", async () => {
+  it("still offers a card for today when the meter cannot be read, without the world's lines", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => json({ error: "down" }, 500)));
-    render(<ShareCard passed siteUrl="http://localhost:3000" now={new Date("2026-11-12T10:00:00Z")} />);
-    const card = await screen.findByRole("region", { name: "Share your day" });
-    expect(card.querySelector("pre")?.textContent).toBe(
-      ["World Streak · Nov 12, 2026", "I passed today's challenge.", "http://localhost:3000"].join("\n"),
+    expect(await sharedText({ passed: true, siteUrl: "http://localhost:3000", now: new Date("2026-11-12T10:00:00Z") })).toBe(
+      buildShareText({ passed: true, gameDate: "2026-11-12", streak: null, meter: null, siteUrl: "http://localhost:3000" }),
     );
   });
 });

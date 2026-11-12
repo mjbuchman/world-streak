@@ -515,7 +515,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 - Acceptance criteria:
   - [ ] The ready / playing / result / Play again scaffolding and its styles shared by `StackingPractice`, `InnerClockPractice` and `FlashCountPractice` live in one component and CSS module; each page keeps only its challenge-specific parts (how-to, game, result text).
   - [ ] Rendered markup is unchanged; existing unit and e2e tests pass unmodified; `npm run verify` passes.
-- Notes: From the maintainer check after T29 (about 150-250 lines). Each new challenge would otherwise copy the scaffolding again.
+- Notes: From the maintainer check after T29 (about 150-250 lines). Each new challenge would otherwise copy the scaffolding again. From the end-of-M3 check: the shell should take each challenge's how-to from `challengeUi(type)`, and the "N s off" / "N% off" wording should be built in one place per challenge and shared by daily play and practice (today `InnerClockPractice` builds its own), so the two cannot drift.
 
 ### T110 Scored timing challenges and a hidden tab
 - Type: feature
@@ -555,9 +555,56 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] `npm run test:e2e:local` passes 3 full runs in a row at the default workers.
 - Notes: Seen once each during T32 (a click lost under 6-worker load; both passed on a re-run). T78 covered the shared helpers only. About 20 lines.
 
-### T32 Spoiler-free share card with call for help
+### T115 Share is a button with an emoji share text
 - Type: feature
 - Status: in-progress
+- Depends on: T32
+- Acceptance criteria:
+  - [ ] The result's share card shows the Share button but not the text. If neither sharing nor copying works, it shows the text so the player can copy it by hand.
+  - [ ] The share text uses emojis: ✅/❌ outcome, 🔥 world streak, a 10-square meter bar (🟩 at or above the line, 🟧 below, ⬜ empty) with the rate and the line, 🆘 on a call for help. Still no score, target or challenge (tests).
+  - [ ] Unit tests for the text and the card; play e2e updated.
+- Notes: M3 play-test (Nov 12).
+
+### T113 Second Sense starts with a visible timer
+- Type: feature
+- Status: todo
+- Depends on: T27
+- Acceptance criteria:
+  - [ ] Daily play and practice show a running seconds timer from the start for `REVEAL_MS` (1000 ms), then hide it; the target still counts from the start.
+  - [ ] Targets rise to 5–12 s (`TARGET_RANGE_MS`), golden engine tests updated; the placeholder pass target is re-checked.
+  - [ ] Unit test of the timer's show and hide with mocked time; e2e of the practice page still passes.
+- Notes: M3 play-test (Nov 12): the start was ambiguous without a reference.
+
+### T114 Swift Sum balance
+- Type: feature
+- Status: todo
+- Depends on: T29
+- Acceptance criteria:
+  - [ ] Fewer dots and a longer flash (`DOT_COUNT_RANGE` 12–30, `FLASH_MS` 1500), so a player cannot count them all but can estimate; golden tests updated; decision recorded and flagged.
+- Notes: M3 play-test (Nov 12): it felt like a crapshoot.
+
+### T116 Admin dev tools: days and attempts
+- Type: feature
+- Status: todo
+- Depends on: T25, T31
+- Acceptance criteria:
+  - [ ] `/admin` gains a "Local tools" panel, shown and accepted only when the Supabase URL is local (the same guard as the scripts; the server actions refuse otherwise) and the user is an admin.
+  - [ ] Controls: set today's (or any open day's) challenge; clear my own attempt today so I can play again; reset a day (delete its attempts, reopen it if closed, follow the rotation again); restore the rotation to the default.
+  - [ ] Unit tests for each action, including the refusals (not local, not admin); e2e: clear my attempt and play again.
+- Notes: M3 play-test (Nov 12): no commands to remember.
+
+### T117 Admin dev tools: seed and close
+- Type: feature
+- Status: todo
+- Depends on: T116
+- Acceptance criteria:
+  - [ ] The "Local tools" panel can seed fake players (count, pass rate, date) and close a day, sharing the code of `npm run seed:dev` and `npm run close-day` (the scripts keep working); remove all fake players too.
+  - [ ] Unit tests for the actions and their guards; README points to the panel.
+- Notes: M3 play-test (Nov 12).
+
+### T32 Spoiler-free share card with call for help
+- Type: feature
+- Status: done
 - Depends on: T24, T30
 - Acceptance criteria:
   - [ ] `src/config/share.ts` exports `NEAR_THRESHOLD_MARGIN = 0.05`. `src/lib/share.ts` exports pure `buildShareText({ passed, gameDate, streak, meter, siteUrl })`.
