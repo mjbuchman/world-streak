@@ -29,7 +29,8 @@ type FlashCountGameProps = { params: FlashCountParams; onFinish: (inputs: FlashC
 /**
  * A Swift Sum run: the dots appear in the first frame after the canvas is on screen, stay for
  * `flashMs` of elapsed time (whatever the frame rate), then the board clears and the player
- * enters how many there were.
+ * enters how many there were. If the tab is hidden while the dots are shown, they are shown again
+ * in full on return, so a scored player always gets the whole flash.
  */
 export function FlashCountGame({ params, onFinish }: FlashCountGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -57,15 +58,30 @@ export function FlashCountGame({ params, onFinish }: FlashCountGameProps) {
     };
 
     const tick = () => {
+      // A hidden tab shows nothing, so the flash starts over in the first frame back (T110).
+      if (document.hidden) {
+        start = null;
+        frame = requestAnimationFrame(tick);
+        return;
+      }
       const now = performance.now();
       start ??= now;
       const visible = dotsVisible(now - start, params.flashMs);
       draw(visible);
       setShowing(visible ? "dots" : "clear");
       if (visible) frame = requestAnimationFrame(tick);
+      else document.removeEventListener("visibilitychange", onVisibilityChange);
     };
+    // Browsers usually run no frames while hidden, so the hide itself restarts the flash.
+    const onVisibilityChange = () => {
+      if (document.hidden) start = null;
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
     frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [params]);
 
   // The answer field appears once the board clears; put the cursor in it.

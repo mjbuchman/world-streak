@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M3 play-tested (Nov 12); its follow-ups (T113-T117) are done. Remaining M3 extras (T109-T112), then M4.
-- Active task: T109 One practice page shell for every challenge. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
+- Active task: T110 Scored timing challenges and a hidden tab. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
 - Blocked tasks: none
 - Waiting on the human: please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: then T109-T112 and M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
+- Next: then T111 and M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T109 One practice page shell (PR #78)
+- `PracticeShell` holds the ready / playing / result scaffolding; how-to from `challengeUi`, score wording from `scoreLabel` (shared with daily play).
+- Review: quality 1 (light). Merges since the end-of-M3 check: 7.
 
 ### 2026-11-12 — T112 Remaining e2e link clicks wait for hydration (PR #77)
 - Go-then-click steps use `gotoReady`; the Sign in click after sign-out retries until it navigates. Full suite 56/56 three runs in a row.

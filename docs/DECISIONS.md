@@ -301,3 +301,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Choice: the pill compares the rounded numbers on screen, but its colour follows the real comparison; a day that rounds to the line while below it says "Just below the line", never "Right on the line". The mint glow is 0.16 (the mockup's 0.22 left muted text at 4.3:1). The home page drops the big title and pitch, as the chosen artboard does (the h1 stays for screen readers).
 - How to change it later: `standing()` in `src/components/Meter.tsx`; `--fs-glow-mint` in `tokens.css` (and `METER_TINTS`); `src/app/page.tsx`.
 - Confirmed by human: pending (NEEDS_HUMAN).
+
+### 2026-11-12 — A hidden tab during Second Sense and Swift Sum (T110)
+- Choice: Second Sense's clock keeps running while the tab is hidden; if the timeout passed while hidden, the run ends with no tap on return. Swift Sum shows the dots again for the full 1.5 s if the tab was hidden while they were shown.
+- Reason: Second Sense measures real time, and the server's start-to-submit check uses real time too; pausing would let a player stop the clock. Swift Sum's re-show can be repeated by switching tabs over and over (more looks); the cheat checks (T40) can flag that later if it matters.
+- How to change it later: the `visibilitychange` handlers in `src/components/inner-clock/InnerClockGame.tsx` and `src/components/flash-count/FlashCountGame.tsx`.
+- Confirmed by human: pending (NEEDS_HUMAN).

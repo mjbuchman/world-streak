@@ -48,18 +48,27 @@ export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
       setShownMs(elapsed);
       frame = requestAnimationFrame(tick);
     };
+    const timeOut = () => {
+      if (done.current) return;
+      done.current = true;
+      finishRef.current({ tapMs: null });
+    };
+    // The clock keeps running while the tab is hidden (T110), but a hidden tab's timer can fire
+    // late, so on return a run already past its timeout ends at once.
+    const onVisibilityChange = () => {
+      if (document.hidden || startedAt.current === null) return;
+      if (performance.now() - startedAt.current >= params.timeoutMs) timeOut();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
     frame = requestAnimationFrame(() => {
       startedAt.current = performance.now();
-      timer = setTimeout(() => {
-        if (done.current) return;
-        done.current = true;
-        finishRef.current({ tapMs: null });
-      }, params.timeoutMs);
+      timer = setTimeout(timeOut, params.timeoutMs);
       frame = requestAnimationFrame(tick);
     });
     return () => {
       cancelAnimationFrame(frame);
       clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [params.timeoutMs]);
 

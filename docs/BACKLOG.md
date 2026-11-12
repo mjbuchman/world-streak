@@ -510,7 +510,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T109 One practice page shell for every challenge
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T108
 - Acceptance criteria:
   - [ ] The ready / playing / result / Play again scaffolding and its styles shared by `StackingPractice`, `InnerClockPractice` and `FlashCountPractice` live in one component and CSS module; each page keeps only its challenge-specific parts (how-to, game, result text).
@@ -519,7 +519,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T110 Scored timing challenges and a hidden tab
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T30
 - Acceptance criteria:
   - [ ] Swift Sum: if the tab is hidden while the dots are shown, the dots are shown again in full when it returns (or the run says so and lets the player see them), so a scored player always gets the whole flash. Unit test with a mocked `visibilitychange` and time.

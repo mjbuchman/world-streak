@@ -26,6 +26,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: you asked for these after trying the M3 follow-ups (Nov 12); they are built during M4.
 - Agent's recommendation: judge the 0.5 s after a few scored-style tries in practice.
 
+### Please confirm: a hidden tab in Second Sense and Swift Sum (T110; blocks nothing)
+- What is needed: OK, or pause instead: Second Sense's clock keeps running if the player switches tabs; Swift Sum shows the dots again in full when they come back.
+- Where to put it: reply in chat.
+- Why: the task asked for a decision. See docs/DECISIONS.md (T110).
+- Agent's recommendation: keep it running; pausing would let a player stop the clock.
+
 ### Please confirm: the share card's "near the line" margin (blocks nothing)
 - What is needed: OK or another number for when a share becomes a call for help: below the threshold plus 5 points (60% needed: under 65%). `NEAR_THRESHOLD_MARGIN` in `src/config/share.ts`.
 - Where to put it: reply in chat.
