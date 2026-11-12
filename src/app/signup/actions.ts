@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { eligibilityToday } from "@/lib/dates";
+import { insertProfile } from "@/lib/profiles";
 import { type SignUpState, signUp } from "@/lib/signup";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -21,9 +22,9 @@ export async function signUpAction(_previous: SignUpState | null, formData: Form
       if (error || !data.user) return { error: error?.code === "email_exists" ? "email-taken" : "unknown" };
       return { userId: data.user.id };
     },
-    async createProfile({ userId, birthDate, country }) {
-      const { error } = await admin().from("profiles").insert({ id: userId, birth_date: birthDate, country });
-      return !error;
+    async createProfile(profile) {
+      // A brand-new account cannot already have a profile, so "exists" is a failure here too.
+      return (await insertProfile(admin(), profile)) === "ok";
     },
     async deleteUser(userId) {
       // An account without a profile must not linger silently; log it for manual clean-up.

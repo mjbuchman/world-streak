@@ -86,6 +86,14 @@ describe("signUpAction", () => {
     expect(m.signInWithPassword).not.toHaveBeenCalled();
   });
 
+  it("treats a profile that already exists as a failure for a brand-new account, and deletes the user", async () => {
+    m.insert.mockResolvedValueOnce({ error: { code: "23505" } });
+    const result = await signUpAction(null, form());
+    expect(result).toMatchObject({ ok: false, message: expect.stringContaining("went wrong") });
+    expect(m.deleteUser).toHaveBeenCalledWith("user-1");
+    expect(m.signInWithPassword).not.toHaveBeenCalled();
+  });
+
   it("reports a failed sign-in without deleting the new account", async () => {
     m.signInWithPassword.mockResolvedValueOnce({ error: { message: "invalid" } });
     const result = await signUpAction(null, form());

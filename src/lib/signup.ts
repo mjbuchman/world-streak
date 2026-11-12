@@ -1,12 +1,11 @@
 import { z } from "zod";
-import { GAME_NAME } from "@/config/game";
-import { eligibilitySummary } from "@/lib/eligibility";
+import { refusalMessage } from "@/lib/eligibility";
 import { type EligibilityField, validateEligibilityFields } from "@/lib/eligibilityFields";
-import { collectFieldErrors, GENERIC_ERROR, textValue } from "@/lib/forms";
+import { collectFieldErrors, emailSchema, GENERIC_ERROR, readFields, textValue } from "@/lib/forms";
 import { PASSWORD_MISMATCH } from "@/lib/passwords";
 
 const accountSchema = z.object({
-  email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address.")),
+  email: emailSchema,
   // Supabase (bcrypt) accepts at most 72 characters.
   password: z.string().min(8, "Use at least 8 characters.").max(72, "Use at most 72 characters."),
 });
@@ -28,21 +27,7 @@ export type SignUpDeps = {
   signIn(email: string, password: string): Promise<boolean>;
 };
 
-export function refusalMessage(): string {
-  return `Sorry, ${GAME_NAME} is open only to ${eligibilitySummary()}.`;
-}
-
-function readForm(formData: FormData): Record<Field, unknown> {
-  const get = (name: Field) => formData.get(name) ?? undefined;
-  return {
-    email: get("email"),
-    password: get("password"),
-    confirmPassword: get("confirmPassword"),
-    birthDate: get("birthDate"),
-    country: get("country"),
-    agree: get("agree"),
-  };
-}
+const FIELDS = ["email", "password", "confirmPassword", "birthDate", "country", "agree"] as const satisfies readonly Field[];
 
 function echoValues(raw: Record<Field, unknown>): SignUpValues {
   return { email: textValue(raw.email), birthDate: textValue(raw.birthDate), country: textValue(raw.country) };
@@ -53,7 +38,7 @@ function echoValues(raw: Record<Field, unknown>): SignUpValues {
  * user exists, and a user whose profile cannot be written is deleted again.
  */
 export async function signUp(formData: FormData, deps: SignUpDeps): Promise<SignUpState> {
-  const raw = readForm(formData);
+  const raw = readFields(formData, FIELDS);
   const values = echoValues(raw);
   const account = accountSchema.safeParse(raw);
   const eligibility = validateEligibilityFields(raw, deps.today);

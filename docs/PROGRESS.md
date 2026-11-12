@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T131 Signed-in users skip /signin and /signup (PR #114)
+- The proxy redirects them home (pages stay static); `email_not_confirmed` gets its own message.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the check: 2.
+
 ### 2026-11-12 — T130 Static pages stay static (PR #113)
 - The header's account state is a client island (`AccountStatus`); /rules, /practice/*, /signup build static.
 - Review rounds: spec 1, quality 1, tests 1. Merges since the check: 1.

@@ -3,6 +3,21 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 /** Any Supabase client that can read the player's own profile (the server client, under RLS). */
 export type ProfileReader = Pick<SupabaseClient, "from">;
 
+/** Postgres unique violation: the player already has a profile. */
+const UNIQUE_VIOLATION = "23505";
+
+export type NewProfile = { userId: string; birthDate: string; country: string };
+
+/**
+ * Writes a player's profile. "exists" lets each caller decide what a second profile means: a
+ * failure for a brand-new sign-up, success for a repeated profile-completion submit.
+ */
+export async function insertProfile(client: ProfileReader, profile: NewProfile): Promise<"ok" | "exists" | "error"> {
+  const { error } = await client.from("profiles").insert({ id: profile.userId, birth_date: profile.birthDate, country: profile.country });
+  if (!error) return "ok";
+  return error.code === UNIQUE_VIOLATION ? "exists" : "error";
+}
+
 export type LandingPath = "/" | "/complete-profile";
 
 /**

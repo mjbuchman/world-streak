@@ -1030,7 +1030,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T131 Signed-in users skip /signin and /signup; unconfirmed-email message (from T58)
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T58
 - Acceptance criteria:
   - [ ] A signed-in user who opens `/signin` or `/signup` is redirected to `/`.
@@ -1081,7 +1081,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T61 Share the auth form helpers: email schema, form reading, profile insert
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T07
 - Acceptance criteria:
   - [ ] One `emailSchema` (trim, lowercase, `z.email("Enter a valid email address.")`) in `src/lib/forms.ts`, used by `signup.ts` and `signin.ts`.

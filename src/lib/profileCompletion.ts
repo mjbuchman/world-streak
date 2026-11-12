@@ -1,6 +1,6 @@
+import { refusalMessage } from "@/lib/eligibility";
 import { type EligibilityFieldErrors, validateEligibilityFields } from "@/lib/eligibilityFields";
-import { GENERIC_ERROR, textValue } from "@/lib/forms";
-import { refusalMessage } from "@/lib/signup";
+import { GENERIC_ERROR, readFields, textValue } from "@/lib/forms";
 
 export type CompleteProfileValues = { birthDate: string; country: string };
 
@@ -20,11 +20,7 @@ export type CompleteProfileDeps = {
  * after their first Google sign-in) and creates the profile. Ineligible players get no profile.
  */
 export async function completeProfile(formData: FormData, deps: CompleteProfileDeps): Promise<CompleteProfileState> {
-  const raw = {
-    birthDate: formData.get("birthDate") ?? undefined,
-    country: formData.get("country") ?? undefined,
-    agree: formData.get("agree") ?? undefined,
-  };
+  const raw = readFields(formData, ["birthDate", "country", "agree"]);
   const values = { birthDate: textValue(raw.birthDate), country: textValue(raw.country) };
 
   const eligibility = validateEligibilityFields(raw, deps.today);

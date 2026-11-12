@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { completeProfile, type CompleteProfileDeps } from "./profileCompletion";
-import { refusalMessage } from "./signup";
+import { refusalMessage } from "./eligibility";
 
 const TODAY = "2026-11-08";
 
