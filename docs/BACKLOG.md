@@ -567,7 +567,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T118 Second Sense clock fades out; targets 7-13 s
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T113
 - Acceptance criteria:
   - [ ] The first second's clock fades away gracefully instead of vanishing (no fade with reduced motion); the tap timing is unchanged.
@@ -848,7 +848,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T46 Account weighting
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T17, T16
 - Acceptance criteria:
   - [ ] `record_attempt_result` computes the weight at submit time: `1` if the account is at least `full_weight_after_days` old, otherwise `new_account_weight`, multiplied by `profiles.weight` (default 1, a manual override). The weight used is stored on the attempt (`attempts.weight`).

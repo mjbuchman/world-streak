@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M4 (M3 and its extras are done).
-- Active task: T46 Account weighting. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
+- Active task: T118 Second Sense clock fades out; targets 7-13 s. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
 - Blocked tasks: T37 (local simulation: how it may close days before their deadline; see NEEDS_HUMAN)
 - Waiting on the human: please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: T47 onward (T45 needs AdSense from the human) (T37 and T39 wait on the human); maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T46 Account weighting (PR #93)
+- `stamp_attempt_weight` applies `new_account_weight` until `full_weight_after_days`, times `profiles.weight`, when the attempt starts (DECISIONS, T46). The launch values keep every account at 1.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the check after T125: 2.
 
 ### 2026-11-12 — T44 Ad slots outside the challenge (PR #92)
 - `AdSlot` on `/`, `/history`, `/rules` and after a `/play` result; nothing unless ads are enabled with a publisher ID; a development placeholder; the AdSense script only when live. `.env.example` lines requested in NEEDS_HUMAN.

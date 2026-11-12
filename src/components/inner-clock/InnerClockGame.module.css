@@ -31,6 +31,18 @@
   font-size: var(--fs-text-display);
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  transition: opacity 400ms ease-out;
+}
+
+/* Stopped at one second, it fades away rather than vanishing (T118; CLOCK_FADE_MS). */
+.clock[data-clock="fading"] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock {
+    transition: none;
+  }
 }
 
 .prompt {

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { InnerClockGame, targetLabel } from "./InnerClockGame";
+import { CLOCK_FADE_MS, InnerClockGame, targetLabel } from "./InnerClockGame";
 
 const params = { targetMs: 5000, timeoutMs: 15_000 };
 
@@ -114,12 +114,45 @@ describe("InnerClockGame", () => {
     act(() => frame!(0));
     expect(shownClock()?.textContent).toBe("0.9");
     expect(shownClock()?.getAttribute("data-clock")).toBe("shown");
+    // At one second it stops at "1.0" and fades out (T118)...
+    clock().mockReturnValue(2000);
+    act(() => frame!(0));
+    expect(shownClock()?.getAttribute("data-clock")).toBe("fading");
+    expect(shownClock()?.textContent).toBe("1.0");
+    clock().mockReturnValue(2000 + CLOCK_FADE_MS - 1);
+    act(() => frame!(0));
+    expect(shownClock()?.textContent).toBe("1.0");
+    // ...and once faded, is gone.
+    clock().mockReturnValue(2000 + CLOCK_FADE_MS);
+    act(() => frame!(0));
+    expect(shownClock()?.getAttribute("data-clock")).toBe("hidden");
+    expect(shownClock()?.textContent).toBe("");
+    // The frame loop stops once hidden: the start, one frame per shown or fading tick, and no more.
+    expect(requestAnimationFrame).toHaveBeenCalledTimes(6);
+  });
+
+  it("with reduced motion, hides the clock at one second without fading", () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce"), addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    render(<InnerClockGame params={params} onFinish={vi.fn()} />);
+    const shownClock = () => document.querySelector("[data-clock]");
+    clock().mockReturnValue(1000);
+    showStart();
     clock().mockReturnValue(2000);
     act(() => frame!(0));
     expect(shownClock()?.getAttribute("data-clock")).toBe("hidden");
     expect(shownClock()?.textContent).toBe("");
-    // The frame loop stops once hidden: the start, then one frame per shown tick, and no more.
-    expect(requestAnimationFrame).toHaveBeenCalledTimes(4);
+  });
+
+  it("times the tap from the start whether or not the clock is fading", () => {
+    const onFinish = vi.fn();
+    render(<InnerClockGame params={params} onFinish={onFinish} />);
+    clock().mockReturnValue(1000);
+    showStart();
+    clock().mockReturnValue(2100);
+    act(() => frame!(0));
+    expect(document.querySelector("[data-clock]")?.getAttribute("data-clock")).toBe("fading");
+    fireEvent.pointerDown(tapArea());
+    expect(onFinish).toHaveBeenCalledExactlyOnceWith({ tapMs: 1100 });
   });
 
   it("shows the instruction and nothing that tells the time once the clock has hidden", () => {
@@ -127,6 +160,8 @@ describe("InnerClockGame", () => {
     clock().mockReturnValue(1000);
     showStart();
     clock().mockReturnValue(2000);
+    act(() => frame!(0));
+    clock().mockReturnValue(2000 + CLOCK_FADE_MS);
     act(() => frame!(0));
     expect(tapArea()).toBeTruthy();
     expect(screen.queryByRole("timer")).toBeNull();
