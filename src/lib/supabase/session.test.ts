@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const m = vi.hoisted(() => ({ createServerClient: vi.fn(), getUser: vi.fn() }));
+const m = vi.hoisted(() => ({ createServerClient: vi.fn(), getClaims: vi.fn(), getUser: vi.fn() }));
 vi.mock("@supabase/ssr", () => ({ createServerClient: m.createServerClient }));
 
 import { updateSession } from "./session";
@@ -18,8 +18,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
-  m.createServerClient.mockReturnValue({ auth: { getUser: m.getUser } });
-  m.getUser.mockResolvedValue({ data: { user: null }, error: null });
+  m.createServerClient.mockReturnValue({ auth: { getClaims: m.getClaims, getUser: m.getUser } });
+  m.getClaims.mockResolvedValue({ data: null, error: null });
 });
 
 function requestWithCookie() {
@@ -27,9 +27,12 @@ function requestWithCookie() {
 }
 
 describe("updateSession", () => {
-  it("asks Supabase for the user, which refreshes an expiring session", async () => {
+  // getClaims refreshes an expiring session and, with asymmetric signing keys, verifies the token
+  // locally; getUser would add an Auth server round trip to every request (T58).
+  it("reads the claims, which refreshes an expiring session, and never calls getUser", async () => {
     await updateSession(requestWithCookie());
-    expect(m.getUser).toHaveBeenCalledTimes(1);
+    expect(m.getClaims).toHaveBeenCalledTimes(1);
+    expect(m.getUser).not.toHaveBeenCalled();
     const [url, key] = m.createServerClient.mock.calls[0];
     expect([url, key]).toEqual(["http://127.0.0.1:54321", "anon-key"]);
   });
@@ -41,7 +44,7 @@ describe("updateSession", () => {
   });
 
   it("writes refreshed cookies to both the forwarded request and the response", async () => {
-    m.getUser.mockImplementation(async () => {
+    m.getClaims.mockImplementation(async () => {
       const cookies = m.createServerClient.mock.calls[0][2].cookies as CookieMethods;
       cookies.setAll([{ name: "sb-local-auth-token", value: "new", options: { path: "/", httpOnly: true } }], {
         "Cache-Control": "private, no-cache, no-store, must-revalidate, max-age=0",
@@ -59,7 +62,7 @@ describe("updateSession", () => {
   });
 
   it("marks a response that refreshes the session as uncacheable, so no CDN can share it", async () => {
-    m.getUser.mockImplementation(async () => {
+    m.getClaims.mockImplementation(async () => {
       const cookies = m.createServerClient.mock.calls[0][2].cookies as CookieMethods;
       cookies.setAll([{ name: "sb-local-auth-token", value: "new", options: {} }], {
         "Cache-Control": "private, no-cache, no-store, must-revalidate, max-age=0",

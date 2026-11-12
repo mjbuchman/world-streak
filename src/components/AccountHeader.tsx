@@ -19,7 +19,8 @@ function Wordmark() {
 /** The top bar: the wordmark home, and the account state on the right. */
 export async function AccountHeader() {
   const supabase = await createSupabaseServerClient();
-  // The proxy has already refreshed the session for this request.
+  // The proxy has already refreshed the session; with an asymmetric signing key getClaims verifies
+  // it locally, without an Auth round trip (T58, docs/DECISIONS.md).
   const { data } = await supabase.auth.getClaims();
   const email = data?.claims.email;
 

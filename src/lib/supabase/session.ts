@@ -28,7 +28,8 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     },
   });
 
-  // getUser() validates the token with Supabase and triggers the refresh when needed.
-  await supabase.auth.getUser();
+  // getClaims() triggers the refresh when needed and, with asymmetric signing keys, verifies the
+  // token locally; getUser() would cost an Auth round trip on every request (T58).
+  await supabase.auth.getClaims();
   return response;
 }

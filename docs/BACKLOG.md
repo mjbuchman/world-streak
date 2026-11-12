@@ -922,7 +922,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T51 Dev dependency audit and e2e build timing
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T01
 - Acceptance criteria:
   - [ ] `npm audit` reports no moderate or higher vulnerabilities, or each remaining one is listed in the PR with why it can't be fixed yet (at T01: 0 in production dependencies, 8 moderate in dev tooling).
@@ -1012,15 +1012,30 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T58 Fewer Auth round trips per page; keep pages static where possible
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T06
 - Acceptance criteria:
   - [ ] Each page render makes at most one Auth server round trip. Options: `getClaims()` in the proxy, or asymmetric JWT signing keys so `getClaims()` verifies locally. Whichever is chosen is recorded in DECISIONS.md with the trade-off.
-  - [ ] Pages whose content does not depend on the user (for example `/rules`) can render statically again, for example by making the account header a small client island that loads the session after first paint, without the header flashing the wrong state.
+  - [ ] `npm run verify` and `npm run test:e2e` pass.
+- Split (Nov 12, 2026, to stay under ~400 lines): static pages are T130; the sign-in redirect and `email_not_confirmed` message are T131.
+- Notes: From the T06 quality review. Not urgent during development; do before the live meter and play pages add traffic (M2). The T10 maintainer check found the comment in `src/components/AccountHeader.tsx` (lines 10-11) wrong: `getClaims` does not verify locally while `signing_keys_path` is commented out in `supabase/config.toml`, so a signed-in render makes two Auth calls today (`getUser` in the proxy, `getClaims` in the header). Fix the comment as part of this task. The T60 maintainer check adds: `src/proxy.ts` matches `/api/*`, so every signed-in API call makes two Auth `getUser` round trips (the proxy and the route), which matters once the meter is polled (T18/T19).
+
+### T130 Keep user-independent pages static (from T58)
+- Type: maintenance
+- Status: todo
+- Depends on: T58
+- Acceptance criteria:
+  - [ ] Pages whose content does not depend on the user (for example `/rules`) render statically again, for example by making the account header a small client island that loads the session after first paint, without the header flashing the wrong state.
+  - [ ] `npm run verify` and `npm run test:e2e` pass.
+
+### T131 Signed-in users skip /signin and /signup; unconfirmed-email message (from T58)
+- Type: maintenance
+- Status: todo
+- Depends on: T58
+- Acceptance criteria:
   - [ ] A signed-in user who opens `/signin` or `/signup` is redirected to `/`.
   - [ ] Sign-in shows a specific message for `email_not_confirmed`, in case email confirmation is ever turned on.
   - [ ] `npm run verify` and `npm run test:e2e` pass.
-- Notes: From the T06 quality review. Not urgent during development; do before the live meter and play pages add traffic (M2). The T10 maintainer check found the comment in `src/components/AccountHeader.tsx` (lines 10-11) wrong: `getClaims` does not verify locally while `signing_keys_path` is commented out in `supabase/config.toml`, so a signed-in render makes two Auth calls today (`getUser` in the proxy, `getClaims` in the header). Fix the comment as part of this task. The T60 maintainer check adds: `src/proxy.ts` matches `/api/*`, so every signed-in API call makes two Auth `getUser` round trips (the proxy and the route), which matters once the meter is polled (T18/T19).
 
 ### T59 One-command local e2e runs
 - Type: maintenance

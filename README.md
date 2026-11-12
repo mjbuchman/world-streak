@@ -164,11 +164,13 @@ Requires Node.js 22.18 or newer (current LTS recommended), npm, and Docker Deskt
 
 ```bash
 npm install                      # install dependencies (includes the Supabase CLI)
-npm run db:start                 # start local Supabase in Docker (first run downloads images)
+npm run db:start                 # create the local JWT signing key, then start local Supabase in Docker
 cp .env.example .env.local       # then fill in the values, see below
 ```
 
 Fill in `.env.local` from the output of `npx supabase status`: copy **API URL** to `NEXT_PUBLIC_SUPABASE_URL`, the **anon key** to `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and the **service_role key** to `SUPABASE_SERVICE_ROLE_KEY`. These are local-only development keys.
+
+Local Supabase signs sessions with a git-ignored ES256 key, `supabase/signing_keys.json`, so pages verify them without asking the Auth server. `npm run db:start` creates it once. Every `npx supabase` command needs the file, so on a fresh clone run `npm run db:keys` (or `npm run db:start`) first. After pulling this change: `npm run db:keys`, `npx supabase stop`, `npm run db:start`, then sign in again.
 
 **Windows PowerShell:** if `npm` or `npx` fails with "running scripts is disabled on this system", use `npm.cmd` and `npx.cmd` instead (for example `npm.cmd run dev`). They are the same tools, and no security setting needs changing.
 

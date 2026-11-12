@@ -27,7 +27,7 @@ describe("localSupabaseEnv", () => {
   });
 
   it("names what is missing when the status output lacks the keys", () => {
-    expect(() => localSupabaseEnv("")).toThrow(/did not report NEXT_PUBLIC_SUPABASE_URL.*npx supabase start/);
+    expect(() => localSupabaseEnv("")).toThrow(/did not report NEXT_PUBLIC_SUPABASE_URL.*npm run db:start/);
   });
 
   it("refuses a Supabase URL that is not on this machine", () => {
@@ -89,7 +89,7 @@ describe("runE2e", () => {
       },
     });
     expect(runE2e([], fake)).toBe(1);
-    expect(fake.logError).toHaveBeenCalledWith(expect.stringMatching(/not running.*npx supabase start/));
+    expect(fake.logError).toHaveBeenCalledWith(expect.stringMatching(/not running.*npm run db:start/));
     expect(fake.runPlaywright).not.toHaveBeenCalled();
   });
 

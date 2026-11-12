@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T51 Dependency audit (PR #111)
+- user-event patch; held majors and the dev-only audit findings in DECISIONS. CI build well under 2 min, so no workflow change.
+- Review rounds: quality 1 (light). Merges since the M4 check: 9.
+
 ### 2026-11-12 — T129 Recount a day in one locked call (PR #109)
 - `recount_game_day(d)` (service role): locks the day, skips closed days, recounts from attempts; `removeFakePlayers` uses it.
 - Review rounds: spec 1, quality 1, tests 2. Merges since the M4 check: 8.

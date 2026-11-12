@@ -12,6 +12,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Asymmetric JWT keys at deployment (T58; blocks nothing)
+- What is needed: nothing locally (I already ran `npm run db:keys` and restarted Supabase; sign in again). At deployment, switch the project to an ECC (P-256) signing key (`docs/DEPLOYMENT.md` §4.4).
+- Where to put it: the Supabase dashboard.
+- Why: pages verify sessions locally instead of asking the Auth server each time. See DECISIONS (T58).
+- Agent's recommendation: do it with the rest of `docs/DEPLOYMENT.md` §4.
+
 ### Please confirm: the simulation's second unchecked function (T37; blocks nothing)
 - What is needed: OK that besides `close_game_day_unchecked`, T37 added a service-role-only `record_attempt_result_unchecked` (results on any open day), so simulated passes earn entries. Both exist in production too but only the service role can call them. See DECISIONS (T37).
 - Where to put it: reply in chat.

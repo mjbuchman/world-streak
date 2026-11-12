@@ -19,7 +19,7 @@ const STATUS_COMMAND =
   " --override-name auth.anon_key=NEXT_PUBLIC_SUPABASE_ANON_KEY" +
   " --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY";
 
-const NOT_RUNNING = "Local Supabase is not running. Start it with `npx supabase start`, then try again.";
+const NOT_RUNNING = "Local Supabase is not running. Start it with `npm run db:start`, then try again.";
 
 /** Picks the app's variables out of `supabase status -o env` output (with the overrides above). */
 export function localSupabaseEnv(statusOutput: string): AppEnv {
