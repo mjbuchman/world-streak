@@ -39,6 +39,8 @@ export default defineConfig({
         "src/lib/meterRead.ts": { lines: 90, branches: 90 },
         // Reads the numbers that pass/fail, the meter and the streak are computed from.
         "src/lib/db/**": { lines: 90, branches: 90 },
+        // How much a cycle's winner is paid, and what rolls over.
+        "src/lib/prize.ts": { lines: 90, branches: 90 },
         // Decides who may enter the prize draw.
         "src/lib/eligibility.ts": { lines: 90, branches: 90 },
         "src/lib/eligibilityFields.ts": { lines: 90, branches: 90 },

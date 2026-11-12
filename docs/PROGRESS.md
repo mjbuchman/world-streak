@@ -4,11 +4,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M3 play-tested (Nov 12); its follow-ups (T113-T117) are done. Remaining M3 extras (T109-T112), then M4.
-- Active task: T111 Admin picks a future day's challenge. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
+- Milestone: M4 (M3 and its extras are done).
+- Active task: T33 Cycles table and prize amount. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
 - Blocked tasks: none
 - Waiting on the human: please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: then M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
+- Next: T34 onward. T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T111 Admin picks a coming day's challenge (PR #80)
+- A challenge select in the admin editor for unstarted open days. A trigger locks a started day's challenge (WS003) and gives a new challenge its default target unless the same update sets one.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the end-of-M3 check: 9.
 
 ### 2026-11-12 — T110 A hidden tab during the timing challenges (PR #79)
 - Swift Sum re-shows the full flash after a hidden tab; Second Sense's clock keeps running (decided, please-confirm) and a run past its timeout ends on return.
