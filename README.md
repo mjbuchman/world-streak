@@ -236,6 +236,7 @@ It closes the empty days before `--from` (broken), creates 50 fake players, and 
 ```bash
 npm run verify                   # lint, typecheck, unit tests with coverage, production build
 npm run test:db                  # database tests (pgTAP) against local Supabase
+npm run db:types                 # after adding a migration: regenerate src/lib/supabase/database.types.ts (CI checks it)
 npx playwright install chromium  # once, to download the test browser
 npm run test:e2e:local           # end-to-end tests against local Supabase (starts the app automatically)
 ```

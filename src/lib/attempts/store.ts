@@ -1,5 +1,6 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { dbInteger, dbNumber } from "@/lib/db/numeric";
+import type { Database, Json, TablesInsert } from "@/lib/supabase/database.types";
 import type { AttemptStore } from "./start";
 import { RECORD_STATUSES, type RecordStatus, type SubmitStore } from "./submit";
 import type { DayAttempt, GameDay } from "./types";
@@ -12,16 +13,6 @@ function throwDbError(operation: string, error: PostgrestError): never {
   throw new Error(`${operation} failed: ${error.message}`);
 }
 
-type GameDayRow = { challenge_type: string; pass_target: number | string; closed_at: string | null };
-type DayAttemptRow = {
-  score: number | string | null;
-  passed: boolean | null;
-  submitted_at: string | null;
-  game_days: { pass_target: number | string };
-};
-type AttemptRow = { user_id: string; game_date: string; seed: number; started_at: string; submitted_at: string | null };
-type RecentScoreRow = { score: number | string; game_days: { challenge_type: string } };
-
 const RECENT_SCORES = 20;
 
 /**
@@ -29,7 +20,7 @@ const RECENT_SCORES = 20;
  * client: players have no write access to attempts or game days under row-level security, by
  * design. `findAttemptForDay` alone also works with a player's own client (see `todaysAttempt`).
  */
-export function supabaseAttemptStore(db: Pick<SupabaseClient, "from" | "rpc">): AttemptStore & SubmitStore {
+export function supabaseAttemptStore(db: Pick<SupabaseClient<Database>, "from" | "rpc">): AttemptStore & SubmitStore {
   return {
     async hasProfile(userId) {
       const { data, error } = await db.from("profiles").select("id").eq("id", userId).maybeSingle();
@@ -49,8 +40,7 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient, "from" | "rpc">): 
         .eq("game_date", gameDate)
         .single();
       if (error) throwDbError("Game day lookup", error);
-      const row = data as GameDayRow;
-      return { challengeType: row.challenge_type, passTarget: dbNumber(row.pass_target, "pass_target"), closed: row.closed_at !== null };
+      return { challengeType: data.challenge_type, passTarget: dbNumber(data.pass_target, "pass_target"), closed: data.closed_at !== null };
     },
 
     async findAttemptForDay(userId, gameDate): Promise<DayAttempt | null> {
@@ -62,26 +52,26 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient, "from" | "rpc">): 
         .maybeSingle();
       if (error) throwDbError("Day attempt lookup", error);
       if (!data) return null;
-      const row = data as unknown as DayAttemptRow;
-      if (row.submitted_at === null) return { submitted: false };
+      if (data.submitted_at === null) return { submitted: false };
       return {
         submitted: true,
-        score: dbNumber(row.score, "score"),
-        passed: row.passed === true,
-        passTarget: dbNumber(row.game_days.pass_target, "pass_target"),
+        score: dbNumber(data.score, "score"),
+        passed: data.passed === true,
+        passTarget: dbNumber(data.game_days.pass_target, "pass_target"),
       };
     },
 
     async insertAttempt({ userId, gameDate, seed }) {
       const { data, error } = await db
         .from("attempts")
-        .insert({ user_id: userId, game_date: gameDate, seed })
+        // counted_weight is NOT NULL but stamped by a trigger (T46), which the generated types cannot see.
+        .insert({ user_id: userId, game_date: gameDate, seed } as TablesInsert<"attempts">)
         .select("id")
         .single();
       if (error?.code === UNIQUE_VIOLATION) return "duplicate";
       if (error?.code === DAY_CLOSED) return "day-closed";
       if (error) throwDbError("Attempt insert", error);
-      return { id: (data as { id: string }).id };
+      return { id: data.id };
     },
 
     async findAttemptById(attemptId) {
@@ -92,20 +82,20 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient, "from" | "rpc">): 
         .maybeSingle();
       if (error) throwDbError("Attempt lookup by id", error);
       if (!data) return null;
-      const row = data as AttemptRow;
       return {
-        userId: row.user_id,
-        gameDate: row.game_date,
-        seed: dbInteger(row.seed, "seed"),
-        startedAt: new Date(row.started_at),
-        submitted: row.submitted_at !== null,
+        userId: data.user_id,
+        gameDate: data.game_date,
+        seed: dbInteger(data.seed, "seed"),
+        startedAt: new Date(data.started_at),
+        submitted: data.submitted_at !== null,
       };
     },
 
     async recordResult({ attemptId, inputs, score, passed }) {
       const { data, error } = await db.rpc("record_attempt_result", {
         p_attempt_id: attemptId,
-        p_inputs: inputs,
+        // The inputs came from a parsed JSON request body, so they are JSON.
+        p_inputs: inputs as Json,
         p_score: score,
         p_passed: passed,
       });
@@ -125,7 +115,7 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient, "from" | "rpc">): 
         .order("game_date", { ascending: false })
         .limit(RECENT_SCORES);
       if (error) throwDbError("Recent scores lookup", error);
-      return (data as unknown as RecentScoreRow[]).map((row) => ({
+      return data.map((row) => ({
         challengeType: row.game_days.challenge_type,
         score: dbNumber(row.score, "score"),
       }));

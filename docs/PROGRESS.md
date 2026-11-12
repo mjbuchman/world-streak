@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T64 Revoke TRUNCATE (PR #118)
+- Client roles lose TRUNCATE on every public table, now and by default; pgTAP checks it.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the check: 6.
+
 ### 2026-11-12 — T63 Component-test race audit (PR #117)
 - Two assertions now wait for the async result (PlayToday flash-count submit, Google sign-in call); 5 clean full runs.
 - Review rounds: quality 1 (light). Merges since the check: 5.
