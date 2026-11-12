@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M3 play-tested (Nov 12); doing its follow-ups (T113-T117) before M4.
-- Active task: T114 Swift Sum balance.
+- Active task: T116 Admin local tools: days and attempts.
 - Blocked tasks: none
 - Waiting on the human: please-confirms (share emojis, rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T116, T117, then T109-T112 and M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
+- Next: T117, then T109-T112 and M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T114 Swift Sum balance (PR #74)
+- 12–30 dots for 1.5 s (was 15–45 for 1 s); goldens re-pinned. Flagged for the next play-test.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the end-of-M3 check: 3.
 
 ### 2026-11-12 — T113 Second Sense starts with a visible timer (PR #73)
 - A clock (`[data-clock]`, aria-hidden) counts tenths for `REVEAL_MS` = 1 s, then hides; targets 5–12 s. Pass target placeholder kept at 0.5 s and flagged.

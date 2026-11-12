@@ -16,13 +16,16 @@ vi.mock("next/navigation", () => ({ notFound }));
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: vi.fn(async () => sessionClient) }));
 vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: vi.fn(() => serviceClient) }));
 vi.mock("@/lib/admin", () => ({ isAdmin, readAdminDays }));
-vi.mock("@/app/admin/actions", () => ({ saveGameDayAction: vi.fn() }));
+vi.mock("@/app/admin/actions", () => ({ saveGameDayAction: vi.fn(), localToolAction: vi.fn() }));
+const localToolsEnabled = vi.hoisted(() => vi.fn(() => false));
+vi.mock("@/lib/localTools", () => ({ localToolsEnabled }));
 
 import AdminPage from "./page";
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  localToolsEnabled.mockReturnValue(false);
 });
 
 describe("/admin", () => {
@@ -57,5 +60,35 @@ describe("/admin", () => {
     expect(within(closed).queryByRole("spinbutton")).toBeNull();
     expect(within(open).getByRole<HTMLInputElement>("spinbutton", { name: "Pass target for Nov 12, 2026" }).value).toBe("10");
     expect(within(open).getByRole<HTMLInputElement>("spinbutton", { name: "Survival threshold in percent for Nov 12, 2026" }).value).toBe("60");
+  });
+
+  it("has no local tools unless the app runs with the local Supabase", async () => {
+    isAdmin.mockResolvedValue(true);
+    readAdminDays.mockResolvedValue([]);
+    render(await AdminPage());
+    expect(screen.queryByRole("region", { name: "Local tools" })).toBeNull();
+  });
+
+  it("offers the local tools with the local Supabase, for the open days and every challenge", async () => {
+    isAdmin.mockResolvedValue(true);
+    localToolsEnabled.mockReturnValue(true);
+    readAdminDays.mockResolvedValue([
+      { gameDate: "2026-11-11", challengeType: "stacking", passTarget: 3, threshold: 0.6, closed: true, started: true },
+      { gameDate: "2026-11-12", challengeType: "inner-clock", passTarget: 0.5, threshold: 0.6, closed: false, started: true },
+    ]);
+    render(await AdminPage());
+    const tools = screen.getByRole("region", { name: "Local tools" });
+    const setChallenge = within(tools).getByRole("form", { name: "Set a day's challenge" });
+    const options = (name: string) =>
+      within(setChallenge).getByRole<HTMLSelectElement>("combobox", { name }).querySelectorAll("option");
+    expect([...options("Day")].map((option) => option.textContent)).toEqual(["Nov 12, 2026"]);
+    expect([...options("Challenge")].map((option) => [option.value, option.textContent])).toEqual([
+      ["stacking", "Teetering Tower"],
+      ["inner-clock", "Second Sense"],
+      ["flash-count", "Swift Sum"],
+    ]);
+    for (const name of ["Clear my attempt today", "Reset day", "Restore the rotation"]) {
+      expect(within(tools).getByRole("button", { name })).toBeTruthy();
+    }
   });
 });

@@ -1,0 +1,35 @@
+.tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* One tool: its fields and button on a row that wraps on a phone. */
+.tool {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--fs-color-surface-border);
+}
+
+.note,
+.what {
+  margin: 0;
+  color: var(--fs-color-text-muted);
+}
+
+.what {
+  flex: 1 1 16rem;
+}
+
+.done {
+  margin: 0;
+  color: var(--fs-color-mint);
+}
+
+.refused {
+  margin: 0;
+  color: var(--fs-color-error);
+}
