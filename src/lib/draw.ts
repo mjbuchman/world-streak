@@ -121,5 +121,5 @@ export async function drawCycle(db: Pick<Db, "rpc">, form: FormData, randomInt: 
   const recorded = await db.rpc("admin_record_winner", { p_cycle: cycle, p_user: winner });
   if (recorded.error) throw new Error(`Recording the winner failed: ${recorded.error.message}`);
   if (recorded.data === "drawn") return { ok: true, message: `Cycle ${cycle} drawn.` };
-  return refuse((STATUS_MESSAGES[recorded.data] ??(() => `Unexpected answer: ${String(recorded.data)}`))(cycle));
+  return refuse((STATUS_MESSAGES[recorded.data] ?? (() => `Unexpected answer: ${String(recorded.data)}`))(cycle));
 }

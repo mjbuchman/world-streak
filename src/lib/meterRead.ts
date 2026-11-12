@@ -31,6 +31,7 @@ export async function readMeter(db: Pick<SupabaseClient<Database>, "from" | "rpc
   const streak = streakReply.data;
   // A one-to-one embed (the counters' key is the day's key) comes back as an object; accept a
   // one-element array too, so a change in how PostgREST detects that can never read as zero.
+  // The generated embed type cannot say "object or array", hence the cast below.
   const embedded: unknown = day?.game_day_counters ?? null;
   const counters = (Array.isArray(embedded) ? (embedded[0] ?? null) : embedded) as Record<
     "attempts" | "weighted_attempts" | "weighted_passes",
