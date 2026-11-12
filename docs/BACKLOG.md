@@ -586,7 +586,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T120 One error helper and one error rule for the local tools
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Follow-up (not in scope): the `recountDay` single-statement recount from the notes goes to T129.
 - Depends on: none
 - Acceptance criteria:
@@ -597,7 +597,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T121 PlayToday: start and submit outcomes as tested pure functions
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] A new module (for example `src/app/play/outcomes.ts`) maps a start response `(status, body)` to the next step (playing, ready with an error, abandoned, refresh) and a submit response to result, refresh or failed (heading and message); the error-message constants move with them.
