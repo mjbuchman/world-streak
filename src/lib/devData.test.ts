@@ -31,6 +31,11 @@ function fakeDb(results: Result[], pages: { email: string; id: string }[][]) {
       calls.push(log);
       return builder(log);
     },
+    rpc: (name: string, args: unknown) => {
+      const log: unknown[][] = [["rpc", name, args]];
+      calls.push(log);
+      return builder(log);
+    },
     auth: { admin: { listUsers, deleteUser } },
   } as unknown as SupabaseClient;
   return { db, calls, listUsers, deleteUser };
@@ -75,11 +80,6 @@ describe("removeFakePlayers", () => {
     const { db, calls, listUsers, deleteUser } = fakeDb(
       [
         ok([{ game_date: "2026-11-12" }]),
-        // The real player's pass (weight 1) and an unfinished zero-weight attempt are left.
-        ok([
-          { passed: true, counted_weight: "1" },
-          { passed: null, counted_weight: null },
-        ]),
         ok(),
       ],
       [firstPage, [{ email: "seed-b-1@example.test", id: "fake-last" }]],
@@ -90,11 +90,7 @@ describe("removeFakePlayers", () => {
     expect(deleteUser).not.toHaveBeenCalledWith("real");
     expect(deleteUser).toHaveBeenLastCalledWith("fake-last");
     expect(calls[0]).toEqual([["from", "game_days"], ["select", "game_date"], ["is", "closed_at", null]]);
-    expect(calls[2]).toEqual([
-      ["from", "game_day_counters"],
-      ["update", { attempts: 2, passes: 1, weighted_attempts: 1, weighted_passes: 1 }],
-      ["eq", "game_date", "2026-11-12"],
-    ]);
+    expect(calls[1]).toEqual([["rpc", "recount_game_day", { d: "2026-11-12" }]]);
   });
 
   it("stops at the first failure", async () => {
