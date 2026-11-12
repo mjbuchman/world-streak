@@ -1,5 +1,6 @@
 import { paramsFromSeed } from "../../src/challenges/stacking/engine";
 import { FALL_MS } from "../../src/challenges/stacking/render";
+import { CANVAS_COLOR_TOKENS } from "../../src/components/stacking/canvasTokens";
 import { expect, test } from "./support/fixtures";
 import { gotoReady, signUpViaForm } from "./support/pages";
 import { pinSeed, playTaps, tapsForAMiss } from "./support/tower";
@@ -81,11 +82,10 @@ test("the game canvas finds its colour tokens", async ({ page }) => {
   await page.getByRole("button", { name: "Start" }).click();
   const canvas = page.getByRole("img", { name: /Teetering Tower game area/ });
   await expect(canvas).toBeVisible();
-  const tokens = await canvas.evaluate((el) => {
-    const style = getComputedStyle(el);
-    return ["surface-strong", "mint", "tangerine", "mint-dark", "mint-light"].map((name) =>
-      style.getPropertyValue(`--fs-color-${name}`).trim(),
-    );
-  });
+  const tokens = await canvas.evaluate(
+    (el, names) => names.map((name) => getComputedStyle(el).getPropertyValue(name).trim()),
+    Object.values(CANVAS_COLOR_TOKENS),
+  );
+  expect(tokens).toHaveLength(5);
   for (const value of tokens) expect(value).not.toBe("");
 });
