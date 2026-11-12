@@ -1,0 +1,12 @@
+/* The prize card (T36): the amount first, then the cycle's progress. */
+.prize {
+  margin: 0;
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-body);
+  color: var(--fs-color-mint);
+}
+
+.line {
+  margin: var(--space-2) 0 0;
+}

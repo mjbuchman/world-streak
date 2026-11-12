@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Countdown } from "@/components/Countdown";
 import { Meter } from "@/components/Meter";
+import { PrizeCycle } from "@/components/PrizeCycle";
 import { WorldStreak } from "@/components/WorldStreak";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { PageShell } from "@/components/ui/PageShell";
@@ -46,6 +47,7 @@ export default async function Home() {
           Practice any challenge
         </Link>
       </Surface>
+      <PrizeCycle />
       <WorldStreak />
     </PageShell>
   );

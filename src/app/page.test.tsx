@@ -3,8 +3,9 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ChallengeType } from "@/challenges/shared/types";
 
-// The meter and the streak panel have their own tests; here they are stand-ins.
+// The meter, the prize and the streak panel have their own tests; here they are stand-ins.
 vi.mock("@/components/WorldStreak", () => ({ WorldStreak: () => <section aria-label="World streak" /> }));
+vi.mock("@/components/PrizeCycle", () => ({ PrizeCycle: () => <section aria-label="Prize" /> }));
 vi.mock("@/components/Meter", () => ({ Meter: () => <section aria-label="Today's meter" /> }));
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: vi.fn(async () => ({})) }));
 const todaysChallenge = vi.hoisted(() => vi.fn<() => Promise<ChallengeType>>());
@@ -27,10 +28,10 @@ describe("Home", () => {
     expect(header?.nextElementSibling?.getAttribute("aria-label")).toBe("Today's meter");
   });
 
-  it("puts the meter first, then today's challenge, then the world streak", async () => {
+  it("puts the meter first, then today's challenge, the prize and the world streak", async () => {
     render(await Home());
     const order = screen.getAllByRole("region").map((region) => region.getAttribute("aria-label") ?? region.textContent);
-    expect(order).toEqual(["Today's meter", expect.stringContaining("Teetering Tower"), "World streak"]);
+    expect(order).toEqual(["Today's meter", expect.stringContaining("Teetering Tower"), "Prize", "World streak"]);
   });
 
   it("shows today's challenge as a card with Play and Practice first", async () => {

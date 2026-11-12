@@ -691,7 +691,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T35 Entries for passed days
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T34
 - Acceptance criteria:
   - [ ] A migration creates `entries` (`user_id`, `cycle_number`, `game_date`, **`unique (user_id, game_date)`**). `record_attempt_result` inserts one when the attempt passed and `cycle_for(game_date)` is not null.
@@ -701,7 +701,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T36 Prize and cycle display
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T35, T24
 - Acceptance criteria:
   - [ ] `/` shows "Prize this cycle: $200" (or the current amount with rollover, for example "$400, including $200 rolled over"), "Day X of 60" and "Goal: a 30-day world streak". Once the goal is reached, it shows "Goal reached on <date>. A winner will be drawn after the cycle ends."
