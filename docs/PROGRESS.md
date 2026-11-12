@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T61 Shared auth form helpers (PR #115)
+- `emailSchema`, `readFields`, `refusalMessage` (in eligibility) and `insertProfile` ("ok" | "exists" | "error").
+- Review rounds: spec 1, quality 1, tests 2. Merges since the check: 3.
+
 ### 2026-11-12 — T131 Signed-in users skip /signin and /signup (PR #114)
 - The proxy redirects them home (pages stay static); `email_not_confirmed` gets its own message.
 - Review rounds: spec 1, quality 1, tests 1. Merges since the check: 2.

@@ -1081,7 +1081,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T61 Share the auth form helpers: email schema, form reading, profile insert
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T07
 - Acceptance criteria:
   - [ ] One `emailSchema` (trim, lowercase, `z.email("Enter a valid email address.")`) in `src/lib/forms.ts`, used by `signup.ts` and `signin.ts`.
@@ -1093,7 +1093,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T62 Shared e2e sign-in, sign-out and header helpers
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T56
 - Acceptance criteria:
   - [ ] `tests/e2e/support/pages.ts` exports `header(page)`, `signInViaForm(page, email, password = E2E_PASSWORD)` (button scoped to `main`, not the header link) and `signOutViaHeader(page)` (waits for the "Sign in" link).
