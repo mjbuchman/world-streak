@@ -1,6 +1,6 @@
 import { chromium, type FullConfig, type Page } from "@playwright/test";
 import { E2E_PASSWORD, gotoReady, signUpViaForm, submitAndWait } from "./support/pages";
-import { deleteUsersByEmail } from "./support/supabase";
+import { adminClient, deleteUsersByEmail } from "./support/supabase";
 
 /** Pages a visitor opens. */
 export const VISITOR_PATHS = ["/", "/signin", "/signup", "/rules", "/practice", "/practice/stacking", "/practice/inner-clock", "/practice/flash-count", "/history", "/admin", "/auth/callback?error=warmup"] as const;
@@ -30,14 +30,37 @@ async function signOut(page: Page): Promise<void> {
   await page.getByRole("banner").getByRole("link", { name: "Sign in" }).waitFor();
 }
 
+/** Before the workers start: pin the rotation, and warm the dev server locally. Playwright runs the returned step after them. */
+export default async function globalSetup(config: FullConfig): Promise<() => Promise<void>> {
+  const restoreRotation = await pinTowerRotation();
+  if (!process.env.CI) await warmUp(config);
+  return restoreRotation;
+}
+
 /**
- * Before the workers start, compiles everything the suite uses against the dev server (T78): every
- * page, API route and server action. Something compiled in the middle of a parallel run makes the
- * dev server rebuild, which stalls other workers' in-flight sign-ups past their waits. CI runs a
- * production build, where everything is compiled up front.
+ * Most specs play today as the Tower, so the run pins the rotation (T31) to it, in CI too: on a
+ * fresh database the first start creates today's day by the rotation. Specs about another
+ * challenge set their day themselves (tests/e2e/after/). Returns the step that puts it back.
  */
-export default async function globalSetup(config: FullConfig): Promise<void> {
-  if (process.env.CI) return;
+async function pinTowerRotation(): Promise<() => Promise<void>> {
+  const db = adminClient();
+  const before = await db.from("game_settings").select("rotation").single();
+  if (before.error) throw before.error;
+  const pinned = await db.from("game_settings").update({ rotation: ["stacking"] }).eq("id", true);
+  if (pinned.error) throw pinned.error;
+  return async () => {
+    const restored = await db.from("game_settings").update({ rotation: before.data.rotation }).eq("id", true);
+    if (restored.error) throw restored.error;
+  };
+}
+
+/**
+ * Compiles everything the suite uses against the dev server (T78): every page, API route and
+ * server action. Something compiled in the middle of a parallel run makes the dev server rebuild,
+ * which stalls other workers' in-flight sign-ups past their waits. CI runs a production build,
+ * where everything is compiled up front, so it skips this.
+ */
+async function warmUp(config: FullConfig): Promise<void> {
   const baseURL = config.projects[0].use.baseURL;
   const browser = await chromium.launch();
   const email = `e2e-warmup-${Date.now()}@example.com`;

@@ -1,5 +1,7 @@
 begin;
 select plan(59);
+-- These tests prepare Tower days; the rotation (T31) has its own tests in rotation.test.sql.
+update public.game_settings set rotation = '{stacking}';
 
 -- Structure and the launch defaults.
 select has_table('public', 'game_settings', 'game_settings table exists');
@@ -97,6 +99,7 @@ select throws_ok(
   'P0001', 'game_settings has no row', 'ensure_game_day refuses to run without the settings row'
 );
 insert into public.game_settings default values;
+update public.game_settings set rotation = '{stacking}';
 
 -- Row-level security and the admin helper.
 select ok((select relrowsecurity from pg_class where oid = 'public.game_settings'::regclass), 'RLS is enabled on game_settings');

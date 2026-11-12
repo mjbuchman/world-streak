@@ -71,7 +71,8 @@ insert into public.profiles (id, birth_date, country) values
 
 -- ensure_game_day: inserts the stacking defaults once, then does nothing. Recent scores from
 -- local dev runs must not set the target here (T22 tests that), so none count as enough.
-update public.game_settings set percentile_min_sample = 2147483647;
+-- A Tower day here; the rotation (T31) has its own tests in rotation.test.sql.
+update public.game_settings set percentile_min_sample = 2147483647, rotation = '{stacking}';
 select lives_ok($$select public.ensure_game_day('2001-11-08')$$, 'ensure_game_day creates a missing day');
 select results_eq(
   $$select challenge_type, pass_target, survival_threshold, outcome, closed_at

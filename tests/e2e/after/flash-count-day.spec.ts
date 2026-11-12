@@ -10,14 +10,18 @@ import { adminClient } from "../support/supabase";
 test("a scored Swift Sum day: start, see the dots, enter a count, see the server's result", async ({ page, accounts }) => {
   const today = gameDateAt(new Date());
   const db = adminClient();
-  const before = await db.from("game_days").select("challenge_type").eq("game_date", today).maybeSingle();
+  const before = await db.from("game_days").select("challenge_type, edited").eq("game_date", today).maybeSingle();
   if (before.error) throw before.error;
-  const set = (challenge_type: string) => db.from("game_days").update({ challenge_type }).eq("game_date", today);
+  // Marked edited, as an admin's choice would be, so the rotation (T31) leaves the day alone: the
+  // other specs' accounts, and so their attempts, are gone by now, so the day looks untouched.
+  const set = (challenge_type: string, edited: boolean) => db.from("game_days").update({ challenge_type, edited }).eq("game_date", today);
   if (before.data) {
-    const changed = await set("flash-count");
+    const changed = await set("flash-count", true);
     if (changed.error) throw changed.error;
   } else {
-    const created = await db.from("game_days").insert({ game_date: today, challenge_type: "flash-count", pass_target: 15, survival_threshold: 0.6 });
+    const created = await db
+      .from("game_days")
+      .insert({ game_date: today, challenge_type: "flash-count", pass_target: 15, survival_threshold: 0.6, edited: true });
     if (created.error) throw created.error;
   }
 
@@ -37,7 +41,7 @@ test("a scored Swift Sum day: start, see the dots, enter a count, see the server
     await expect(page.getByRole("heading", { level: 2, name: /^(Passed|Not this time)$/ })).toBeVisible();
     await expect(page.getByText(/^You were \d+(\.\d+)?% off\. Today's target was within \d+(\.\d+)?%\.$/)).toBeVisible();
   } finally {
-    const restored = await set(before.data?.challenge_type ?? "stacking");
+    const restored = await set(before.data?.challenge_type ?? "stacking", before.data?.edited ?? false);
     if (restored.error) throw restored.error;
   }
 });

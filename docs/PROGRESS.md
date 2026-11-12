@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M2 The world streak is COMPLETE and play-tested (Nov 11); its follow-ups T102-T105 are done (new home page: gauge meter and streak bars).
-- Active task: T108 Practice hub (reviewed, PR open).
+- Active task: T31 Daily challenge rotation.
 - Blocked tasks: none
 - Waiting on the human: nothing now; later, an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: M3 (T26 onward). T91, T100 and the other maintenance tasks fit in when convenient.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T108 Practice hub (PR #69)
+- `/practice` lists the three challenges (`CHALLENGE_TAGLINES`); the home card follows today's challenge (falls back to the default on a failed read) and links to its practice page and the hub.
+- Review rounds: spec 1, quality 1, tests 1 (the first attempt was cut off by the usage limit and resumed). Merges since the maintainer check after T29: 2.
 
 ### 2026-11-11 — T30 All challenges in daily play (PR #68)
 - `src/components/challenges/challengeUi.tsx` (game, how-to, practice path, summary per type); `/play` titles from `todaysChallenge` (default stacking until T31), plays the start reply's `challengeType`. Playwright "after" project for specs that change today's game day (`tests/e2e/after/`), run after the main one.

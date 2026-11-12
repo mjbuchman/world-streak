@@ -249,6 +249,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - No other issues found in the play-test.
 - Confirmed by human: yes (these are the human's decisions).
 
+### 2026-11-12 — Daily rotation (T31)
+- Choice: every day's challenge is `game_settings.rotation[(date - 2027-01-01) mod n]`, default Teetering Tower, Second Sense, Swift Sum in turn (the MVP's three; the Open item "which challenges join the rotation after the first three" stays open). A day nobody has edited or started follows the rotation, so a day created early (by `/admin`) changes with it. Nov 12, 2026 is a Second Sense day.
+- Reason: the backlog's formula; a plain cycle is easy to predict and to change.
+- How to change it later: update `game_settings.rotation` (any known challenge types, at least one); an admin choosing one day's challenge is T111.
+- Confirmed by human: pending (NEEDS_HUMAN).
+
 ### 2026-11-11 — Gauge details (T104)
 - Choice: the pill compares the rounded numbers on screen, but its colour follows the real comparison; a day that rounds to the line while below it says "Just below the line", never "Right on the line". The mint glow is 0.16 (the mockup's 0.22 left muted text at 4.3:1). The home page drops the big title and pitch, as the chosen artboard does (the h1 stays for screen readers).
 - How to change it later: `standing()` in `src/components/Meter.tsx`; `--fs-glow-mint` in `tokens.css` (and `METER_TINTS`); `src/app/page.tsx`.

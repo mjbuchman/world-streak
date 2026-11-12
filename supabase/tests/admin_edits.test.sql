@@ -1,5 +1,7 @@
 begin;
 select plan(13);
+-- These tests prepare Tower days; the rotation (T31) has its own tests in rotation.test.sql.
+update public.game_settings set rotation = '{stacking}';
 
 select col_not_null('public', 'game_days', 'edited', 'edited is required');
 select col_default_is('public', 'game_days', 'edited', 'false', 'a new day is not edited');

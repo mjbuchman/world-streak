@@ -4,24 +4,29 @@ import type { ChallengeType } from "@/challenges/shared/types";
 import { gameDateAt } from "@/lib/gameDay";
 import { supabaseAttemptStore } from "./store";
 
-/**
- * The challenge a day gets when the first start creates it (`ensure_game_day`, which the close
- * job also runs for the next day). Until the rotation (T31) every day is the Tower.
- */
+/** What the home page shows if today's challenge cannot be read at all (it logs the error). */
 export const DEFAULT_CHALLENGE: ChallengeType = "stacking";
 
+function knownType(gameDate: string, type: unknown): ChallengeType {
+  if (typeof type !== "string" || !isChallengeType(type)) {
+    throw new Error(`Game day ${gameDate} has unknown challenge type ${JSON.stringify(type)}`);
+  }
+  return type;
+}
+
 /**
- * Today's challenge, read from the public game day (DEFAULT_CHALLENGE if nobody has created the
- * day yet). It decides the page's title and how-to; the game itself comes from the start reply.
+ * Today's challenge: the public game day's, or, if nobody has created the day yet, the one the
+ * rotation will give it (`challenge_for`, T31). It decides the page's title and how-to; the game
+ * itself comes from the start reply.
  */
-export async function todaysChallenge(supabase: Pick<SupabaseClient, "from">, now: Date): Promise<ChallengeType> {
+export async function todaysChallenge(supabase: Pick<SupabaseClient, "from" | "rpc">, now: Date): Promise<ChallengeType> {
   const gameDate = gameDateAt(now);
   const { data, error } = await supabase.from("game_days").select("challenge_type").eq("game_date", gameDate).maybeSingle();
   if (error) throw new Error(`Game day lookup failed: ${error.message}`);
-  if (!data) return DEFAULT_CHALLENGE;
-  const type = (data as { challenge_type: string }).challenge_type;
-  if (!isChallengeType(type)) throw new Error(`Game day ${gameDate} has unknown challenge type "${type}"`);
-  return type;
+  if (data) return knownType(gameDate, (data as { challenge_type: unknown }).challenge_type);
+  const rotation = await supabase.rpc("challenge_for", { d: gameDate });
+  if (rotation.error) throw new Error(`Rotation lookup failed: ${rotation.error.message}`);
+  return knownType(gameDate, rotation.data);
 }
 
 /** What `/play` shows a signed-in player for today's game date. */
