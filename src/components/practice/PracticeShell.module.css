@@ -2,8 +2,9 @@
   color: var(--fs-color-text-muted);
 }
 
-/* The target, in display type; its line is kept before it appears (see useIsClient). */
-.target {
+/* A preview of the next run in display type (Second Sense's target); its line is kept before it
+   appears (see useIsClient). */
+.preview {
   min-height: 1.3em;
   font-family: var(--fs-font-display);
   font-weight: 800;

@@ -20,23 +20,11 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: the share card links to the site. Until it is set, the card uses the page's own address, which is right locally.
 - Agent's recommendation: add it now; set the real value at deployment (T50). Next.js builds `NEXT_PUBLIC_` values into the page, so set it before the production build.
 
-### Please confirm: Swift Sum balance (T114; blocks nothing)
-- What is needed: OK or other numbers for 12–30 dots shown for 1.5 s (was 15–45 for 1 s). See docs/DECISIONS.md (T114).
-- Where to put it: reply in chat after a few runs of `/practice/flash-count`.
-- Why: your M3 play-test found it a crapshoot; the numbers are my call.
-- Agent's recommendation: try it; if still too hard, 2 s next.
-
-### Please confirm: Second Sense clock and targets (T113; blocks nothing)
-- What is needed: OK or other numbers: the clock shows for 1 s, targets are 5–12 s, and the placeholder pass target stays within 0.5 s (it may now be hard, since longer targets give bigger errors; 0.8 s is an option). See docs/DECISIONS.md (T113).
-- Where to put it: reply in chat after trying `/practice/inner-clock`.
-- Why: your M3 play-test asked for a visible start and higher targets; the numbers are my call.
-- Agent's recommendation: keep 1 s and 5–12 s; judge the 0.5 s after a few tries.
-
-### Please confirm: the share text's emojis (T115; blocks nothing)
-- What is needed: OK or changes to the share text: ✅/❌ outcome, 🔥 world streak, a 10-square meter bar (🟩 at or above the line, 🟧 below) with the rate and the line, 🆘 when near the line, 🙈 when the meter is hidden. See docs/DECISIONS.md (T115).
-- Where to put it: reply in chat (try Share after a scored attempt).
-- Why: your M3 play-test asked for emojis; the exact set is my call.
-- Agent's recommendation: keep it.
+### At the M4 play-test: Second Sense fade and pass target, Swift Sum countdown (T118, T119; blocks nothing)
+- What is needed: try the clock's fade and the 7–13 s targets (T118) and the 3-2-1 countdown (T119). Also say whether the placeholder pass target "within 0.5 s" is too hard with longer targets (0.8 s is an option).
+- Where to put it: reply in chat at the M4 play-test.
+- Why: you asked for these after trying the M3 follow-ups (Nov 12); they are built during M4.
+- Agent's recommendation: judge the 0.5 s after a few scored-style tries in practice.
 
 ### Please confirm: the share card's "near the line" margin (blocks nothing)
 - What is needed: OK or another number for when a share becomes a call for help: below the threshold plus 5 points (60% needed: under 65%). `NEAR_THRESHOLD_MARGIN` in `src/config/share.ts`.
@@ -81,6 +69,8 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: do it before the public launch. T52 works without the keys locally (it skips the CAPTCHA and logs a warning).
 
 ## Resolved
+
+- **M3 follow-ups tried** (Nov 12, 2026): admin local tools, Swift Sum balance and the share emojis are good. New: Second Sense clock fades, targets 7–13 s (T118); Swift Sum 3-2-1 countdown (T119); both built during M4 and checked at its play-test. Go straight into M4.
 
 - **M3 play-test** (Nov 12, 2026): Second Sense gets a visible timer that hides quickly, with higher targets (T113); Swift Sum gets fewer dots and more time (T114); share is just a button with an emoji text (T115); the admin page gets controls for the command-line tools (T116, T117).
 

@@ -5,9 +5,9 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M3 play-tested (Nov 12); its follow-ups (T113-T117) are done. Remaining M3 extras (T109-T112), then M4.
-- Active task: T112 Remaining e2e link clicks wait for hydration.
+- Active task: T109 One practice page shell for every challenge. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
 - Blocked tasks: none
-- Waiting on the human: please-confirms (share emojis, rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
+- Waiting on the human: please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: then T109-T112 and M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T112 Remaining e2e link clicks wait for hydration (PR #77)
+- Go-then-click steps use `gotoReady`; the Sign in click after sign-out retries until it navigates. Full suite 56/56 three runs in a row.
+- Review: quality 1 (light). Merges since the end-of-M3 check: 6.
 
 ### 2026-11-12 — T117 Admin local tools: seed and close (PR #76)
 - Seed players, close a day, remove fake players from /admin; the scripts' logic moved to `src/lib/devData.ts` (scripts re-export it). Fake players are `seed-…@example.test` (`FAKE_PLAYER_EMAIL`).

@@ -22,9 +22,14 @@ type ChallengeUi<Params, Inputs> = {
   howTo: string;
   practicePath: string;
   play: (props: PlayProps<Params, Inputs>) => ReactNode;
+  /** A score as players read it ("You reached row 7", "0.32 s", "12%"); daily play and practice share it. */
+  scoreLabel: (score: number) => string;
   /** The result's line under the verdict: the player's score against today's target. */
   summary: (score: number, passTarget: number) => string;
 };
+
+const seconds = (score: number) => `${score} s`;
+const percent = (score: number) => `${score}%`;
 
 const stacking: ChallengeUi<StackingParams, StackingInputs> = {
   howTo: STACKING_HOW_TO,
@@ -32,6 +37,7 @@ const stacking: ChallengeUi<StackingParams, StackingInputs> = {
   play: ({ params, passTarget, onFinish }) => (
     <StackingGame params={params} passTarget={passTarget} onFinish={({ taps }) => onFinish({ tapsMs: taps })} />
   ),
+  scoreLabel: reachedRow,
   summary: (score, passTarget) => `${reachedRow(score)}. Today's target was ${targetRow(passTarget)}.`,
 };
 
@@ -39,14 +45,16 @@ const innerClock: ChallengeUi<InnerClockParams, InnerClockInputs> = {
   howTo: INNER_CLOCK_HOW_TO,
   practicePath: practicePath("inner-clock"),
   play: ({ params, onFinish }) => <InnerClockGame params={params} onFinish={onFinish} />,
-  summary: (score, passTarget) => `You were ${score} s off. Today's target was within ${passTarget} s.`,
+  scoreLabel: seconds,
+  summary: (score, passTarget) => `You were ${seconds(score)} off. Today's target was within ${seconds(passTarget)}.`,
 };
 
 const flashCount: ChallengeUi<FlashCountParams, FlashCountInputs> = {
   howTo: FLASH_COUNT_HOW_TO,
   practicePath: practicePath("flash-count"),
   play: ({ params, onFinish }) => <FlashCountGame params={params} onFinish={onFinish} />,
-  summary: (score, passTarget) => `You were ${score}% off. Today's target was within ${passTarget}%.`,
+  scoreLabel: percent,
+  summary: (score, passTarget) => `You were ${percent(score)} off. Today's target was within ${percent(passTarget)}.`,
 };
 
 const CHALLENGE_UI = { stacking, "inner-clock": innerClock, "flash-count": flashCount } satisfies Record<ChallengeType, unknown>;
