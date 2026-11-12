@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T83 One source for the password rules (PR #121)
+- `MIN/MAX_PASSWORD_LENGTH`; a test pins `minimum_password_length` in config.toml.
+- Review rounds: spec 1, quality 1, tests 1. CI: e2e hit an ECR pull rate limit, passed on one re-run. Merges since the check: 9.
+
 ### 2026-11-12 — T82 One page-title template (PR #120)
 - The root layout's `title.template`; 14 pages set only their own part. Titles unchanged.
 - Review rounds: quality 1 (light). Merges since the check: 8.

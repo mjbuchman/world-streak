@@ -1164,7 +1164,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T83 One source for the password rules
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] `src/lib/passwords.ts` exports `MIN_PASSWORD_LENGTH` (8) and `MAX_PASSWORD_LENGTH` (72), used by the zod schema in `src/lib/signup.ts` (both messages) and by `SignUpForm.tsx` (`minLength` and the label).
@@ -1174,7 +1174,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T84 Guard the design tokens; one source for the canvas colours
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T81
 - Acceptance criteria:
   - [ ] A unit test fails if any `var(--name)` under `src/` is neither defined in `src/app/tokens.css`, a `next/font` variable, nor declared in the same file.

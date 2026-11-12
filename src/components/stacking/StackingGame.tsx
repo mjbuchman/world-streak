@@ -5,6 +5,7 @@ import { MAX_TAPS, type StackingParams, type StackingResult } from "@/challenges
 import { drawStacking, FALL_MS, type StackingColors } from "@/challenges/stacking/render";
 import { usePrefersReducedMotion } from "@/components/ui/useReducedMotion";
 import { CHALLENGE_NAMES } from "@/config/challenges";
+import { CANVAS_COLOR_TOKENS } from "./canvasTokens";
 import { targetRowNumber } from "./rows";
 import styles from "./StackingGame.module.css";
 import { frameAt } from "./stackingLoop";
@@ -20,17 +21,11 @@ type Props = {
   best?: number;
 };
 
-/** Reads the Fresh Sport colour tokens, so the canvas matches the rest of the page. */
+/** Reads the colour tokens, so the canvas matches the rest of the page. */
 function themeColors(element: HTMLElement): StackingColors {
   const style = getComputedStyle(element);
-  const token = (name: string) => style.getPropertyValue(`--fs-color-${name}`).trim();
-  return {
-    empty: token("surface-strong"),
-    tower: token("mint"),
-    moving: token("tangerine"),
-    falling: token("mint-dark"),
-    target: token("mint-light"),
-  };
+  const entries = Object.entries(CANVAS_COLOR_TOKENS).map(([key, token]) => [key, style.getPropertyValue(token).trim()]);
+  return Object.fromEntries(entries) as StackingColors;
 }
 
 /**
