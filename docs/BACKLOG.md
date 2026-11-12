@@ -748,7 +748,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T37 Local multi-day simulation script
 - Type: infra
-- Status: todo
+- Status: in-progress
 - Depends on: T34, T20
 - Acceptance criteria:
   - [ ] `npm run simulate:days -- --from 2027-01-01 --days 30 --players 50 --pass-rate 0.8` creates the game days, fake attempts (via `record_attempt_result`, so counters and entries update) and closes each day in order (local-only guard).

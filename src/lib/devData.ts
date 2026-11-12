@@ -32,6 +32,11 @@ export function passingIndices(players: number, passRate: number): Set<number> {
   return indices;
 }
 
+/** A fake score just over or just under the target, like real near misses. */
+export function nearMissScore(target: number, passed: boolean): number {
+  return passed ? target + 1 : Math.max(0, target - 1);
+}
+
 /** The database steps a seed run needs (see `supabaseSeedDeps`). */
 export type SeedDeps = {
   todayGameDate: () => Promise<string>;
@@ -69,8 +74,7 @@ export async function runSeed(args: SeedArgs, runId: string, deps: SeedDeps): Pr
     const userId = await deps.createPlayer(`seed-${runId}-${i + 1}@example.test`);
     const attemptId = await deps.startAttempt(userId, date);
     const passed = passing.has(i);
-    // Just over or just under the target, like real near misses.
-    const score = passed ? target + 1 : Math.max(0, target - 1);
+    const score = nearMissScore(target, passed);
     if (date === today) {
       const status = await deps.recordResult(attemptId, score, passed);
       if (status !== "recorded") throw new Error(`record_attempt_result answered "${status}" for player ${i + 1}.`);

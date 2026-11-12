@@ -218,6 +218,15 @@ npm run close-day -- --date 2026-11-10   # prints e.g. "2026-11-10 survived. Wor
 
 Only a day whose deadline has passed can close, and days close in order (close earlier ones first). Closing a closed day again just prints its outcome. Like `seed:dev`, it reads `.env.local` and refuses anything but a localhost URL.
 
+**Play-testing a prize cycle and the draw:** start from a fresh database, then simulate the cycle's days:
+
+```bash
+npm run db:reset
+npm run simulate:days -- --from 2027-01-01 --days 30 --players 50 --pass-rate 0.8
+```
+
+It closes the empty days before `--from` (broken), creates 50 fake players, and for each day lets all of them play (80% pass, earning entries) and closes it, ahead of its deadline (two requests per player per day, so 50 players for 30 days take a minute or two). Afterwards the world streak is 30 and cycle 1 has reached its goal on 2027-01-30 (check `/` and `/admin`). The draw opens only once a won cycle's last day is in the real past, so to try it, move cycle 1 into the past right after the reset (Studio's SQL editor at http://localhost:54323: `update cycles set start_date = '2026-08-01', end_date = '2026-09-29' where number = 1;`), run `npm run simulate:days -- --from 2026-08-01 --days 60 --players 50 --pass-rate 0.8`, then open `/admin/draw` as the admin. It refuses a day before `--from` that someone has played, and a day from `--from` on that is already closed: run `npm run db:reset` first. It changes past and future days for good, so run `npm run db:reset` again when you are done. Like the other scripts, it refuses anything but a localhost URL.
+
 **Admin page:** sign in as `admin@local.test` with the password `admin-local-only` and open http://localhost:3000/admin to see today and the next 7 game days. That account comes from `supabase/seed.sql`, which `npm run db:reset` applies. To add it without wiping your local data, run `npx supabase db query -f supabase/seed.sql`. It exists only locally; everyone else gets a 404 at `/admin`. Against the local Supabase, `/admin` also has **Local tools**: set a day's challenge, clear your own attempt today (to play again), reset an open day, restore the rotation, seed fake players, close a day and remove the fake players. They do what the commands below do, so you need not remember those.
 
 **Checks** (the same ones CI runs):
