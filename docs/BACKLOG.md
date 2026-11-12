@@ -748,14 +748,14 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T37 Local multi-day simulation script
 - Type: infra
-- Status: blocked
+- Status: todo
 - Depends on: T34, T20
 - Acceptance criteria:
   - [ ] `npm run simulate:days -- --from 2027-01-01 --days 30 --players 50 --pass-rate 0.8` creates the game days, fake attempts (via `record_attempt_result`, so counters and entries update) and closes each day in order (local-only guard).
   - [ ] After that command, `world_streak()` reports current 30, and cycle 1 has `goal_reached_on 2027-01-30` (integration check in the script's test, or a documented manual step).
   - [ ] README documents how to play-test the cycle and the draw with it, including resetting with `npm run db:reset`.
 - Notes: From the T20 reviews: `record_attempt_result` refuses every game date but today, so "via `record_attempt_result`" cannot hold for simulated past or future days. Reuse T20's direct path in `scripts/seed-dev.mts` (write the result, then add the pass with the attempt's `counted_weight`), or plan another way; see DECISIONS, "Seeding a day other than today". That path reads then writes the counters and uses two requests per pass; for a bigger simulation, consider one small SQL function that writes the result and increments the counters atomically (T20 quality review).
-- needs-human: how the simulation may close days that have not reached their deadline (and the open days before them); options A, B, C in docs/NEEDS_HUMAN.md (Nov 12).
+- Decided (Nov 12, human): option A. Add `close_game_day_unchecked(d)`, service-role only, with `close_game_day` keeping its deadline check and calling it; the script refuses any non-local URL, first closes every open day before `--from` that has no attempts (broken), and the README says to run `npm run db:reset` afterwards. Full review (migration, streak).
 
 ### T38 Official rules page (draft)
 - Type: feature
