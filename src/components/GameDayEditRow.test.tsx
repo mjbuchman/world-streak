@@ -14,16 +14,24 @@ afterEach(() => {
   saveGameDayAction.mockReset();
 });
 
-const day = { gameDate: "2026-11-12", label: "Nov 12, 2026", challenge: "Teetering Tower", passTarget: 10, thresholdPercent: 60, started: false };
+const day = {
+  gameDate: "2026-11-12",
+  label: "Nov 12, 2026",
+  challengeType: "stacking",
+  challenge: "Teetering Tower",
+  passTarget: 10,
+  thresholdPercent: 60,
+  started: false,
+} as const;
+
+const inTable = (row: React.ReactNode) => (
+  <table>
+    <tbody>{row}</tbody>
+  </table>
+);
 
 function renderRow(started = false) {
-  render(
-    <table>
-      <tbody>
-        <GameDayEditRow day={{ ...day, started }} />
-      </tbody>
-    </table>,
-  );
+  render(inTable(<GameDayEditRow day={{ ...day, started }} />));
   if (started) {
     return { threshold: screen.getByRole("spinbutton", { name: "Survival threshold in percent for Nov 12, 2026" }) };
   }
@@ -45,10 +53,35 @@ describe("GameDayEditRow", () => {
     await vi.waitFor(() => expect(saveGameDayAction).toHaveBeenCalledTimes(1));
     expect(Object.fromEntries(saveGameDayAction.mock.calls[0][1])).toEqual({
       gameDate: "2026-11-12",
+      challengeType: "stacking",
       passTarget: "10",
       thresholdPercent: "55",
     });
     expect((await screen.findByRole("status")).textContent).toBe("Saved Nov 12, 2026.");
+  });
+
+  it("offers every challenge for a day nobody has started, and sends the one picked", async () => {
+    saveGameDayAction.mockResolvedValue({ ok: true, message: "Saved." });
+    const user = userEvent.setup();
+    renderRow();
+    const select = screen.getByRole<HTMLSelectElement>("combobox", { name: "Challenge for Nov 12, 2026" });
+    expect(select.value).toBe("stacking");
+    expect([...select.options].map((option) => [option.value, option.text])).toEqual([
+      ["stacking", "Teetering Tower"],
+      ["inner-clock", "Second Sense"],
+      ["flash-count", "Swift Sum"],
+    ]);
+    await user.selectOptions(select, "flash-count");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await vi.waitFor(() => expect(saveGameDayAction).toHaveBeenCalledTimes(1));
+    expect(saveGameDayAction.mock.calls[0][1].get("challengeType")).toBe("flash-count");
+  });
+
+  it("shows the target the server now has after a save, not the one typed before (a new challenge's default)", () => {
+    const { rerender } = render(inTable(<GameDayEditRow day={day} />));
+    rerender(inTable(<GameDayEditRow day={{ ...day, challengeType: "flash-count", challenge: "Swift Sum", passTarget: 20 }} />));
+    expect(screen.getByRole<HTMLInputElement>("spinbutton", { name: "Pass target for Nov 12, 2026" }).value).toBe("20");
+    expect(screen.getByRole<HTMLSelectElement>("combobox", { name: "Challenge for Nov 12, 2026" }).value).toBe("flash-count");
   });
 
   it("shows a started day's pass target read-only with the reason, and still saves its threshold", async () => {
@@ -56,7 +89,9 @@ describe("GameDayEditRow", () => {
     const user = userEvent.setup();
     const { threshold } = renderRow(true);
     expect(screen.getAllByRole("spinbutton")).toEqual([threshold]);
-    const targetCell = screen.getAllByRole("cell")[1];
+    expect(screen.queryByRole("combobox")).toBeNull();
+    const [challengeCell, targetCell] = screen.getAllByRole("cell");
+    expect(challengeCell.textContent).toBe("Teetering Tower");
     expect(targetCell.textContent).toBe("10Locked: players have started this day.");
 
     await user.clear(threshold);

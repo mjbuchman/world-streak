@@ -145,6 +145,60 @@ describe("saveGameDayEdit", () => {
     expect(await saveGameDayEdit(other.db, edit({ passTarget: "40" }))).toMatchObject({ ok: true });
   });
 
+  describe("changing the challenge (T111)", () => {
+    const OPEN_CLOCK: Result = { data: { challenge_type: "inner-clock", closed_at: null, pass_target: 0.5 }, error: null };
+
+    it("saves the new type with the rest, so the database gives it that type's default target", async () => {
+      const { db, calls } = fakeDb([ADMIN, OPEN_CLOCK, { data: [{}], error: null }]);
+      expect(await saveGameDayEdit(db, edit({ challengeType: "flash-count", passTarget: "0.5" }))).toEqual({
+        ok: true,
+        message: "Saved Nov 12, 2026. It is now Swift Sum, with that challenge's default pass target.",
+      });
+      expect(calls[2]).toContainEqual(["update", { challenge_type: "flash-count", pass_target: 0.5, survival_threshold: 0.55, edited: true }]);
+    });
+
+    it("keeps a target the admin changed in the same save", async () => {
+      const { db, calls } = fakeDb([ADMIN, OPEN_CLOCK, { data: [{}], error: null }]);
+      expect(await saveGameDayEdit(db, edit({ challengeType: "flash-count", passTarget: "25" }))).toEqual({
+        ok: true,
+        message: "Saved Nov 12, 2026. It is now Swift Sum.",
+      });
+      expect(calls[2]).toContainEqual(["update", { challenge_type: "flash-count", pass_target: 25, survival_threshold: 0.55, edited: true }]);
+    });
+
+    it("does not hold the old challenge's unchanged target to the Tower's rows when switching to the Tower", async () => {
+      const { db } = fakeDb([ADMIN, OPEN_CLOCK, { data: [{}], error: null }]);
+      expect(await saveGameDayEdit(db, edit({ challengeType: "stacking", passTarget: "0.5" }))).toMatchObject({ ok: true });
+    });
+
+    it("does hold a new target to the Tower's rows when switching to the Tower", async () => {
+      const { db, calls } = fakeDb([ADMIN, OPEN_CLOCK]);
+      expect(await saveGameDayEdit(db, edit({ challengeType: "stacking", passTarget: "40" }))).toMatchObject({ ok: false, message: /from 1 to 15/ });
+      expect(calls).toHaveLength(2);
+    });
+
+    it("sends no type when it is unchanged", async () => {
+      const { db, calls } = fakeDb([ADMIN, OPEN_STACKING, { data: [{}], error: null }]);
+      expect(await saveGameDayEdit(db, edit({ challengeType: "stacking" }))).toEqual({ ok: true, message: "Saved Nov 12, 2026." });
+      expect(calls[2]).toContainEqual(["update", { pass_target: 9, survival_threshold: 0.55, edited: true }]);
+    });
+
+    it("refuses an unknown type without touching the database", async () => {
+      const { db, calls } = fakeDb([ADMIN]);
+      expect(await saveGameDayEdit(db, edit({ challengeType: "chess" }))).toEqual({ ok: false, message: "Unknown challenge." });
+      expect(calls).toHaveLength(1);
+    });
+
+    it("reports the database's lock on a started day's challenge (WS003) as a refusal", async () => {
+      const locked = { data: null, error: { code: "WS003", message: "game day 2026-11-12 has started, so its challenge is locked" } };
+      const { db } = fakeDb([ADMIN, OPEN_CLOCK, locked]);
+      expect(await saveGameDayEdit(db, edit({ challengeType: "flash-count" }))).toEqual({
+        ok: false,
+        message: "Nov 12, 2026 has started, so its challenge can no longer change.",
+      });
+    });
+  });
+
   it("throws on a database error, so the page shows its error rather than a false message", async () => {
     const lookup = fakeDb([ADMIN, { data: null, error: { message: "down" } }]);
     await expect(saveGameDayEdit(lookup.db, edit())).rejects.toThrow("Game day lookup failed: down");

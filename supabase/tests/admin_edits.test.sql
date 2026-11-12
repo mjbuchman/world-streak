@@ -29,7 +29,7 @@ select throws_ok(
   '42501', null, 'an edit must mark the day edited, so the automatic preparation leaves it alone'
 );
 select throws_ok(
-  $$update public.game_days set challenge_type = 'stacking' where game_date = '2000-04-10'$$,
+  $$update public.game_days set outcome = 'survived' where game_date = '2000-04-10'$$,
   '42501', null, 'an admin cannot change any other column'
 );
 update public.game_days set pass_target = 1, edited = true where game_date = '2000-04-09';
