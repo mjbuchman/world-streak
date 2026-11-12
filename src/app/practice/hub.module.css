@@ -1,0 +1,27 @@
+.intro {
+  color: var(--fs-color-text-muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The challenge's name is the link: a 48 px target in display type. */
+.name {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-title);
+}
+
+.tagline {
+  margin: 0;
+  color: var(--fs-color-text);
+}

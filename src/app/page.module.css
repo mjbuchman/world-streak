@@ -31,3 +31,13 @@
   align-items: center;
   font-weight: 700;
 }
+
+/* Quieter than "Practice first": for when you want a different game. */
+.practiceAll {
+  align-self: center;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--fs-text-small);
+  color: var(--fs-color-text-muted);
+}

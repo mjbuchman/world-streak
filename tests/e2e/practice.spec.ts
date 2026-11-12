@@ -112,6 +112,19 @@ test("Swift Sum practice: the dots flash, clear, and an answer shows the true co
   await expect(page.getByRole("heading", { level: 2 })).toHaveText(/^(\d+(\.\d+)?% off|Exactly right)$/);
 });
 
+test("the practice hub opens each challenge's practice page", async ({ page }) => {
+  for (const [name, path, heading] of [
+    ["Teetering Tower", "/practice/stacking", "Practice: Teetering Tower"],
+    ["Second Sense", "/practice/inner-clock", "Practice: Second Sense"],
+    ["Swift Sum", "/practice/flash-count", "Practice: Swift Sum"],
+  ]) {
+    await gotoReady(page, "/practice");
+    await page.getByRole("list", { name: "Challenges" }).getByRole("link", { name }).click();
+    await expect(page).toHaveURL(path);
+    await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+  }
+});
+
 test("the home page links to practice", async ({ page }) => {
   await gotoReady(page, "/");
   await page.getByRole("link", { name: "Practice first" }).click();

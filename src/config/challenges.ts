@@ -10,6 +10,13 @@ export const CHALLENGE_NAMES: Record<ChallengeType, string> = {
   "flash-count": "Swift Sum",
 };
 
+/** One line on each challenge, for the home card and the practice hub. */
+export const CHALLENGE_TAGLINES: Record<ChallengeType, string> = {
+  stacking: "Stack the sliding rows as high as you can.",
+  "inner-clock": "Tap when you think the target time has passed, with no clock to watch.",
+  "flash-count": "Dots flash for a second. Say how many there were.",
+};
+
 /** Each challenge's practice page (the route folders are named after the types). */
 export function practicePath(type: ChallengeType): string {
   return `/practice/${type}`;
