@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T62 Shared e2e auth helpers (PR #116)
+- `header`, `signInViaForm`, `signOutViaHeader` in `tests/e2e/support/pages.ts`; `hasSessionCookie` uses `AUTH_COOKIE`.
+- Review rounds: quality 1 (light). Merges since the check: 4.
+
 ### 2026-11-12 — T61 Shared auth form helpers (PR #115)
 - `emailSchema`, `readFields`, `refusalMessage` (in eligibility) and `insertProfile` ("ok" | "exists" | "error").
 - Review rounds: spec 1, quality 1, tests 2. Merges since the check: 3.

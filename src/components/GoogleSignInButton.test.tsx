@@ -29,10 +29,13 @@ async function clickContinue() {
 describe("GoogleSignInButton", () => {
   it("starts Google sign-in and asks to come back to this site's callback", async () => {
     await clickContinue();
-    expect(signInWithOAuth).toHaveBeenCalledWith({
-      provider: "google",
-      options: { redirectTo: "https://worldstreak.test/auth/callback" },
-    });
+    // The click handler is async, so wait for the call rather than assume it already happened.
+    await vi.waitFor(() =>
+      expect(signInWithOAuth).toHaveBeenCalledWith({
+        provider: "google",
+        options: { redirectTo: "https://worldstreak.test/auth/callback" },
+      }),
+    );
   });
 
   it("is a plain button, so it never submits the email form around it", () => {
