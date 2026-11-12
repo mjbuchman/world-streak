@@ -592,7 +592,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] `src/lib/localTools.ts` drops its private `failed(step, error)` and reuses `check` from `src/lib/devData.ts` (or both share one helper); message wording unchanged and covered by the existing tests.
   - [ ] All seven tools follow one rule: a database error comes back as a refused `ToolState` with its message (as `seed` and `close-day` already do), including `remove-fake-players` and the four database tools. Unit tests cover the throwing cases.
   - [ ] `npm run verify` passes; no product behaviour changes beyond errors showing as a message.
-- Notes: From the maintainer check after T33. Local play-testing only, so low risk; today some tools throw to a generic error page.
+- Notes: From the maintainer check after T33. Local play-testing only, so low risk; today some tools throw to a generic error page. Also (T49 review): `recountDay` in `src/lib/devData.ts` reads then writes, so an attempt started meanwhile (a parallel e2e spec) can lose its count; consider one SQL statement for the recount.
 
 ### T121 PlayToday: start and submit outcomes as tested pure functions
 - Type: maintenance
@@ -868,7 +868,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T48 Meter performance under load
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T18
 - Acceptance criteria:
   - [ ] The meter handler adds a module-level cache with a single in-flight request (`METER_CACHE_SECONDS`): 500 concurrent calls within one window trigger exactly 1 database read, and a call after the window triggers 1 more (unit test with a fake clock and a counting mock).
@@ -878,7 +878,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T49 End-to-end coverage of the main flows
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T43, T46, T47
 - Acceptance criteria:
   - [ ] e2e "day survives": seed today with 10 fake attempts at 70% passing, then a new user signs up, plays and finishes. `/api/meter` (bypassing the cache via a test header that is only honoured outside production, or by waiting) shows 11 attempts. `close-day` makes `/` show the streak increased by 1 and `/history` list the day as survived.

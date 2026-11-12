@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { paramsFromSeed, simulate } from "../../src/challenges/stacking/engine";
 import { FALL_MS } from "../../src/challenges/stacking/render";
 import { reachedRow } from "../../src/components/stacking/rows";
@@ -77,7 +78,17 @@ test("a deliberate miss in practice ends the run with the score the engine gives
   await expect(page.getByText(`Best: row ${score}`)).toBeVisible();
 });
 
+/** Every request to the scored-attempt endpoints; practice must make none (T49). */
+function attemptRequests(page: Page): string[] {
+  const seen: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname.startsWith("/api/attempts")) seen.push(request.url());
+  });
+  return seen;
+}
+
 test("Second Sense practice: start, see the clock for a second, tap, and see how far off it was", async ({ page }) => {
+  const scored = attemptRequests(page);
   await gotoReady(page, "/practice/inner-clock");
   await expect(page.getByText(/^Your target: \d+(\.\d)? seconds$/)).toBeVisible();
   await page.getByRole("button", { name: "Start" }).click();
@@ -97,9 +108,11 @@ test("Second Sense practice: start, see the clock for a second, tap, and see how
   await expect(page.getByRole("heading", { level: 2 })).toHaveText(/^\d+(\.\d+)? s early$/);
   await expect(page.getByText(/^You tapped at \d+(\.\d+)? s\. The target was \d+(\.\d)? s\.$/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
+  expect(scored).toEqual([]);
 });
 
 test("Swift Sum practice: the dots flash, clear, and an answer shows the true count and the error", async ({ page }) => {
+  const scored = attemptRequests(page);
   await gotoReady(page, "/practice/flash-count");
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.locator("canvas")).toHaveAttribute("data-showing", "dots");
@@ -114,6 +127,7 @@ test("Swift Sum practice: the dots flash, clear, and an answer shows the true co
   await expect(page.getByText(/^You said 20\. There were \d+ dots\.$/)).toBeVisible();
   // 20 is exactly right only when the instance has 20 dots.
   await expect(page.getByRole("heading", { level: 2 })).toHaveText(/^(\d+(\.\d+)?% off|Exactly right)$/);
+  expect(scored).toEqual([]);
 });
 
 test("the practice hub opens each challenge's practice page", async ({ page }) => {

@@ -1,7 +1,7 @@
 import { gameDateAt } from "../../../src/lib/gameDay";
 import { expect, test } from "../support/fixtures";
 import { gotoReady, signUpViaForm } from "../support/pages";
-import { adminClient } from "../support/supabase";
+import { adminClient, deleteUsersByEmail } from "../support/supabase";
 
 /**
  * Today played as Swift Sum. It changes today's challenge for everyone, so it runs in its own
@@ -25,8 +25,9 @@ test("a scored Swift Sum day: start, see the dots, enter a count, see the server
     if (created.error) throw created.error;
   }
 
+  const email = accounts.uniqueEmail();
   try {
-    await signUpViaForm(page, { email: accounts.uniqueEmail() });
+    await signUpViaForm(page, { email });
     await expect(page).toHaveURL("/");
     await gotoReady(page, "/play");
     await expect(page.getByRole("heading", { level: 1, name: "Swift Sum" })).toBeVisible();
@@ -41,6 +42,8 @@ test("a scored Swift Sum day: start, see the dots, enter a count, see the server
     await expect(page.getByRole("heading", { level: 2, name: /^(Passed|Not this time)$/ })).toBeVisible();
     await expect(page.getByText(/^You were \d+(\.\d+)?% off\. Today's target was within \d+(\.\d+)?%\.$/)).toBeVisible();
   } finally {
+    // A started day's challenge is locked (T111): the account, and with it its attempt, goes first.
+    await deleteUsersByEmail([email]);
     const restored = await set(before.data?.challenge_type ?? "stacking", before.data?.edited ?? false);
     if (restored.error) throw restored.error;
   }

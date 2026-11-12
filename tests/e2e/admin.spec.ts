@@ -5,6 +5,10 @@ import { expect, test } from "./support/fixtures";
 import { gotoReady, signUpViaForm, submitAndWait } from "./support/pages";
 import { adminClient, findUserByEmail } from "./support/supabase";
 
+// Each test signs in and loads several admin pages; a cold local dev server under a full parallel
+// run can take longer than the default 30 s to compile them.
+test.describe.configure({ timeout: 60_000 });
+
 // The local-only admin from supabase/seed.sql.
 const ADMIN = { email: "admin@local.test", password: "admin-local-only" };
 
