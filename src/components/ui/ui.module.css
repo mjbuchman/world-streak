@@ -256,12 +256,13 @@
   box-shadow: none;
 }
 
-.resultMint {
+/* A pass and a practice run are mint; a fail or a refused result stays plain. */
+.result:is([data-tone="pass"], [data-tone="practice"]) :is(.resultScore, .resultHeading) {
   color: var(--fs-color-mint);
 }
 
 /* Only a pass on /play glows. */
-.resultGlow {
+.result[data-tone="pass"] :is(.resultScore, .resultHeading) {
   text-shadow: 0 0 28px color-mix(in srgb, var(--fs-color-mint) 45%, transparent);
 }
 

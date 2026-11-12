@@ -87,8 +87,13 @@ test("a player plays today's attempt once and sees the server's result, also aft
   await expect(summary).toHaveText(/^You reached row \d+\. Today's target was row \d+\.$/);
   await expect(page.locator("[data-big-score]")).toHaveText(String(score));
   // The human's layout (second play-test): the big score above the verdict.
-  const scoreTop = (await page.locator("[data-big-score]").boundingBox())!.y;
-  expect(scoreTop).toBeLessThan((await verdict.boundingBox())!.y);
+  const bigScore = page.locator("[data-big-score]");
+  await expect(bigScore).toBeVisible();
+  await expect(verdict).toBeVisible();
+  const [scoreBox, verdictBox] = [await bigScore.boundingBox(), await verdict.boundingBox()];
+  expect(scoreBox).not.toBeNull();
+  expect(verdictBox).not.toBeNull();
+  expect(scoreBox?.y ?? Infinity).toBeLessThan(verdictBox?.y ?? -Infinity);
   await expect(page.getByRole("banner").getByRole("button", { name: "Sign out" })).toBeVisible();
   // The share card (T32, T115): just the button; the text it shares has the outcome, never the
   // score or the target.

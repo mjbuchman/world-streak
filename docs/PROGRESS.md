@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T86 Shared response types; test-only player (PR #123)
+- /play picks its success shapes from `StartResult`/`SubmitResult`; lint bans `stacking/player` outside unit tests and e2e support.
+- Review rounds: quality 1 (light). Merges since the check: 1.
+
 ### 2026-11-12 — T84 Design-token guard (PR #122)
 - Every `var(--name)` must be defined; `CANVAS_COLOR_TOKENS` shared with look.spec; cell radius pinned.
 - Review rounds: quality 1 (light). Maintainer check done (10 merges): T135 added (the other proposal repeated T51's DECISIONS entry). Merges since: 0.
