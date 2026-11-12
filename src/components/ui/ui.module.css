@@ -256,6 +256,10 @@
   box-shadow: none;
 }
 
+.resultNote {
+  color: var(--fs-color-text-muted);
+}
+
 /* A pass and a practice run are mint; a fail or a refused result stays plain. */
 .result:is([data-tone="pass"], [data-tone="practice"]) :is(.resultScore, .resultHeading) {
   color: var(--fs-color-mint);

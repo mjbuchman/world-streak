@@ -1,7 +1,3 @@
-.note {
-  color: var(--fs-color-text-muted);
-}
-
 /* A preview of the next run in display type (Second Sense's target); its line is kept before it
    appears (see useIsClient). */
 .preview {

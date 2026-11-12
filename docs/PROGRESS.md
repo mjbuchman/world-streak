@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T89 game_settings checks and drift guard (PR #125)
+- Streak steps refuse NaN/Infinity; `gameSettings.fixture.json` checked by pgTAP and zod; named-column select.
+- Review rounds: spec 1, quality 1, tests 1. Auto-merge stalled once (toggled). Merges since the check: 3.
+
 ### 2026-11-12 — T88 ResultHero data-tone (PR #124)
 - The tone is a `data-tone` attribute the CSS colours by; tests read it; a browser check pins practice mint.
 - Review rounds: quality 1 (light). Merges since the check: 2.

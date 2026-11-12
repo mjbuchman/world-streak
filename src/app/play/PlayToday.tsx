@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useState } from "react";
 import type { ChallengeType } from "@/challenges/shared/types";
 import { challengeUi } from "@/components/challenges/challengeUi";
 import { Meter } from "@/components/Meter";
@@ -52,13 +52,6 @@ export function PlayToday({
   const ui = challengeUi(challenge);
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>(() => initialPhase(initial));
-  const headingRef = useRef<HTMLHeadingElement>(null);
-
-  // As in practice (T60): when the game goes, focus the outcome so it is announced and a Space
-  // still held from the last drop cannot press anything.
-  useEffect(() => {
-    if (phase.name === "result" || phase.name === "failed") headingRef.current?.focus();
-  }, [phase.name]);
 
   async function start() {
     setPhase({ name: "starting" });
@@ -117,15 +110,12 @@ export function PlayToday({
           <ResultHero
             score={score}
             heading={passed ? "Passed" : "Not this time"}
-            headingRef={headingRef}
             tone={passed ? "pass" : "plain"}
             confetti={passed && phase.fresh}
+            note={`${passed ? "You helped keep the streak alive. " : ""}Come back tomorrow for the next challenge.`}
             actions={backHome}
           >
             <p className={styles.summary}>{challengeUi(phase.challengeType ?? challenge).summary(score, passTarget)}</p>
-            <p className={styles.note}>
-              {passed ? "You helped keep the streak alive. " : ""}Come back tomorrow for the next challenge.
-            </p>
           </ResultHero>
           {/* Spoiler-free, so sharing it gives nothing away (T32). */}
           <ShareCard passed={passed} />
@@ -146,7 +136,7 @@ export function PlayToday({
 
     case "failed":
       return (
-        <ResultHero heading={phase.heading} headingRef={headingRef} actions={backHome}>
+        <ResultHero heading={phase.heading} actions={backHome}>
           <p role="alert">{phase.message}</p>
         </ResultHero>
       );
