@@ -95,6 +95,8 @@ describe("saveGameSettings", () => {
     ["a negative target step", { pass_target_streak_step: "-1" }, "Pass target step must be 0 or more."],
     ["a threshold step above 1", { threshold_streak_step: "2" }, "Threshold step must be from 0 to 1."],
     ["a lookback of 0 days", { percentile_lookback_days: "0" }, "Lookback days must be a whole number from 1 to 365."],
+    ["a lookback of 366 days", { percentile_lookback_days: "366" }, "Lookback days must be a whole number from 1 to 365."],
+    ["a sample too big for the column", { percentile_min_sample: "2147483648" }, "Minimum sample must be a whole number, at least 1."],
     ["a fractional sample", { percentile_min_sample: "2.5" }, "Minimum sample must be a whole number, at least 1."],
     ["a weight above 1", { new_account_weight: "1.5" }, "New account weight must be from 0 to 1."],
     ["negative full-weight days", { full_weight_after_days: "-3" }, "Full weight after must be a whole number, 0 or more."],
@@ -110,6 +112,8 @@ describe("saveGameSettings", () => {
   });
 
   it("accepts the edges of each range", async () => {
+    const low = fakeDb([ADMIN, { data: [{ id: true }], error: null }]);
+    expect(await saveGameSettings(low.db, form({ pass_target_percentile: "0.5", percentile_min_sample: "2147483647" }))).toMatchObject({ ok: true });
     const { db } = fakeDb([ADMIN, { data: [{ id: true }], error: null }]);
     const edges = {
       default_survival_threshold: "0",

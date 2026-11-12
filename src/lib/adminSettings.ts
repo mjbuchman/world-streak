@@ -23,7 +23,9 @@ const between = (label: string, min: number, max: number) => {
   return number(label).pipe(z.number().min(min, message).max(max, message));
 };
 const atLeastZero = (label: string) => number(label).pipe(z.number().min(0, `${label} must be 0 or more.`));
-const wholeNumber = (label: string, min: number, message: string, max = Number.MAX_SAFE_INTEGER) =>
+/** Postgres `integer`'s largest value: beyond it the database refuses the row. */
+const MAX_INTEGER = 2_147_483_647;
+const wholeNumber = (label: string, min: number, message: string, max = MAX_INTEGER) =>
   number(label).pipe(z.number().int(message).min(min, message).max(max, message));
 
 /** The scalar settings, in form order: column name, label, a hint for the admin, and its check. */
