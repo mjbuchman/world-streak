@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T134 Typed database reads (PR #134)
+- The read helpers take `SupabaseClient<Database>`; their row casts are gone (two explained ones stay); `devData.check` narrows on success.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the check: 2.
+
 ### 2026-11-12 — T135 One canvas helper (PR #133)
 - `src/components/canvas.ts` (`fitCanvas`, `readColorTokens`); both games' token lists in `src/components/canvasTokens.ts`, checked by look.spec.
 - Review rounds: quality 1 (light). Merges since the check: 1.

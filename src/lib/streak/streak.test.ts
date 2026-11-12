@@ -1,5 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
+import { fakeSupabase, type FakeResult as Result } from "@/lib/testing/fakeSupabase";
 import {
   HISTORY_PAGE_SIZE,
   MAX_HISTORY_PAGE,
@@ -16,38 +16,8 @@ import {
   yesterdayLine,
 } from "./streak";
 
-type Result = { data: unknown; error: { message: string; code?: string } | null; count?: number | null };
-
 /** A client whose queries answer `results` in order, recording each builder call per query. */
-function fakeDb(results: Result[]) {
-  const queries: unknown[][][] = [];
-  const builder = (log: unknown[][]): object => {
-    const result = results.shift();
-    const query: object = new Proxy(
-      {},
-      {
-        get(_, method) {
-          if (method === "then") return (resolve: (value: unknown) => void) => resolve(result);
-          return (...args: unknown[]) => {
-            log.push([method, ...args]);
-            return query;
-          };
-        },
-      },
-    );
-    return query;
-  };
-  const start = (first: unknown[]) => {
-    const log: unknown[][] = [first];
-    queries.push(log);
-    return builder(log);
-  };
-  const db = {
-    from: (table: string) => start(["from", table]),
-    rpc: (name: string) => start(["rpc", name]),
-  } as unknown as SupabaseClient;
-  return { db, queries };
-}
+const fakeDb = (results: Result[]) => fakeSupabase(results);
 
 const day = (over: Record<string, unknown> = {}) => ({
   game_date: "2026-11-10",

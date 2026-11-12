@@ -1146,7 +1146,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T134 Typed database reads outside the attempt store (from T65)
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T65
 - Acceptance criteria:
   - [ ] The read helpers that take an untyped client (`draw.ts`, `prize.ts`, `adminFlags.ts`, `adminSettings.ts`, `meterRead.ts`, `admin.ts`, `localTools.ts`, `attempts/today.ts`, `streak/streak.ts`) take `SupabaseClient<Database>` (or a `Pick` of it), and their `data as ...` casts are removed; any cast that must stay has a one-line reason.
@@ -1429,7 +1429,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T100 One fake Supabase query builder for unit tests
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T25
 - Acceptance criteria:
   - [ ] One helper (for example `src/lib/testing/fakeSupabase.ts`) provides the chainable, thenable query-builder Proxy that scripts results per call and records every builder call.

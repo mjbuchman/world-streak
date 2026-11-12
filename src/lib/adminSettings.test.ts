@@ -1,32 +1,11 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
+import { fakeSupabase, type FakeResult as Result } from "@/lib/testing/fakeSupabase";
 import { readSettingsForm, saveGameSettings, SETTINGS_FIELDS } from "./adminSettings";
-
-type Result = { data: unknown; error: { message: string } | null };
 
 /** A client whose calls answer `results` in order, recording each call and its builder steps. */
 function fakeDb(results: Result[]) {
-  const calls: unknown[][][] = [];
-  const start = (first: unknown[]) => {
-    const log: unknown[][] = [first];
-    calls.push(log);
-    const result = results.shift();
-    const query: object = new Proxy(
-      {},
-      {
-        get(_, method) {
-          if (method === "then") return (resolve: (value: unknown) => void) => resolve(result);
-          return (...args: unknown[]) => {
-            log.push([method, ...args]);
-            return query;
-          };
-        },
-      },
-    );
-    return query;
-  };
-  const db = { from: (table: string) => start(["from", table]), rpc: (name: string) => start(["rpc", name]) };
-  return { db: db as unknown as SupabaseClient, calls };
+  const { db, queries } = fakeSupabase(results);
+  return { db, calls: queries };
 }
 
 const ADMIN: Result = { data: true, error: null };

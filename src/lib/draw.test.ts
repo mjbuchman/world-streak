@@ -1,5 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
+import { fakeSupabase, type FakeResult as Result } from "@/lib/testing/fakeSupabase";
 import { canDraw, drawCycle, markPaid, payoutDeadline, pickWinner, readDrawCycles, readWinners } from "./draw";
 
 describe("pickWinner", () => {
@@ -40,31 +40,10 @@ describe("canDraw", () => {
   });
 });
 
-type Result = { data: unknown; error: { message: string } | null };
-
 /** A client whose calls answer `results` in order, recording each call and its builder steps. */
 function fakeDb(results: Result[]) {
-  const calls: unknown[][][] = [];
-  const start = (first: unknown[]) => {
-    const log: unknown[][] = [first];
-    calls.push(log);
-    const result = results.shift();
-    const query: object = new Proxy(
-      {},
-      {
-        get(_, method) {
-          if (method === "then") return (resolve: (value: unknown) => void) => resolve(result);
-          return (...args: unknown[]) => {
-            log.push([method, ...args]);
-            return query;
-          };
-        },
-      },
-    );
-    return query;
-  };
-  const db = { from: (table: string) => start(["from", table]), rpc: (name: string, args?: unknown) => start(["rpc", name, args]) };
-  return { db: db as unknown as SupabaseClient, calls };
+  const { db, queries } = fakeSupabase(results);
+  return { db, calls: queries };
 }
 
 const ADMIN: Result = { data: true, error: null };
@@ -162,7 +141,7 @@ describe("readWinners (T125)", () => {
   it("maps each drawn cycle to its winner's email and verification", async () => {
     const { db, calls } = fakeDb([{ data: [{ cycle_number: 1, email: "w@example.com", email_verified: false }], error: null }]);
     expect(await readWinners(db)).toEqual(new Map([[1, { email: "w@example.com", verified: false }]]));
-    expect(calls[0]).toEqual([["rpc", "admin_cycle_winners", undefined]]);
+    expect(calls[0]).toEqual([["rpc", "admin_cycle_winners"]]);
     const noEmail = fakeDb([{ data: [{ cycle_number: 2, email: null, email_verified: false }], error: null }]);
     expect((await readWinners(noEmail.db)).get(2)).toEqual({ email: "(no email)", verified: false });
     await expect(readWinners(fakeDb([{ data: null, error: { message: "down" } }]).db)).rejects.toThrow("Winner lookup failed: down");
