@@ -2,7 +2,9 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const guide = readFileSync("docs/DEPLOYMENT.md", "utf8");
+const guideText = readFileSync("docs/DEPLOYMENT.md", "utf8");
+// Whole names only, so FOO does not pass because FOO_BAR is in the guide.
+const guide = { includes: (name: string) => new RegExp(`(?<![A-Z0-9_])${name}(?![A-Z0-9_])`).test(guideText) };
 
 /** Variable names set or commented out in .env.example, e.g. `FOO=` or `# FOO=bar`. */
 function exampleNames(): string[] {
@@ -34,6 +36,6 @@ describe("docs/DEPLOYMENT.md", () => {
   });
 
   it("gives the exact SQL that makes the owner an admin", () => {
-    expect(guide).toContain("update profiles set is_admin = true where id = (select id from auth.users where email = '<owner email>')");
+    expect(guideText).toContain("update profiles set is_admin = true where id = (select id from auth.users where email = '<owner email>')");
   });
 });

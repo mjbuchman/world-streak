@@ -51,7 +51,7 @@ In **Authentication**:
 | `NEXT_PUBLIC_SITE_URL` | `https://<your domain>` (used in shared result cards) | No |
 | `NEXT_PUBLIC_ADS_ENABLED` | `false` until section 8 | No |
 | `NEXT_PUBLIC_ADSENSE_CLIENT` | Empty until section 8 (`ca-pub-…`) | No |
-| `NEXT_PUBLIC_ADS_PLACEHOLDER` | `false` (development only: grey boxes where ads go) | No |
+| `NEXT_PUBLIC_ADS_PLACEHOLDER` | Optional; leave unset (development only: grey boxes where ads go, never shown in production) | No |
 
 These are the names in `.env.example` and the ones the app reads; a unit test (`tests/docs/deployment.test.ts`) fails if a new one is added without appearing here.
 
