@@ -787,7 +787,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `/admin/draw` lists cycles. The Draw button is enabled only when the cycle has `goal_reached_on` and today is after `end_date`. It uses `drawable_entries` and `crypto.randomInt`, and stores `winner_user_id` and `drawn_at` in one transaction. A cycle cannot be drawn twice (second attempt rejected, with a pgTAP or unit test).
   - [ ] It shows the winner's email, whether the email is verified (`auth.users.email_confirmed_at`), the payout deadline (end date + 45 days), and a "Mark paid" action that sets `paid_on`.
   - [ ] e2e with `simulate:days` fixtures: an admin draws a winner for a finished, won cycle and sees the email and the deadline.
-- Notes: Judgment call (record it): entries from the whole cycle count, including those earned after the goal day, and the draw happens after the cycle ends. Email verification before payout is a manual step for the owner (confirmations are off in the MVP).
+- Notes: Judgment call (record it): entries from the whole cycle count, including those earned after the goal day, and the draw happens after the cycle ends. Email verification before payout is a manual step for the owner (confirmations are off in the MVP). From the T41 reviews: if recording a flag fails at submit (logged, not thrown) or the server stops between the result and the flags, that attempt is never checked; consider re-running `detectFlags` over the cycle's passed attempts before the draw.
 
 ### T44 Ad slots outside the challenge
 - Type: feature
