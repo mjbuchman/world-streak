@@ -26,6 +26,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: you asked for these after trying the M3 follow-ups (Nov 12); they are built during M4.
 - Agent's recommendation: judge the 0.5 s after a few scored-style tries in practice.
 
+### Please confirm: what the prize draw counts (T43; blocks nothing)
+- What is needed: OK, or changes: one ticket per passed day in the cycle, including days after the goal was reached; the draw opens after the cycle's last day; flagged accounts are left out until an admin dismisses their flags.
+- Where to put it: reply in chat.
+- Why: the backlog asked for this judgment call to be recorded. See docs/DECISIONS.md (T43).
+- Agent's recommendation: keep it; it matches what the rules page says.
+
 ### Please confirm: cheat check thresholds (T40; blocks nothing)
 - What is needed: OK, or other numbers, for the placeholders in `src/config/cheat.ts`. The one change from the backlog: the Tower's "perfect run" is 12 rows without losing a cell (the 15-row Tower can never reach the backlog's 20).
 - Where to put it: reply in chat.

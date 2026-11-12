@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M4 (M3 and its extras are done).
-- Active task: T124 Admin flags review. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
+- Active task: T43 Prize draw tool (split: winner details and payout are T125). The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
 - Blocked tasks: T37 (local simulation: how it may close days before their deadline; see NEEDS_HUMAN)
 - Waiting on the human: please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T43 onward (T37 and T39 wait on the human); maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
+- Next: T125, then T44 onward (T37 and T39 wait on the human); maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T124 Admin flags review (PR #89)
+- `/admin/flags`: open flags with email, reason, time, day and score; Dismiss and Confirm through admin-checked definer functions. Only open flags can be reviewed; the account clears only when no open or confirmed flag remains.
+- Review rounds: spec 1, quality 2, tests 2. Merges since the check after T33: 8.
 
 ### 2026-11-12 — T42 Admin settings editor (PR #88)
 - `/admin/settings` edits every `game_settings` field (zod-checked, saved under the admin RLS policy). T42 was split: the flags review is T124.

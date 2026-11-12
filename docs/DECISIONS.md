@@ -314,6 +314,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - How to change it later: `close_game_day` in `supabase/migrations/20261113010000_cycle_close.sql` (a new migration).
 - Confirmed by human: pending (NEEDS_HUMAN).
 
+### 2026-11-12 — Which entries the prize draw counts (T43)
+- Choice: every drawable entry of the cycle counts, including those earned after the goal day, one ticket each; the draw opens only after the cycle's last day. Flagged accounts' entries are out (T41), and an admin draws by hand from `/admin/draw`.
+- Reason: the backlog's judgment call; the cycle keeps running after the goal (T34), so later passes are earned the same way.
+- How to change it later: `admin_draw_tickets` in `supabase/migrations/20261113050000_prize_draw.sql` (a new migration).
+- Confirmed by human: pending (NEEDS_HUMAN).
+
 ### 2026-11-12 — Cheat check thresholds (T40)
 - Choice: the backlog's placeholders (taps under 120 ms apart; 10+ taps with interval SD under 5 ms; Second Sense error under 0.01 s on 3 of the latest 5; Swift Sum answer under 800 ms when reported; a last input more than 2 s behind the server clock beyond a 15 s allowance), except the Tower's perfect run: 12 rows in a row locked without losing a cell, since the 15-row grid Tower (T76) can never reach the backlog's 20. Swift Sum's untimed answer and a Second Sense timeout skip the timing check.
 - Reason: a flag only holds an account's entries for an admin to review (T41, T42); it never changes a result, so a cautious placeholder costs little. Tune with real data before launch.

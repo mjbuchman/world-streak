@@ -28,7 +28,7 @@ export default async function AdminPage() {
   return (
     <PageShell title="Admin" backHref="/">
       <nav aria-label="Admin pages">
-        <Link href="/admin/settings">Game settings</Link> · <Link href="/admin/flags">Cheat flags</Link>
+        <Link href="/admin/settings">Game settings</Link> · <Link href="/admin/flags">Cheat flags</Link> · <Link href="/admin/draw">Prize draw</Link>
       </nav>
       <Surface as="section" aria-label="Coming game days">
         <AdminDayList days={days} />

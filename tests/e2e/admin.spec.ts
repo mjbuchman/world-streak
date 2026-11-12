@@ -152,8 +152,59 @@ test("an admin dismisses a player's only flag, and the player's entry is back in
   }
 });
 
+test("an admin draws the winner of a finished, won cycle, once", async ({ page, accounts }) => {
+  const db = adminClient();
+  // A cycle of its own, long past, so it overlaps no real cycle and no test that moves cycle 1.
+  const cycle = { number: 900, start_date: "1990-01-01", end_date: "1990-03-01", goal_reached_on: "1990-01-30" };
+  const day = "1990-01-05";
+  const email = accounts.uniqueEmail();
+  const created = await db.auth.admin.createUser({ email, password: crypto.randomUUID(), email_confirm: true });
+  if (created.error) throw created.error;
+  const userId = created.data.user.id;
+  try {
+    for (const step of [
+      await db.from("profiles").insert({ id: userId, birth_date: "1990-01-01", country: "US" }),
+      await db.from("cycles").insert(cycle),
+      await db.rpc("ensure_game_day", { d: day }),
+    ]) {
+      if (step.error) throw step.error;
+    }
+    const attempt = await db.from("attempts").insert({ user_id: userId, game_date: day, seed: 1 }).select("id").single();
+    if (attempt.error) throw attempt.error;
+    for (const step of [
+      await db.from("attempts").update({ submitted_at: new Date().toISOString(), score: 12, passed: true }).eq("id", attempt.data.id),
+      await db.from("entries").insert({ attempt_id: attempt.data.id, user_id: userId, cycle_number: cycle.number, game_date: day }),
+      // Closed again, so an open day this early never holds up the daily close.
+      await db.from("game_days").update({ closed_at: new Date().toISOString(), outcome: "broken" }).eq("game_date", day),
+    ]) {
+      if (step.error) throw step.error;
+    }
+
+    await signInAsAdmin(page);
+    await gotoReady(page, "/admin");
+    await expect(page.getByRole("link", { name: "Prize draw" })).toHaveAttribute("href", "/admin/draw");
+    // Straight there: the first visit to a route can compile for longer than a click's wait.
+    await gotoReady(page, "/admin/draw");
+    const draw = page.getByRole("button", { name: "Draw cycle 900" });
+    await submitAndWait(page, draw);
+    await expect(page.getByRole("row").filter({ has: draw }).getByRole("status")).toHaveText("Cycle 900 drawn.");
+    await expect(draw).toBeDisabled();
+
+    const stored = await db.from("cycles").select("winner_user_id, drawn_at").eq("number", cycle.number).single();
+    if (stored.error) throw stored.error;
+    expect(stored.data.winner_user_id).toBe(userId);
+    expect(stored.data.drawn_at).not.toBeNull();
+  } finally {
+    await db.from("cycles").update({ winner_user_id: null }).eq("number", cycle.number);
+    await db.auth.admin.deleteUser(userId);
+    await db.from("cycles").delete().eq("number", cycle.number);
+    await db.from("game_day_counters").delete().eq("game_date", day);
+    await db.from("game_days").delete().eq("game_date", day);
+  }
+});
+
 test("a signed-out visitor gets a 404", async ({ page }) => {
-  for (const path of ["/admin", "/admin/settings", "/admin/flags"]) {
+  for (const path of ["/admin", "/admin/settings", "/admin/flags", "/admin/draw"]) {
     const response = await page.goto(path);
     expect(response?.status()).toBe(404);
   }
@@ -162,7 +213,7 @@ test("a signed-out visitor gets a 404", async ({ page }) => {
 test("a signed-in player who is not an admin gets a 404", async ({ page, accounts }) => {
   await signUpViaForm(page, { email: accounts.uniqueEmail() });
   await expect(page).toHaveURL("/");
-  for (const path of ["/admin", "/admin/settings", "/admin/flags"]) {
+  for (const path of ["/admin", "/admin/settings", "/admin/flags", "/admin/draw"]) {
     const response = await page.goto(path);
     expect(response?.status()).toBe(404);
   }
