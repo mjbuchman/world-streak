@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T100 One fake Supabase client for unit tests (PR #135)
+- `src/lib/testing/fakeSupabase.ts`; seven test files use it (store, today and devData keep their own).
+- Review rounds: quality 1 (light). Merges since the check: 3.
+
 ### 2026-11-12 — T134 Typed database reads (PR #134)
 - The read helpers take `SupabaseClient<Database>`; their row casts are gone (two explained ones stay); `devData.check` narrows on success.
 - Review rounds: spec 1, quality 1, tests 1. Merges since the check: 2.
