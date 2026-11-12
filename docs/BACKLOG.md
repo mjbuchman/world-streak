@@ -671,7 +671,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T34 Close job: cycle-aware streak, goal and rollover
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T33
 - Acceptance criteria:
   - [ ] The first game day of a cycle starts a fresh streak run (any open run from before the cycle is ended), so the goal counts only streak days inside the cycle.
@@ -682,7 +682,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T35 Entries for passed days
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T34
 - Acceptance criteria:
   - [ ] A migration creates `entries` (`user_id`, `cycle_number`, `game_date`, **`unique (user_id, game_date)`**). `record_attempt_result` inserts one when the attempt passed and `cycle_for(game_date)` is not null.
