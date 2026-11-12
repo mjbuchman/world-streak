@@ -30,7 +30,7 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - What is needed: have the text at `/rules` (T38) reviewed by someone qualified for US sweepstakes and contest rules before launch. The sponsor's name, address and contact email are still placeholders (T39), so the page shows a "Draft" banner.
 - Where to put it: reply in chat with changes; the wording lives in `src/lib/rules.ts`, the numbers in `src/config/`.
 - Why: a prize game needs official rules that hold up; the agents drafted them from the design doc.
-- Agent's recommendation: review once T39's sponsor details are in, so the reviewer sees the final page.
+- Agent's recommendation: review once T39's sponsor details are in, so the reviewer sees the final page. Ask them in particular about the draw happening only after a cycle that reached the goal (otherwise the prize rolls over, and nobody wins that cycle).
 
 ### T37 blocked: how the local simulation may close days that have not ended (blocks T37)
 - What is needed: pick one way for `npm run simulate:days -- --from 2027-01-01 --days 30` to close days in 2027, which `close_game_day` refuses today in two ways: a day before its deadline, and any day while an earlier day (today, and the rest of 2026) is still open.
