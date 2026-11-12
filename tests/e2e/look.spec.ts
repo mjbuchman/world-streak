@@ -1,6 +1,6 @@
 import { paramsFromSeed } from "../../src/challenges/stacking/engine";
 import { FALL_MS } from "../../src/challenges/stacking/render";
-import { CANVAS_COLOR_TOKENS } from "../../src/components/stacking/canvasTokens";
+import { CANVAS_COLOR_TOKENS, FLASH_COUNT_COLOR_TOKENS } from "../../src/components/canvasTokens";
 import { expect, test } from "./support/fixtures";
 import { gotoReady, signUpViaForm } from "./support/pages";
 import { pinSeed, playTaps, tapsForAMiss } from "./support/tower";
@@ -80,15 +80,17 @@ test("the back button hides during a run and returns with the result", async ({ 
   await expect(heading).toHaveCSS("color", "rgb(52, 245, 181)");
 });
 
-test("the game canvas finds its colour tokens", async ({ page }) => {
-  await gotoReady(page, "/practice/stacking");
-  await page.getByRole("button", { name: "Start" }).click();
-  const canvas = page.getByRole("img", { name: /Teetering Tower game area/ });
-  await expect(canvas).toBeVisible();
-  const tokens = await canvas.evaluate(
-    (el, names) => names.map((name) => getComputedStyle(el).getPropertyValue(name).trim()),
-    Object.values(CANVAS_COLOR_TOKENS),
-  );
-  expect(tokens).toHaveLength(5);
-  for (const value of tokens) expect(value).not.toBe("");
-});
+for (const { game, path, canvasName, names } of [
+  { game: "Teetering Tower", path: "/practice/stacking", canvasName: /Teetering Tower game area/, names: Object.values(CANVAS_COLOR_TOKENS) },
+  { game: "Swift Sum", path: "/practice/flash-count", canvasName: "Get ready.", names: Object.values(FLASH_COUNT_COLOR_TOKENS) },
+]) {
+  test(`the ${game} canvas finds its colour tokens`, async ({ page }) => {
+    await gotoReady(page, path);
+    await page.getByRole("button", { name: "Start" }).click();
+    const canvas = page.getByRole("img", { name: canvasName });
+    await expect(canvas).toBeVisible();
+    const tokens = await canvas.evaluate((el, list) => list.map((name) => getComputedStyle(el).getPropertyValue(name).trim()), names);
+    expect(tokens).toHaveLength(names.length);
+    for (const value of tokens) expect(value).not.toBe("");
+  });
+}

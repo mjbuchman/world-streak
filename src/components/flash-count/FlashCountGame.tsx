@@ -2,21 +2,14 @@
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import type { FlashCountInputs, FlashCountParams } from "@/challenges/flash-count/engine";
-import { dotsVisible, drawFlashCount, type FlashCountFrame } from "@/challenges/flash-count/render";
+import { dotsVisible, drawFlashCount } from "@/challenges/flash-count/render";
+import { fitCanvas, readColorTokens } from "@/components/canvas";
+import { FLASH_COUNT_COLOR_TOKENS } from "@/components/canvasTokens";
 import { Field, TextInput } from "@/components/form/Field";
 import { Button } from "@/components/ui/Button";
 import styles from "./FlashCountGame.module.css";
 
 const INVALID = "Enter a whole number from 0 to 999.";
-
-/** Reads the Fresh Sport colour tokens, so the canvas matches the rest of the page. */
-function themeColors(element: HTMLElement): FlashCountFrame["colors"] {
-  const style = getComputedStyle(element);
-  return {
-    board: style.getPropertyValue("--fs-color-meter-surface").trim(),
-    dot: style.getPropertyValue("--fs-color-mint").trim(),
-  };
-}
 
 /** A typed answer as a count, or null unless it is a whole number from 0 to 999. */
 function parseCount(text: string): number | null {
@@ -53,21 +46,14 @@ export function FlashCountGame({ params, onFinish, countdownMs = COUNTDOWN_FROM 
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
-    const colors = themeColors(canvas);
+    const colors = readColorTokens(canvas, FLASH_COUNT_COLOR_TOKENS);
     // The countdown counts from `start`; the flash from the first frame that drew the dots.
     let start: number | null = null;
     let flashStart: number | null = null;
     let frame = 0;
 
     const draw = (showDots: boolean) => {
-      const { width, height } = canvas.getBoundingClientRect();
-      const devicePixelRatio = window.devicePixelRatio || 1;
-      // Resizing clears and reallocates the backing store, so only do it when the size changes.
-      const pixelWidth = Math.round(width * devicePixelRatio);
-      const pixelHeight = Math.round(height * devicePixelRatio);
-      if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
-      if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
-      drawFlashCount(ctx, { dots: params.dots, showDots, width, height, devicePixelRatio, colors });
+      drawFlashCount(ctx, { dots: params.dots, showDots, ...fitCanvas(canvas), colors });
     };
 
     const tick = () => {

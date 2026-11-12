@@ -1050,7 +1050,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T133 One helper for the admin server actions
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T132
 - Acceptance criteria:
   - [ ] The five `EditState` actions in `src/app/admin/actions.ts` are built from one helper (for example `adminAction(path, run)`) that makes the caller's server client, runs the save and revalidates the path only when `state.ok`.
@@ -1060,7 +1060,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T135 One canvas helper for sizing and reading colour tokens
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T84
 - Acceptance criteria:
   - [ ] A shared client helper (for example `src/components/canvas.ts`) sizes a canvas's backing store to its CSS box times the device pixel ratio (only when it changes, returning `{ width, height, devicePixelRatio }`) and reads a map of CSS custom properties off an element, trimmed.
@@ -1506,3 +1506,23 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `tests/e2e/attempts.spec.ts` "scores a submission itself" compares `passTarget` with the stored game day's target (as the start check in the same file does), not the literal 10.
   - [ ] The spec passes locally when today's target is not 10 (for example after `npm run seed:dev` or an admin edit).
 - Notes: Seen in T104-T106: locally today's target was 8 (recent scores), so this one test failed on every full run; CI passes on a fresh database. About 5 lines.
+
+### T136 Coverage thresholds for the auth and request-gate modules
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `vitest.config.mts` gets per-path thresholds (at least 90% lines and branches, or the highest the files already meet) for `src/lib/http/**`, `src/lib/supabase/session.ts`, `src/lib/profiles.ts`, `src/lib/profileCompletion.ts` and `src/lib/dates.ts`; any file short of it gets the missing tests.
+  - [ ] The stale comment at `vitest.config.mts:28-29` ("Matches nothing yet…") is corrected: `src/lib/streak/streak.ts` exists.
+  - [ ] No threshold is lowered; `npm run verify` passes; no behavior change.
+- Notes: From the maintainer check after T133. These gates only have the global 70% today, while the sign-in, sign-up and admin gates have 90%.
+
+### T137 One frame-loop hook for the challenge components
+- Type: maintenance
+- Status: todo
+- Depends on: T135
+- Acceptance criteria:
+  - [ ] A small hook (for example `src/components/useFrameLoop.ts`) owns `requestAnimationFrame` start and cancel and the elapsed-ms bookkeeping from `performance.now()`, with unit tests including cancel on unmount.
+  - [ ] `FlashCountGame`, `InnerClockGame` and `StackingGame` use it; the `startedAt.current!` assertion in `InnerClockGame` is gone. If `StackingGame` is too entangled with `stackingLoop.ts`, migrate the other two and note why.
+  - [ ] Existing component tests pass unchanged; engines and scoring untouched; `npm run verify` passes; no behavior change.
+- Notes: From the maintainer check after T133. Each game hand-rolls its loop (FlashCountGame 78-107, InnerClockGame 55-93, StackingGame 54-116), so a timing or cleanup fix is made three times. Keep under 400 lines.
