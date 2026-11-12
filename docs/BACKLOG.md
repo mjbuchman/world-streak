@@ -1093,7 +1093,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T62 Shared e2e sign-in, sign-out and header helpers
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T56
 - Acceptance criteria:
   - [ ] `tests/e2e/support/pages.ts` exports `header(page)`, `signInViaForm(page, email, password = E2E_PASSWORD)` (button scoped to `main`, not the header link) and `signOutViaHeader(page)` (waits for the "Sign in" link).
@@ -1104,7 +1104,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T63 Component-test race audit
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T55
 - Acceptance criteria:
   - [ ] Every component test in `src/app/**` and `src/components/**` is checked for assertions made right after a submit whose result arrives asynchronously, with no `findBy*` or `waitFor` first (the pattern behind the `SignUpForm.test.tsx` flake fixed in T59). Each one found waits for the result; no assertion is removed or weakened.

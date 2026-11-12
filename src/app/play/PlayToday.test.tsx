@@ -128,8 +128,9 @@ describe("PlayToday with another challenge (T30)", () => {
     await user.click(screen.getByRole("button", { name: "Start" }));
     await user.click(await screen.findByRole("button", { name: "Answer 20" }));
 
-    expect(JSON.parse(fetchSpy.mock.calls[1][1]!.body as string)).toEqual({ attemptId, inputs: { count: 20 } });
+    // The submission starts asynchronously after the answer, so wait for its result first.
     expect(await screen.findByRole("heading", { name: "Not this time" })).toBeTruthy();
+    expect(JSON.parse(fetchSpy.mock.calls[1][1]!.body as string)).toEqual({ attemptId, inputs: { count: 20 } });
     expect(screen.getByText("You were 20% off. Today's target was within 15%.")).toBeTruthy();
   });
 
