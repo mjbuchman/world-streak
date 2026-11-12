@@ -5,16 +5,15 @@ import { z } from "zod";
 import { isAdmin } from "@/lib/admin";
 import { refuse, type EditState } from "@/lib/adminForm";
 import { dbInteger, dbNumber } from "@/lib/db/numeric";
+import type { Database } from "@/lib/supabase/database.types";
 
 export type OpenFlag = { id: number; email: string; reason: string; createdAt: string; gameDate: string; score: number | null };
 
-type FlagRow = { flag_id: unknown; email: string | null; reason: string; created_at: string; game_date: string; score: unknown };
-
 /** Every open flag, oldest first. */
-export async function readOpenFlags(db: Pick<SupabaseClient, "rpc">): Promise<OpenFlag[]> {
+export async function readOpenFlags(db: Pick<SupabaseClient<Database>, "rpc">): Promise<OpenFlag[]> {
   const { data, error } = await db.rpc("admin_open_flags");
   if (error) throw new Error(`Flag lookup failed: ${error.message}`);
-  return (data as FlagRow[]).map((row) => ({
+  return data.map((row) => ({
     id: dbInteger(row.flag_id, "flag_id"),
     // A Google account always has one; kept readable if an account somehow has none.
     email: row.email ?? "(no email)",
@@ -36,7 +35,7 @@ const MESSAGES = {
 } as const;
 
 /** Dismisses or confirms one flag from the review form. */
-export async function reviewFlag(db: Pick<SupabaseClient, "rpc">, form: FormData): Promise<EditState> {
+export async function reviewFlag(db: Pick<SupabaseClient<Database>, "rpc">, form: FormData): Promise<EditState> {
   if (!(await isAdmin(db))) return refuse("Only admins can review flags.");
   const parsed = reviewSchema.safeParse({ flagId: form.get("flagId") ?? "", decision: form.get("decision") });
   if (!parsed.success) return refuse("Unknown flag or decision.");

@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T135 One canvas helper (PR #133)
+- `src/components/canvas.ts` (`fitCanvas`, `readColorTokens`); both games' token lists in `src/components/canvasTokens.ts`, checked by look.spec.
+- Review rounds: quality 1 (light). Merges since the check: 1.
+
 ### 2026-11-12 — T133 One helper for the admin server actions (PR #132)
 - A private `adminAction(path, save)` builds the five admin actions; refresh only on success.
 - Review rounds: quality 1 (light). Maintainer check done (10 merges): T136, T137 added. Merges since: 0.

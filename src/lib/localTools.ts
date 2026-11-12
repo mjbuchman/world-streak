@@ -9,12 +9,13 @@ import { dbInteger, dbNumber } from "@/lib/db/numeric";
 import { check, removeFakePlayers, runCloseDay, runSeed, supabaseCloseDayDeps, supabaseSeedDeps, type SeedArgs } from "@/lib/devData";
 import { gameDateAt } from "@/lib/gameDay";
 import { dayLabel } from "@/lib/streak/streak";
+import type { Database } from "@/lib/supabase/database.types";
 import { isLocalSupabaseUrl } from "@/lib/supabase/local";
 
 export type ToolState = { ok: boolean; message: string };
 
-type Db = Pick<SupabaseClient, "from" | "rpc">;
-type Caller = Pick<SupabaseClient, "rpc" | "auth">;
+type Db = Pick<SupabaseClient<Database>, "from" | "rpc">;
+type Caller = Pick<SupabaseClient<Database>, "rpc" | "auth">;
 
 /** Each fake player takes a moment to create, so one press seeds at most this many (T117). */
 export const MAX_SEED_PLAYERS = 500;
@@ -56,11 +57,11 @@ async function dayStatus(db: Db, date: string): Promise<{ closed: boolean; start
     db.from("game_days").select("closed_at").eq("game_date", date).maybeSingle(),
     db.from("game_day_counters").select("attempts").eq("game_date", date).maybeSingle(),
   ]);
-  check("Game day lookup", day);
-  check("Counters lookup", counters);
-  if (!day.data) return null;
-  const attempts = counters.data ? dbInteger((counters.data as { attempts: unknown }).attempts, "attempts") : 0;
-  return { closed: (day.data as { closed_at: string | null }).closed_at !== null, started: attempts > 0 };
+  const dayRow = check("Game day lookup", day);
+  const counterRow = check("Counters lookup", counters);
+  if (!dayRow) return null;
+  const attempts = counterRow ? dbInteger(counterRow.attempts, "attempts") : 0;
+  return { closed: dayRow.closed_at !== null, started: attempts > 0 };
 }
 
 /** Gives an open day nobody has started another challenge, with that challenge's pass target. */
@@ -74,7 +75,7 @@ async function setChallenge(db: Db, date: string, challenge: ChallengeType): Pro
 
   const streak = await db.rpc("world_streak").single();
   check("World streak lookup", streak);
-  const current = dbInteger((streak.data as { current: unknown }).current, "current");
+  const current = dbInteger(streak.data?.current, "current");
   const target = await db.rpc("pass_target_for", { challenge, d: date, streak: current });
   check("Pass target lookup", target);
 
@@ -100,17 +101,15 @@ async function clearMyAttempt(caller: Caller, db: Db, now: Date): Promise<ToolSt
     .eq("user_id", auth.user.id)
     .eq("game_date", today)
     .maybeSingle();
-  check("Attempt lookup", found);
-  if (!found.data) return refuse("You have no attempt today.");
-  const attempt = found.data as { id: string; passed: boolean | null; counted_weight: unknown };
+  const attempt = check("Attempt lookup", found);
+  if (!attempt) return refuse("You have no attempt today.");
 
   const counters = await db
     .from("game_day_counters")
     .select("attempts, passes, weighted_attempts, weighted_passes")
     .eq("game_date", today)
     .single();
-  check("Counters lookup", counters);
-  const row = counters.data as Record<"attempts" | "passes" | "weighted_attempts" | "weighted_passes", unknown>;
+  const row = check("Counters lookup", counters);
   // Rows from before weights were stamped count as weight 0 (T17), so they take nothing back.
   const weight = attempt.counted_weight === null ? 0 : dbNumber(attempt.counted_weight, "counted_weight");
   const passed = attempt.passed === true;
@@ -156,7 +155,7 @@ async function resetDay(db: Db, date: string): Promise<ToolState> {
 }
 
 async function restoreRotation(db: Db): Promise<ToolState> {
-  const saved = await db.from("game_settings").update({ rotation: DEFAULT_ROTATION }).eq("id", true);
+  const saved = await db.from("game_settings").update({ rotation: [...DEFAULT_ROTATION] }).eq("id", true);
   check("Saving the rotation", saved);
   return done(`The rotation is back to ${DEFAULT_ROTATION.map((type) => CHALLENGE_NAMES[type]).join(", ")}.`);
 }

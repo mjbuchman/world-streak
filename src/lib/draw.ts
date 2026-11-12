@@ -8,6 +8,9 @@ import { isAdmin } from "@/lib/admin";
 import { refuse, type EditState } from "@/lib/adminForm";
 import { dbInteger } from "@/lib/db/numeric";
 import { addDays } from "@/lib/gameDay";
+import type { Database } from "@/lib/supabase/database.types";
+
+type Db = SupabaseClient<Database>;
 
 /** The player holding ticket `randomInt(total)`, counting tickets in the order given. */
 export function pickWinner(entries: readonly { userId: string; tickets: number }[], randomInt: (max: number) => number): string {
@@ -37,14 +40,13 @@ export function canDraw(cycle: Pick<DrawCycle, "endDate" | "goalReachedOn" | "dr
 }
 
 /** Every cycle, newest first. */
-export async function readDrawCycles(db: Pick<SupabaseClient, "from">): Promise<DrawCycle[]> {
+export async function readDrawCycles(db: Pick<Db, "from">): Promise<DrawCycle[]> {
   const { data, error } = await db
     .from("cycles_public")
     .select("number, start_date, end_date, goal_reached_on, drawn_at, paid_on")
     .order("number", { ascending: false });
   if (error) throw new Error(`Cycle lookup failed: ${error.message}`);
-  type Row = { number: unknown; start_date: string; end_date: string; goal_reached_on: string | null; drawn_at: string | null; paid_on: string | null };
-  return (data as Row[]).map((row) => ({
+  return data.map((row) => ({
     number: dbInteger(row.number, "number"),
     startDate: row.start_date,
     endDate: row.end_date,
@@ -60,12 +62,11 @@ export const payoutDeadline = (endDate: string) => addDays(endDate, PAYOUT_WITHI
 export type Winner = { email: string; verified: boolean };
 
 /** Each drawn cycle's winner, by cycle number (admins only; the database checks). */
-export async function readWinners(db: Pick<SupabaseClient, "rpc">): Promise<Map<number, Winner>> {
+export async function readWinners(db: Pick<Db, "rpc">): Promise<Map<number, Winner>> {
   const { data, error } = await db.rpc("admin_cycle_winners");
   if (error) throw new Error(`Winner lookup failed: ${error.message}`);
-  type Row = { cycle_number: unknown; email: string | null; email_verified: boolean };
   return new Map(
-    (data as Row[]).map((row) => [
+    data.map((row) => [
       dbInteger(row.cycle_number, "cycle_number"),
       // An account need not have an email (auth allows phone sign-in); keep the row readable.
       { email: row.email ?? "(no email)", verified: row.email_verified },
@@ -79,7 +80,7 @@ const PAID_MESSAGES: Record<string, (cycle: number) => string> = {
 };
 
 /** Marks cycle `form.cycle`'s prize paid today, as the signed-in admin. */
-export async function markPaid(db: Pick<SupabaseClient, "rpc">, form: FormData): Promise<EditState> {
+export async function markPaid(db: Pick<Db, "rpc">, form: FormData): Promise<EditState> {
   if (!(await isAdmin(db))) return refuse("Only admins can mark a prize paid.");
   const parsed = cycleSchema.safeParse(form.get("cycle") || undefined);
   if (!parsed.success) return refuse("Unknown cycle.");
@@ -87,7 +88,7 @@ export async function markPaid(db: Pick<SupabaseClient, "rpc">, form: FormData):
   const { data, error } = await db.rpc("admin_mark_paid", { p_cycle: cycle });
   if (error) throw new Error(`Marking the prize paid failed: ${error.message}`);
   if (data === "paid") return { ok: true, message: `Cycle ${cycle} marked paid.` };
-  return refuse((PAID_MESSAGES[data as string] ?? (() => `Unexpected answer: ${String(data)}`))(cycle));
+  return refuse((PAID_MESSAGES[data] ?? (() => `Unexpected answer: ${String(data)}`))(cycle));
 }
 
 const cycleSchema = z.coerce.number().int().positive();
@@ -100,7 +101,7 @@ const STATUS_MESSAGES: Record<string, (cycle: number) => string> = {
 };
 
 /** Draws cycle `form.cycle` as the signed-in admin (their own client). */
-export async function drawCycle(db: Pick<SupabaseClient, "rpc">, form: FormData, randomInt: (max: number) => number): Promise<EditState> {
+export async function drawCycle(db: Pick<Db, "rpc">, form: FormData, randomInt: (max: number) => number): Promise<EditState> {
   if (!(await isAdmin(db))) return refuse("Only admins can draw a winner.");
   const parsed = cycleSchema.safeParse(form.get("cycle") || undefined);
   if (!parsed.success) return refuse("Unknown cycle.");
@@ -108,7 +109,7 @@ export async function drawCycle(db: Pick<SupabaseClient, "rpc">, form: FormData,
 
   const tickets = await db.rpc("admin_draw_tickets", { p_cycle: cycle });
   if (tickets.error) throw new Error(`Ticket lookup failed: ${tickets.error.message}`);
-  const entries = (tickets.data as { user_id: string; tickets: unknown }[]).map((row) => ({
+  const entries = tickets.data.map((row) => ({
     userId: row.user_id,
     tickets: dbInteger(row.tickets, "tickets"),
   }));
@@ -120,5 +121,5 @@ export async function drawCycle(db: Pick<SupabaseClient, "rpc">, form: FormData,
   const recorded = await db.rpc("admin_record_winner", { p_cycle: cycle, p_user: winner });
   if (recorded.error) throw new Error(`Recording the winner failed: ${recorded.error.message}`);
   if (recorded.data === "drawn") return { ok: true, message: `Cycle ${cycle} drawn.` };
-  return refuse((STATUS_MESSAGES[recorded.data as string] ?? (() => `Unexpected answer: ${String(recorded.data)}`))(cycle));
+  return refuse((STATUS_MESSAGES[recorded.data] ?? (() => `Unexpected answer: ${String(recorded.data)}`))(cycle));
 }
