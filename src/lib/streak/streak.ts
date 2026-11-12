@@ -75,12 +75,9 @@ export function shapeRecentDays(closed: ClosedDay[], today: string, currentStart
   });
 }
 
-/** "Nov 1, 2026". Game dates are UTC dates, so they are formatted in UTC. */
-export function dayLabel(gameDate: string): string {
-  return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" }).format(
-    new Date(`${gameDate}T00:00:00Z`),
-  );
-}
+// Kept here for its many importers; the formatter lives in src/lib/dates.ts (T126).
+import { dayLabel } from "@/lib/dates";
+export { dayLabel };
 
 /** The challenge's on-screen name; a type this build does not know yet shows as itself. */
 export function challengeName(type: string): string {

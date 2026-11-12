@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T122 Cycles cannot overlap (PR #105)
+- An exclusion constraint on the cycle date range; `prepare_next_cycle`'s back-to-back cycles still go in.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the M4 check: 4.
+
 ### 2026-11-12 — T121 /play outcomes as pure functions (PR #104)
 - `src/app/play/outcomes.ts` maps start and submit replies; table tests cover every branch. No behaviour change.
 - Review rounds: spec 1, quality 1, tests 1. Merges since the M4 check: 3.

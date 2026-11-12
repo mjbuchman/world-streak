@@ -7,13 +7,12 @@ import { Surface } from "@/components/ui/Surface";
 import { GAME_NAME } from "@/config/game";
 import { isAdmin } from "@/lib/admin";
 import { readOpenFlags } from "@/lib/adminFlags";
+import { instantLabel as flaggedAt } from "@/lib/dates";
 import { dayLabel } from "@/lib/streak/streak";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: `Flags | ${GAME_NAME}`, robots: { index: false } };
 
-const flaggedAt = (iso: string) =>
-  new Intl.DateTimeFormat("en-US", { timeZone: "UTC", dateStyle: "medium", timeStyle: "short" }).format(new Date(iso));
 
 /** Open cheat flags for an admin to dismiss or confirm (T124). Anyone else gets a 404. */
 export default async function FlagsPage() {

@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { calendarDateIn, eligibilityToday } from "./dates";
+import { calendarDateIn, dayLabel, eligibilityToday, instantLabel, longDayLabel } from "./dates";
+
+describe("UTC labels (T126)", () => {
+  it("formats a game date short, in UTC whatever the local zone", () => {
+    expect(dayLabel("2026-11-01")).toBe("Nov 1, 2026");
+  });
+  it("formats a date long", () => {
+    expect(longDayLabel("2027-01-01")).toBe("January 1, 2027");
+  });
+  it("formats an instant in UTC", () => {
+    expect(instantLabel("2026-11-12T15:04:00Z")).toBe("Nov 12, 2026, 3:04 PM");
+  });
+});
 
 describe("calendarDateIn", () => {
   it("returns the calendar date in the given time zone", () => {
