@@ -18,7 +18,7 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
   `NEXT_PUBLIC_SITE_URL=http://localhost:3000`
 - Where to put it: `.env.example` (and later the Vercel project settings, with the real domain).
 - Why: the share card links to the site. Until it is set, the card uses the page's own address, which is right locally.
-- Agent's recommendation: add it now; set the real value at deployment (T50).
+- Agent's recommendation: add it now; set the real value at deployment (T50). Next.js builds `NEXT_PUBLIC_` values into the page, so set it before the production build.
 
 ### Please confirm: the share card's "near the line" margin (blocks nothing)
 - What is needed: OK or another number for when a share becomes a call for help: below the threshold plus 5 points (60% needed: under 65%). `NEAR_THRESHOLD_MARGIN` in `src/config/share.ts`.
