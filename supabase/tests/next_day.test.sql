@@ -1,5 +1,7 @@
 begin;
 select plan(27);
+-- These tests prepare Tower days; the rotation (T31) has its own tests in rotation.test.sql.
+update public.game_settings set rotation = '{stacking}';
 
 -- Structure and privileges.
 select has_table('public', 'challenge_types', 'challenge_types table exists');

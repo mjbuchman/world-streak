@@ -12,6 +12,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Please confirm: the daily rotation (blocks nothing)
+- What is needed: OK, or a different order, for the rotation: Teetering Tower, Second Sense, Swift Sum, one each day in turn (T31). Locally, today (Nov 12) is now a Second Sense day.
+- Where to put it: reply in chat.
+- Why: the design leaves later challenges Open; this is the MVP's three. See docs/DECISIONS.md (T31).
+- Agent's recommendation: keep the plain cycle.
+
 ### Please confirm: gauge details (blocks nothing)
 - What is needed: OK or changes to three small calls in T104: the home page no longer shows the big title and pitch line (the chosen artboard has neither); the mint glow is a little softer than the mockup (contrast); a day that rounds to the line while below it says "Just below the line".
 - Where to put it: reply in chat.

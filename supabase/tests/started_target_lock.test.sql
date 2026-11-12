@@ -1,5 +1,7 @@
 begin;
 select plan(6);
+-- These tests prepare Tower days; the rotation (T31) has its own tests in rotation.test.sql.
+update public.game_settings set rotation = '{stacking}';
 
 -- Fixtures: an admin and a player, two open days (one started below), no streak.
 \ir fixtures/fixtures.psql

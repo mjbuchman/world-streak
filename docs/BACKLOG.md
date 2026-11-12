@@ -500,7 +500,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T108 Practice hub
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T30
 - Acceptance criteria:
   - [ ] `/practice` lists the three challenges with a one-line description each and links to each practice page.
@@ -528,14 +528,23 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T31 Daily challenge rotation
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T22, T30
 - Acceptance criteria:
   - [ ] `game_settings` gains `rotation text[]`, default `{stacking,inner-clock,flash-count}`. The next day's type is `rotation[(next_date - date '2027-01-01') mod array_length + 1]` (positive modulo, so dates before 2027 work).
   - [ ] `ensure_game_day` and the prepare step in `close_game_day` both use the rotation.
   - [ ] pgTAP: 2027-01-01 is stacking, 2027-01-02 inner-clock, 2027-01-03 flash-count, 2027-01-04 stacking, and 2026-12-31 flash-count. An admin-edited future row keeps its type.
-  - [ ] The admin editor (T25) gains a challenge type select for unplayed future days, validated against `challenge_types`.
-- Notes: Depends on **Open** "Which challenges join the rotation after the first three". The MVP rotates only the first three; adding a type later is a data change plus a new module. From the T30 spec review: `/play` falls back to `DEFAULT_CHALLENGE` (`src/lib/attempts/today.ts`) for a day nobody has created yet; with the rotation it must use the rotation's choice instead (also note that `ensure_game_day` and `pass_target_for` hard-code 'stacking' today).
+- Notes: Split on Nov 12 (over 400 lines): the admin challenge type select is T111. Depends on **Open** "Which challenges join the rotation after the first three". The MVP rotates only the first three; adding a type later is a data change plus a new module. From the T30 spec review: `/play` falls back to `DEFAULT_CHALLENGE` (`src/lib/attempts/today.ts`) for a day nobody has created yet; with the rotation it must use the rotation's choice instead (also note that `ensure_game_day` and `pass_target_for` hard-code 'stacking' today).
+
+### T111 Admin picks a future day's challenge
+- Type: feature
+- Status: todo
+- Depends on: T31, T99
+- Acceptance criteria:
+  - [ ] The admin editor (T25, T99) gains a challenge type select for open days nobody has started, validated against `challenge_types` (server action and the database: the column-level grant and policy allow `challenge_type` only on unstarted open days).
+  - [ ] A changed type marks the day edited, so the rotation leaves it alone; the pass target shown follows the new type's default until edited.
+  - [ ] Unit tests for the action (unknown type refused, started day refused); pgTAP for the policy.
+- Notes: Split from T31 (Nov 12).
 
 ### T32 Spoiler-free share card with call for help
 - Type: feature

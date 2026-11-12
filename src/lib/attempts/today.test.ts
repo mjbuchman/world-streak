@@ -84,8 +84,22 @@ describe("todaysAttempt", () => {
 });
 
 describe("todaysChallenge", () => {
-  it("reads today's challenge from the public game day", async () => {
-    const { db, calls } = fakeDb({ data: { challenge_type: "flash-count" }, error: null });
+  /** A client whose game day read answers `day` and whose rotation call answers `rotation`. */
+  function fakeChallengeDb(day: Result, rotation: Result = { data: null, error: null }) {
+    const day$ = fakeDb(day);
+    const rpcCalls: unknown[][] = [];
+    const db = {
+      from: day$.db.from,
+      rpc: (...args: unknown[]) => {
+        rpcCalls.push(args);
+        return Promise.resolve(rotation);
+      },
+    } as unknown as SupabaseClient;
+    return { db, calls: day$.calls, rpcCalls };
+  }
+
+  it("reads today's challenge from the public game day, without asking the rotation", async () => {
+    const { db, calls, rpcCalls } = fakeChallengeDb({ data: { challenge_type: "flash-count" }, error: null });
     expect(await todaysChallenge(db, now)).toBe("flash-count");
     expect(calls).toEqual([
       ["from", "game_days"],
@@ -93,18 +107,31 @@ describe("todaysChallenge", () => {
       ["eq", "game_date", "2026-11-08"],
       ["maybeSingle"],
     ]);
+    expect(rpcCalls).toEqual([]);
   });
 
-  it("is the challenge a new day gets when nobody has created today's yet", async () => {
-    const { db } = fakeDb({ data: null, error: null });
-    expect(DEFAULT_CHALLENGE).toBe("stacking");
-    expect(await todaysChallenge(db, now)).toBe("stacking");
+  it("asks the rotation which challenge today will be when nobody has created the day yet (T31)", async () => {
+    const { db, rpcCalls } = fakeChallengeDb({ data: null, error: null }, { data: "inner-clock", error: null });
+    expect(await todaysChallenge(db, now)).toBe("inner-clock");
+    expect(rpcCalls).toEqual([["challenge_for", { d: "2026-11-08" }]]);
   });
 
-  it("throws on a database error or a challenge this build does not know", async () => {
-    await expect(todaysChallenge(fakeDb({ data: null, error: { message: "down" } }).db, now)).rejects.toThrow("Game day lookup failed: down");
-    await expect(todaysChallenge(fakeDb({ data: { challenge_type: "chess" }, error: null }).db, now)).rejects.toThrow(
+  it("throws on a database error or a challenge this build does not know, from either source", async () => {
+    await expect(todaysChallenge(fakeChallengeDb({ data: null, error: { message: "down" } }).db, now)).rejects.toThrow(
+      "Game day lookup failed: down",
+    );
+    await expect(todaysChallenge(fakeChallengeDb({ data: null, error: null }, { data: null, error: { message: "gone" } }).db, now)).rejects.toThrow(
+      "Rotation lookup failed: gone",
+    );
+    await expect(todaysChallenge(fakeChallengeDb({ data: { challenge_type: "chess" }, error: null }).db, now)).rejects.toThrow(
       'Game day 2026-11-08 has unknown challenge type "chess"',
     );
+    await expect(todaysChallenge(fakeChallengeDb({ data: null, error: null }, { data: null, error: null }).db, now)).rejects.toThrow(
+      "Game day 2026-11-08 has unknown challenge type null",
+    );
+  });
+
+  it("keeps a default for the home page when nothing can be read", () => {
+    expect(DEFAULT_CHALLENGE).toBe("stacking");
   });
 });
