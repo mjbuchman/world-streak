@@ -1,23 +1,20 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { FlagReviewRow } from "@/components/FlagReviewRow";
 import table from "@/components/ui/DataTable.module.css";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
 import { GAME_NAME } from "@/config/game";
-import { isAdmin } from "@/lib/admin";
+import { requireAdminPage } from "@/lib/adminPage";
 import { readOpenFlags } from "@/lib/adminFlags";
 import { instantLabel as flaggedAt } from "@/lib/dates";
 import { dayLabel } from "@/lib/streak/streak";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: `Flags | ${GAME_NAME}`, robots: { index: false } };
 
 
 /** Open cheat flags for an admin to dismiss or confirm (T124). Anyone else gets a 404. */
 export default async function FlagsPage() {
-  const db = await createSupabaseServerClient();
-  if (!(await isAdmin(db))) notFound();
+  const db = await requireAdminPage();
   const flags = await readOpenFlags(db);
   return (
     <PageShell title="Cheat flags" backHref="/admin">

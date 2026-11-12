@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { DrawButton } from "@/components/DrawButton";
 import { WinnerPayout } from "@/components/WinnerPayout";
 import table from "@/components/ui/DataTable.module.css";
@@ -7,11 +6,10 @@ import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
 import { GAME_NAME } from "@/config/game";
 import { STREAK_GOAL_DAYS } from "@/config/prize";
-import { isAdmin } from "@/lib/admin";
+import { requireAdminPage } from "@/lib/adminPage";
 import { canDraw, payoutDeadline, readDrawCycles, readWinners, type DrawCycle, type Winner } from "@/lib/draw";
 import { gameDateAt } from "@/lib/gameDay";
 import { dayLabel } from "@/lib/streak/streak";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: `Prize draw | ${GAME_NAME}`, robots: { index: false } };
 
@@ -40,8 +38,7 @@ function winnerCell(cycle: DrawCycle, winner: Winner | undefined) {
 
 /** Every cycle with its goal, draw and payout status (T43, T125). A 404 for non-admins. */
 export default async function DrawPage() {
-  const db = await createSupabaseServerClient();
-  if (!(await isAdmin(db))) notFound();
+  const db = await requireAdminPage();
   const [cycles, winners] = await Promise.all([readDrawCycles(db), readWinners(db)]);
   const today = gameDateAt(new Date());
   return (

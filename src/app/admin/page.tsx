@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { CHALLENGE_TYPES } from "@/challenges/shared/types";
 import { AdminDayList } from "@/components/AdminDayList";
 import { LocalTools } from "@/components/LocalTools";
@@ -8,12 +7,12 @@ import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
 import { CHALLENGE_NAMES } from "@/config/challenges";
 import { GAME_NAME } from "@/config/game";
-import { isAdmin, readAdminDays } from "@/lib/admin";
+import { readAdminDays } from "@/lib/admin";
+import { requireAdminPage } from "@/lib/adminPage";
 import { addDays, gameDateAt } from "@/lib/gameDay";
 import { localToolsEnabled, MAX_SEED_PLAYERS } from "@/lib/localTools";
 import { dayLabel } from "@/lib/streak/streak";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: `Admin | ${GAME_NAME}`, robots: { index: false } };
 
@@ -22,7 +21,7 @@ export const metadata: Metadata = { title: `Admin | ${GAME_NAME}`, robots: { ind
  * exist, so the page does not reveal itself. The check runs on the server for every request.
  */
 export default async function AdminPage() {
-  if (!(await isAdmin(await createSupabaseServerClient()))) notFound();
+  await requireAdminPage();
   const now = new Date();
   const days = await readAdminDays(createSupabaseAdminClient(), now);
   return (
