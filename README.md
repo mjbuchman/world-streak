@@ -218,7 +218,7 @@ npm run close-day -- --date 2026-11-10   # prints e.g. "2026-11-10 survived. Wor
 
 Only a day whose deadline has passed can close, and days close in order (close earlier ones first). Closing a closed day again just prints its outcome. Like `seed:dev`, it reads `.env.local` and refuses anything but a localhost URL.
 
-**Admin page:** sign in as `admin@local.test` with the password `admin-local-only` and open http://localhost:3000/admin to see today and the next 7 game days. That account comes from `supabase/seed.sql`, which `npm run db:reset` applies. To add it without wiping your local data, run `npx supabase db query -f supabase/seed.sql`. It exists only locally; everyone else gets a 404 at `/admin`. Against the local Supabase, `/admin` also has **Local tools**: set a day's challenge, clear your own attempt today (to play again), reset an open day, and restore the rotation.
+**Admin page:** sign in as `admin@local.test` with the password `admin-local-only` and open http://localhost:3000/admin to see today and the next 7 game days. That account comes from `supabase/seed.sql`, which `npm run db:reset` applies. To add it without wiping your local data, run `npx supabase db query -f supabase/seed.sql`. It exists only locally; everyone else gets a 404 at `/admin`. Against the local Supabase, `/admin` also has **Local tools**: set a day's challenge, clear your own attempt today (to play again), reset an open day, restore the rotation, seed fake players, close a day and remove the fake players. They do what the commands below do, so you need not remember those.
 
 **Checks** (the same ones CI runs):
 

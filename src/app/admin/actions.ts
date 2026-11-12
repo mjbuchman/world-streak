@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { saveGameDayEdit, type EditState } from "@/lib/adminEdit";
-import { localToolsEnabled, runLocalTool, type ToolState } from "@/lib/localTools";
+import { localToolsEnabled, runLocalTool, supabaseDevData, type ToolState } from "@/lib/localTools";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -17,7 +17,8 @@ export async function saveGameDayAction(_previous: EditState | null, form: FormD
 export async function localToolAction(_previous: ToolState | null, form: FormData): Promise<ToolState> {
   // Checked before the service-role client is even made.
   if (!localToolsEnabled()) return { ok: false, message: "Local tools work only with the local Supabase." };
-  const state = await runLocalTool(await createSupabaseServerClient(), createSupabaseAdminClient(), form, new Date());
+  const service = createSupabaseAdminClient();
+  const state = await runLocalTool(await createSupabaseServerClient(), service, form, new Date(), supabaseDevData(service));
   if (state.ok) revalidatePath("/admin");
   return state;
 }

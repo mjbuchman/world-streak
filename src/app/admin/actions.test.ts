@@ -3,7 +3,11 @@ import type { EditState } from "@/lib/adminEdit";
 import type { ToolState } from "@/lib/localTools";
 
 const saveGameDayEdit = vi.hoisted(() => vi.fn<(db: unknown, form: FormData) => Promise<EditState>>());
-const runLocalTool = vi.hoisted(() => vi.fn<(caller: unknown, db: unknown, form: FormData, now: Date) => Promise<ToolState>>());
+const runLocalTool = vi.hoisted(() =>
+  vi.fn<(caller: unknown, db: unknown, form: FormData, now: Date, data: unknown) => Promise<ToolState>>(),
+);
+const devData = vi.hoisted(() => ({ kind: "dev data" }));
+const supabaseDevData = vi.hoisted(() => vi.fn(() => devData));
 const localToolsEnabled = vi.hoisted(() => vi.fn(() => true));
 const createSupabaseAdminClient = vi.hoisted(() => vi.fn(() => serviceClient));
 const revalidatePath = vi.hoisted(() => vi.fn());
@@ -13,7 +17,7 @@ vi.mock("next/cache", () => ({ revalidatePath }));
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: vi.fn(async () => sessionClient) }));
 vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient }));
 vi.mock("@/lib/adminEdit", () => ({ saveGameDayEdit }));
-vi.mock("@/lib/localTools", () => ({ localToolsEnabled, runLocalTool }));
+vi.mock("@/lib/localTools", () => ({ localToolsEnabled, runLocalTool, supabaseDevData }));
 
 import { localToolAction, saveGameDayAction } from "./actions";
 
@@ -43,7 +47,8 @@ describe("localToolAction", () => {
     runLocalTool.mockResolvedValue({ ok: true, message: "Done." });
     const form = new FormData();
     expect(await localToolAction(null, form)).toEqual({ ok: true, message: "Done." });
-    expect(runLocalTool).toHaveBeenCalledWith(sessionClient, serviceClient, form, expect.any(Date));
+    expect(runLocalTool).toHaveBeenCalledWith(sessionClient, serviceClient, form, expect.any(Date), devData);
+    expect(supabaseDevData).toHaveBeenCalledWith(serviceClient);
     expect(revalidatePath).toHaveBeenCalledWith("/admin");
   });
 

@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M3 play-tested (Nov 12); doing its follow-ups (T113-T117) before M4.
-- Active task: T116 Admin local tools: days and attempts.
+- Active task: T117 Admin local tools: seed and close.
 - Blocked tasks: none
 - Waiting on the human: please-confirms (share emojis, rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T117, then T109-T112 and M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
+- Next: then T109-T112 and M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T116 Admin local tools: days and attempts (PR #75)
+- "Local tools" on /admin (local Supabase and admins only; guard shared in `src/lib/supabase/local.ts`): set a day's challenge, clear my attempt today, reset an open day, restore the rotation. Closed days cannot be reset (the streak counts them).
+- Review rounds: spec 1, quality 1, tests 1. Merges since the end-of-M3 check: 4.
 
 ### 2026-11-12 — T114 Swift Sum balance (PR #74)
 - 12–30 dots for 1.5 s (was 15–45 for 1 s); goldens re-pinned. Flagged for the next play-test.
