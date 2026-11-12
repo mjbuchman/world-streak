@@ -1,5 +1,5 @@
 begin;
-select plan(14);
+select plan(15);
 
 -- close_game_day refuses days before their deadline, so cycle 1 moves to the past for these
 -- tests: 2000-01-01 to 2000-02-29 is 60 days too (a leap year), as 2027-01-01 to 2027-03-01 is.
@@ -76,6 +76,13 @@ select results_eq(
   $$select number, rollover_in_cents, base_prize_cents + rollover_in_cents from public.cycles where number in (3, 4) order by number$$,
   $$values (3, 0, 20000), (4, 20000, 40000)$$,
   'an unwon cycle rolls its whole prize into the next: $400'
+);
+-- Cycle 4 (2000-06-29 to 2000-08-27) is not won either: its whole $400 rolls on, base and rollover.
+select tests.run_days('2000-06-29', 60, 0);
+select results_eq(
+  $$select rollover_in_cents, base_prize_cents + rollover_in_cents from public.cycles where number = 5$$,
+  $$values (40000, 60000)$$,
+  'a second unwon cycle in a row makes the next one $600'
 );
 
 select * from finish();
