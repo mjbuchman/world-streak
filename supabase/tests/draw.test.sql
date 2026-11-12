@@ -1,5 +1,5 @@
 begin;
-select plan(13);
+select plan(14);
 
 -- Fixtures: cycle 1 moved into 2000 and won; players A (3 entries), B (1) and C (2, flagged);
 -- cycle 2 still running and cycle 3 ended without the goal.
@@ -40,6 +40,13 @@ reset role;
 update public.cycles set end_date = '2000-04-29' where number = 2;
 set local role authenticated;
 select is(public.admin_record_winner(2, '00000000-0000-0000-0000-0000000000a1'), 'not-ready', 'nor one that ended without the goal');
+reset role;
+update public.cycles set end_date = public.game_date_at(now()), goal_reached_on = '2000-03-30' where number = 2;
+set local role authenticated;
+select is(public.admin_record_winner(2, '00000000-0000-0000-0000-0000000000a1'), 'not-ready', 'nor a won cycle on its last day: only after it ends');
+reset role;
+update public.cycles set end_date = '2000-04-29', goal_reached_on = null where number = 2;
+set local role authenticated;
 select is(public.admin_record_winner(1, '00000000-0000-0000-0000-0000000000c1'), 'not-entered', 'a winner must hold a drawable entry (not flagged)');
 select is(public.admin_record_winner(1, '00000000-0000-0000-0000-0000000000ad'), 'not-entered', 'and an entry in that cycle at all');
 select is(public.admin_record_winner(1, '00000000-0000-0000-0000-0000000000b1'), 'drawn', 'a won, ended cycle is drawn');
