@@ -4,16 +4,10 @@
  * a real project.
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+// Shared with the admin page's local tools (T116), so both use one guard.
+import { isLocalSupabaseUrl } from "../../src/lib/supabase/local.ts";
 
-/** Whether `url` points at the local Supabase: exactly localhost or 127.0.0.1, any port. */
-export function isLocalSupabaseUrl(url: string | undefined): boolean {
-  try {
-    const { hostname } = new URL(url ?? "");
-    return hostname === "127.0.0.1" || hostname === "localhost";
-  } catch {
-    return false;
-  }
-}
+export { isLocalSupabaseUrl };
 
 /**
  * Throws unless `url` is local. `purpose` and `setting` name what is refused and where the URL

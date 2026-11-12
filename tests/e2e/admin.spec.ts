@@ -3,7 +3,7 @@ import { addDays, gameDateAt } from "../../src/lib/gameDay";
 import { dayLabel } from "../../src/lib/streak/streak";
 import { expect, test } from "./support/fixtures";
 import { gotoReady, signUpViaForm, submitAndWait } from "./support/pages";
-import { adminClient } from "./support/supabase";
+import { adminClient, findUserByEmail } from "./support/supabase";
 
 // The local-only admin from supabase/seed.sql.
 const ADMIN = { email: "admin@local.test", password: "admin-local-only" };
@@ -50,6 +50,30 @@ test("an admin changes tomorrow's survival threshold to 55%, and it stays saved"
     } else {
       await db.from("game_days").update({ edited: false }).eq("game_date", tomorrow);
     }
+  }
+});
+
+test("an admin clears their own attempt today with the local tools, and can play again", async ({ page }) => {
+  const db = adminClient();
+  const today = gameDateAt(new Date());
+  try {
+    await signInAsAdmin(page);
+    // An attempt today (new, or one the admin already has locally): /play then offers no second go.
+    expect([200, 409]).toContain((await page.request.post("/api/attempts/start")).status());
+    await gotoReady(page, "/play");
+    await expect(page.getByRole("button", { name: "Start" })).toHaveCount(0);
+
+    await gotoReady(page, "/admin");
+    const tools = page.getByRole("region", { name: "Local tools" });
+    await submitAndWait(page, tools.getByRole("button", { name: "Clear my attempt today" }));
+    await expect(tools.getByRole("status")).toHaveText("Your attempt today is gone. You can play again.");
+
+    await gotoReady(page, "/play");
+    await expect(page.getByRole("button", { name: "Start" })).toBeVisible();
+  } finally {
+    // If the tool failed, do not leave the shared admin with an attempt today.
+    const admin = await findUserByEmail(ADMIN.email);
+    if (admin) await db.from("attempts").delete().eq("user_id", admin.id).eq("game_date", today);
   }
 });
 

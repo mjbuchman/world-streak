@@ -256,6 +256,11 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - **Share:** no visible share text, just the button (the messaging app shows the prefilled text). Emojis are welcome in the share text only, for example as a progress bar, so it stands out (T115).
 - Confirmed by human: yes (these are the human's decisions).
 
+### 2026-11-12 — Admin local tools (T116)
+- Choice: a "Local tools" panel on /admin, shown and run only when the app's Supabase URL is localhost (the scripts' guard) and the caller is an admin. Set a day's challenge (open, unstarted days; it takes that challenge's pass target and is marked edited), clear my own attempt today (taking it back out of the counters), reset an open day (no attempts, zero counters, back on the rotation), restore the rotation. A closed day cannot be reset: the world streak already counts it, and undoing that is `npm run db:reset` territory.
+- How to change it later: `src/lib/localTools.ts`, `src/components/LocalTools.tsx`.
+- Confirmed by human: pending (next play-test).
+
 ### 2026-11-12 — Swift Sum dots and flash (T114)
 - Choice: 12–30 dots (was 15–45) shown for 1.5 s (was 1 s): one by one, a player counts about 6–8 in that time, so the count stays an estimate, but a closer one. The placeholder pass target stays within 15%.
 - How to change it later: `DOT_COUNT_RANGE` and `FLASH_MS` in `src/challenges/flash-count/engine.ts`.

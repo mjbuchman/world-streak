@@ -577,7 +577,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T114 Swift Sum balance
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T29
 - Acceptance criteria:
   - [ ] Fewer dots and a longer flash (`DOT_COUNT_RANGE` 12–30, `FLASH_MS` 1500), so a player cannot count them all but can estimate; golden tests updated; decision recorded and flagged.
@@ -585,11 +585,11 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T116 Admin dev tools: days and attempts
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T25, T31
 - Acceptance criteria:
   - [ ] `/admin` gains a "Local tools" panel, shown and accepted only when the Supabase URL is local (the same guard as the scripts; the server actions refuse otherwise) and the user is an admin.
-  - [ ] Controls: set today's (or any open day's) challenge; clear my own attempt today so I can play again; reset a day (delete its attempts, reopen it if closed, follow the rotation again); restore the rotation to the default.
+  - [ ] Controls: set today's (or any open day's) challenge; clear my own attempt today so I can play again; reset an open day (delete its attempts, zero its counters, follow the rotation again; a closed day is refused, since the streak counts it); restore the rotation to the default.
   - [ ] Unit tests for each action, including the refusals (not local, not admin); e2e: clear my attempt and play again.
 - Notes: M3 play-test (Nov 12): no commands to remember.
 
