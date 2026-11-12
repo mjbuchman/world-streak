@@ -69,10 +69,10 @@ describe("reviewFlag", () => {
     expect(calls).toHaveLength(1);
   });
 
-  it("says when the flag no longer exists, and throws on a database error", async () => {
+  it("says when the flag is gone or was already reviewed, and throws on a database error", async () => {
     expect(await reviewFlag(fakeDb([ADMIN, { data: "not-found", error: null }]).db, form({ flagId: "7", decision: "dismissed" }))).toEqual({
       ok: false,
-      message: "That flag is gone. Reload the page.",
+      message: "That flag is gone or already reviewed. Reload the page.",
     });
     await expect(
       reviewFlag(fakeDb([ADMIN, { data: null, error: { message: "down" } }]).db, form({ flagId: "7", decision: "dismissed" })),

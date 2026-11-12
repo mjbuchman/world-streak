@@ -44,6 +44,6 @@ export async function reviewFlag(db: Pick<SupabaseClient, "rpc">, form: FormData
 
   const { data, error } = await db.rpc("review_cheat_flag", { p_flag_id: flagId, p_decision: decision });
   if (error) throw new Error(`Reviewing the flag failed: ${error.message}`);
-  if (data === "not-found") return { ok: false, message: "That flag is gone. Reload the page." };
+  if (data === "not-found") return { ok: false, message: "That flag is gone or already reviewed. Reload the page." };
   return { ok: true, message: MESSAGES[decision] };
 }

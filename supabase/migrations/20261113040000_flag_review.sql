@@ -27,9 +27,10 @@ revoke all on function public.admin_open_flags() from public, anon;
 grant execute on function public.admin_open_flags() to authenticated;
 
 /**
- * Dismisses or confirms one flag. Dismissing the player's last open or confirmed flag clears
- * their account's flag, so their entries return to the draw; confirming keeps it flagged.
- * Returns the new status, or 'not-found'.
+ * Dismisses or confirms one open flag. Dismissing the player's last open or confirmed flag
+ * clears their account's flag, so their entries return to the draw; confirming keeps it
+ * flagged. Returns the new status, or 'not-found' for a flag that is missing or already
+ * reviewed (a stale page must not turn a confirmed flag into a dismissed one).
  */
 create function public.review_cheat_flag(p_flag_id bigint, p_decision text)
 returns text
@@ -48,10 +49,14 @@ begin
     raise exception 'unknown decision %', p_decision using errcode = '22023';
   end if;
 
-  update public.cheat_flags set status = p_decision where id = p_flag_id returning user_id into v_user_id;
+  update public.cheat_flags set status = p_decision
+   where id = p_flag_id and status = 'open'
+  returning user_id into v_user_id;
   if not found then
     return 'not-found';
   end if;
+  -- Locked, so two admins reviewing this player's flags at once see each other's decisions.
+  perform 1 from public.profiles where id = v_user_id for update;
   update public.profiles
      set flagged = exists (
        select 1 from public.cheat_flags where user_id = v_user_id and status in ('open', 'confirmed')
