@@ -93,6 +93,16 @@ describe("ShareCard", () => {
     expect(await screen.findByRole("status")).toHaveProperty("textContent", "Could not copy. Select the text below and copy it.");
     expect(document.querySelector("pre")?.textContent).toBe(expectedText);
   });
+
+  it("copies instead when the share sheet fails for another reason", async () => {
+    share = vi.fn(async () => Promise.reject(new DOMException("blocked", "NotAllowedError")));
+    const user = setUpUser();
+    render(<ShareCard passed siteUrl="http://localhost:3000" />);
+    await user.click(await screen.findByRole("button", { name: "Share" }));
+    expect(writeText).toHaveBeenCalledExactlyOnceWith(expectedText);
+    expect(await screen.findByRole("status")).toHaveProperty("textContent", "Copied");
+  });
+
   it("stays quiet when the player closes the share sheet", async () => {
     share = vi.fn(async () => Promise.reject(new DOMException("cancelled", "AbortError")));
     const user = setUpUser();

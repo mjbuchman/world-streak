@@ -62,10 +62,11 @@ export function ShareCard({ passed, siteUrl, now }: ShareCardProps) {
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({ text });
-      } catch {
-        // Closing the share sheet is not an error worth showing.
+        return;
+      } catch (error) {
+        // Closing the share sheet is not an error worth showing; any other failure falls back to copying.
+        if (error instanceof DOMException && error.name === "AbortError") return;
       }
-      return;
     }
     try {
       await navigator.clipboard.writeText(text);

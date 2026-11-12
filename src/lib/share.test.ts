@@ -22,7 +22,7 @@ describe("meterBar", () => {
     [0.52, 0.6, "🟧🟧🟧🟧🟧⬜⬜⬜⬜⬜"],
     [0.04, 0.6, "⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜"],
     [1, 0.6, "🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩"],
-  ])("at %d with %d needed: %s", (passRate, threshold, bar) => {
+  ])("at %s with %s needed: %s", (passRate, threshold, bar) => {
     expect(meterBar(passRate, threshold)).toBe(bar);
   });
 
