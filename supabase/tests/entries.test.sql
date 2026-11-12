@@ -1,5 +1,5 @@
 begin;
-select plan(15);
+select plan(16);
 
 select has_table('public', 'entries', 'entries exists');
 select col_is_unique('public', 'entries', array['user_id', 'game_date'], 'one entry per player per game day');
@@ -53,6 +53,7 @@ reset role;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000e1","role":"authenticated"}', true);
 set local role authenticated;
 select is(public.my_entry_count(1), 1, 'the player who passed counts their entry');
+select is(public.my_entry_count(2), 0, 'in that cycle only');
 reset role;
 
 -- Clearing an attempt (as the local tools do) takes its entry with it.

@@ -604,6 +604,15 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
   - [ ] Table-style unit tests cover every branch (401, 403, 409 `day-closed`, 409 submitted, other 409, other statuses, unknown challenge, `already-submitted`, both refusal codes, unknown error). Existing `PlayToday` tests pass unchanged; `npm run verify` passes.
 - Notes: From the maintainer check after T33. The scored-attempt flow's error branches are today reachable only through component and e2e tests.
 
+### T122 Cycles cannot overlap
+- Type: maintenance
+- Status: todo
+- Depends on: T35
+- Acceptance criteria:
+  - [ ] The database refuses a cycle whose dates overlap another's (an exclusion constraint on the date range, or a trigger if `btree_gist` is not wanted), so `cycle_for` can never match two cycles.
+  - [ ] pgTAP: an overlapping insert is refused; `prepare_next_cycle`'s back-to-back cycles still go in.
+- Notes: From the T35 quality review. Cycles are only created back to back by the close job today, so this guards against a manual mistake.
+
 ### T113 Second Sense starts with a visible timer
 - Type: feature
 - Status: done
