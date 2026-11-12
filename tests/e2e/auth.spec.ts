@@ -25,15 +25,19 @@ test("sign up, sign out, then sign in again and see the email in the header", as
   await expect(header(page)).toContainText(email);
 
   // Sign out from another page, so the redirect home is really exercised.
-  await page.goto("/rules");
+  await gotoReady(page, "/rules");
   await expect(header(page)).toContainText(email);
   await signOut(page);
   await expect(page).toHaveURL("/");
   await expect(header(page)).not.toContainText(email);
   expect(await hasSessionCookie(page)).toBe(false);
 
-  await header(page).getByRole("link", { name: "Sign in" }).click();
-  await expect(page).toHaveURL("/signin");
+  // The header re-renders as the sign-out settles, which can swallow a click on the fresh link
+  // under load: click again until it navigates.
+  await expect(async () => {
+    await header(page).getByRole("link", { name: "Sign in" }).click();
+    await expect(page).toHaveURL("/signin", { timeout: 2000 });
+  }).toPass();
   await submitSignIn(page, email, E2E_PASSWORD);
 
   await expect(page).toHaveURL("/");

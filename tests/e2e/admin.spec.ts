@@ -34,7 +34,7 @@ test("an admin changes tomorrow's survival threshold to 55%, and it stays saved"
   if (before.error) throw before.error;
   try {
     await signInAsAdmin(page);
-    await page.goto("/admin");
+    await gotoReady(page, "/admin");
     const threshold = page.getByRole("spinbutton", { name: `Survival threshold in percent for ${dayLabel(tomorrow)}` });
     await threshold.fill("55");
     const row = page.getByRole("row").filter({ has: threshold });

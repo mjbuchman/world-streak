@@ -4,8 +4,8 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M3 play-tested (Nov 12); doing its follow-ups (T113-T117) before M4.
-- Active task: T117 Admin local tools: seed and close.
+- Milestone: M3 play-tested (Nov 12); its follow-ups (T113-T117) are done. Remaining M3 extras (T109-T112), then M4.
+- Active task: T112 Remaining e2e link clicks wait for hydration.
 - Blocked tasks: none
 - Waiting on the human: please-confirms (share emojis, rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: then T109-T112 and M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T117 Admin local tools: seed and close (PR #76)
+- Seed players, close a day, remove fake players from /admin; the scripts' logic moved to `src/lib/devData.ts` (scripts re-export it). Fake players are `seed-…@example.test` (`FAKE_PLAYER_EMAIL`).
+- Review rounds: spec 1, quality 1, tests 1. Merges since the end-of-M3 check: 5.
 
 ### 2026-11-12 — T116 Admin local tools: days and attempts (PR #75)
 - "Local tools" on /admin (local Supabase and admins only; guard shared in `src/lib/supabase/local.ts`): set a day's challenge, clear my attempt today, reset an open day, restore the rotation. Closed days cannot be reset (the streak counts them).
