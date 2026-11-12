@@ -93,7 +93,7 @@ test("Second Sense practice: start, see the clock for a second, tap, and see how
   await expect(page.getByRole("timer")).toHaveCount(0);
   await tapArea.click();
 
-  // Targets are at least 5 s, so a tap after a second or two is early by 3 s or more.
+  // Targets are at least 7 s, so a tap after a second or two is early by 5 s or more.
   await expect(page.getByRole("heading", { level: 2 })).toHaveText(/^\d+(\.\d+)? s early$/);
   await expect(page.getByText(/^You tapped at \d+(\.\d+)? s\. The target was \d+(\.\d)? s\.$/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();

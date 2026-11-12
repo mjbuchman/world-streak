@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M4 (M3 and its extras are done).
-- Active task: T119 Swift Sum countdown before the dots. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
+- Active task: T47 Mobile checks. The human tried the M3 follow-ups (Nov 12): go straight into M4 without stopping; T118 and T119 (their new notes) are built during M4 and checked at the M4 play-test.
 - Blocked tasks: T37 (local simulation: how it may close days before their deadline; see NEEDS_HUMAN)
 - Waiting on the human: please-confirms (rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
 - Next: T47 onward (T45 needs AdSense from the human) (T37 and T39 wait on the human); maintenance T120, T121 (from the check after T33) fit in when convenient. T91, T100 and the other maintenance tasks fit in when convenient.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T119 Swift Sum countdown (PR #95)
+- A 3-2-1 (800 ms each, a pop per number, plain with reduced motion) before the dots; the flash counts from the first frame that shows them. For the M4 play-test.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the check after T125: 4.
 
 ### 2026-11-12 — T118 Second Sense clock fades; targets 7-13 s (PR #94)
 - The first second's clock stops at 1.0 and fades over 400 ms (no fade with reduced motion); `TARGET_RANGE_MS` 7,000-13,000 with new goldens. For the M4 play-test.

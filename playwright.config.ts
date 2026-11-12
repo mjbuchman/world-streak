@@ -19,7 +19,14 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: "after/**" },
+    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: ["after/**", "mobile/**"] },
+    // Phones (T47), on Chromium so CI installs no other browser; only the phone checks run here.
+    { name: "pixel-7", use: { ...devices["Pixel 7"] }, testMatch: "mobile/**/*.spec.ts" },
+    {
+      name: "phone-390",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
+      testMatch: "mobile/**/*.spec.ts",
+    },
     // Tests that change today's game day for everyone (its challenge): only after the rest.
     { name: "after", use: { ...devices["Desktop Chrome"] }, testMatch: "after/**/*.spec.ts", dependencies: ["chromium"] },
   ],

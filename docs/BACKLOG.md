@@ -577,7 +577,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T119 Swift Sum countdown before the dots
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T29
 - Acceptance criteria:
   - [ ] Before the dots flash, a "3, 2, 1" countdown animation builds up to it (daily play and practice); the flash itself is unchanged and starts right after "1". Reduced motion: the numbers without the animation.
@@ -858,12 +858,12 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T47 Mobile checks
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T32, T44
 - Acceptance criteria:
   - [ ] Playwright gains Chromium-based mobile projects (`Pixel 7` and an iPhone-sized viewport, 390×844 with `hasTouch` and `isMobile`) without adding new browsers to CI.
   - [ ] On both: `/`, `/play` (signed in), `/practice/*` and `/rules` have no horizontal scroll (`scrollWidth <= clientWidth`); each challenge canvas fits within the viewport; every button and link has a hit area of at least 44×44 CSS px; each practice challenge can be completed with touch taps (`page.touchscreen.tap`).
-  - [ ] Pinch-zoom and double-tap zoom do not trigger during challenge taps (`touch-action: manipulation` on the canvas, asserted via computed style).
+  - [ ] Pinch-zoom and double-tap zoom do not trigger during challenge taps (`touch-action: manipulation`, or the stricter `none` the Tower uses, on the canvas, asserted via computed style).
   - [ ] Any layout fixes needed to pass are included (split into a follow-up task if they exceed the size limit).
 
 ### T48 Meter performance under load
