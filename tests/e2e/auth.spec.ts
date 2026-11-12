@@ -24,6 +24,12 @@ test("sign up, sign out, then sign in again and see the email in the header", as
   await expect(page).toHaveURL("/");
   await expect(header(page)).toContainText(email);
 
+  // A signed-in player has no use for the sign-in and sign-up pages (T131).
+  for (const path of ["/signin", "/signup"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL("/");
+  }
+
   // Sign out from another page, so the redirect home is really exercised.
   await gotoReady(page, "/rules");
   await expect(header(page)).toContainText(email);

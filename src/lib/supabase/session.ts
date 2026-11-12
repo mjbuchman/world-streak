@@ -30,6 +30,21 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
 
   // getClaims() triggers the refresh when needed and, with asymmetric signing keys, verifies the
   // token locally; getUser() would cost an Auth round trip on every request (T58).
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
+  if (data && SIGNED_OUT_ONLY.has(request.nextUrl.pathname)) return redirectHome(request, response);
   return response;
+}
+
+/** Pages only a signed-out visitor needs; redirecting here keeps them static (T131). */
+const SIGNED_OUT_ONLY = new Set(["/signin", "/signup"]);
+
+function redirectHome(request: NextRequest, refreshed: NextResponse): NextResponse {
+  const redirect = NextResponse.redirect(new URL("/", request.url));
+  for (const cookie of refreshed.cookies.getAll()) redirect.cookies.set(cookie);
+  // A redirect that carries a refreshed session cookie must stay as uncacheable as the page would.
+  for (const name of ["cache-control", "expires", "pragma"]) {
+    const value = refreshed.headers.get(name);
+    if (value !== null) redirect.headers.set(name, value);
+  }
+  return redirect;
 }

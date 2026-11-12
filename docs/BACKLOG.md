@@ -1022,7 +1022,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T130 Keep user-independent pages static (from T58)
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T58
 - Acceptance criteria:
   - [ ] Pages whose content does not depend on the user (for example `/rules`) render statically again, for example by making the account header a small client island that loads the session after first paint, without the header flashing the wrong state.
@@ -1030,7 +1030,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T131 Signed-in users skip /signin and /signup; unconfirmed-email message (from T58)
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T58
 - Acceptance criteria:
   - [ ] A signed-in user who opens `/signin` or `/signup` is redirected to `/`.

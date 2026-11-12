@@ -77,6 +77,29 @@ describe("updateSession", () => {
     expect(response.headers.get("pragma")).toBe("no-cache");
   });
 
+  it.each(["/signin", "/signup"])("sends a signed-in player from %s home, keeping a refreshed cookie", async (path) => {
+    m.getClaims.mockImplementation(async () => {
+      const cookies = m.createServerClient.mock.calls[0][2].cookies as CookieMethods;
+      cookies.setAll([{ name: "sb-local-auth-token", value: "new", options: {} }], { "Cache-Control": "private, no-store" });
+      return { data: { claims: { sub: "u1" } }, error: null };
+    });
+    const response = await updateSession(new NextRequest(`http://localhost:3000${path}`));
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost:3000/");
+    expect(response.cookies.get("sb-local-auth-token")?.value).toBe("new");
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+  });
+
+  it.each([
+    ["a visitor on /signin", "/signin", null],
+    ["a signed-in player elsewhere", "/rules", { claims: { sub: "u1" } }],
+    ["a signed-in player on a longer path", "/signin/extra", { claims: { sub: "u1" } }],
+  ])("lets %s through", async (_name, path, data) => {
+    m.getClaims.mockResolvedValue({ data, error: null });
+    const response = await updateSession(new NextRequest(`http://localhost:3000${path}`));
+    expect(response.headers.get("location")).toBeNull();
+  });
+
   it("passes the request through untouched when Supabase is not configured", async () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "");
     const response = await updateSession(requestWithCookie());

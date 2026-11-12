@@ -17,8 +17,9 @@ export async function signInAction(_previous: SignInState | null, formData: Form
         return "ok";
       }
       // Supabase uses one code for an unknown email and a wrong password, so this still
-      // never reveals whether an account exists.
-      return error.code === "invalid_credentials" ? "invalid-credentials" : "error";
+      // never reveals whether an account exists. It checks the password before confirmation.
+      if (error.code === "invalid_credentials") return "invalid-credentials";
+      return error.code === "email_not_confirmed" ? "email-not-confirmed" : "error";
     },
   });
   if (result.ok) redirect(userId ? await landingPath(supabase, userId) : "/");

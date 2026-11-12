@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T130 Static pages stay static (PR #113)
+- The header's account state is a client island (`AccountStatus`); /rules, /practice/*, /signup build static.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the check: 1.
+
 ### 2026-11-12 — T58 One Auth round trip per page (PR #112)
 - Proxy uses `getClaims()`; local Supabase signs with a git-ignored ES256 key (`npm run db:keys`, run by `db:start` and CI). Production needs an ECC key (DEPLOYMENT §4.4). Split: T130, T131.
 - Review rounds: spec 1, quality 1, tests 2. Maintainer check done (10 merges): T132, T133 added. Merges since: 0.

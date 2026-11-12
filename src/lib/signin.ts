@@ -18,9 +18,12 @@ export type SignInState =
 /** For outages and rate limits, so players are not told their password is wrong. */
 export const SIGN_IN_FAILED = GENERIC_ERROR;
 
+/** Only if email confirmation is ever turned on (it is off: docs/DEPLOYMENT.md §4). */
+export const EMAIL_NOT_CONFIRMED = "Confirm your email first: open the link we sent you, then sign in.";
+
 export type SignInDeps = {
   /** Signs in and stores the session. */
-  authenticate(email: string, password: string): Promise<"ok" | "invalid-credentials" | "error">;
+  authenticate(email: string, password: string): Promise<"ok" | "invalid-credentials" | "email-not-confirmed" | "error">;
 };
 
 export async function signIn(formData: FormData, deps: SignInDeps): Promise<SignInState> {
@@ -32,6 +35,7 @@ export async function signIn(formData: FormData, deps: SignInDeps): Promise<Sign
   const { email, password } = parsed.data;
   const outcome = await deps.authenticate(email, password);
   if (outcome === "invalid-credentials") return { ok: false, message: WRONG_CREDENTIALS, values };
+  if (outcome === "email-not-confirmed") return { ok: false, message: EMAIL_NOT_CONFIRMED, values };
   if (outcome === "error") return { ok: false, message: SIGN_IN_FAILED, values };
   return { ok: true };
 }

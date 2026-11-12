@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { SIGN_IN_FAILED, WRONG_CREDENTIALS, type SignInDeps, signIn } from "./signin";
+import { EMAIL_NOT_CONFIRMED, SIGN_IN_FAILED, WRONG_CREDENTIALS, type SignInDeps, signIn } from "./signin";
 
 function form(fields: Record<string, string>): FormData {
   const data = new FormData();
@@ -58,6 +58,12 @@ describe("signIn", () => {
       values: { email: "player@example.com" },
     });
     expect(deps.authenticate).not.toHaveBeenCalled();
+  });
+
+  it("says when the email is not confirmed yet, in case confirmation is ever turned on", async () => {
+    const result = await signIn(form({ email: "player@example.com", password: "right-pass" }), answering("email-not-confirmed"));
+    expect(result).toEqual({ ok: false, message: EMAIL_NOT_CONFIRMED, values: { email: "player@example.com" } });
+    expect(EMAIL_NOT_CONFIRMED).toBe("Confirm your email first: open the link we sent you, then sign in.");
   });
 
   it("never echoes the password back", async () => {

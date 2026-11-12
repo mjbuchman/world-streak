@@ -53,6 +53,13 @@ describe("signInAction", () => {
     expect(m.landingPath).not.toHaveBeenCalled();
   });
 
+  it("says so when Supabase refuses an unconfirmed email", async () => {
+    m.signInWithPassword.mockResolvedValueOnce({ error: { code: "email_not_confirmed" } });
+    const result = await signInAction(null, form("player@example.com", "right-pass"));
+    expect(result).toMatchObject({ ok: false, message: expect.stringMatching(/^Confirm your email first/) });
+    expect(m.redirect).not.toHaveBeenCalled();
+  });
+
   it("returns the generic credentials message when Supabase rejects the credentials", async () => {
     m.signInWithPassword.mockResolvedValueOnce({ error: { code: "invalid_credentials" } });
     const result = await signInAction(null, form("player@example.com", "wrong-pass"));
