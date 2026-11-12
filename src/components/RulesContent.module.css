@@ -1,0 +1,14 @@
+/* The draft banner stands out in tangerine; each rule is its own card. */
+.draft {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--fs-color-tangerine);
+  border-radius: var(--fs-radius-field);
+  font-weight: 700;
+}
+
+.heading {
+  margin: 0 0 var(--space-2);
+  font-family: var(--fs-font-display);
+  font-size: var(--fs-text-body);
+}

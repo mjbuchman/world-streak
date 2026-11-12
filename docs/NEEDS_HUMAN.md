@@ -26,6 +26,21 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: you asked for these after trying the M3 follow-ups (Nov 12); they are built during M4.
 - Agent's recommendation: judge the 0.5 s after a few scored-style tries in practice.
 
+### Legal review of the draft official rules (blocks nothing; before public launch)
+- What is needed: have the text at `/rules` (T38) reviewed by someone qualified for US sweepstakes and contest rules before launch. The sponsor's name, address and contact email are still placeholders (T39), so the page shows a "Draft" banner.
+- Where to put it: reply in chat with changes; the wording lives in `src/lib/rules.ts`, the numbers in `src/config/`.
+- Why: a prize game needs official rules that hold up; the agents drafted them from the design doc.
+- Agent's recommendation: review once T39's sponsor details are in, so the reviewer sees the final page.
+
+### T37 blocked: how the local simulation may close days that have not ended (blocks T37)
+- What is needed: pick one way for `npm run simulate:days -- --from 2027-01-01 --days 30` to close days in 2027, which `close_game_day` refuses today in two ways: a day before its deadline, and any day while an earlier day (today, and the rest of 2026) is still open.
+  - A (recommended): split `close_game_day` into the deadline check plus `close_game_day_unchecked(d)`, service-role only (the service role can already change every table, so no new power). The script refuses any non-local URL and first closes every open day before `--from` with no attempts (broken). Your local "today" is then closed too, so play-testing needs `npm run db:reset` afterwards (the README will say so).
+  - B: no database change. The simulation moves cycle 1 into the past on the local database (for example 2000-01-01), simulates there, and prints the goal date in that window. The real 2027 dates are not exercised.
+  - C: drop T37; the pgTAP tests (T34) already cover a full cycle.
+- Where to put it: reply in chat with A, B or C.
+- Why: A touches the close path that guards the streak in production, so I did not choose it on my own.
+- Agent's recommendation: A. It exercises the real close job on the real 2027 dates.
+
 ### Please confirm: the streak and the prize cycle (T34; blocks nothing)
 - What is needed: OK, or changes: the streak resets to 0 on each cycle's first day (Jan 1, 2027 included); after a 30-day streak the cycle still runs to day 60 and passes keep earning entries; preseason days show in the streak but earn no entries.
 - Where to put it: reply in chat.

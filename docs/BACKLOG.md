@@ -701,7 +701,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T36 Prize and cycle display
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T35, T24
 - Acceptance criteria:
   - [ ] `/` shows "Prize this cycle: $200" (or the current amount with rollover, for example "$400, including $200 rolled over"), "Day X of 60" and "Goal: a 30-day world streak". Once the goal is reached, it shows "Goal reached on <date>. A winner will be drawn after the cycle ends."
@@ -711,17 +711,18 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T37 Local multi-day simulation script
 - Type: infra
-- Status: todo
+- Status: blocked
 - Depends on: T34, T20
 - Acceptance criteria:
   - [ ] `npm run simulate:days -- --from 2027-01-01 --days 30 --players 50 --pass-rate 0.8` creates the game days, fake attempts (via `record_attempt_result`, so counters and entries update) and closes each day in order (local-only guard).
   - [ ] After that command, `world_streak()` reports current 30, and cycle 1 has `goal_reached_on 2027-01-30` (integration check in the script's test, or a documented manual step).
   - [ ] README documents how to play-test the cycle and the draw with it, including resetting with `npm run db:reset`.
 - Notes: From the T20 reviews: `record_attempt_result` refuses every game date but today, so "via `record_attempt_result`" cannot hold for simulated past or future days. Reuse T20's direct path in `scripts/seed-dev.mts` (write the result, then add the pass with the attempt's `counted_weight`), or plan another way; see DECISIONS, "Seeding a day other than today". That path reads then writes the counters and uses two requests per pass; for a bigger simulation, consider one small SQL function that writes the result and increments the counters atomically (T20 quality review).
+- needs-human: how the simulation may close days that have not reached their deadline (and the open days before them); options A, B, C in docs/NEEDS_HUMAN.md (Nov 12).
 
 ### T38 Official rules page (draft)
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T33, T03
 - Acceptance criteria:
   - [ ] `/rules` states: free to enter, no purchase or payment of any kind; eligibility (US residents aged 18+, enforced at sign-up), with values from config; one account per person; how a day passes and how the world streak and cycles work (60 days, first cycle January 1, 2027, goal a 30-day streak); the prize is $200 per cycle, rolling over in full to the next cycle if the goal is not reached; one entry per passed day; one winner drawn at random from all entries; flagged accounts lose their entries; the winner must verify their email before payout; payment within 45 days of the cycle ending.

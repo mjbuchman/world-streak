@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope, Unbounded } from "next/font/google";
 import { AccountHeader } from "@/components/AccountHeader";
 import { HydrationMarker } from "@/components/HydrationMarker";
+import { SiteFooter } from "@/components/SiteFooter";
 import { GAME_NAME, GAME_PITCH } from "@/config/game";
 import "./tokens.css";
 import "./globals.css";
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <HydrationMarker />
         <AccountHeader />
         {children}
+        <SiteFooter />
       </body>
     </html>
   );

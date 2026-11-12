@@ -23,7 +23,16 @@ for (const path of ["/signin", "/signup", "/complete-profile", "/rules"]) {
 
 test("the rules checkbox links to the official rules page", async ({ page }) => {
   await page.goto("/signup");
-  await expect(page.getByRole("link", { name: "official rules" })).toHaveAttribute("href", "/rules");
+  // The form's link, not the footer's "Official rules".
+  await expect(page.getByRole("main").getByRole("link", { name: "official rules", exact: true })).toHaveAttribute("href", "/rules");
+});
+
+test("every page's footer links to the draft official rules", async ({ page }) => {
+  await gotoReady(page, "/");
+  await page.getByRole("contentinfo").getByRole("link", { name: "Official rules" }).click();
+  await expect(page).toHaveURL("/rules");
+  await expect(page.getByRole("note")).toHaveText("Draft: these rules are not final and the prize draw is not open yet.");
+  await expect(page.getByRole("region", { name: "The prize" })).toContainText("The prize is $200 per cycle");
 });
 
 test("a field error is shown next to the field and the form keeps what was typed", async ({ page, accounts }) => {
