@@ -6,7 +6,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 - Milestone: M4 complete (Nov 12); waiting for the human's M4 play-test.
 - Active task: none.
-- Blocked tasks: T37 (local simulation: how it may close days before their deadline; see NEEDS_HUMAN)
+- Blocked tasks: none
 - Waiting on the human: the M4 play-test (incl. T118, T119); T39 sponsor details; T45 AdSense; deployment (docs/DEPLOYMENT.md); please-confirms and `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: after the play-test, the maintenance tasks (T120 onward, and the two from the M4 check), then T37/T39/T45 as the human unblocks them.
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T37 Local multi-day simulation (PR #102)
+- `npm run simulate:days`: local-only; service-role `close_game_day_unchecked` and `record_attempt_result_unchecked` (the checked versions call them). README: play-testing a cycle and the draw.
+- Review rounds: spec 1, quality 1, tests 1. CI: the pgTAP test assumed an earlier open day (1 fix). Merges since the M4 check: 1.
 
 ### 2026-11-12 — T50 Deployment guide and launch checklist (PR #99)
 - `docs/DEPLOYMENT.md` for the human, a test that every env var is in it, and NEEDS_HUMAN entries for Supabase, Vercel and the production admin. M4 complete.
