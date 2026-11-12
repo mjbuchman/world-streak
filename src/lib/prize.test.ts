@@ -26,6 +26,12 @@ describe("prize config", () => {
     const lastDay = addDays(FIRST_CYCLE_START, CYCLE_LENGTH_DAYS - 1);
     expect(migration).toContain(`values (1, '${FIRST_CYCLE_START}', '${lastDay}')`);
   });
+
+  it("matches the close job, which repeats the cycle length and the goal", () => {
+    const close = readFileSync("supabase/migrations/20261113010000_cycle_close.sql", "utf8");
+    expect(close).toContain(`end_date + 1, end_date + ${CYCLE_LENGTH_DAYS},`);
+    expect(close).toContain(`if v_run_length >= ${STREAK_GOAL_DAYS} then`);
+  });
 });
 
 describe("currentPrizeCents", () => {

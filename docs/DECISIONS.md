@@ -307,3 +307,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: Second Sense measures real time, and the server's start-to-submit check uses real time too; pausing would let a player stop the clock. Swift Sum's re-show can be repeated by switching tabs over and over (more looks); the cheat checks (T40) can flag that later if it matters.
 - How to change it later: the `visibilitychange` handlers in `src/components/inner-clock/InnerClockGame.tsx` and `src/components/flash-count/FlashCountGame.tsx`.
 - Confirmed by human: pending (NEEDS_HUMAN).
+
+### 2026-11-12 — The streak and the prize cycle (T34)
+- Choice: the world streak resets at each cycle's first day (a run from before it ends there), so the goal counts only days inside the cycle. Once the goal is reached the cycle runs on to day 60 and entries keep accruing; `goal_reached_on` keeps the first date. Preseason days (before 2027-01-01) count for the streak display but award no entries (T35). A cycle's first day is still prepared with the streak as it stood the day before; with the launch step of 0 that changes nothing.
+- Reason: the backlog's notes (the data model ties the streak to a cycle). The design says the world "can try again while time remains", which this keeps.
+- How to change it later: `close_game_day` in `supabase/migrations/20261113010000_cycle_close.sql` (a new migration).
+- Confirmed by human: pending (NEEDS_HUMAN).

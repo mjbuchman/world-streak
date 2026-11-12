@@ -26,6 +26,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: you asked for these after trying the M3 follow-ups (Nov 12); they are built during M4.
 - Agent's recommendation: judge the 0.5 s after a few scored-style tries in practice.
 
+### Please confirm: the streak and the prize cycle (T34; blocks nothing)
+- What is needed: OK, or changes: the streak resets to 0 on each cycle's first day (Jan 1, 2027 included); after a 30-day streak the cycle still runs to day 60 and passes keep earning entries; preseason days show in the streak but earn no entries.
+- Where to put it: reply in chat.
+- Why: the backlog asked for these judgment calls to be flagged. See docs/DECISIONS.md (T34).
+- Agent's recommendation: keep all three.
+
 ### Please confirm: a hidden tab in Second Sense and Swift Sum (T110; blocks nothing)
 - What is needed: OK, or pause instead: Second Sense's clock keeps running if the player switches tabs; Swift Sum shows the dots again in full when they come back.
 - Where to put it: reply in chat.
