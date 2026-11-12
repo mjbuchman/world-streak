@@ -54,7 +54,9 @@ export function FlashCountGame({ params, onFinish, countdownMs = COUNTDOWN_FROM 
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     const colors = themeColors(canvas);
+    // The countdown counts from `start`; the flash from the first frame that drew the dots.
     let start: number | null = null;
+    let flashStart: number | null = null;
     let frame = 0;
 
     const draw = (showDots: boolean) => {
@@ -72,6 +74,7 @@ export function FlashCountGame({ params, onFinish, countdownMs = COUNTDOWN_FROM 
       // A hidden tab shows nothing, so the flash starts over in the first frame back (T110).
       if (document.hidden) {
         start = null;
+        flashStart = null;
         frame = requestAnimationFrame(tick);
         return;
       }
@@ -86,7 +89,9 @@ export function FlashCountGame({ params, onFinish, countdownMs = COUNTDOWN_FROM 
         return;
       }
       setCountdownNumber(null);
-      const visible = dotsVisible(elapsed - countdownMs, params.flashMs);
+      // From the first frame that shows the dots, so a slow frame at the switch takes no time off the flash.
+      flashStart ??= now;
+      const visible = dotsVisible(now - flashStart, params.flashMs);
       draw(visible);
       setShowing(visible ? "dots" : "clear");
       if (visible) frame = requestAnimationFrame(tick);
@@ -94,7 +99,9 @@ export function FlashCountGame({ params, onFinish, countdownMs = COUNTDOWN_FROM 
     };
     // Browsers usually run no frames while hidden, so the hide itself restarts the flash.
     const onVisibilityChange = () => {
-      if (document.hidden) start = null;
+      if (!document.hidden) return;
+      start = null;
+      flashStart = null;
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
     frame = requestAnimationFrame(tick);

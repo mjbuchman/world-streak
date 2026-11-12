@@ -68,11 +68,32 @@ describe("FlashCountGame countdown (T119)", () => {
     expect(canvas().dataset.showing).toBe("clear");
   });
 
-  it("keeps each number on screen once the step it belongs to has passed in a single long frame", () => {
+  it("gives the whole flash even when a slow frame lands past the end of the countdown", () => {
     render(<FlashCountGame params={params} onFinish={vi.fn()} />);
     frameAt(1000);
-    frameAt(1000 + 2 * COUNTDOWN_STEP_MS + 10);
-    expect(countdown()?.textContent).toBe("1");
+    // The dots first show 300 ms late; the flash counts from then.
+    const first = 1000 + 3 * COUNTDOWN_STEP_MS + 300;
+    frameAt(first);
+    expect(canvas().dataset.showing).toBe("dots");
+    frameAt(first + params.flashMs - 1);
+    expect(canvas().dataset.showing).toBe("dots");
+    frameAt(first + params.flashMs);
+    expect(canvas().dataset.showing).toBe("clear");
+  });
+
+  it("starts the countdown again at 3 if the tab is hidden during it", () => {
+    let hidden = false;
+    vi.spyOn(document, "hidden", "get").mockImplementation(() => hidden);
+    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+    frameAt(1000);
+    frameAt(1000 + COUNTDOWN_STEP_MS);
+    expect(countdown()?.textContent).toBe("2");
+    hidden = true;
+    act(() => void document.dispatchEvent(new Event("visibilitychange")));
+    hidden = false;
+    act(() => void document.dispatchEvent(new Event("visibilitychange")));
+    frameAt(9000);
+    expect(countdown()?.textContent).toBe("3");
   });
 });
 
