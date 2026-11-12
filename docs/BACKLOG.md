@@ -761,7 +761,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T41 Cheat flags wiring
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T40, T35
 - Acceptance criteria:
   - [ ] A migration creates `cheat_flags` (`id`, `user_id`, `attempt_id`, `reason`, `created_at`, `status` in `open|confirmed|dismissed`) with no client read or write policies (admin-only via functions).
@@ -769,19 +769,28 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] Flagged attempts still count in the counters and the pass result (pgTAP or unit test).
   - [ ] Entries of flagged accounts are excluded by a SQL view `drawable_entries` (pgTAP: user with 3 entries, flagged, contributes 0).
 
-### T42 Admin settings editor and flags review
+### T42 Admin settings editor
 - Type: feature
-- Status: todo
-- Depends on: T41, T25, T31
+- Status: in-progress
+- Depends on: T25, T31
 - Acceptance criteria:
   - [ ] `/admin/settings` edits every `game_settings` field with zod validation (for example a threshold between 0 and 1, a percentile between 0.5 and 0.99, and rotation entries that must exist in `challenge_types`). A non-admin gets 404.
+  - [ ] Unit tests for the server action (admin check, validation).
+- Notes: Split on Nov 12 (over 400 lines): the flags review is T124.
+
+### T124 Admin flags review
+- Type: feature
+- Status: todo
+- Depends on: T41, T42
+- Acceptance criteria:
   - [ ] `/admin/flags` lists open flags with user email, reason, date and attempt score. "Dismiss" sets the status to `dismissed` and, when the user has no remaining open or confirmed flags, clears `profiles.flagged`. "Confirm" keeps the account flagged.
-  - [ ] Unit tests for both server actions (admin check, validation). e2e: an admin dismisses a flag and the user's entries reappear in `drawable_entries` (an SQL assertion in the test).
+  - [ ] Unit tests for the server actions (admin check, validation). e2e: an admin dismisses a flag and the user's entries reappear in `drawable_entries` (an SQL assertion in the test).
+- Notes: Split from T42 (Nov 12).
 
 ### T43 Prize draw tool
 - Type: feature
 - Status: todo
-- Depends on: T42
+- Depends on: T42, T124
 - Acceptance criteria:
   - [ ] `src/lib/draw.ts` exports pure `pickWinner(entries: { userId, tickets }[], randomInt: (max) => number)`, which maps ticket index to user. With A:3, B:1, index 0 to 2 picks A and index 3 picks B. An empty list throws. At least 90% coverage.
   - [ ] `/admin/draw` lists cycles. The Draw button is enabled only when the cycle has `goal_reached_on` and today is after `end_date`. It uses `drawable_entries` and `crypto.randomInt`, and stores `winner_user_id` and `drawn_at` in one transaction. A cycle cannot be drawn twice (second attempt rejected, with a pgTAP or unit test).

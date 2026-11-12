@@ -107,13 +107,28 @@ test("an admin clears their own attempt today with the local tools, and can play
 });
 
 test("a signed-out visitor gets a 404", async ({ page }) => {
-  const response = await page.goto("/admin");
-  expect(response?.status()).toBe(404);
+  for (const path of ["/admin", "/admin/settings"]) {
+    const response = await page.goto(path);
+    expect(response?.status()).toBe(404);
+  }
 });
 
 test("a signed-in player who is not an admin gets a 404", async ({ page, accounts }) => {
   await signUpViaForm(page, { email: accounts.uniqueEmail() });
   await expect(page).toHaveURL("/");
-  const response = await page.goto("/admin");
-  expect(response?.status()).toBe(404);
+  for (const path of ["/admin", "/admin/settings"]) {
+    const response = await page.goto(path);
+    expect(response?.status()).toBe(404);
+  }
+});
+
+test("an admin opens the settings from /admin and saves them as they are", async ({ page }) => {
+  await signInAsAdmin(page);
+  await gotoReady(page, "/admin");
+  await page.getByRole("link", { name: "Game settings" }).click();
+  await expect(page).toHaveURL("/admin/settings");
+  await expect(page.getByRole("textbox", { name: "Rotation" })).not.toHaveValue("");
+  // Saving the values unchanged leaves the shared local settings as other tests expect them.
+  await submitAndWait(page, page.getByRole("button", { name: "Save settings" }));
+  await expect(page.getByRole("status")).toHaveText("Settings saved.");
 });
