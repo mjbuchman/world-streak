@@ -348,3 +348,8 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: a flag only holds an account's entries for an admin to review (T41, T42); it never changes a result, so a cautious placeholder costs little. Tune with real data before launch.
 - How to change it later: `src/config/cheat.ts`.
 - Confirmed by human: yes (Nov 12, 2026).
+
+### 2026-11-12 — Held major upgrades and remaining dev-only audit findings (T51)
+- Choice: hold ESLint 10 and TypeScript 7 (`eslint-config-next` 16.4.x targets ESLint 9 and TypeScript 5); hold autocannon 9 (the T48 load test's API; its only gain is the `uuid` advisory fix); hold `@types/node` 26 (tracks the Node runtime). `npm audit` keeps 10 moderate findings, all dev-only: `minimatch` under `typescript-eslint` (pinned `^10.2.2` by 8.72.2, the latest) and `uuid` under autocannon 8; neither runs on user input or in the deployed app.
+- Reason: `npm audit fix --force` would make breaking major upgrades; the advisories need attacker-controlled globs or a caller-supplied buffer.
+- When to revisit: when `eslint-config-next` supports ESLint 10 / TypeScript 7, when `typescript-eslint` ships a fixed `minimatch` range, or before the next load test (autocannon 9).
