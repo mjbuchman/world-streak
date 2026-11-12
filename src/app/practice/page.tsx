@@ -4,10 +4,9 @@ import { CHALLENGE_TYPES } from "@/challenges/shared/types";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
 import { CHALLENGE_NAMES, CHALLENGE_TAGLINES, practicePath } from "@/config/challenges";
-import { GAME_NAME } from "@/config/game";
 import styles from "./hub.module.css";
 
-export const metadata: Metadata = { title: `Practice | ${GAME_NAME}` };
+export const metadata: Metadata = { title: "Practice" };
 
 /** Every challenge, to practise any of them at any time (T108). Open to everyone. */
 export default function PracticeHub() {

@@ -1124,7 +1124,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T65 Generated Supabase database types
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T12
 - Acceptance criteria:
   - [ ] `npm run db:types` writes `src/lib/supabase/database.types.ts` from the local schema (`supabase gen types typescript --local`), and the server, admin and browser clients are typed with it.
@@ -1154,7 +1154,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T82 One page-title template in the root layout
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] `src/app/layout.tsx` metadata uses `title: { default: GAME_NAME, template: "%s | " + GAME_NAME }`, and the six pages that build `` `X | ${GAME_NAME}` `` by hand set only their own part.

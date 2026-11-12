@@ -4,11 +4,10 @@ import { FormAlert } from "@/components/form/FormParts";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
-import { GAME_NAME } from "@/config/game";
 import styles from "@/app/auth/authPage.module.css";
 import { SignInForm } from "./SignInForm";
 
-export const metadata: Metadata = { title: `Sign in | ${GAME_NAME}` };
+export const metadata: Metadata = { title: "Sign in" };
 
 /** Set by /auth/callback when Google sign-in was cancelled or its code was rejected. */
 const OAUTH_FAILED = "Google sign-in didn't complete. Please try again.";
