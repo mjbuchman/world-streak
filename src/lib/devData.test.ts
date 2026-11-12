@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
-import { FAKE_PLAYER_EMAIL, removeFakePlayers } from "./devData";
+import { FAKE_PLAYER_EMAIL, removeFakePlayers, runSeed, type SeedDeps } from "./devData";
 
 type Result = { data: unknown; error: { message: string } | null };
 
@@ -39,6 +39,25 @@ function fakeDb(results: Result[], pages: { email: string; id: string }[][]) {
 const ok = (data: unknown = null): Result => ({ data, error: null });
 
 describe("FAKE_PLAYER_EMAIL", () => {
+  it("matches every email the seed creates, so removing fake players finds them all", async () => {
+    const emails: string[] = [];
+    const deps: SeedDeps = {
+      todayGameDate: async () => "2026-11-12",
+      ensureGameDay: async () => {},
+      passTarget: async () => 10,
+      createPlayer: async (email) => (emails.push(email), `id-${emails.length}`),
+      startAttempt: async (userId) => `attempt-${userId}`,
+      recordResult: async () => "recorded",
+      dayClosed: async () => false,
+      writePastResult: async () => {},
+      addPastPass: async () => {},
+      log: () => {},
+    };
+    await runSeed({ players: 3, passRate: 0.5, date: null }, Date.now().toString(36), deps);
+    expect(emails).toHaveLength(3);
+    for (const email of emails) expect(email).toMatch(FAKE_PLAYER_EMAIL);
+  });
+
   it("matches the seed's emails only", () => {
     expect(FAKE_PLAYER_EMAIL.test("seed-mhx1-12@example.test")).toBe(true);
     expect(FAKE_PLAYER_EMAIL.test("admin@local.test")).toBe(false);
