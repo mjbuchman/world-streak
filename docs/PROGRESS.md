@@ -8,7 +8,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Active task: none.
 - Blocked tasks: none
 - Waiting on the human: the M4 play-test (incl. T118, T119); T39 sponsor details; T45 AdSense; deployment (docs/DEPLOYMENT.md); please-confirms and `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: T37 and T120–T129 are done (T128 waits for the `.env.example` lines). Remaining: the older maintenance tasks (T58 onward in backlog order), then T39/T45 as the human unblocks them. The maintainer check is due after 2 more merges.
+- Next: T135, T134, T100, T136, T137 (maintenance), then T39/T45/T52/T128 as the human unblocks them.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T133 One helper for the admin server actions (PR #132)
+- A private `adminAction(path, save)` builds the five admin actions; refresh only on success.
+- Review rounds: quality 1 (light). Maintainer check done (10 merges): T136, T137 added. Merges since: 0.
 
 ### 2026-11-12 — T132 One set of admin form helpers (PR #131)
 - `src/lib/adminForm.ts`: `EditState`, `refuse`, `numberField` and the Tower range, shared by the admin saves.

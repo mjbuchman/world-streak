@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MAX_TAPS, type StackingParams, type StackingResult } from "@/challenges/stacking/engine";
-import { drawStacking, FALL_MS, type StackingColors } from "@/challenges/stacking/render";
+import { drawStacking, FALL_MS } from "@/challenges/stacking/render";
+import { fitCanvas, readColorTokens } from "@/components/canvas";
+import { CANVAS_COLOR_TOKENS } from "@/components/canvasTokens";
 import { usePrefersReducedMotion } from "@/components/ui/useReducedMotion";
 import { CHALLENGE_NAMES } from "@/config/challenges";
-import { CANVAS_COLOR_TOKENS } from "./canvasTokens";
 import { targetRowNumber } from "./rows";
 import styles from "./StackingGame.module.css";
 import { frameAt } from "./stackingLoop";
@@ -20,13 +21,6 @@ type Props = {
   /** The best row reached earlier in this visit, shown in practice. */
   best?: number;
 };
-
-/** Reads the colour tokens, so the canvas matches the rest of the page. */
-function themeColors(element: HTMLElement): StackingColors {
-  const style = getComputedStyle(element);
-  const entries = Object.entries(CANVAS_COLOR_TOKENS).map(([key, token]) => [key, style.getPropertyValue(token).trim()]);
-  return Object.fromEntries(entries) as StackingColors;
-}
 
 /**
  * Runs one stacking game from the moment it mounts. Taps (pointer presses on the canvas, or
@@ -53,7 +47,7 @@ export function StackingGame({ params, onFinish, passTarget: target, best = 0 }:
     canvas.focus({ preventScroll: true });
     const start = performance.now();
     const taps: number[] = [];
-    const colors = themeColors(canvas);
+    const colors = readColorTokens(canvas, CANVAS_COLOR_TOKENS);
     let finished = false;
     // Set when the run ends: the run as it ended, and when, so the last fall can play out.
     let ended: { run: FinishedRun; atMs: number } | null = null;
@@ -87,15 +81,8 @@ export function StackingGame({ params, onFinish, passTarget: target, best = 0 }:
     const frame = () => {
       const elapsedMs = performance.now() - start;
       const { result, finished: done } = frameAt(params, taps, elapsedMs);
-      const { width, height } = canvas.getBoundingClientRect();
-      const devicePixelRatio = window.devicePixelRatio || 1;
-      // Resizing clears the backing store, so only do it when the size actually changes.
-      const pixelWidth = Math.round(width * devicePixelRatio);
-      const pixelHeight = Math.round(height * devicePixelRatio);
-      if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
-      if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
       const { passTarget, reducedMotion } = latest.current;
-      drawStacking(ctx, { params, result, elapsedMs, width, height, devicePixelRatio, colors, passTarget, reducedMotion });
+      drawStacking(ctx, { params, result, elapsedMs, ...fitCanvas(canvas), colors, passTarget, reducedMotion });
       setRow(result.moving?.row ?? result.score);
       if (done && !ended) {
         // Taps stop counting now; the result is fixed.
