@@ -10,10 +10,12 @@ import { pinSeed, tapsForAMiss } from "../support/tower";
 /** The page scrolls only vertically, and every button and link is at least 44 x 44 CSS px. */
 async function expectPhoneFriendly(page: Page) {
   const layout = await page.evaluate(() => ({
-    scrollWidth: document.documentElement.scrollWidth,
+    // The body too, in case it hides an overflow the page itself does not show.
+    scrollWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
     clientWidth: document.documentElement.clientWidth,
+    // Rendered controls only (fixed ones included); hidden ones have no boxes.
     small: [...document.querySelectorAll<HTMLElement>("a[href], button")]
-      .filter((element) => element.offsetParent !== null)
+      .filter((element) => element.getClientRects().length > 0)
       .map((element) => ({ name: (element.getAttribute("aria-label") ?? element.textContent ?? "").trim(), box: element.getBoundingClientRect() }))
       .filter(({ box }) => box.width < 44 || box.height < 44)
       .map(({ name, box }) => `${name} (${Math.round(box.width)} x ${Math.round(box.height)})`),
