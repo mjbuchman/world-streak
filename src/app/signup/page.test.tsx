@@ -20,7 +20,7 @@ async function loadWith(allowedCountries: string[], minAge: number) {
     MIN_AGE: minAge,
   }));
   const { eligibilitySummary } = await import("@/lib/eligibility");
-  const { refusalMessage } = await import("@/lib/signup");
+  const { refusalMessage } = await import("@/lib/eligibility");
   const { default: SignUpPage } = await import("@/app/signup/page");
   return { eligibilitySummary, refusalMessage, pageText: renderToStaticMarkup(SignUpPage()) };
 }

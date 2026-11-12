@@ -1,4 +1,5 @@
 import { ALLOWED_COUNTRIES, MAX_PLAUSIBLE_AGE, MIN_AGE } from "@/config/eligibility";
+import { GAME_NAME } from "@/config/game";
 
 export type EligibilityInput = {
   /** Date of birth as `YYYY-MM-DD`. */
@@ -78,4 +79,9 @@ export function checkEligibility(
 /** Who may play, in words, for example "US residents aged 18 or over". */
 export function eligibilitySummary(rules: EligibilityRules = DEFAULT_RULES): string {
   return `${rules.allowedCountries.join(" or ")} residents aged ${rules.minAge} or over`;
+}
+
+/** What sign-up and profile completion tell an ineligible player. */
+export function refusalMessage(): string {
+  return `Sorry, ${GAME_NAME} is open only to ${eligibilitySummary()}.`;
 }

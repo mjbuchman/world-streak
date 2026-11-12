@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { type SignUpDeps, refusalMessage, signUp } from "./signup";
+import { refusalMessage } from "./eligibility";
+import { type SignUpDeps, signUp } from "./signup";
 
 const TODAY = "2026-11-07";
 

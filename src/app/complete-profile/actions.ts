@@ -3,11 +3,9 @@
 import { redirect } from "next/navigation";
 import { eligibilityToday } from "@/lib/dates";
 import { type CompleteProfileState, completeProfile } from "@/lib/profileCompletion";
+import { insertProfile } from "@/lib/profiles";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-/** Postgres unique violation: the profile already exists. */
-const UNIQUE_VIOLATION = "23505";
 
 export async function completeProfileAction(
   _previous: CompleteProfileState | null,
@@ -24,11 +22,9 @@ export async function completeProfileAction(
   const result = await completeProfile(formData, {
     today: eligibilityToday(new Date()),
     async createProfile({ birthDate, country }) {
-      const { error } = await createSupabaseAdminClient()
-        .from("profiles")
-        .insert({ id: user.id, birth_date: birthDate, country });
+      const saved = await insertProfile(createSupabaseAdminClient(), { userId: user.id, birthDate, country });
       // A repeated submit (for example from a second tab) finds the profile already there.
-      return !error || error.code === UNIQUE_VIOLATION;
+      return saved !== "error";
     },
   });
 

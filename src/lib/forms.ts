@@ -1,4 +1,13 @@
 // Small helpers shared by server-side form handling.
+import { z } from "zod";
+
+/** An email as sign-up and sign-in compare it: trimmed and lower-case. */
+export const emailSchema = z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address."));
+
+/** Reads the named fields, with undefined for a missing one, ready for a zod schema. */
+export function readFields<N extends string>(formData: FormData, names: readonly N[]): Record<N, unknown> {
+  return Object.fromEntries(names.map((name) => [name, formData.get(name) ?? undefined])) as Record<N, unknown>;
+}
 
 /** For failures the player cannot fix (outages, rate limits): never blames their input. */
 export const GENERIC_ERROR = "Something went wrong. Please try again.";
