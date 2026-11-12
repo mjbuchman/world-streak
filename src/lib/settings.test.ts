@@ -1,6 +1,14 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
+import fixture from "./gameSettings.fixture.json";
 import { loadGameSettings, parseGameSettings, type GameSettings } from "./settings";
+
+// Named, not "*": a new column must be added here (and to the parser) on purpose (T89).
+const SETTINGS_COLUMNS =
+  "default_survival_threshold, pass_target_percentile, pass_target_streak_step, threshold_streak_step, " +
+  "percentile_lookback_days, percentile_min_sample, default_pass_targets, new_account_weight, full_weight_after_days";
 
 /** The launch row as PostgREST returns it. */
 const launchRow = {
@@ -27,6 +35,23 @@ const launchSettings: GameSettings = {
   newAccountWeight: 1,
   fullWeightAfterDays: 0,
 };
+
+// The same boundary rows are checked against the table's constraints in game_settings.test.sql,
+// so a range here cannot drift from the database's.
+describe("the shared boundary fixture", () => {
+  it.each(fixture)("$column = $value is accepted: $accepted", ({ column, value, accepted }) => {
+    const parse = () => parseGameSettings({ ...launchRow, [column]: value });
+    if (accepted) expect(parse).not.toThrow();
+    else expect(parse).toThrow(/Invalid game_settings row/);
+  });
+
+  it("is exactly the fixture the pgTAP test embeds", () => {
+    const sql = readFileSync(path.resolve(import.meta.dirname, "../../supabase/tests/game_settings.test.sql"), "utf8");
+    const embedded = /\$fixture\$([\s\S]*?)\$fixture\$/.exec(sql);
+    if (!embedded) throw new Error("the pgTAP test must embed the fixture between $fixture$ quotes");
+    expect(JSON.parse(embedded[1])).toEqual(fixture);
+  });
+});
 
 describe("parseGameSettings", () => {
   it("turns the launch row into typed settings", () => {
@@ -116,7 +141,7 @@ describe("loadGameSettings", () => {
   it("reads the single settings row", async () => {
     const { db, calls } = fakeDb({ data: launchRow, error: null });
     expect(await loadGameSettings(db)).toEqual(launchSettings);
-    expect(calls).toEqual([["from", "game_settings"], ["select", "*"], ["single"]]);
+    expect(calls).toEqual([["from", "game_settings"], ["select", SETTINGS_COLUMNS], ["single"]]);
   });
 
   it("throws when the query fails", async () => {

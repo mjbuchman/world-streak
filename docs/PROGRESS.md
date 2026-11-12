@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T88 ResultHero data-tone (PR #124)
+- The tone is a `data-tone` attribute the CSS colours by; tests read it; a browser check pins practice mint.
+- Review rounds: quality 1 (light). Merges since the check: 2.
+
 ### 2026-11-12 — T86 Shared response types; test-only player (PR #123)
 - /play picks its success shapes from `StartResult`/`SubmitResult`; lint bans `stacking/player` outside unit tests and e2e support.
 - Review rounds: quality 1 (light). Merges since the check: 1.
