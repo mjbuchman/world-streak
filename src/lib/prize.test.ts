@@ -147,6 +147,14 @@ describe("readPrizeSummary", () => {
     expect(calls[1]).toEqual([["rpc", "my_entry_count", { cycle: 1 }]]);
   });
 
+  it.each([
+    ["2027-01-01T00:00:00Z", 1],
+    ["2027-03-01T23:59:59Z", 60],
+  ])("counts %s as day %i of the cycle", async (now, day) => {
+    const { db } = fakeDb([{ data: CYCLE_ROW, error: null }]);
+    expect(await readPrizeSummary(db, new Date(now), false)).toMatchObject({ day, length: 60 });
+  });
+
   it("asks no entry count when signed out, and passes a reached goal on", async () => {
     const { db, calls } = fakeDb([{ data: { ...CYCLE_ROW, goal_reached_on: "2027-01-30" }, error: null }]);
     expect(await readPrizeSummary(db, NOW, false)).toMatchObject({ kind: "cycle", goalReachedOn: "2027-01-30", entries: null });
@@ -156,12 +164,12 @@ describe("readPrizeSummary", () => {
   it("before the first cycle, is preseason with the first cycle's start and prize", async () => {
     const { db, calls } = fakeDb([
       { data: null, error: null },
-      { data: { start_date: "2027-01-01", base_prize_cents: 20_000, rollover_in_cents: 0 }, error: null },
+      { data: { start_date: "2027-01-01", base_prize_cents: 20_000, rollover_in_cents: 5_000 }, error: null },
     ]);
     expect(await readPrizeSummary(db, new Date("2026-11-12T12:00:00Z"), true)).toEqual({
       kind: "preseason",
       firstStart: "2027-01-01",
-      prizeCents: 20_000,
+      prizeCents: 25_000,
     });
     expect(calls[1]).toEqual([
       ["from", "cycles_public"],
@@ -179,7 +187,7 @@ describe("readPrizeSummary", () => {
     expect(await readPrizeSummary(none.db, NOW, false)).toBeNull();
   });
 
-  it("throws on a failed read, so the card shows as unavailable", async () => {
+  it("throws on a failed read, so the card is left out", async () => {
     await expect(readPrizeSummary(fakeDb([{ data: null, error: { message: "down" } }]).db, NOW, false)).rejects.toThrow(
       "Cycle lookup failed: down",
     );
