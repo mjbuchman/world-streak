@@ -231,4 +231,14 @@ npm run test:e2e:local           # end-to-end tests against local Supabase (star
 
 `npm run test:e2e:local` reads the local Supabase URL and keys from `npx supabase status` itself, so it needs no `.env.local`. It refuses to run if the URL is not localhost or local Supabase is stopped. It always starts its own app server on port 3100, so it never reuses or clashes with an `npm run dev` on port 3000. Extra arguments go to Playwright, for example `npm run test:e2e:local -- tests/e2e/practice.spec.ts`. CI uses plain `npm run test:e2e` with the keys already in its environment. During a run the daily rotation is pinned to the Tower and put back at the end; if a run is killed part-way, restore it with `npx supabase db query "update public.game_settings set rotation = '{stacking,inner-clock,flash-count}'"`.
 
+**Meter load test:** the meter endpoint keeps its own reading for each cache window, so however many requests reach it, the database is read once per window; if the database fails it answers the last good reading (marked `stale`) for up to 5 minutes, then 503. To measure it under load against a local production build:
+
+```bash
+npm run build
+npm run start -- -p 3200         # in one terminal
+npm run load:meter               # in another: 200 connections for 30 s, prints p50, p95 and p99
+```
+
+It refuses any server but localhost (`LOAD_URL` picks another local port). Target: p95 under 200 ms locally. Baseline (Nov 12, 2026, Windows dev machine, one Node process, no CDN): about 1,500 requests/s, p50 63 ms, p95 403 ms, p99 574 ms, no errors, so the target is not met here yet. In production the CDN answers most meter requests (`s-maxage=30`), so few reach the server.
+
 **Theme:** the Fresh Sport colours, gradients, shapes, type, spacing and motion are CSS variables in `src/app/tokens.css`. The colours are listed once more in `src/lib/theme/palette.ts`, where a unit test checks text contrast and that the two stay identical, so change both together. Shared UI pieces (buttons, back button, spinner, surfaces, page shell) live in `src/components/ui/`. The design rules are in [`docs/UI_GUIDELINES.md`](docs/UI_GUIDELINES.md).

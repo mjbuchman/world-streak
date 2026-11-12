@@ -12,6 +12,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Meter load test: p95 above the local target (T48; blocks nothing)
+- What is needed: decide whether the local p95 matters. On this machine, 200 connections for 30 s gave p95 403 ms (target under 200 ms), about 1,500 requests/s and no errors; the database is read once per 30 s, so the time is the single Node server. In production the CDN serves most requests.
+- Where to put it: reply in chat; or rerun `npm run load:meter` on a faster machine (README, "Meter load test").
+- Why: the task records the target; it was not met here.
+- Agent's recommendation: accept it for launch (the CDN carries the load), and recheck on the deployed preview with the CDN in front.
+
 ### Add the ad settings to .env.example (T44; blocks nothing)
 - What is needed: add these lines to `.env.example` (my permission settings deny me that file):
   `# Ads (T44). Off unless both are set; real values come with T45 and Vercel Pro.`
