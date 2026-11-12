@@ -1104,7 +1104,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T63 Component-test race audit
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T55
 - Acceptance criteria:
   - [ ] Every component test in `src/app/**` and `src/components/**` is checked for assertions made right after a submit whose result arrives asynchronously, with no `findBy*` or `waitFor` first (the pattern behind the `SignUpForm.test.tsx` flake fixed in T59). Each one found waits for the result; no assertion is removed or weakened.
@@ -1114,7 +1114,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T64 Revoke TRUNCATE from client roles
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T11
 - Acceptance criteria:
   - [ ] A migration revokes TRUNCATE on every table in `public` from `anon` and `authenticated` (RLS does not cover TRUNCATE, and Supabase's default grants include it), and changes the default privileges so tables created later are covered too.
