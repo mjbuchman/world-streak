@@ -190,6 +190,19 @@ describe("Confetti", () => {
 });
 
 describe("ResultHero", () => {
+  it("focuses its heading when it mounts, so the outcome is announced and a held key lands there", () => {
+    render(<ResultHero heading="Passed" actions={<button type="button">Back</button>} />);
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Passed" }));
+  });
+
+  it("shows the muted note last in the text, before the actions", () => {
+    const { container } = render(<ResultHero heading="Result" note="Come back tomorrow." actions={<button type="button">Back</button>} />);
+    const note = screen.getByText("Come back tomorrow.");
+    expect(note.className).toBeTruthy();
+    expect(note.compareDocumentPosition(screen.getByRole("button", { name: "Back" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container.querySelectorAll("p").length).toBe(1);
+  });
+
   it("shows the big score first (for the eye only), then the heading, the text and the actions", () => {
     stubReducedMotion(false);
     const { container } = render(
@@ -207,12 +220,6 @@ describe("ResultHero", () => {
     expect(screen.getByText("Practice never counts.")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Back to home" })).toBeTruthy();
     expect(container.querySelector("[data-confetti]")).toBeNull();
-  });
-
-  it("forwards a ref to the heading, so the page can move focus to it when a run ends", () => {
-    const ref = { current: null as HTMLHeadingElement | null };
-    render(<ResultHero heading="Passed" headingRef={ref} actions={null} />);
-    expect(ref.current).toBe(screen.getByRole("heading", { name: "Passed" }));
   });
 
   it("can leave the score out (a refused submission has none)", () => {

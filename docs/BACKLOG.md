@@ -1247,7 +1247,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T89 game_settings: tighter checks and a drift guard
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T16
 - Acceptance criteria:
   - [ ] The two streak-step checks also refuse `'NaN'` and `'Infinity'` (Postgres `numeric` lets them through `>= 0`), with pgTAP cases.
@@ -1326,7 +1326,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T90 ResultHero owns the result focus and the shared result bits
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T79
 - Acceptance criteria:
   - [ ] `ResultHero` focuses its own heading when it mounts; the `headingRef` prop and the focus `useRef`/`useEffect` in `PlayToday.tsx` and `StackingPractice.tsx` go. Focus behaviour is unchanged: `/play` focuses the result and "Not counted" views (including a stored result on a later visit), practice focuses the result after every run.

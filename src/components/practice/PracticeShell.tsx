@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { ResultHero } from "@/components/ui/ResultHero";
@@ -38,15 +38,8 @@ type Phase<Params, Inputs> =
  */
 export function PracticeShell<Params, Inputs>({ howTo, newRun, game, result, preview, startDisabled }: PracticeShellProps<Params, Inputs>) {
   const [phase, setPhase] = useState<Phase<Params, Inputs>>(() => ({ name: "ready", params: newRun() }));
-  const resultRef = useRef<HTMLHeadingElement>(null);
   const finish = (inputs: Inputs) =>
     setPhase((current) => (current.name === "playing" ? { name: "done", params: current.params, inputs } : current));
-
-  // The game (which had focus) is gone, so move focus to the result: screen readers announce it,
-  // and a key still held from the game lands on the heading rather than on "Play again".
-  useEffect(() => {
-    if (phase.name === "done") resultRef.current?.focus();
-  }, [phase.name]);
 
   if (phase.name === "playing") return game(phase.params, finish);
 
@@ -56,8 +49,8 @@ export function PracticeShell<Params, Inputs>({ howTo, newRun, game, result, pre
       <ResultHero
         score={shown.score}
         heading={shown.heading}
-        headingRef={resultRef}
         tone="practice"
+        note="Practice never counts. Play as often as you like."
         actions={
           <>
             <Button onClick={() => setPhase({ name: "playing", params: newRun() })}>Play again</Button>
@@ -68,7 +61,6 @@ export function PracticeShell<Params, Inputs>({ howTo, newRun, game, result, pre
         }
       >
         {shown.detail && <p>{shown.detail}</p>}
-        <p className={styles.note}>Practice never counts. Play as often as you like.</p>
       </ResultHero>
     );
   }
