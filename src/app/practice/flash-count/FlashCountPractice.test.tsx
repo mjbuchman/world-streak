@@ -35,7 +35,7 @@ async function answer(count: number) {
 describe("FlashCountPractice", () => {
   it("explains the game before the start", () => {
     render(<FlashCountPractice />);
-    expect(screen.getByText(/dots flash on the board for one second/)).toBeTruthy();
+    expect(screen.getByText(/dots flash on the board for a second and a half/)).toBeTruthy();
   });
 
   it("reveals the true count and the error, and focuses the result", async () => {

@@ -567,7 +567,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T113 Second Sense starts with a visible timer
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T27
 - Acceptance criteria:
   - [ ] Daily play and practice show a running seconds timer from the start for `REVEAL_MS` (1000 ms), then hide it; the target still counts from the start.
@@ -577,7 +577,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T114 Swift Sum balance
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T29
 - Acceptance criteria:
   - [ ] Fewer dots and a longer flash (`DOT_COUNT_RANGE` 12–30, `FLASH_MS` 1500), so a player cannot count them all but can estimate; golden tests updated; decision recorded and flagged.

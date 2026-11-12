@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M3 play-tested (Nov 12); doing its follow-ups (T113-T117) before M4.
-- Active task: T113 Second Sense starts with a visible timer.
+- Active task: T114 Swift Sum balance.
 - Blocked tasks: none
 - Waiting on the human: please-confirms (share emojis, rotation, share margin, gauge details); two lines for `.env.example`. Later: an accessibility pass and more Tower testers. See docs/NEEDS_HUMAN.md.
-- Next: T114, T116, T117, then T109-T112 and M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
+- Next: T116, T117, then T109-T112 and M4 (T33 onward). T91, T100 and the other maintenance tasks fit in when convenient.
 
 ## Log
 
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T113 Second Sense starts with a visible timer (PR #73)
+- A clock (`[data-clock]`, aria-hidden) counts tenths for `REVEAL_MS` = 1 s, then hides; targets 5–12 s. Pass target placeholder kept at 0.5 s and flagged.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the end-of-M3 check: 2.
 
 ### 2026-11-12 — T115 Share is a button with an emoji share text (PR #72)
 - M3 play-test recorded (DECISIONS, T113-T117). The card shows only Share; the text (✅/❌, 🔥, a 🟩/🟧 meter bar, 🆘) appears only if sharing and copying fail. Emojis stay in `src/lib/share*` (guidelines test), so card tests build the expected text with `buildShareText`.

@@ -20,6 +20,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: the share card links to the site. Until it is set, the card uses the page's own address, which is right locally.
 - Agent's recommendation: add it now; set the real value at deployment (T50). Next.js builds `NEXT_PUBLIC_` values into the page, so set it before the production build.
 
+### Please confirm: Swift Sum balance (T114; blocks nothing)
+- What is needed: OK or other numbers for 12–30 dots shown for 1.5 s (was 15–45 for 1 s). See docs/DECISIONS.md (T114).
+- Where to put it: reply in chat after a few runs of `/practice/flash-count`.
+- Why: your M3 play-test found it a crapshoot; the numbers are my call.
+- Agent's recommendation: try it; if still too hard, 2 s next.
+
 ### Please confirm: Second Sense clock and targets (T113; blocks nothing)
 - What is needed: OK or other numbers: the clock shows for 1 s, targets are 5–12 s, and the placeholder pass target stays within 0.5 s (it may now be hard, since longer targets give bigger errors; 0.8 s is an option). See docs/DECISIONS.md (T113).
 - Where to put it: reply in chat after trying `/practice/inner-clock`.

@@ -14,7 +14,7 @@ export const CHALLENGE_NAMES: Record<ChallengeType, string> = {
 export const CHALLENGE_TAGLINES: Record<ChallengeType, string> = {
   stacking: "Stack the sliding rows as high as you can.",
   "inner-clock": "Tap when you think the target time has passed. The clock hides after a second.",
-  "flash-count": "Dots flash for a second. Say how many there were.",
+  "flash-count": "Dots flash for a moment. Say how many there were.",
 };
 
 /** Each challenge's practice page (the route folders are named after the types). */
@@ -28,7 +28,7 @@ export const INNER_CLOCK_HOW_TO =
 
 /** How to play Swift Sum: shown before a practice run (and later before a scored attempt). */
 export const FLASH_COUNT_HOW_TO =
-  "Press Start and dots flash on the board for one second. Then enter how many you think there were. The closer you are, the better.";
+  "Press Start and dots flash on the board for a second and a half. Then enter how many you think there were. The closer you are, the better.";
 
 /** How to play the Tower: shown before a practice run and before today's scored attempt. */
 export const STACKING_HOW_TO =
