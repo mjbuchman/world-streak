@@ -35,7 +35,8 @@ select is(
 );
 select is((select submitted_at from public.attempts where id = '00000000-0000-0000-0000-00000000f001'), null, 'and records nothing');
 
--- Days must still close in order: today and the days up to 2026-12-31 are open.
+-- Days must still close in order: an open 2026-12-31 (a fresh database may have no earlier day).
+select tests.play_day('2026-12-31', 0, 0);
 select throws_ok(
   $$select public.close_game_day_unchecked('2027-01-01')$$,
   null, 'an earlier game day is still open; close days in order',
