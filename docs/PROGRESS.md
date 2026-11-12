@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T121 /play outcomes as pure functions (PR #104)
+- `src/app/play/outcomes.ts` maps start and submit replies; table tests cover every branch. No behaviour change.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the M4 check: 3.
+
 ### 2026-11-12 — T120 One error rule for the local tools (PR #103)
 - The local tools reuse `check`; any failed step shows as a refused message. T129 added (recount in one statement).
 - Review rounds: quality 1 (light). Merges since the M4 check: 2.

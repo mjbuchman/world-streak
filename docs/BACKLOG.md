@@ -597,7 +597,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T121 PlayToday: start and submit outcomes as tested pure functions
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] A new module (for example `src/app/play/outcomes.ts`) maps a start response `(status, body)` to the next step (playing, ready with an error, abandoned, refresh) and a submit response to result, refresh or failed (heading and message); the error-message constants move with them.
@@ -607,7 +607,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T122 Cycles cannot overlap
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T35
 - Acceptance criteria:
   - [ ] The database refuses a cycle whose dates overlap another's (an exclusion constraint on the date range, or a trigger if `btree_gist` is not wanted), so `cycle_for` can never match two cycles.
