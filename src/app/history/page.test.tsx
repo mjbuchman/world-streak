@@ -21,6 +21,7 @@ import HistoryPage from "./page";
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  vi.unstubAllEnvs();
 });
 
 const oneDay: History = {
@@ -37,7 +38,6 @@ describe("/history", () => {
     readHistory.mockResolvedValue(oneDay);
     const { container } = render(await visit({}));
     expect(container.querySelector('[data-ad-slot="history"]')).not.toBeNull();
-    vi.unstubAllEnvs();
   });
 
   it("shows the requested page of closed days", async () => {

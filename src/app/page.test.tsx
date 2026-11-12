@@ -17,7 +17,10 @@ beforeEach(() => {
   todaysChallenge.mockResolvedValue("stacking");
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllEnvs();
+});
 
 describe("Home", () => {
   it("has the game name as its heading and the countdown in its header, before the meter", async () => {
@@ -57,7 +60,6 @@ describe("Home", () => {
     vi.stubEnv("NODE_ENV", "development");
     const { container } = render(await Home());
     expect(container.querySelector("main")?.lastElementChild?.getAttribute("data-ad-slot")).toBe("home");
-    vi.unstubAllEnvs();
   });
 
   it("follows today's challenge, and links to every practice game (T108)", async () => {
