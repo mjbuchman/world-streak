@@ -19,6 +19,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Notes: anything the next session should know
 -->
 
+### 2026-11-12 — T126 One module for the UTC date labels (PR #106)
+- `src/lib/dates.ts`: `dayLabel`, `longDayLabel`, `instantLabel`; strings unchanged.
+- Review rounds: quality 1 (light). Merges since the M4 check: 5.
+
 ### 2026-11-12 — T122 Cycles cannot overlap (PR #105)
 - An exclusion constraint on the cycle date range; `prepare_next_cycle`'s back-to-back cycles still go in.
 - Review rounds: spec 1, quality 1, tests 1. Merges since the M4 check: 4.

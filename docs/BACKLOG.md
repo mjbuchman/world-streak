@@ -616,7 +616,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T126 One date-label formatter for the UTC day labels
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] The long-date formatter (`month: "long"`) in `src/lib/prize.ts` and `src/lib/rules.ts`, the short one in `src/lib/share.ts` and `dayLabel` (`src/lib/streak/streak.ts`), and the flags page's `flaggedAt` move to one module (for example `src/lib/dates.ts`), each with a unit test of a fixed date and its exact string.
@@ -625,7 +625,7 @@ Goal: practise all three challenges (Teetering Tower, Second Sense, Swift Sum), 
 
 ### T127 One tested admin gate for the admin pages
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] The repeated `createSupabaseServerClient()` + `isAdmin` + `notFound()` in `/admin`, `/admin/settings`, `/admin/flags` and `/admin/draw` becomes one helper (for example `requireAdminPage()` in `src/lib/admin.ts`) that returns the client or calls `notFound()`; all four pages use it.
