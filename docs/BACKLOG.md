@@ -771,7 +771,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T42 Admin settings editor
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T25, T31
 - Acceptance criteria:
   - [ ] `/admin/settings` edits every `game_settings` field with zod validation (for example a threshold between 0 and 1, a percentile between 0.5 and 0.99, and rotation entries that must exist in `challenge_types`). A non-admin gets 404.
@@ -780,7 +780,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T124 Admin flags review
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T41, T42
 - Acceptance criteria:
   - [ ] `/admin/flags` lists open flags with user email, reason, date and attempt score. "Dismiss" sets the status to `dismissed` and, when the user has no remaining open or confirmed flags, clears `profiles.flagged`. "Confirm" keeps the account flagged.
