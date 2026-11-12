@@ -896,7 +896,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] `docs/DEPLOYMENT.md` lists, step by step for the human: create the Supabase cloud project (free plan); apply migrations (`supabase link` + `supabase db push`); confirm pg_cron is enabled and the jobs exist; set the auth settings (email confirmations off, site URL, redirect URLs, Google provider); create the Vercel project with every env var from `.env.example`; make the owner's account an admin (exact SQL: `update profiles set is_admin = true where id = (select id from auth.users where email = '<owner email>')`); and the pre-launch items (domain, custom email provider, Vercel Pro before ads, AdSense, legal review of the rules).
   - [ ] Every env var in `.env.example` is mentioned in the guide (a unit test or script check compares the two lists).
   - [ ] `docs/NEEDS_HUMAN.md` gains entries for the Supabase cloud project, the Vercel project and the production admin account, each pointing at the relevant guide section.
-- Notes: The agents never run commands against production; deployment is a human step.
+- Notes: The agents never run commands against production; deployment is a human step. From the T118 review: the server replays each attempt with the engine it runs at submit, so the guide should say to deploy engine changes (target ranges, rules) when no attempt is open, for example just after the daily close.
 
 ## Maintenance
 
