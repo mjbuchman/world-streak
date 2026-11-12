@@ -1,5 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fakeSupabase, type FakeResult as Result } from "@/lib/testing/fakeSupabase";
 import { readMeter } from "./meterRead";
 
 // The setting is 0 (shown until the deadline, T103); the hidden-window test switches on 3 hours.
@@ -18,8 +18,6 @@ beforeEach(() => {
 const open = new Date("2026-11-08T20:59:59Z");
 const closesAt = "2026-11-09T00:00:00.000Z";
 
-type Result = { data: unknown; error: { message: string } | null };
-
 const STREAK_OK: Result = { data: { current: 4, best: 9, current_start_date: "2026-11-05" }, error: null };
 
 /**
@@ -27,41 +25,28 @@ const STREAK_OK: Result = { data: { current: 4, best: 9, current_start_date: "20
  * `streak`; each records its calls separately, since the two run side by side.
  */
 function fakeDb(day: Result, streak: Result = STREAK_OK) {
-  const calls: unknown[][] = [];
-  const streakCalls: unknown[][] = [];
   // When each read starts and when it is first awaited, across both reads.
   const order: string[] = [];
-  const builder = (result: Result, log: unknown[][], name: string): object => {
-    order.push(`start ${name}`);
-    const query: object = new Proxy(
-      {},
-      {
-        get(_, method) {
-          if (method === "then")
-            return (resolve: (value: Result) => void) => {
-              order.push(`await ${name}`);
-              resolve(result);
-            };
-          return (...args: unknown[]) => {
-            log.push([method, ...args]);
-            return query;
-          };
-        },
-      },
-    );
-    return query;
+  const name = (first: unknown[]) => (first[0] === "from" ? "day" : "streak");
+  const { db, queries } = fakeSupabase(
+    (first) => {
+      order.push(`start ${name(first)}`);
+      return first[0] === "from" ? day : streak;
+    },
+    { onAwait: (log) => order.push(`await ${name(log[0])}`) },
+  );
+  const log = (kind: string) => queries.find((query) => query[0][0] === kind) ?? [];
+  return {
+    db,
+    order,
+    queries,
+    get calls() {
+      return log("from");
+    },
+    get streakCalls() {
+      return log("rpc");
+    },
   };
-  const db = {
-    from: (table: string) => {
-      calls.push(["from", table]);
-      return builder(day, calls, "day");
-    },
-    rpc: (name: string) => {
-      streakCalls.push(["rpc", name]);
-      return builder(streak, streakCalls, "streak");
-    },
-  } as unknown as SupabaseClient;
-  return { db, calls, streakCalls, order };
 }
 
 describe("readMeter", () => {
@@ -70,8 +55,8 @@ describe("readMeter", () => {
       survival_threshold: "0.60",
       game_day_counters: { attempts: 4, weighted_attempts: "4", weighted_passes: "3" },
     };
-    const { db, calls, streakCalls } = fakeDb({ data, error: null });
-    expect(await readMeter(db, open)).toEqual({
+    const fake = fakeDb({ data, error: null });
+    expect(await readMeter(fake.db, open)).toEqual({
       gameDate: "2026-11-08",
       status: "open",
       passRate: 0.75,
@@ -80,14 +65,15 @@ describe("readMeter", () => {
       closesAt,
       streak: { current: 4, best: 9 },
     });
-    expect(streakCalls).toEqual([["rpc", "world_streak"], ["single"]]);
-    expect(calls).toEqual([
+    expect(fake.streakCalls).toEqual([["rpc", "world_streak"], ["single"]]);
+    expect(fake.calls).toEqual([
       ["from", "game_days"],
       ["select", "survival_threshold, game_day_counters(attempts, weighted_attempts, weighted_passes)"],
       ["eq", "game_date", "2026-11-08"],
       ["maybeSingle"],
     ]);
-    expect(calls.filter(([method]) => method === "from")).toEqual([["from", "game_days"]]);
+    expect(fake.queries.filter(([[method]]) => method === "from")).toHaveLength(1);
+    expect(fake.calls.filter(([method]) => method === "from")).toEqual([["from", "game_days"]]);
   });
 
   it("opens the next day's meter at the deadline", async () => {
