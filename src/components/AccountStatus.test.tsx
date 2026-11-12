@@ -59,7 +59,7 @@ describe("AccountStatus", () => {
     expect(m.getSession).toHaveBeenCalledTimes(2);
   });
 
-  it("signs out through the server action and shows sign-in at once, even when already home", async () => {
+  it("signs out through the server action and shows sign-in when it settles, even when already home", async () => {
     m.getSession.mockResolvedValue(session("player@example.com"));
     m.signOutAction.mockResolvedValue(undefined);
     render(<AccountStatus />);

@@ -51,7 +51,7 @@ export function AccountStatus() {
   }
 
   // Sign-out on the home page redirects to the same path, so the route change alone would not
-  // update the header.
+  // update the header. The update is part of the action's transition: it shows as the redirect lands.
   async function signOut() {
     setAccount({ kind: "signed-out" });
     await signOutAction();
