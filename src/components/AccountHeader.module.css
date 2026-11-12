@@ -47,6 +47,11 @@
   min-width: 0;
 }
 
+/* The account state before the browser has read the session: the sign-in link's height. */
+.pending {
+  min-height: 48px;
+}
+
 .initial {
   display: inline-flex;
   align-items: center;

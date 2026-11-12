@@ -1012,7 +1012,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T58 Fewer Auth round trips per page; keep pages static where possible
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T06
 - Acceptance criteria:
   - [ ] Each page render makes at most one Auth server round trip. Options: `getClaims()` in the proxy, or asymmetric JWT signing keys so `getClaims()` verifies locally. Whichever is chosen is recorded in DECISIONS.md with the trade-off.
@@ -1022,7 +1022,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T130 Keep user-independent pages static (from T58)
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T58
 - Acceptance criteria:
   - [ ] Pages whose content does not depend on the user (for example `/rules`) render statically again, for example by making the account header a small client island that loads the session after first paint, without the header flashing the wrong state.
@@ -1036,6 +1036,27 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] A signed-in user who opens `/signin` or `/signup` is redirected to `/`.
   - [ ] Sign-in shows a specific message for `email_not_confirmed`, in case email confirmation is ever turned on.
   - [ ] `npm run verify` and `npm run test:e2e` pass.
+
+### T132 One set of admin form helpers
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] The zod `number(label)` field helper is defined once (for example `src/lib/adminForm.ts`) and used by `adminEdit.ts` and `adminSettings.ts`.
+  - [ ] `EditState` and `refuse(message)` are defined once and used by `adminEdit`, `adminSettings`, `adminFlags` and `draw`.
+  - [ ] The Teetering Tower target range check (`STACKING_TARGET_RANGE` and its message) is built in one place, used by `adminEdit` and `adminSettings.targetSchema`; wording unchanged.
+  - [ ] A unit test covers the shared helper: empty, non-numeric, `Infinity` and trimmed input. Existing admin tests pass unchanged; `npm run verify` passes; no behavior change.
+- Notes: From the maintainer check after T58. Copies today: `number` (adminEdit 21, adminSettings 13), `refuse` (adminEdit 40, adminSettings 106), the Tower range (adminEdit 69-72, adminSettings 87-93); `adminSettings` imports `EditState` from `adminEdit`.
+
+### T133 One helper for the admin server actions
+- Type: maintenance
+- Status: todo
+- Depends on: T132
+- Acceptance criteria:
+  - [ ] The five `EditState` actions in `src/app/admin/actions.ts` are built from one helper (for example `adminAction(path, run)`) that makes the caller's server client, runs the save and revalidates the path only when `state.ok`.
+  - [ ] Each action keeps its name, signature and revalidated path; `actions.test.ts` passes unchanged and gains a case that a failed result does not revalidate.
+  - [ ] `npm run verify` passes; no behavior change.
+- Notes: From the maintainer check after T58 (lines 14-46 repeat the same three lines per action).
 
 ### T59 One-command local e2e runs
 - Type: maintenance
