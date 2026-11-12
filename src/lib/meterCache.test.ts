@@ -85,6 +85,16 @@ describe("createMeterCache", () => {
     expect(await cache.get()).toBeNull();
   });
 
+  it("tries again after a read that throws at once (a missing key), rather than keep that failure", async () => {
+    const { cache, read } = setup();
+    read.mockImplementationOnce(() => {
+      throw new Error("SUPABASE_SERVICE_ROLE_KEY is missing");
+    });
+    expect(await cache.get()).toBeNull();
+    expect(await cache.get()).toMatchObject({ stale: false });
+    expect(read).toHaveBeenCalledTimes(2);
+  });
+
   it("recovers on the next good read", async () => {
     const { cache, read, advance } = setup();
     await cache.get();

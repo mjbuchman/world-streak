@@ -31,15 +31,17 @@ export function createMeterCache({ read, now }: { read: () => Promise<MeterBody>
     } catch (error) {
       console.error("Reading the meter failed", error);
       return staleOrNothing(now().getTime());
-    } finally {
-      inFlight = null;
     }
   };
 
   return {
     async get(): Promise<MeterAnswer | null> {
       if (good && now().getTime() < good.freshUntil) return { body: good.body, stale: false };
-      inFlight ??= refresh();
+      // Cleared once the stored promise settles, so even a read that throws before its first
+      // await (a missing key) cannot leave a finished read standing as the one in flight.
+      inFlight ??= refresh().finally(() => {
+        inFlight = null;
+      });
       return inFlight;
     },
   };
