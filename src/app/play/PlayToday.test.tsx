@@ -64,6 +64,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+// The human-approved wording for a started, unsubmitted attempt (DECISIONS, T91): since T87 a run
+// has no time limit, so it may still be open in another tab.
+const UNFINISHED =
+  "You started today's attempt but haven't finished it here. If it's still open in another tab, finish it there before the day ends. Otherwise it counts as not passed. Come back tomorrow.";
+
 // onFinish starts the (async) submission; the test then waits for what it renders.
 const finish = (taps: number[], score: number) =>
   act(async () => {
@@ -285,11 +290,9 @@ describe("PlayToday", () => {
     expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   });
 
-  it("explains an abandoned attempt, with no Start", () => {
+  it("explains an unfinished attempt (perhaps still open elsewhere), with no Start", () => {
     render(<PlayToday challenge="stacking" initial={{ kind: "abandoned" }} />);
-    expect(
-      screen.getByText("You left today's attempt before finishing, so it counted as not passed. Come back tomorrow."),
-    ).toBeTruthy();
+    expect(screen.getByText(UNFINISHED)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   });
 
@@ -304,7 +307,7 @@ describe("PlayToday", () => {
     respond(json(409, { error: "already-started", submitted: false }));
     render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
-    expect(await screen.findByText(/You left today's attempt before finishing/)).toBeTruthy();
+    expect(await screen.findByText(UNFINISHED)).toBeTruthy();
   });
 
   it("says the day just closed, not that the player left, when a start races the deadline", async () => {
@@ -312,7 +315,7 @@ describe("PlayToday", () => {
     render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
     await userEvent.click(screen.getByRole("button", { name: "Start" }));
     expect((await screen.findByRole("alert")).textContent).toBe("Today's challenge just closed. Press Start to play the next one.");
-    expect(screen.queryByText(/You left today's attempt/)).toBeNull();
+    expect(screen.queryByText(UNFINISHED)).toBeNull();
     expect(games).toHaveLength(0);
     // Pressing Start again works out the new game date, so it starts the next day's attempt.
     expect(screen.getByRole("button", { name: "Start" })).toHaveProperty("disabled", false);

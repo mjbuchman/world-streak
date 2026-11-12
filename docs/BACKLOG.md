@@ -1326,7 +1326,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T90 ResultHero owns the result focus and the shared result bits
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T79
 - Acceptance criteria:
   - [ ] `ResultHero` focuses its own heading when it mounts; the `headingRef` prop and the focus `useRef`/`useEffect` in `PlayToday.tsx` and `StackingPractice.tsx` go. Focus behaviour is unchanged: `/play` focuses the result and "Not counted" views (including a stored result on a later visit), practice focuses the result after every run.
@@ -1338,7 +1338,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T91 An unfinished attempt is not necessarily abandoned (wording after T87)
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T87
 - Acceptance criteria:
   - [ ] When today's attempt has started but not been submitted, `/play` shows wording that stays true now that runs have no time limit (the human approves the exact text; see NEEDS_HUMAN).

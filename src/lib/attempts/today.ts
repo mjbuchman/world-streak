@@ -33,7 +33,10 @@ export async function todaysChallenge(supabase: Pick<SupabaseClient, "from" | "r
 export type PlayStatus =
   | { kind: "ready" }
   | { kind: "submitted"; score: number; passed: boolean; passTarget: number }
-  /** Started but never submitted: it counts as not passed, and it cannot be restarted. */
+  /**
+   * Started but not submitted. It cannot be restarted. Runs have no time limit (T87), so it may
+   * still be finished in another tab before the deadline; otherwise it counts as not passed.
+   */
   | { kind: "abandoned" };
 
 /**
