@@ -13,6 +13,33 @@ test("the home page offers today's challenge and practice", async ({ page }) => 
   await expect(page).toHaveURL("/play");
 });
 
+test("a run finished after the attempt was submitted elsewhere shows the stored result (T69)", async ({ page, accounts }) => {
+  await signUpViaForm(page, { email: accounts.uniqueEmail() });
+  await expect(page).toHaveURL("/");
+  await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+  await gotoReady(page, "/play");
+  await page.clock.pauseAt(new Date("2026-01-01T00:00:30Z"));
+  const started = page.waitForResponse("**/api/attempts/start");
+  await page.getByRole("button", { name: "Start" }).click();
+  const instance = (await (await started).json()) as { attemptId: string; params: StackingParams };
+  await expect(page.getByRole("status")).toHaveText("Row 1");
+
+  // The same attempt is submitted from "another tab" while this one still runs.
+  const taps = tapsForAMiss(instance.params);
+  // The server refuses taps later than the attempt has really run (plus 2 s); the page's clock is
+  // paused, so wait in real time (as attempts.spec.ts does).
+  await page.waitForTimeout(Math.max(0, taps.at(-1)! - 1_000));
+  const elsewhere = await page.request.post("/api/attempts/submit", { data: { attemptId: instance.attemptId, inputs: { tapsMs: taps } } });
+  expect(elsewhere.status()).toBe(200);
+
+  // This tab finishes its run; its own submission is refused as already submitted, and the
+  // refreshed page shows the stored result instead of hanging on "Checking your result".
+  await playTaps(page, taps);
+  await page.clock.runFor(FALL_MS + 50);
+  await expect(page.getByRole("heading", { name: "Not this time" })).toBeVisible();
+  await expect(page.locator("[data-big-score]")).toHaveText(String(simulate(instance.params, taps).score));
+});
+
 test("a signed-out visitor is asked to sign in, or to practice", async ({ page }) => {
   await gotoReady(page, "/play");
   const main = page.getByRole("main");
