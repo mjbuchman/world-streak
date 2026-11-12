@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { calendarDateIn, dayLabel, eligibilityToday, instantLabel, longDayLabel } from "./dates";
 
 describe("UTC labels (T126)", () => {
-  it("formats a game date short, in UTC whatever the local zone", () => {
+  it("formats a game date short", () => {
     expect(dayLabel("2026-11-01")).toBe("Nov 1, 2026");
   });
   it("formats a date long", () => {
@@ -10,6 +10,7 @@ describe("UTC labels (T126)", () => {
   });
   it("formats an instant in UTC", () => {
     expect(instantLabel("2026-11-12T15:04:00Z")).toBe("Nov 12, 2026, 3:04 PM");
+    expect(instantLabel("2026-12-31T23:30:00Z")).toBe("Dec 31, 2026, 11:30 PM");
   });
 });
 

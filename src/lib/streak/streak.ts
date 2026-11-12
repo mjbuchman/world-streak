@@ -2,6 +2,7 @@
 // components. Not for client components: the parsers (zod) would ship to the browser.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CHALLENGE_NAMES } from "@/config/challenges";
+import { dayLabel } from "@/lib/dates";
 import { dbInteger, dbNumber } from "@/lib/db/numeric";
 import { addDays, gameDateAt } from "@/lib/gameDay";
 
@@ -76,7 +77,6 @@ export function shapeRecentDays(closed: ClosedDay[], today: string, currentStart
 }
 
 // Kept here for its many importers; the formatter lives in src/lib/dates.ts (T126).
-import { dayLabel } from "@/lib/dates";
 export { dayLabel };
 
 /** The challenge's on-screen name; a type this build does not know yet shows as itself. */
