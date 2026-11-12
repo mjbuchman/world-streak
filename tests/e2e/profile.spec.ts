@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/fixtures";
-import { E2E_PASSWORD, gotoReady, oneDayShortOf18, signUpViaForm, submitAndWait } from "./support/pages";
+import { gotoReady, oneDayShortOf18, signInViaForm, signOutViaHeader, signUpViaForm, submitAndWait } from "./support/pages";
 import { adminClient, findUserByEmail } from "./support/supabase";
 
 async function profileOf(email: string) {
@@ -18,15 +18,7 @@ async function signedOutAccountWithoutProfile(page: Page, email: string) {
   const { userId } = await profileOf(email);
   const { error } = await adminClient().from("profiles").delete().eq("id", userId);
   if (error) throw error;
-  await submitAndWait(page, page.getByRole("banner").getByRole("button", { name: "Sign out" }));
-  await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
-}
-
-async function signIn(page: Page, email: string) {
-  await gotoReady(page, "/signin");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(E2E_PASSWORD);
-  await submitAndWait(page, page.getByRole("main").getByRole("button", { name: "Sign in" }));
+  await signOutViaHeader(page);
 }
 
 async function submitProfile(page: Page, birthDate: string) {
@@ -61,7 +53,7 @@ test("a player without a profile is sent to complete it after signing in, and ca
   const email = accounts.uniqueEmail();
   await signedOutAccountWithoutProfile(page, email);
 
-  await signIn(page, email);
+  await signInViaForm(page, email);
   await expect(page).toHaveURL("/complete-profile");
   await submitProfile(page, "1991-02-03");
 
@@ -76,7 +68,7 @@ test("a player without a profile is sent to complete it after signing in, and ca
 test("an underage player completing their profile is refused and gets no profile", async ({ page, accounts }) => {
   const email = accounts.uniqueEmail();
   await signedOutAccountWithoutProfile(page, email);
-  await signIn(page, email);
+  await signInViaForm(page, email);
   await expect(page).toHaveURL("/complete-profile");
 
   await submitProfile(page, oneDayShortOf18());

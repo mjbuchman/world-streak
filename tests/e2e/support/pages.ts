@@ -1,5 +1,6 @@
-import type { Locator, Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 import { eligibilityToday } from "../../../src/lib/dates";
+import { AUTH_COOKIE } from "./session";
 
 export const E2E_PASSWORD = "e2e-password-123";
 
@@ -28,7 +29,24 @@ export async function submitAndWait(page: Page, button: Locator): Promise<void> 
 /** True when the browser holds a Supabase session cookie. */
 export async function hasSessionCookie(page: Page): Promise<boolean> {
   const cookies = await page.context().cookies();
-  return cookies.some((cookie) => /^sb-.*-auth-token/.test(cookie.name));
+  return cookies.some((cookie) => AUTH_COOKIE.test(cookie.name));
+}
+
+/** The top bar with the account state. */
+export const header = (page: Page): Locator => page.getByRole("banner");
+
+/** Signs in on /signin, clicking the form's button (in main), not the header's "Sign in" link. */
+export async function signInViaForm(page: Page, email: string, password = E2E_PASSWORD): Promise<void> {
+  await gotoReady(page, "/signin");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await submitAndWait(page, page.getByRole("main").getByRole("button", { name: "Sign in" }));
+}
+
+/** Signs out from the header and waits until it offers sign-in again. */
+export async function signOutViaHeader(page: Page): Promise<void> {
+  await submitAndWait(page, header(page).getByRole("button", { name: "Sign out" }));
+  await expect(header(page).getByRole("link", { name: "Sign in" })).toBeVisible();
 }
 
 /** A birth date whose 18th birthday is tomorrow on the eligibility date. */
