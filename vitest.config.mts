@@ -25,8 +25,8 @@ export default defineConfig({
         branches: 70,
         "src/challenges/**": { lines: 90, branches: 90 },
         "src/lib/scoring/**": { lines: 90, branches: 90 },
-        // Matches nothing yet: the streak is computed in SQL (T21, T34). TypeScript streak logic,
-        // for example the streak and history display in T24, belongs here.
+        // The streak, yesterday's result and the history as players see them (the streak itself is
+        // computed in SQL, T21, T34).
         "src/lib/streak/**": { lines: 90, branches: 90 },
         // Start, submit and store scored attempts: who may play and what counts.
         "src/lib/attempts/**": { lines: 90, branches: 90 },
@@ -57,6 +57,12 @@ export default defineConfig({
         // Gates account creation.
         "src/lib/signup.ts": { lines: 90, branches: 90 },
         "src/lib/signin.ts": { lines: 90, branches: 90 },
+        // Who is signed in and has a profile, and how route handlers check requests (T136).
+        "src/lib/http/**": { lines: 90, branches: 90 },
+        "src/lib/supabase/session.ts": { lines: 90, branches: 90 },
+        "src/lib/profiles.ts": { lines: 90, branches: 90 },
+        "src/lib/profileCompletion.ts": { lines: 90, branches: 90 },
+        "src/lib/dates.ts": { lines: 90, branches: 90 },
         // Client components get component tests (Testing Library, jsdom per file).
         "src/app/signup/SignUpForm.tsx": { lines: 80, branches: 80 },
         "src/app/signin/SignInForm.tsx": { lines: 80, branches: 80 },

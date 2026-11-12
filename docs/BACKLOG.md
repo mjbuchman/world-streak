@@ -1429,7 +1429,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T100 One fake Supabase query builder for unit tests
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T25
 - Acceptance criteria:
   - [ ] One helper (for example `src/lib/testing/fakeSupabase.ts`) provides the chainable, thenable query-builder Proxy that scripts results per call and records every builder call.
@@ -1509,7 +1509,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T136 Coverage thresholds for the auth and request-gate modules
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] `vitest.config.mts` gets per-path thresholds (at least 90% lines and branches, or the highest the files already meet) for `src/lib/http/**`, `src/lib/supabase/session.ts`, `src/lib/profiles.ts`, `src/lib/profileCompletion.ts` and `src/lib/dates.ts`; any file short of it gets the missing tests.
