@@ -2,12 +2,14 @@ import { z } from "zod";
 import { refusalMessage } from "@/lib/eligibility";
 import { type EligibilityField, validateEligibilityFields } from "@/lib/eligibilityFields";
 import { collectFieldErrors, emailSchema, GENERIC_ERROR, readFields, textValue } from "@/lib/forms";
-import { PASSWORD_MISMATCH } from "@/lib/passwords";
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH, PASSWORD_MISMATCH } from "@/lib/passwords";
 
 const accountSchema = z.object({
   email: emailSchema,
-  // Supabase (bcrypt) accepts at most 72 characters.
-  password: z.string().min(8, "Use at least 8 characters.").max(72, "Use at most 72 characters."),
+  password: z
+    .string()
+    .min(MIN_PASSWORD_LENGTH, `Use at least ${MIN_PASSWORD_LENGTH} characters.`)
+    .max(MAX_PASSWORD_LENGTH, `Use at most ${MAX_PASSWORD_LENGTH} characters.`),
 });
 
 type Field = keyof z.infer<typeof accountSchema> | "confirmPassword" | EligibilityField;
