@@ -113,7 +113,7 @@ describe("stacking-robotic-rhythm", () => {
 
   it("pins the boundary: exactly STACKING_RHYTHM_MAX_SD_MS is not flagged, just under is", () => {
     expect(detectFlags(tower(alternating(STACKING_RHYTHM_MAX_SD_MS)))).not.toContain("stacking-robotic-rhythm");
-    expect(detectFlags(tower(alternating(STACKING_RHYTHM_MAX_SD_MS - 0.01)))).toContain("stacking-robotic-rhythm");
+    expect(detectFlags(tower(alternating(STACKING_RHYTHM_MAX_SD_MS - 0.01)))).toEqual(["stacking-robotic-rhythm"]);
   });
 
   it("ignores 9 such taps, and 10 with a human spread", () => {
@@ -153,7 +153,7 @@ describe("inner-clock-implausible", () => {
     expect(detectFlags(clock(0.005, { history: [far, far, far, far, near, near] }))).not.toContain("inner-clock-implausible");
     const tower = { challengeType: "stacking", score: 0 };
     // Tower attempts in between do not push Second Sense ones out of the window.
-    expect(detectFlags(clock(0.005, { history: [tower, near, tower, tower, tower, far, near] }))).toContain("inner-clock-implausible");
+    expect(detectFlags(clock(0.005, { history: [tower, near, tower, tower, tower, far, near] }))).toEqual(["inner-clock-implausible"]);
     expect(detectFlags(clock(0.01, { history: [near, far, { challengeType: "inner-clock", score: 0.01 }] }))).not.toContain("inner-clock-implausible");
   });
 });
