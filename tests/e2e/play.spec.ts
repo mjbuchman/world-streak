@@ -3,7 +3,7 @@ import { FALL_MS } from "../../src/challenges/stacking/render";
 import { expect, test } from "./support/fixtures";
 import { gotoReady, signUpViaForm } from "./support/pages";
 import { reachedRow, targetRow } from "../../src/components/stacking/rows";
-import { playTaps, tapsForAMiss } from "./support/tower";
+import { playTaps, skipCountdown, tapsForAMiss } from "./support/tower";
 import { adminClient, findUserByEmail } from "./support/supabase";
 
 test("the home page offers today's challenge and practice", async ({ page }) => {
@@ -34,6 +34,7 @@ test("a run finished after the attempt was submitted elsewhere shows the stored 
 
   // This tab finishes its run; its own submission is refused as already submitted, and the
   // refreshed page shows the stored result instead of hanging on "Checking your result".
+  await skipCountdown(page);
   await playTaps(page, taps);
   await page.clock.runFor(FALL_MS + 50);
   await expect(page.getByRole("heading", { name: "Not this time" })).toBeVisible();
@@ -101,6 +102,7 @@ test("a player plays today's attempt once and sees the server's result, also aft
   const expected = simulate(instance.params, taps);
   expect(expected.endReason).toBe("miss");
   const score = expected.score;
+  await skipCountdown(page);
   await playTaps(page, taps);
   // The missed row falls away before the result appears.
   await page.clock.runFor(FALL_MS + 50);

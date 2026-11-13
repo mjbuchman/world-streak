@@ -5,9 +5,11 @@ import type { FlashCountInputs, FlashCountParams } from "@/challenges/flash-coun
 import { dotsVisible, drawFlashCount } from "@/challenges/flash-count/render";
 import { fitCanvas, readColorTokens } from "@/components/canvas";
 import { FLASH_COUNT_COLOR_TOKENS } from "@/components/canvasTokens";
+import { CountdownNumber, countdownNumber } from "@/components/countdown/CountdownNumber";
 import { runFrames } from "@/components/frameLoop";
 import { Field, TextInput } from "@/components/form/Field";
 import { Button } from "@/components/ui/Button";
+import { RUN_COUNTDOWN_MS } from "@/config/countdown";
 import styles from "./FlashCountGame.module.css";
 
 const INVALID = "Enter a whole number from 0 to 999.";
@@ -25,10 +27,6 @@ type FlashCountGameProps = {
   countdownMs?: number;
 };
 
-/** Each number of the 3-2-1 before the dots (T119). */
-export const COUNTDOWN_STEP_MS = 800;
-const COUNTDOWN_FROM = 3;
-
 /**
  * A Swift Sum run: a 3-2-1 countdown builds up to the flash (T119), counted from the first frame
  * after the canvas is on screen. Right after "1" the dots stay for `flashMs` of elapsed time
@@ -36,11 +34,11 @@ const COUNTDOWN_FROM = 3;
  * the tab is hidden before the dots have cleared, the countdown and the flash start over on return,
  * so a scored player always gets the whole flash.
  */
-export function FlashCountGame({ params, onFinish, countdownMs = COUNTDOWN_FROM * COUNTDOWN_STEP_MS }: FlashCountGameProps) {
+export function FlashCountGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_MS }: FlashCountGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [showing, setShowing] = useState<"countdown" | "dots" | "clear" | null>(null);
-  const [countdownNumber, setCountdownNumber] = useState<number | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
@@ -64,14 +62,13 @@ export function FlashCountGame({ params, onFinish, countdownMs = COUNTDOWN_FROM 
         return true;
       }
       start ??= now;
-      const elapsed = now - start;
-      if (elapsed < countdownMs) {
+      const number = countdownNumber(now - start, countdownMs);
+      setCountdown(number);
+      if (number !== null) {
         draw(false);
         setShowing("countdown");
-        setCountdownNumber(Math.ceil((countdownMs - elapsed) / COUNTDOWN_STEP_MS));
         return true;
       }
-      setCountdownNumber(null);
       // From the first frame that shows the dots, so a slow frame at the switch takes no time off the flash.
       flashStart ??= now;
       const visible = dotsVisible(now - flashStart, params.flashMs);
@@ -119,13 +116,8 @@ export function FlashCountGame({ params, onFinish, countdownMs = COUNTDOWN_FROM 
           aria-label={showing === "countdown" ? "Get ready." : showing === "clear" ? "The dots are gone." : "Count the dots."}
           role="img"
         />
-        {/* Keyed on the number, so each one plays its pop again. Hidden from screen readers:
-            the board's label says "Get ready." */}
-        {countdownNumber !== null && (
-          <span key={countdownNumber} className={styles.countdown} data-countdown="" aria-hidden="true">
-            {countdownNumber}
-          </span>
-        )}
+        {/* The board's label says "Get ready." meanwhile. */}
+        {countdown !== null && <CountdownNumber key={countdown} value={countdown} />}
       </div>
       {showing === "clear" && (
         <form className={styles.answer} onSubmit={submit} noValidate>

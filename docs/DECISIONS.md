@@ -357,3 +357,8 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 ### 2026-11-12 — One Auth round trip per page: asymmetric signing keys (T58)
 - Choice: both options. The proxy calls `getClaims()` (it still refreshes an expiring session), and local Supabase signs with an ES256 key (`npm run db:keys`, git-ignored), so `getClaims()` in the proxy, header and pages verifies against the cached public keys: no Auth round trip on a page render. API routes keep `getUser()`: one round trip, and a signed-out session is refused at once.
 - Trade-off: a locally verified token stays valid until it expires (up to `jwt_expiry`, 1 hour) after sign-out elsewhere; pages only display with it, and every write goes through `getUser()` or row-level security. Production needs the asymmetric key switched on in the dashboard (docs/DEPLOYMENT.md §4); until then `getClaims()` falls back to an Auth call, so a page costs two round trips but stays correct.
+
+### 2026-11-12 — The cheat timing allowance includes the 3-2-1 (T138)
+- Choice: `TIMING_LOAD_ALLOWANCE_MS` becomes 15 s plus `RUN_COUNTDOWN_MS` (2.4 s), as the Tower's and Second Sense's clocks now start after the countdown while the server's starts at the attempt's start.
+- Reason: keeps the same 15 s margin for loading and reading as before; without it an honest run that takes a little longer to load would be flagged.
+- How to change it later: `src/config/cheat.ts`.

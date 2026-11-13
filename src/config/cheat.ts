@@ -3,6 +3,7 @@
  * docs/DECISIONS.md: a flag only puts an account's prize entries on hold for an admin to review
  * (T41, T42); it never changes a pass, a fail or the meter.
  */
+import { RUN_COUNTDOWN_MS } from "./countdown";
 
 /** Two Tower taps closer than this are faster than a person can tap. */
 export const STACKING_MIN_TAP_INTERVAL_MS = 120;
@@ -24,7 +25,10 @@ export const INNER_CLOCK_WINDOW = 5;
 /** Swift Sum: an answer this soon after the dots cleared is faster than typing, when reported. */
 export const FLASH_COUNT_MIN_ANSWER_MS = 800;
 
-/** Loading and reading before a run starts, which the server's clock includes and the game's does not. */
-export const TIMING_LOAD_ALLOWANCE_MS = 15_000;
+/**
+ * Loading and reading before a run starts (15 s), and the 3-2-1 before its own clock starts
+ * (T138), which the server's clock includes and the game's does not.
+ */
+export const TIMING_LOAD_ALLOWANCE_MS = 15_000 + RUN_COUNTDOWN_MS;
 /** Beyond that allowance, a last input more than this far behind the server's clock is a mismatch. */
 export const TIMING_MISMATCH_MS = 2_000;

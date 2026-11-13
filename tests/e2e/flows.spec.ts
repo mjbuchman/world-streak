@@ -6,7 +6,7 @@ import { gameDateAt } from "../../src/lib/gameDay";
 import { expect, test } from "./support/fixtures";
 import { gotoReady, signUpViaForm } from "./support/pages";
 import { adminClient } from "./support/supabase";
-import { playTaps, tapsForAMiss } from "./support/tower";
+import { playTaps, skipCountdown, tapsForAMiss } from "./support/tower";
 
 // The day-survives half of T49 for today: the close half is tests/e2e/after/day-close.spec.ts.
 const db = adminClient();
@@ -34,6 +34,7 @@ test("today: 10 players at 70%, then a new player plays to the end, and the mete
   const started = page.waitForResponse("**/api/attempts/start");
   await page.getByRole("button", { name: "Start" }).click();
   const instance = (await (await started).json()) as { params: StackingParams };
+  await skipCountdown(page);
   await playTaps(page, tapsForAMiss(instance.params));
   await page.clock.runFor(FALL_MS + 50);
   await expect(page.getByRole("heading", { level: 2, name: /^(Passed|Not this time)$/ })).toBeVisible();

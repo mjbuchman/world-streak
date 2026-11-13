@@ -18,11 +18,6 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: pages verify sessions locally instead of asking the Auth server each time. See DECISIONS (T58).
 - Agent's recommendation: do it with the rest of `docs/DEPLOYMENT.md` §4.
 
-### Please confirm: the simulation's second unchecked function (T37; blocks nothing)
-- What is needed: OK that besides `close_game_day_unchecked`, T37 added a service-role-only `record_attempt_result_unchecked` (results on any open day), so simulated passes earn entries. Both exist in production too but only the service role can call them. See DECISIONS (T37).
-- Where to put it: reply in chat.
-- Agent's recommendation: keep it.
-
 ### Create the Supabase cloud project (T50; blocks deployment)
 - What is needed: a free-plan Supabase project with the migrations applied, pg_cron jobs checked and auth set up.
 - Where to put it: follow `docs/DEPLOYMENT.md` sections 1–4; the keys go into Vercel (section 5), never the repository.
@@ -60,14 +55,8 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: the share card links to the site. Until it is set, the card uses the page's own address, which is right locally.
 - Agent's recommendation: add it now; set the real value at deployment (T50). Next.js builds `NEXT_PUBLIC_` values into the page, so set it before the production build.
 
-### At the M4 play-test: Second Sense fade and pass target, Swift Sum countdown (T118, T119; blocks nothing)
-- What is needed: try the clock's fade and the 7–13 s targets (T118) and the 3-2-1 countdown (T119). (The 0.5 s pass target stays: decided Nov 12.)
-- Where to put it: reply in chat at the M4 play-test.
-- Why: you asked for these after trying the M3 follow-ups (Nov 12); they are built during M4.
-- Agent's recommendation: a few tries of each in practice.
-
 ### Legal review of the draft official rules (blocks nothing; before public launch)
-- What is needed: have the text at `/rules` (T38) reviewed by someone qualified for US sweepstakes and contest rules before launch. The sponsor's name, address and contact email are still placeholders (T39), so the page shows a "Draft" banner.
+- What is needed: have the text at `/rules` (T38) reviewed by someone qualified for US sweepstakes and contest rules before launch. There is no sponsor yet (T39 dropped Nov 12), so the sponsor's name, address and contact email stay placeholders and the page shows a "Draft" banner.
 - Where to put it: reply in chat with changes; the wording lives in `src/lib/rules.ts`, the numbers in `src/config/`.
 - Why: a prize game needs official rules that hold up; the agents drafted them from the design doc.
 - Agent's recommendation: review once T39's sponsor details are in, so the reviewer sees the final page. Ask them in particular about the draw happening only after a cycle that reached the goal (otherwise the prize rolls over, and nobody wins that cycle).
@@ -97,6 +86,8 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: do it before the public launch. T52 works without the keys locally (it skips the CAPTCHA and logs a warning).
 
 ## Resolved
+
+- **M4 play-test** (Nov 12, 2026): Second Sense fade and targets good; Swift Sum countdown perfect, so every game gets it (T138). No sponsor yet: T39 dropped. `record_attempt_result_unchecked` stays (checked: only the service role can run it, pgTAP-tested). Turnstile's free plan has no usage charge.
 
 - **Decisions after M4** (Nov 12, 2026): all eight please-confirms accepted as built (T44 ads off, T43 draw, T40 cheat thresholds, T34 streak and cycle, T110 hidden tab, T32 share margin, T31 rotation, T104 gauge); T37 goes ahead with option A; the meter's local p95 is accepted, to be rechecked on the preview; Second Sense keeps the 0.5 s pass target.
 

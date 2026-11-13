@@ -25,6 +25,9 @@
 
 /* The first second's clock; it keeps its space once hidden, so the prompt does not move. */
 .clock {
+  /* The countdown's numbers centre on the clock's place (T138), which keeps a clock's width. */
+  position: relative;
+  min-width: 3ch;
   min-height: 1.1em;
   font-family: var(--fs-font-display);
   font-weight: 800;

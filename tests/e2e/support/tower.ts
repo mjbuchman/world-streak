@@ -1,12 +1,18 @@
 import type { Page } from "@playwright/test";
+import { RUN_COUNTDOWN_MS } from "../../../src/config/countdown";
 
 // The deliberate-miss search lives with the engine's other test support.
 export { tapsForAMiss } from "../../../src/challenges/stacking/player";
 
+/** Runs the paused page clock through the 3-2-1 before a Tower run (T138), to the run's 0 ms. */
+export async function skipCountdown(page: Page): Promise<void> {
+  await page.clock.runFor(RUN_COUNTDOWN_MS);
+}
+
 /**
- * Presses Space at each tap time, measured from the moment the run started. The page's clock
- * must be paused (page.clock.pauseAt) before the run starts, so the game's start time and every
- * tap land on exact milliseconds.
+ * Presses Space at each tap time, measured from the moment the run started (after
+ * skipCountdown). The page's clock must be paused (page.clock.pauseAt) before the run starts, so
+ * the game's start time and every tap land on exact milliseconds.
  */
 export async function playTaps(page: Page, taps: number[]): Promise<void> {
   let now = 0;

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { COUNTDOWN_STEP_MS, RUN_COUNTDOWN_MS } from "@/config/countdown";
 import { CLOCK_FADE_MS, InnerClockGame, targetLabel } from "./InnerClockGame";
 
 const params = { targetMs: 5000, timeoutMs: 15_000 };
@@ -32,9 +33,58 @@ const tapArea = () => screen.getByRole("button", { name: /Tap when you think 5 s
 const showStart = () => act(() => frame!(0));
 
 describe("InnerClockGame", () => {
-  it("reports the tap in ms from the moment the start was on screen", () => {
+  it("counts 3-2-1 first, ignores taps during it, and starts the clock and the timeout right after it (T138)", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     const onFinish = vi.fn();
     render(<InnerClockGame params={params} onFinish={onFinish} />);
+    const countdown = () => document.querySelector("[data-countdown]")?.textContent;
+    const shownClock = () => document.querySelector("[data-clock]");
+    // The first frame on screen starts the countdown; the clock waits, showing nothing.
+    clock().mockReturnValue(1000);
+    showStart();
+    expect(countdown()).toBe("3");
+    expect(shownClock()?.getAttribute("data-clock")).toBe("countdown");
+    expect(shownClock()?.textContent).toBe("3");
+    clock().mockReturnValue(1000 + COUNTDOWN_STEP_MS);
+    act(() => frame!(0));
+    expect(countdown()).toBe("2");
+    clock().mockReturnValue(1000 + RUN_COUNTDOWN_MS - 1);
+    act(() => frame!(0));
+    expect(countdown()).toBe("1");
+    fireEvent.pointerDown(tapArea());
+    expect(onFinish).not.toHaveBeenCalled();
+    // No timeout counts during the countdown.
+    await act(async () => void (await vi.advanceTimersByTimeAsync(20_000)));
+    expect(onFinish).not.toHaveBeenCalled();
+
+    // Right after "1", the clock starts at 0.0, and the tap is timed from there.
+    clock().mockReturnValue(1000 + RUN_COUNTDOWN_MS);
+    act(() => frame!(0));
+    expect(countdown()).toBeUndefined();
+    expect(shownClock()?.getAttribute("data-clock")).toBe("shown");
+    expect(shownClock()?.textContent).toBe("0.0");
+    clock().mockReturnValue(1000 + RUN_COUNTDOWN_MS + 5320);
+    fireEvent.pointerDown(tapArea());
+    expect(onFinish).toHaveBeenCalledExactlyOnceWith({ tapMs: 5320 });
+  });
+
+  it("times out counting from the end of the countdown (T138)", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const onFinish = vi.fn();
+    render(<InnerClockGame params={params} onFinish={onFinish} />);
+    clock().mockReturnValue(1000);
+    showStart();
+    clock().mockReturnValue(1000 + RUN_COUNTDOWN_MS);
+    act(() => frame!(0));
+    await act(async () => void (await vi.advanceTimersByTimeAsync(params.timeoutMs - 1)));
+    expect(onFinish).not.toHaveBeenCalled();
+    await act(async () => void (await vi.advanceTimersByTimeAsync(1)));
+    expect(onFinish).toHaveBeenCalledExactlyOnceWith({ tapMs: null });
+  });
+
+  it("reports the tap in ms from the moment the start was on screen", () => {
+    const onFinish = vi.fn();
+    render(<InnerClockGame countdownMs={0} params={params} onFinish={onFinish} />);
     // React reads the clock too, so each value holds until the next step rather than once.
     clock().mockReturnValue(1000);
     showStart();
@@ -45,7 +95,7 @@ describe("InnerClockGame", () => {
 
   it("takes Space as a tap too, once, and ignores a held key's repeats", () => {
     const onFinish = vi.fn();
-    render(<InnerClockGame params={params} onFinish={onFinish} />);
+    render(<InnerClockGame countdownMs={0} params={params} onFinish={onFinish} />);
     clock().mockReturnValue(1000);
     showStart();
     clock().mockReturnValue(4000);
@@ -58,7 +108,7 @@ describe("InnerClockGame", () => {
 
   it("ignores other keys", () => {
     const onFinish = vi.fn();
-    render(<InnerClockGame params={params} onFinish={onFinish} />);
+    render(<InnerClockGame countdownMs={0} params={params} onFinish={onFinish} />);
     showStart();
     fireEvent.keyDown(tapArea(), { key: "a" });
     expect(onFinish).not.toHaveBeenCalled();
@@ -69,7 +119,7 @@ describe("InnerClockGame", () => {
   it("reports no tap at the timeout, counted from the start on screen", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     const onFinish = vi.fn();
-    render(<InnerClockGame params={params} onFinish={onFinish} />);
+    render(<InnerClockGame countdownMs={0} params={params} onFinish={onFinish} />);
     await act(async () => void (await vi.advanceTimersByTimeAsync(20_000)));
     expect(onFinish).not.toHaveBeenCalled();
     showStart();
@@ -84,7 +134,7 @@ describe("InnerClockGame", () => {
 
   it("ignores a right-click", () => {
     const onFinish = vi.fn();
-    render(<InnerClockGame params={params} onFinish={onFinish} />);
+    render(<InnerClockGame countdownMs={0} params={params} onFinish={onFinish} />);
     showStart();
     fireEvent.pointerDown(tapArea(), { button: 2 });
     expect(onFinish).not.toHaveBeenCalled();
@@ -94,13 +144,13 @@ describe("InnerClockGame", () => {
 
   it("ignores a tap before the start is on screen", () => {
     const onFinish = vi.fn();
-    render(<InnerClockGame params={params} onFinish={onFinish} />);
+    render(<InnerClockGame countdownMs={0} params={params} onFinish={onFinish} />);
     fireEvent.pointerDown(tapArea());
     expect(onFinish).not.toHaveBeenCalled();
   });
 
   it("shows a running clock from the start for the first second, then hides it", () => {
-    render(<InnerClockGame params={params} onFinish={vi.fn()} />);
+    render(<InnerClockGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     const shownClock = () => document.querySelector("[data-clock]");
     // Before the start frame, the clock waits at zero.
     expect(shownClock()?.textContent).toBe("0.0");
@@ -133,7 +183,7 @@ describe("InnerClockGame", () => {
 
   it("with reduced motion, hides the clock at one second without fading", () => {
     vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce"), addEventListener: vi.fn(), removeEventListener: vi.fn() }));
-    render(<InnerClockGame params={params} onFinish={vi.fn()} />);
+    render(<InnerClockGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     const shownClock = () => document.querySelector("[data-clock]");
     clock().mockReturnValue(1000);
     showStart();
@@ -145,7 +195,7 @@ describe("InnerClockGame", () => {
 
   it("times the tap from the start whether or not the clock is fading", () => {
     const onFinish = vi.fn();
-    render(<InnerClockGame params={params} onFinish={onFinish} />);
+    render(<InnerClockGame countdownMs={0} params={params} onFinish={onFinish} />);
     clock().mockReturnValue(1000);
     showStart();
     clock().mockReturnValue(2100);
@@ -156,7 +206,7 @@ describe("InnerClockGame", () => {
   });
 
   it("shows the instruction and nothing that tells the time once the clock has hidden", () => {
-    render(<InnerClockGame params={params} onFinish={vi.fn()} />);
+    render(<InnerClockGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     clock().mockReturnValue(1000);
     showStart();
     clock().mockReturnValue(2000);
@@ -170,18 +220,18 @@ describe("InnerClockGame", () => {
   });
 
   it("keeps the shown clock out of the tap area's name, so it is announced once, not every frame", () => {
-    render(<InnerClockGame params={params} onFinish={vi.fn()} />);
+    render(<InnerClockGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     expect(screen.getByRole("button").getAttribute("aria-hidden")).toBeNull();
     expect(document.querySelector("[data-clock]")?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("puts focus on the tap area, so Space works at once", () => {
-    render(<InnerClockGame params={params} onFinish={vi.fn()} />);
+    render(<InnerClockGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     expect(document.activeElement).toBe(tapArea());
   });
 
   it("stops its clock when it leaves the screen", () => {
-    const { unmount } = render(<InnerClockGame params={params} onFinish={vi.fn()} />);
+    const { unmount } = render(<InnerClockGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     unmount();
     expect(cancelAnimationFrame).toHaveBeenCalledWith(1);
   });
@@ -200,7 +250,7 @@ describe("InnerClockGame", () => {
 
     it("keeps counting: a tap after the tab returns includes the time it was hidden", () => {
       const onFinish = vi.fn();
-      render(<InnerClockGame params={params} onFinish={onFinish} />);
+      render(<InnerClockGame countdownMs={0} params={params} onFinish={onFinish} />);
       clock().mockReturnValue(1000);
       showStart();
       clock().mockReturnValue(2000);
@@ -216,7 +266,7 @@ describe("InnerClockGame", () => {
     it("ends the run with no tap when the tab returns after the timeout, even if the timer has not fired", () => {
       vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
       const onFinish = vi.fn();
-      render(<InnerClockGame params={params} onFinish={onFinish} />);
+      render(<InnerClockGame countdownMs={0} params={params} onFinish={onFinish} />);
       clock().mockReturnValue(1000);
       showStart();
       setHidden(true);
@@ -229,7 +279,7 @@ describe("InnerClockGame", () => {
 
     it("does nothing on return when the run has not started", () => {
       const onFinish = vi.fn();
-      render(<InnerClockGame params={params} onFinish={onFinish} />);
+      render(<InnerClockGame countdownMs={0} params={params} onFinish={onFinish} />);
       clock().mockReturnValue(99_000);
       setHidden(true);
       setHidden(false);
@@ -238,7 +288,7 @@ describe("InnerClockGame", () => {
 
     it("stops listening when it leaves the screen", () => {
       const remove = vi.spyOn(document, "removeEventListener");
-      const { unmount } = render(<InnerClockGame params={params} onFinish={vi.fn()} />);
+      const { unmount } = render(<InnerClockGame countdownMs={0} params={params} onFinish={vi.fn()} />);
       unmount();
       expect(remove).toHaveBeenCalledWith("visibilitychange", expect.any(Function));
     });

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_TAPS, simulate, type StackingParams } from "@/challenges/stacking/engine";
 import { simulatedTaps, tapsForAMiss } from "@/challenges/stacking/player";
 import { FALL_MS } from "@/challenges/stacking/render";
+import { COUNTDOWN_STEP_MS, RUN_COUNTDOWN_MS } from "@/config/countdown";
 
 const drawStacking = vi.hoisted(() => vi.fn());
 // Only the drawing is replaced; the real constants (FALL_MS) stay.
@@ -57,9 +58,41 @@ function missAndFinish(taps: number[]): number[] {
 }
 
 describe("StackingGame", () => {
-  it("records taps from Space and pointer presses as elapsed ms, and finishes with the engine's final result", () => {
+  it("counts 3-2-1 over the still board first, ignores taps during it, and times taps from right after it (T138)", () => {
     const onFinish = vi.fn();
     render(<StackingGame params={params} onFinish={onFinish} />);
+    const countdown = () => document.querySelector("[data-countdown]")?.textContent;
+    // Already before the first frame.
+    expect(countdown()).toBe("3");
+    advance(20);
+    expect(countdown()).toBe("3");
+    expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ elapsedMs: 0 });
+    pressSpace();
+    advance(COUNTDOWN_STEP_MS);
+    expect(countdown()).toBe("2");
+    advance(COUNTDOWN_STEP_MS);
+    expect(countdown()).toBe("1");
+    pressSpace();
+    advance(RUN_COUNTDOWN_MS - elapsed);
+    expect(countdown()).toBeUndefined();
+    expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ elapsedMs: 0 });
+
+    // The run's 0 ms is the end of the countdown: a tap 930 ms later is recorded as 930.
+    advance(930);
+    pressSpace();
+    const all = tapsForAMiss(params, [930], 931);
+    for (const tap of all.slice(1)) {
+      advance(RUN_COUNTDOWN_MS + tap - elapsed);
+      pressSpace();
+    }
+    advance(FALL_MS + 50);
+    expect(onFinish).toHaveBeenCalledTimes(1);
+    expect(onFinish.mock.calls[0][0].taps).toEqual(all);
+  });
+
+  it("records taps from Space and pointer presses as elapsed ms, and finishes with the engine's final result", () => {
+    const onFinish = vi.fn();
+    render(<StackingGame countdownMs={0} params={params} onFinish={onFinish} />);
 
     advance(930);
     pressSpace();
@@ -82,7 +115,7 @@ describe("StackingGame", () => {
   });
 
   it("shows the row in play live", () => {
-    render(<StackingGame params={params} onFinish={vi.fn()} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     expect(screen.getByRole("status").textContent).toBe("Row 1");
     advance(900);
     pressSpace();
@@ -92,7 +125,7 @@ describe("StackingGame", () => {
   });
 
   it("shows today's target on /play, and draws its line", () => {
-    render(<StackingGame params={params} onFinish={vi.fn()} passTarget={10} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={vi.fn()} passTarget={10} />);
     expect(screen.getByText("Row 10 to pass")).toBeTruthy();
     advance(20);
     expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ passTarget: 10 });
@@ -100,7 +133,7 @@ describe("StackingGame", () => {
 
   it("rounds a fractional target up, for the HUD and the line", () => {
     // 10.2 rounds to 10 but up to 11: reaching row 10 would not be enough.
-    render(<StackingGame params={params} onFinish={vi.fn()} passTarget={10.2} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={vi.fn()} passTarget={10.2} />);
     expect(screen.getByText("Row 11 to pass")).toBeTruthy();
     advance(20);
     expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ passTarget: 11 });
@@ -117,7 +150,7 @@ describe("StackingGame", () => {
     vi.spyOn(window, "getComputedStyle").mockReturnValue({
       getPropertyValue: (name: string) => ` ${tokens[name] ?? ""} `,
     } as CSSStyleDeclaration);
-    render(<StackingGame params={params} onFinish={vi.fn()} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     advance(20);
     expect(drawStacking.mock.calls.at(-1)![1].colors).toEqual({
       empty: "surface-strong",
@@ -129,9 +162,9 @@ describe("StackingGame", () => {
   });
 
   it("shows the best row of this visit in practice, once there is one", () => {
-    const { rerender } = render(<StackingGame params={params} onFinish={vi.fn()} best={0} />);
+    const { rerender } = render(<StackingGame countdownMs={0} params={params} onFinish={vi.fn()} best={0} />);
     expect(screen.queryByText(/Best/)).toBeNull();
-    rerender(<StackingGame params={params} onFinish={vi.fn()} best={7} />);
+    rerender(<StackingGame countdownMs={0} params={params} onFinish={vi.fn()} best={7} />);
     expect(screen.getByText("Best: row 7")).toBeTruthy();
     expect(screen.queryByText(/to pass/)).toBeNull();
   });
@@ -143,7 +176,7 @@ describe("StackingGame", () => {
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
       }));
-      render(<StackingGame params={params} onFinish={vi.fn()} />);
+      render(<StackingGame countdownMs={0} params={params} onFinish={vi.fn()} />);
       advance(20);
       expect(drawStacking.mock.calls.at(-1)![1]).toMatchObject({ reducedMotion: reduced });
       cleanup();
@@ -154,7 +187,7 @@ describe("StackingGame", () => {
     // Row 1 at 2-4; row 2 one step after appearing at the right wall keeps 3-4; row 3 tapped
     // as it appears at the left wall (0-1) misses (see stackingLoop.test.ts).
     const onFinish = vi.fn();
-    render(<StackingGame params={params} onFinish={onFinish} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={onFinish} />);
     advance(1);
     pressSpace();
     advance(169);
@@ -173,7 +206,7 @@ describe("StackingGame", () => {
 
   it("keeps drawing the ended run for the whole fall, then reports it once", () => {
     const onFinish = vi.fn();
-    render(<StackingGame params={params} onFinish={onFinish} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={onFinish} />);
     advance(1);
     pressSpace();
     advance(169);
@@ -202,7 +235,7 @@ describe("StackingGame", () => {
 
   it("ignores taps while the last row falls, and reports the run as it ended", () => {
     const onFinish = vi.fn();
-    render(<StackingGame params={params} onFinish={onFinish} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={onFinish} />);
     advance(1);
     pressSpace();
     advance(169);
@@ -223,7 +256,7 @@ describe("StackingGame", () => {
       removeEventListener: vi.fn(),
     }));
     const onFinish = vi.fn();
-    render(<StackingGame params={params} onFinish={onFinish} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={onFinish} />);
     advance(1);
     pressSpace();
     advance(169);
@@ -235,7 +268,7 @@ describe("StackingGame", () => {
   });
 
   it("draws every frame with the engine state for that moment", () => {
-    render(<StackingGame params={params} onFinish={vi.fn()} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     advance(100);
     const frame = drawStacking.mock.calls.at(-1)![1];
     expect(frame.params).toBe(params);
@@ -245,7 +278,7 @@ describe("StackingGame", () => {
 
   it("ignores a held Space key and other keys", () => {
     const onFinish = vi.fn();
-    render(<StackingGame params={params} onFinish={onFinish} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={onFinish} />);
     advance(400);
     pressSpace();
     advance(100);
@@ -263,7 +296,7 @@ describe("StackingGame", () => {
     const perfect = simulatedTaps(params, 0, 1);
     expect(simulate(params, perfect).endReason).toBe("top");
     const onFinish = vi.fn();
-    render(<StackingGame params={params} onFinish={onFinish} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={onFinish} />);
     pressSpace(); // at 0 ms
     for (const tap of perfect) {
       advance(tap - elapsed);
@@ -277,7 +310,7 @@ describe("StackingGame", () => {
 
   it("records one tap when two inputs land at the same moment", () => {
     const onFinish = vi.fn();
-    render(<StackingGame params={params} onFinish={onFinish} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={onFinish} />);
     advance(930);
     pressSpace();
     fireEvent.pointerDown(screen.getByRole("img", { name: /tower/i }), { isPrimary: true });
@@ -287,7 +320,7 @@ describe("StackingGame", () => {
 
   it("ignores a second finger on the canvas", () => {
     const onFinish = vi.fn();
-    render(<StackingGame params={params} onFinish={onFinish} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={onFinish} />);
     const canvas = screen.getByRole("img", { name: /tower/i });
     advance(930);
     fireEvent.pointerDown(canvas, { isPrimary: true });
@@ -301,7 +334,7 @@ describe("StackingGame", () => {
     // 20 taps half a millisecond apart all land before the first animation frame, so the run
     // has not noticed its end yet; the cap keeps the submission valid.
     const onFinish = vi.fn();
-    render(<StackingGame params={params} onFinish={onFinish} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={onFinish} />);
     for (let i = 0; i < MAX_TAPS + 5; i++) {
       advance(0.5);
       pressSpace();
@@ -314,7 +347,7 @@ describe("StackingGame", () => {
   it("sizes the canvas backing store for the device pixel ratio", () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 140, height: 300 } as DOMRect);
     vi.stubGlobal("devicePixelRatio", 2);
-    render(<StackingGame params={params} onFinish={vi.fn()} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     advance(20);
     const canvas = screen.getByRole("img", { name: /tower/i }) as HTMLCanvasElement;
     expect([canvas.width, canvas.height]).toEqual([280, 600]);
@@ -322,7 +355,7 @@ describe("StackingGame", () => {
   });
 
   it("stops Space from scrolling the page", () => {
-    render(<StackingGame params={params} onFinish={vi.fn()} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     // fireEvent returns false when the handler called preventDefault.
     expect(pressSpace()).toBe(false);
   });
@@ -330,28 +363,28 @@ describe("StackingGame", () => {
   it("keeps the run going when the parent passes a new onFinish", () => {
     const first = vi.fn();
     const second = vi.fn();
-    const { rerender } = render(<StackingGame params={params} onFinish={first} />);
+    const { rerender } = render(<StackingGame countdownMs={0} params={params} onFinish={first} />);
     advance(930);
     pressSpace();
-    rerender(<StackingGame params={params} onFinish={second} />);
+    rerender(<StackingGame countdownMs={0} params={params} onFinish={second} />);
     const expected = missAndFinish([930]);
     expect(first).not.toHaveBeenCalled();
     expect(second.mock.calls[0][0].taps).toEqual(expected);
   });
 
   it("marks itself as a running game, so the page can hide its back button", () => {
-    const { container } = render(<StackingGame params={params} onFinish={vi.fn()} />);
+    const { container } = render(<StackingGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     expect(container.querySelector("[data-game-running]")).not.toBeNull();
   });
 
   it("takes keyboard focus when it starts, so focus is not lost when the Start button goes", () => {
-    render(<StackingGame params={params} onFinish={vi.fn()} />);
+    render(<StackingGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     expect(document.activeElement).toBe(screen.getByRole("img", { name: /tower/i }));
   });
 
   it("stops listening and drawing once unmounted", () => {
     const onFinish = vi.fn();
-    const { unmount } = render(<StackingGame params={params} onFinish={onFinish} />);
+    const { unmount } = render(<StackingGame countdownMs={0} params={params} onFinish={onFinish} />);
     advance(100);
     unmount();
     const draws = drawStacking.mock.calls.length;

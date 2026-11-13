@@ -781,7 +781,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T39 Fill in sponsor details on the rules page
 - Type: docs
-- Status: todo
+- Status: dropped (Nov 12: no sponsor for now; the rules page keeps its "Draft" banner)
 - Depends on: T38
 - Acceptance criteria:
   - [ ] `src/config/sponsor.ts` holds the human-provided sponsor legal name, mailing address and contact email. The "Draft" banner disappears when no placeholder remains.
@@ -917,6 +917,19 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] Every env var in `.env.example` is mentioned in the guide (a unit test or script check compares the two lists).
   - [ ] `docs/NEEDS_HUMAN.md` gains entries for the Supabase cloud project, the Vercel project and the production admin account, each pointing at the relevant guide section.
 - Notes: The agents never run commands against production; deployment is a human step. From the T118 review: the server replays each attempt with the engine it runs at submit, so the guide should say to deploy engine changes (target ranges, rules) when no attempt is open, for example just after the daily close.
+
+## M4 play-test follow-ups
+
+### T138 The 3-2-1 countdown before every challenge
+- Type: feature
+- Status: in-progress
+- Depends on: T119
+- Acceptance criteria:
+  - [ ] Teetering Tower and Second Sense get Swift Sum's 3-2-1 (same look, timing and reduced-motion behaviour), shared by all three games, in daily play and practice.
+  - [ ] Each run's own clock (Tower taps, the Second Sense tap and timeout) starts right after "1"; taps during the countdown are ignored.
+  - [ ] The cheat check's timing allowance grows by the countdown, so honest runs are not flagged.
+  - [ ] Unit tests with mocked time for both games; the e2e specs still pass.
+- Notes: M4 play-test (Nov 12): "add the countdown to all games, it adds a nice polish".
 
 ## Maintenance
 

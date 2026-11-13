@@ -2,8 +2,10 @@
 
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { type InnerClockInputs, type InnerClockParams, REVEAL_MS } from "@/challenges/inner-clock/engine";
+import { CountdownNumber, countdownNumber } from "@/components/countdown/CountdownNumber";
 import { runFrames } from "@/components/frameLoop";
 import { usePrefersReducedMotion } from "@/components/ui/useReducedMotion";
+import { COUNTDOWN_FROM, RUN_COUNTDOWN_MS } from "@/config/countdown";
 import styles from "./InnerClockGame.module.css";
 
 /** "5 seconds"; targets are whole multiples of 100 ms, so at most one decimal. */
@@ -18,17 +20,22 @@ const clockLabel = (ms: number) => (Math.floor(ms / 100) / 10).toFixed(1);
 /** After the first second the clock stops and fades out over this long (T118), or just goes with reduced motion. */
 export const CLOCK_FADE_MS = 400;
 
-type ClockState = { phase: "shown"; ms: number } | { phase: "fading" } | { phase: "hidden" };
+type ClockState = { phase: "countdown"; number: number } | { phase: "shown"; ms: number } | { phase: "fading" } | { phase: "hidden" };
 
-type InnerClockGameProps = { params: InnerClockParams; onFinish: (inputs: InnerClockInputs) => void };
+type InnerClockGameProps = {
+  params: InnerClockParams;
+  onFinish: (inputs: InnerClockInputs) => void;
+  /** How long the 3-2-1 lasts; 0 skips it (tests of the run alone). */
+  countdownMs?: number;
+};
 
 /**
  * A Second Sense run: one big tap area, with a running clock for the first REVEAL_MS only (an
- * exact starting point; M3 play-test). The clock starts in the first frame after the run is on
- * screen (what the player sees as the start), and the run ends
- * with the first tap (pointer, Space or Enter) or at the timeout with no tap.
+ * exact starting point; M3 play-test). A 3-2-1 counts from the first frame after the run is on
+ * screen (T138); the clock starts right after "1" (what the player sees as the start), and the
+ * run ends with the first tap after that (pointer, Space or Enter) or at the timeout with no tap.
  */
-export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
+export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_MS }: InnerClockGameProps) {
   const areaRef = useRef<HTMLButtonElement>(null);
   const startedAt = useRef<number | null>(null);
   const done = useRef(false);
@@ -38,8 +45,11 @@ export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
     finishRef.current = onFinish;
   });
 
-  // The clock: running for the first REVEAL_MS, then stopped at the reveal and fading, then gone.
-  const [clockState, setClockState] = useState<ClockState>({ phase: "shown", ms: 0 });
+  // The clock: the countdown in its place, then running for the first REVEAL_MS, then stopped at
+  // the reveal and fading, then gone.
+  const [clockState, setClockState] = useState<ClockState>(() =>
+    countdownMs > 0 ? { phase: "countdown", number: COUNTDOWN_FROM } : { phase: "shown", ms: 0 },
+  );
   // Read in the frame loop, which must not restart when the preference arrives after hydration.
   const reducedMotion = usePrefersReducedMotion();
   const reducedRef = useRef(reducedMotion);
@@ -52,12 +62,20 @@ export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
     let timer: ReturnType<typeof setTimeout> | undefined;
     // This effect's own start; the ref is what tap() reads, and outlives a re-run of the effect.
     let start: number | null = null;
-    // The first frame starts the run; each later one moves the clock on, until it has faded
-    // (elapsed time, not frames, decides).
+    let shownAt: number | null = null;
+    // The first frame starts the countdown and the first one after it the run; each later one
+    // moves the clock on, until it has faded (elapsed time, not frames, decides).
     const tick = (now: number) => {
       if (start === null) {
+        shownAt ??= now;
+        const number = countdownNumber(now - shownAt, countdownMs);
+        if (number !== null) {
+          setClockState({ phase: "countdown", number });
+          return true;
+        }
         start = startedAt.current = now;
         timer = setTimeout(timeOut, params.timeoutMs);
+        setClockState({ phase: "shown", ms: 0 });
         return true;
       }
       const elapsed = now - start;
@@ -89,7 +107,7 @@ export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [params.timeoutMs]);
+  }, [params.timeoutMs, countdownMs]);
 
   const tap = () => {
     if (done.current || startedAt.current === null) return;
@@ -115,7 +133,15 @@ export function InnerClockGame({ params, onFinish }: InnerClockGameProps) {
     >
       {/* Hidden from screen readers: read every frame it would drown out the prompt. */}
       <span className={styles.clock} data-clock={clockState.phase} aria-hidden="true">
-        {clockState.phase === "shown" ? clockLabel(clockState.ms) : clockState.phase === "fading" ? clockLabel(REVEAL_MS) : ""}
+        {clockState.phase === "countdown" ? (
+          <CountdownNumber key={clockState.number} value={clockState.number} />
+        ) : clockState.phase === "shown" ? (
+          clockLabel(clockState.ms)
+        ) : clockState.phase === "fading" ? (
+          clockLabel(REVEAL_MS)
+        ) : (
+          ""
+        )}
       </span>
       <span className={styles.prompt}>Tap when you think {targetLabel(params.targetMs)} have passed</span>
       <span className={styles.hint}>Tap, click or press Space</span>
