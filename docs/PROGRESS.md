@@ -4,11 +4,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M4 complete (Nov 12); waiting for the human's M4 play-test.
+- Milestone: M4 play-test follow-ups done (T138, Nov 12).
 - Active task: none.
 - Blocked tasks: none
-- Waiting on the human: the M4 play-test (incl. T118, T119); T39 sponsor details; T45 AdSense; deployment (docs/DEPLOYMENT.md); please-confirms and `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: no eligible tasks. T39, T45, T52 and T128 wait on the human; then the M4 play-test follow-ups.
+- Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
+- Next: no eligible tasks. T39 dropped (no sponsor).
 
 ## Log
 
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-12 — T138 The 3-2-1 before every challenge (PR #139)
+- Shared `CountdownNumber` and `src/config/countdown.ts`; Tower and Second Sense clocks start after "1"; cheat timing allowance + 2.4 s. e2e Tower runs call `skipCountdown(page)`.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the check: 6.
+- Notes: locally `streak.spec.ts:48` fails once today's day is started (WS003, local data); CI is green.
 
 ### 2026-11-12 — T137 One frame loop for the challenges (PR #137)
 - `runFrames(step)` in `src/components/frameLoop.ts`, used by all three games. A plain function, not a hook: each game keeps its own start time (Tower at mount, Second Sense at its first frame, Swift Sum restarts after a hidden tab).
