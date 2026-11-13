@@ -3,7 +3,7 @@ import { FALL_MS } from "../../src/challenges/stacking/render";
 import { CANVAS_COLOR_TOKENS, FLASH_COUNT_COLOR_TOKENS } from "../../src/components/canvasTokens";
 import { expect, test } from "./support/fixtures";
 import { gotoReady, signUpViaForm } from "./support/pages";
-import { pinSeed, playTaps, tapsForAMiss } from "./support/tower";
+import { pinSeed, playTaps, skipCountdown, tapsForAMiss } from "./support/tower";
 
 // Checks only a real browser can make (jsdom has no layout, CSS or canvas): focus visibility,
 // busy buttons, touch-target size and the game's colour tokens.
@@ -65,6 +65,7 @@ test("the back button hides during a run and returns with the result", async ({ 
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByRole("img", { name: /game area/ })).toBeVisible();
   await expect(back).toBeHidden();
+  await skipCountdown(page);
   // Still hidden while the player takes their time (no time limit), until a miss ends the run.
   await page.clock.runFor(20_000);
   await expect(back).toBeHidden();

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { COLUMNS, columnAt, simulate, type StackingParams } from "@/challenges/stacking/engine";
 import { createRng } from "@/challenges/shared/prng";
 import { STACKING_RHYTHM_MAX_SD_MS } from "@/config/cheat";
+import { RUN_COUNTDOWN_MS } from "@/config/countdown";
 import { detectFlags, type DetectArgs } from "./detect";
 
 const PARAMS: StackingParams = { startStepMs: 160, stepDecayMs: 7, startColumn: 2, direction: "right" };
@@ -167,15 +168,19 @@ describe("flash-count-instant", () => {
 });
 
 describe("timing-mismatch", () => {
-  it("flags a last input more than 2 s behind the server's clock beyond the 15 s allowance", () => {
+  // 15 s to load and read, plus the 3-2-1 before the run's own clock starts (T138), plus 2 s.
+  const allowed = 15_000 + RUN_COUNTDOWN_MS + 2_000;
+
+  it("flags a last input more than 2 s behind the server's clock beyond the loading and countdown allowance", () => {
     const taps = humanTaps(8);
-    expect(detectFlags(tower(taps, { serverElapsedMs: taps.at(-1)! + 17_001 }))).toEqual(["timing-mismatch"]);
-    expect(detectFlags(clock(0.2, { serverElapsedMs: 6_000 + 17_001 }))).toEqual(["timing-mismatch"]);
+    expect(detectFlags(tower(taps, { serverElapsedMs: taps.at(-1)! + allowed + 1 }))).toEqual(["timing-mismatch"]);
+    expect(detectFlags(clock(0.2, { serverElapsedMs: 6_000 + allowed + 1 }))).toEqual(["timing-mismatch"]);
   });
 
-  it("allows exactly 17 s", () => {
+  it("allows exactly the allowance, so an honest run with a 3-2-1 is not flagged", () => {
     const taps = humanTaps(8);
-    expect(detectFlags(tower(taps, { serverElapsedMs: taps.at(-1)! + 17_000 }))).not.toContain("timing-mismatch");
+    expect(detectFlags(tower(taps, { serverElapsedMs: taps.at(-1)! + allowed }))).not.toContain("timing-mismatch");
+    expect(detectFlags(clock(0.2, { serverElapsedMs: 6_000 + allowed }))).not.toContain("timing-mismatch");
   });
 
   it("skips runs with no timed input: a Second Sense timeout, no Tower taps, and Swift Sum's untimed answer", () => {

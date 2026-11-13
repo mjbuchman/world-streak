@@ -2,7 +2,8 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { COUNTDOWN_STEP_MS, FlashCountGame } from "./FlashCountGame";
+import { COUNTDOWN_STEP_MS } from "@/config/countdown";
+import { FlashCountGame } from "./FlashCountGame";
 
 const params = {
   dotCount: 2,

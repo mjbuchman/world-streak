@@ -3,7 +3,7 @@ import { paramsFromSeed } from "../../../src/challenges/stacking/engine";
 import { FALL_MS } from "../../../src/challenges/stacking/render";
 import { expect, test } from "../support/fixtures";
 import { gotoReady, signUpViaForm } from "../support/pages";
-import { pinSeed, tapsForAMiss } from "../support/tower";
+import { pinSeed, skipCountdown, tapsForAMiss } from "../support/tower";
 
 // Runs on the phone projects only (playwright.config.ts): Pixel 7 and a 390 x 844 touch screen.
 
@@ -67,6 +67,7 @@ test("the Tower can be played to the end with taps, on a board that fits", async
   await expect(page.getByRole("status")).toHaveText("Row 1");
   await expectBoardFits(page, board);
 
+  await skipCountdown(page);
   let now = 0;
   for (const at of tapsForAMiss(paramsFromSeed(seed))) {
     await page.clock.runFor(at - now);
@@ -83,6 +84,8 @@ test("Second Sense can be played with a tap, on an area that fits", async ({ pag
   await tap(page, page.getByRole("button", { name: "Start" }));
   const area = page.getByRole("button", { name: /Tap when you think [\d.]+ seconds have passed/ });
   await expectBoardFits(page, area);
+  // A tap during the 3-2-1 does not count (T138).
+  await expect(page.locator("[data-clock]")).not.toHaveAttribute("data-clock", "countdown");
   await tap(page, area);
   await expect(page.getByRole("heading", { level: 2 })).toHaveText(/^\d+(\.\d+)? s early$/);
   await expectPhoneFriendly(page);

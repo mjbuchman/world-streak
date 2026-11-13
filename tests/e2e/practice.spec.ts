@@ -4,7 +4,7 @@ import { FALL_MS } from "../../src/challenges/stacking/render";
 import { reachedRow } from "../../src/components/stacking/rows";
 import { expect, test } from "./support/fixtures";
 import { gotoReady } from "./support/pages";
-import { pinSeed, playTaps, tapsForAMiss } from "./support/tower";
+import { pinSeed, playTaps, skipCountdown, tapsForAMiss } from "./support/tower";
 
 test("practice tower works signed out, ends with a score and offers another go", async ({ page }) => {
   const attemptRequests: string[] = [];
@@ -22,6 +22,10 @@ test("practice tower works signed out, ends with a score and offers another go",
 
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByRole("status")).toHaveText("Row 1");
+  // The 3-2-1 over the board comes first (T138).
+  await expect(page.locator("[data-countdown]")).toHaveText("3");
+  await skipCountdown(page);
+  await expect(page.locator("[data-countdown]")).toHaveCount(0);
   const taps = tapsForAMiss(paramsFromSeed(seed));
   await playTaps(page, taps.slice(0, -1));
   // The missing tap's Space is still held down when the run ends.
@@ -63,6 +67,7 @@ test("a deliberate miss in practice ends the run with the score the engine gives
   const taps = tapsForAMiss(params);
   const { score, endReason } = simulate(params, taps);
   expect(endReason).toBe("miss");
+  await skipCountdown(page);
   await playTaps(page, taps);
   await page.clock.runFor(FALL_MS + 50);
 
@@ -95,8 +100,10 @@ test("Second Sense practice: start, see the clock for a second, tap, and see how
 
   const tapArea = page.getByRole("button", { name: /Tap when you think [\d.]+ seconds have passed/ });
   await expect(tapArea).toBeFocused();
-  // A clock runs for the first second as a starting point, then hides.
+  // A 3-2-1 first (T138), then a clock runs for the first second as a starting point, then hides.
   const shownClock = page.locator("[data-clock]");
+  await expect(shownClock).toHaveAttribute("data-clock", "countdown");
+  await expect(page.locator("[data-countdown]")).toBeVisible();
   await expect(shownClock).toHaveAttribute("data-clock", "shown");
   await expect(shownClock).toHaveText(/^0\.\d$/);
   await expect(shownClock).toHaveAttribute("data-clock", "hidden");

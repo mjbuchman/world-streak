@@ -26,11 +26,17 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The 7 x 15 board with square cells, as large as fits: the full width, or 70% of the screen height. */
-.canvas {
-  display: block;
+/* The 7 x 15 board with square cells, as large as fits: the full width, or 70% of the screen
+   height; the countdown sits over its middle. */
+.stage {
+  position: relative;
   width: min(100%, calc(70dvh * 7 / 15));
   margin-inline: auto;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
   aspect-ratio: 7 / 15;
   border-radius: var(--fs-radius-cell);
   touch-action: none;
