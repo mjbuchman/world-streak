@@ -65,9 +65,9 @@ export function StackingGame({ params, onFinish, passTarget: target, best = 0, c
     // them. A tap the engine would ignore must not be recorded, or it would use up the last
     // row's tap and, with no time limit, the run could never end. (A tap in the moment between
     // the run ending and the next frame is recorded; the engine ignores taps after the end.)
-    // A tap during the countdown stamps a negative time, so it is dropped too. Browsers round performance.now() (to 1 ms, or far coarser with fingerprinting
-    // protection), so two inputs in one moment, or a press as the run starts, stamp the same
-    // time.
+    // A tap during the countdown stamps a negative time, so it is dropped too. Browsers round
+    // performance.now() (to 1 ms, or far coarser with fingerprinting protection), so two inputs
+    // in one moment, or a press as the run starts, stamp the same time.
     const tap = () => {
       const at = performance.now() - start;
       if (finished || taps.length >= MAX_TAPS) return;
