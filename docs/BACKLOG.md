@@ -922,7 +922,7 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
 
 ### T138 The 3-2-1 countdown before every challenge
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T119
 - Acceptance criteria:
   - [ ] Teetering Tower and Second Sense get Swift Sum's 3-2-1 (same look, timing and reduced-motion behaviour), shared by all three games, in daily play and practice.
