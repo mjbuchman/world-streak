@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M5 The Daily Three (planned Nov 15).
-- Active task: T141.
+- Active task: T170 (split from T142).
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M5 The Daily Three (T139–T166, approved in advance on Nov 15), starting with T139.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-15 — T141 Swift Sum: Flash Ladder engine (PR #146)
+- `src/challenges/flash-count/flashLadder.ts` (not registered yet): 10 levels, 3 lives, retry with a new layout.
+- Review rounds: spec 1, quality 1, tests 1. Maintainer check done (10 merges): T168, T169 added. Merges since: 0.
 
 ### 2026-11-15 — T140 Second Sense plays as Time Bank (PR #145)
 - Registry, play and practice use Time Bank; old engine removed; migration makes `inner-clock` higher-better with a 4-round placeholder; cheat rule retired until T164.
