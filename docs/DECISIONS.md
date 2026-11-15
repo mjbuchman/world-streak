@@ -369,3 +369,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - How to change it later: the constants in `src/challenges/inner-clock/timeBank.ts`.
 - T140: the default pass target is 4 rounds. Scores from the old single-round game (errors in seconds) stay in `attempts`, so for 14 days they could enter the percentile if 50 or more exist. That only happens on local data, since nothing has launched. Its cheat rule is retired until T164, and a round with no tap now counts in the timing check at its timeout.
 - Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
+### 2026-11-15 — Swift Sum: Flash Ladder rules and placeholders (T141)
+- Choice: a wrong count costs a life and retries the same level with a new layout. 3 lives, 10 levels, level i has 8 + 3i to 10 + 3i dots, the flash shrinks from 1.8 s by 0.12 s a level, and the tolerance is 10% (at least 1). Lives left are counted when the run ends.
+- Reason: the design does not say whether a wrong count moves on, so this follows Echo Path. A simulated estimator that is off by up to 16% clears about 6 levels.
+- How to change it later: the constants in `src/challenges/flash-count/flashLadder.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
