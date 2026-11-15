@@ -370,6 +370,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - T140: the default pass target is 4 rounds. Scores from the old single-round game (errors in seconds) stay in `attempts`, so for 14 days they could enter the percentile if 50 or more exist. That only happens on local data, since nothing has launched. Its cheat rule is retired until T164, and a round with no tap now counts in the timing check at its timeout.
 - Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
 
+### 2026-11-15 — Echo Path rules and placeholders (T143)
+- Choice: a 3 x 3 grid, lengths 3 to 12, 3 lives, each tile lit for 450-650 ms. There is no time limit per tap, as the Tower has none (T87). Each length's sequence is drawn fresh, not grown from the last, and never lights the same tile twice in a row. Lives left are counted when the run ends.
+- Reason: the design leaves these details open; this keeps the engine simple and every try fair.
+- How to change it later: the constants in `src/challenges/echo-path/engine.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
 ### 2026-11-15 — Swift Sum: Flash Ladder rules and placeholders (T141)
 - Choice: a wrong count costs a life and retries the same level with a new layout. 3 lives, 10 levels, level i has 8 + 3i to 10 + 3i dots, the flash shrinks from 1.8 s by 0.12 s a level, and the tolerance is 10% (at least 1). Lives left are counted when the run ends.
 - Reason: the design does not say whether a wrong count moves on, so this follows Echo Path. A simulated estimator that is off by up to 16% clears about 6 levels.
