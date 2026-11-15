@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M5 The Daily Three (planned Nov 15).
-- Active task: T168.
+- Active task: T169.
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M5 The Daily Three (T139–T166, approved in advance on Nov 15), starting with T139.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-15 — T168 One ladder-range helper (PR #149)
+- `ladderRanges` in `src/challenges/shared/ladder.ts`, used by Time Bank and Flash Ladder.
+- Review rounds: quality 1 (light). Merges since the check: 3.
 
 ### 2026-11-15 — T142 Swift Sum plays as Flash Ladder (PR #148)
 - Registry, play and practice use Flash Ladder; placement moved to `flash-count/dots.ts`; migration makes `flash-count` higher-better (5 levels); `flash-count-instant` derives clear times from the params.
