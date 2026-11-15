@@ -39,6 +39,10 @@ describe("challengeUi", () => {
     }
   });
 
+  it("explains Second Sense's rounds and time bank (T140)", () => {
+    expect(challengeUi("inner-clock").howTo).toMatch(/round.*3-second time bank.*Survive as many rounds/);
+  });
+
   it.each([
     ["stacking", "Tower", { tapsMs: [900, 1800] }],
     ["inner-clock", "Clock", { tapsMs: [3200, 4100] }],
