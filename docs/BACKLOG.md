@@ -969,7 +969,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T140 Second Sense plays as Time Bank
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T167
 - Acceptance criteria:
   - [ ] The registry's `inner-clock` entry uses the Time Bank module; the single-round engine and its tests are removed. A migration sets `challenge_types` `inner-clock` to `higher-better` and its `default_pass_targets` placeholder to 4 (rounds), and recomputes unedited, unstarted open `inner-clock` days' targets (pgTAP).
@@ -980,7 +980,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T141 Swift Sum: Flash Ladder engine
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T114, T138
 - Acceptance criteria:
   - [ ] A new pure module (for example `src/challenges/flash-count/flashLadder.ts`, not yet in the registry) implements `ChallengeModule` with `direction "higher-better"` and `LIVES = 3`. `paramsFromSeed(seed)` returns `MAX_ROUNDS` levels (placeholder 10), each with a `dotCount` and `flashMs`; counts rise and flashes shorten from level to level within documented ranges.
