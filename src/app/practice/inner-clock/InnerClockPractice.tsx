@@ -1,8 +1,9 @@
 "use client";
 
-import { type InnerClockInputs, type InnerClockParams, paramsFromSeed, tapScore } from "@/challenges/inner-clock/engine";
+import { paramsFromSeed, play, timeBank, type TimeBankInputs, type TimeBankParams } from "@/challenges/inner-clock/timeBank";
 import { challengeUi } from "@/components/challenges/challengeUi";
-import { InnerClockGame, targetLabel } from "@/components/inner-clock/InnerClockGame";
+import { targetLabel } from "@/components/inner-clock/InnerClockGame";
+import { TimeBankGame } from "@/components/inner-clock/TimeBankGame";
 import { PracticeShell } from "@/components/practice/PracticeShell";
 import { useIsClient } from "@/components/useIsClient";
 import { secureRandomSeed } from "@/lib/random";
@@ -10,39 +11,29 @@ import { secureRandomSeed } from "@/lib/random";
 const ui = challengeUi("inner-clock");
 const newRun = () => paramsFromSeed(secureRandomSeed());
 
-/** Seconds for people: "5.32 s", from ms (rounded to the ms). */
-const seconds = (ms: number) => ui.scoreLabel(Math.round(ms) / 1000);
+/** "2.8 s", from ms. */
+const seconds = (ms: number) => `${ms / 1000} s`;
 
-// The game never reports a tap after the timeout; the checks below follow the engine's rule anyway.
-const timedOut = (params: InnerClockParams, tapMs: number | null): tapMs is null => tapMs === null || tapMs > params.timeoutMs;
-
-/** The result's heading: how far off, and which way (as the engine rounds it). */
-function verdict(params: InnerClockParams, tapMs: number | null): string {
-  if (timedOut(params, tapMs)) return "Time ran out";
-  const error = tapScore(params, tapMs);
-  if (error === 0) return "Spot on";
-  return `${ui.scoreLabel(error)} ${tapMs > params.targetMs ? "late" : "early"}`;
-}
-
-function detail(params: InnerClockParams, tapMs: number | null): string {
-  if (timedOut(params, tapMs)) {
-    return `No tap within ${seconds(params.timeoutMs)}, so it counts as ${ui.scoreLabel(tapScore(params, null))} off.`;
-  }
-  return `You tapped at ${seconds(tapMs)}. The target was ${seconds(params.targetMs)}.`;
+/** The result: rounds survived and the time bank left, as the engine counts them. */
+function result(params: TimeBankParams, inputs: TimeBankInputs) {
+  const { survived, leftMs } = play(params, inputs);
+  const heading = survived === params.rounds.length ? "Every round survived" : `${ui.scoreLabel(survived)} survived`;
+  const detail = `${seconds(leftMs)} of your ${seconds(params.budgetMs)} time bank left. Score: ${timeBank.score(params, inputs)}.`;
+  return { heading, detail };
 }
 
 export function InnerClockPractice() {
-  // The target is random, so the server cannot know the one the browser picked: show it (and
-  // allow the start) only once the page runs in the browser.
+  // The targets are random, so the server cannot know the ones the browser picked: show the first
+  // (and allow the start) only once the page runs in the browser.
   const isClient = useIsClient();
   return (
-    <PracticeShell<InnerClockParams, InnerClockInputs>
+    <PracticeShell<TimeBankParams, TimeBankInputs>
       howTo={ui.howTo}
       newRun={newRun}
-      preview={(params) => (isClient ? `Your target: ${targetLabel(params.targetMs)}` : null)}
+      preview={(params) => (isClient ? `First target: ${targetLabel(params.rounds[0].targetMs)}` : null)}
       startDisabled={!isClient}
-      game={(params, onFinish) => <InnerClockGame params={params} onFinish={onFinish} />}
-      result={(params, { tapMs }) => ({ heading: verdict(params, tapMs), detail: detail(params, tapMs) })}
+      game={(params, onFinish) => <TimeBankGame params={params} onFinish={onFinish} />}
+      result={result}
     />
   );
 }

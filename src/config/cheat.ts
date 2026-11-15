@@ -16,12 +16,6 @@ export const STACKING_RHYTHM_MAX_SD_MS = 5;
  */
 export const STACKING_PERFECT_RUN_ROWS = 12;
 
-/** Second Sense: an error under this many seconds counts as near perfect... */
-export const INNER_CLOCK_NEAR_PERFECT_S = 0.01;
-/** ...and this many near-perfect runs among the player's latest INNER_CLOCK_WINDOW is implausible. */
-export const INNER_CLOCK_NEAR_PERFECT_COUNT = 3;
-export const INNER_CLOCK_WINDOW = 5;
-
 /** Swift Sum: an answer this soon after the dots cleared is faster than typing, when reported. */
 export const FLASH_COUNT_MIN_ANSWER_MS = 800;
 

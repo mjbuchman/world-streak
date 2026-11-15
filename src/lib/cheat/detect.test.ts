@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ROUND_GAP_MS } from "@/challenges/inner-clock/timeBank";
 import { COLUMNS, columnAt, simulate, type StackingParams } from "@/challenges/stacking/engine";
 import { createRng } from "@/challenges/shared/prng";
 import { STACKING_RHYTHM_MAX_SD_MS } from "@/config/cheat";
@@ -53,9 +54,9 @@ const tower = (tapsMs: number[], over: Partial<DetectArgs> = {}): DetectArgs => 
 
 const clock = (score: number, over: Partial<DetectArgs> = {}): DetectArgs => ({
   challengeType: "inner-clock",
-  inputs: { tapMs: 6_000 },
+  inputs: { tapsMs: [6_000] },
   score,
-  params: { targetMs: 6_000, timeoutMs: 18_000 },
+  params: { budgetMs: 3_000, rounds: [{ targetMs: 6_000, revealMs: 1_000, timeoutMs: 18_000 }] },
   serverElapsedMs: 10_000,
   history: [],
   ...over,
@@ -77,7 +78,7 @@ describe("detectFlags on honest-looking runs", () => {
   });
 
   it("flags nothing for a good, ordinary Second Sense or Swift Sum run", () => {
-    expect(detectFlags(clock(0.21, { history: [{ challengeType: "inner-clock", score: 0.4 }] }))).toEqual([]);
+    expect(detectFlags(clock(1, { history: [{ challengeType: "inner-clock", score: 1 }] }))).toEqual([]);
     expect(detectFlags(sum({ answerAfterClearMs: 2_400 }))).toEqual([]);
     expect(detectFlags(sum())).toEqual([]);
   });
@@ -142,20 +143,10 @@ describe("stacking-perfect-run", () => {
   });
 });
 
-describe("inner-clock-implausible", () => {
-  const near = { challengeType: "inner-clock", score: 0.004 };
-  const far = { challengeType: "inner-clock", score: 0.3 };
-
-  it("flags a third near-perfect run among the latest five", () => {
-    expect(detectFlags(clock(0.005, { history: [near, far, near, far] }))).toEqual(["inner-clock-implausible"]);
-  });
-
-  it("counts only the latest five, only Second Sense, and only errors under 0.01 s", () => {
-    expect(detectFlags(clock(0.005, { history: [far, far, far, far, near, near] }))).not.toContain("inner-clock-implausible");
-    const tower = { challengeType: "stacking", score: 0 };
-    // Tower attempts in between do not push Second Sense ones out of the window.
-    expect(detectFlags(clock(0.005, { history: [tower, near, tower, tower, tower, far, near] }))).toEqual(["inner-clock-implausible"]);
-    expect(detectFlags(clock(0.01, { history: [near, far, { challengeType: "inner-clock", score: 0.01 }] }))).not.toContain("inner-clock-implausible");
+describe("Second Sense (Time Bank)", () => {
+  it("has no rule of its own until T164: even perfect runs again and again are not flagged", () => {
+    const perfect = Array.from({ length: 5 }, () => ({ challengeType: "inner-clock", score: 1 }));
+    expect(detectFlags(clock(1, { history: perfect }))).toEqual([]);
   });
 });
 
@@ -183,15 +174,27 @@ describe("timing-mismatch", () => {
     expect(detectFlags(clock(0.2, { serverElapsedMs: 6_000 + allowed }))).not.toContain("timing-mismatch");
   });
 
-  it("skips runs with no timed input: a Second Sense timeout, no Tower taps, and Swift Sum's untimed answer", () => {
-    expect(detectFlags(clock(12, { inputs: { tapMs: null }, serverElapsedMs: 60_000 }))).toEqual([]);
+  it("times a Second Sense round with no tap at its timeout, and later rounds after the gaps", () => {
+    const timedOut = { inputs: { tapsMs: [null] } };
+    expect(detectFlags(clock(0, { ...timedOut, serverElapsedMs: 18_000 + allowed }))).toEqual([]);
+    expect(detectFlags(clock(0, { ...timedOut, serverElapsedMs: 18_000 + allowed + 1 }))).toEqual(["timing-mismatch"]);
+    const twoRounds = {
+      inputs: { tapsMs: [3_000, 4_000] },
+      params: { budgetMs: 3_000, rounds: [3_000, 4_000].map((targetMs) => ({ targetMs, revealMs: 1_000, timeoutMs: 3 * targetMs })) },
+    };
+    const lastMs = 3_000 + ROUND_GAP_MS + 4_000;
+    expect(detectFlags(clock(2, { ...twoRounds, serverElapsedMs: lastMs + allowed }))).toEqual([]);
+    expect(detectFlags(clock(2, { ...twoRounds, serverElapsedMs: lastMs + allowed + 1 }))).toEqual(["timing-mismatch"]);
+  });
+
+  it("skips runs with no timed input: no Tower taps, and Swift Sum's untimed answer", () => {
     expect(detectFlags(tower([], { serverElapsedMs: 60_000 }))).toEqual([]);
     expect(detectFlags(sum({ serverElapsedMs: 600_000 }))).toEqual([]);
   });
 });
 
 describe("each challenge's rules stay with that challenge", () => {
-  const nearPerfect = Array.from({ length: 4 }, () => ({ challengeType: "inner-clock", score: 0.001 }));
+  const nearPerfect = Array.from({ length: 4 }, () => ({ challengeType: "inner-clock", score: 8 }));
 
   it("a Tower attempt ignores Second Sense history and Swift Sum timing", () => {
     expect(detectFlags(tower(humanTaps(15), { score: 0.001, history: nearPerfect, answerAfterClearMs: 0 }))).toEqual([]);

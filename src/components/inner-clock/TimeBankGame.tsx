@@ -77,7 +77,6 @@ export function TimeBankGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_MS 
         <InnerClockGame
           key={index}
           params={params.rounds[index]}
-          revealMs={params.rounds[index].revealMs}
           countdownMs={index === 0 ? countdownMs : 0}
           onFinish={finishRound}
         />

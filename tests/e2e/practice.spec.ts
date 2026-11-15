@@ -92,15 +92,15 @@ function attemptRequests(page: Page): string[] {
   return seen;
 }
 
-test("Second Sense practice: start, see the clock for a second, tap, and see how far off it was", async ({ page }) => {
+test("Second Sense practice: rounds drain the time bank until a miss empties it", async ({ page }) => {
   const scored = attemptRequests(page);
   await gotoReady(page, "/practice/inner-clock");
-  await expect(page.getByText(/^Your target: \d+(\.\d)? seconds$/)).toBeVisible();
+  await expect(page.getByText(/^First target: \d+(\.\d)? seconds$/)).toBeVisible();
   await page.getByRole("button", { name: "Start" }).click();
 
   const tapArea = page.getByRole("button", { name: /Tap when you think [\d.]+ seconds have passed/ });
   await expect(tapArea).toBeFocused();
-  // A 3-2-1 first (T138), then a clock runs for the first second as a starting point, then hides.
+  // A 3-2-1 first (T138), then a clock runs for a moment as a starting point, then hides.
   const shownClock = page.locator("[data-clock]");
   await expect(shownClock).toHaveAttribute("data-clock", "countdown");
   await expect(page.locator("[data-countdown]")).toBeVisible();
@@ -109,11 +109,20 @@ test("Second Sense practice: start, see the clock for a second, tap, and see how
   await expect(shownClock).toHaveAttribute("data-clock", "hidden");
   await expect(shownClock).toHaveText("");
   await expect(page.getByRole("timer")).toHaveCount(0);
+  const bank = page.getByRole("meter", { name: "Error budget left" });
+  await expect(bank).toHaveAttribute("aria-valuenow", "3000");
   await tapArea.click();
 
-  // Targets are at least 7 s, so a tap after a second or two is early by 5 s or more.
-  await expect(page.getByRole("heading", { level: 2 })).toHaveText(/^\d+(\.\d+)? s early$/);
-  await expect(page.getByText(/^You tapped at \d+(\.\d+)? s\. The target was \d+(\.\d)? s\.$/)).toBeVisible();
+  // Round 1's target is 3 to 3.5 s, so a tap after about 1.5 s is early, and the bank drains by it.
+  await expect(page.getByRole("status")).toHaveText(/^(\d+(\.\d+)? s (early|late)|Spot on)$/);
+  await expect(bank).not.toHaveAttribute("aria-valuenow", "3000");
+  // Round 2 (a 4 s target or more) starts without a 3-2-1; a tap at once misses by more than is left.
+  await expect(page.getByText("Round 2 of 8")).toBeVisible();
+  await expect(shownClock).toHaveAttribute("data-clock", "shown");
+  await page.getByRole("button", { name: /Tap when you think [\d.]+ seconds have passed/ }).click();
+
+  await expect(page.getByRole("heading", { level: 2 })).toHaveText("1 round survived");
+  await expect(page.getByText(/^0 s of your 3 s time bank left\. Score: 1\.$/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
   expect(scored).toEqual([]);
 });

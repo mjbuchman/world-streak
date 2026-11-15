@@ -2,11 +2,11 @@
 
 import type { ReactNode } from "react";
 import type { FlashCountInputs, FlashCountParams } from "@/challenges/flash-count/engine";
-import type { InnerClockInputs, InnerClockParams } from "@/challenges/inner-clock/engine";
+import type { TimeBankInputs, TimeBankParams } from "@/challenges/inner-clock/timeBank";
 import type { ChallengeType } from "@/challenges/shared/types";
 import type { StackingInputs, StackingParams } from "@/challenges/stacking/engine";
 import { FlashCountGame } from "@/components/flash-count/FlashCountGame";
-import { InnerClockGame } from "@/components/inner-clock/InnerClockGame";
+import { TimeBankGame } from "@/components/inner-clock/TimeBankGame";
 import { reachedRow, targetRow } from "@/components/stacking/rows";
 import { StackingGame } from "@/components/stacking/StackingGame";
 import { FLASH_COUNT_HOW_TO, INNER_CLOCK_HOW_TO, practicePath, STACKING_HOW_TO } from "@/config/challenges";
@@ -28,7 +28,8 @@ type ChallengeUi<Params, Inputs> = {
   summary: (score: number, passTarget: number) => string;
 };
 
-const seconds = (score: number) => `${score} s`;
+/** Time Bank: rounds survived plus the budget left as a fraction ("3.9 rounds"). */
+const rounds = (score: number) => `${score} ${score === 1 ? "round" : "rounds"}`;
 const percent = (score: number) => `${score}%`;
 
 const stacking: ChallengeUi<StackingParams, StackingInputs> = {
@@ -41,12 +42,12 @@ const stacking: ChallengeUi<StackingParams, StackingInputs> = {
   summary: (score, passTarget) => `${reachedRow(score)}. Today's target was ${targetRow(passTarget)}.`,
 };
 
-const innerClock: ChallengeUi<InnerClockParams, InnerClockInputs> = {
+const innerClock: ChallengeUi<TimeBankParams, TimeBankInputs> = {
   howTo: INNER_CLOCK_HOW_TO,
   practicePath: practicePath("inner-clock"),
-  play: ({ params, onFinish }) => <InnerClockGame params={params} onFinish={onFinish} />,
-  scoreLabel: seconds,
-  summary: (score, passTarget) => `You were ${seconds(score)} off. Today's target was within ${seconds(passTarget)}.`,
+  play: ({ params, onFinish }) => <TimeBankGame params={params} onFinish={onFinish} />,
+  scoreLabel: rounds,
+  summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${rounds(passTarget)}.`,
 };
 
 const flashCount: ChallengeUi<FlashCountParams, FlashCountInputs> = {

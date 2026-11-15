@@ -1,12 +1,10 @@
 // Cheat checks (T40): pure rules over one scored attempt and the player's recent ones. They
 // protect prize entries only. A flag never changes a pass, a fail or the meter: cheating to pass
 // only helps the streak, and sabotage must look the same as an honest fail (DESIGN.md).
+import { timeBank, type TimeBankInputs, type TimeBankParams } from "@/challenges/inner-clock/timeBank";
 import { simulate, type StackingParams } from "@/challenges/stacking/engine";
 import {
   FLASH_COUNT_MIN_ANSWER_MS,
-  INNER_CLOCK_NEAR_PERFECT_COUNT,
-  INNER_CLOCK_NEAR_PERFECT_S,
-  INNER_CLOCK_WINDOW,
   STACKING_MIN_TAP_INTERVAL_MS,
   STACKING_PERFECT_RUN_ROWS,
   STACKING_RHYTHM_MAX_SD_MS,
@@ -19,7 +17,8 @@ export type FlagReason =
   | "stacking-min-interval"
   | "stacking-robotic-rhythm"
   | "stacking-perfect-run"
-  | "inner-clock-implausible"
+  // "inner-clock-implausible" was retired with the single-round Second Sense (T140); older flags
+  // keep it as stored text. Time Bank's own check comes with T164.
   | "flash-count-instant"
   | "timing-mismatch";
 
@@ -68,21 +67,14 @@ function stackingFlags(params: StackingParams, taps: readonly number[]): FlagRea
   return flags;
 }
 
-/** This attempt and the latest earlier Second Sense ones, up to INNER_CLOCK_WINDOW in all. */
-function innerClockImplausible(score: number, history: DetectArgs["history"]): boolean {
-  const earlier = history.filter((attempt) => attempt.challengeType === "inner-clock").map((attempt) => attempt.score);
-  const window = [score, ...earlier].slice(0, INNER_CLOCK_WINDOW);
-  return window.filter((error) => error < INNER_CLOCK_NEAR_PERFECT_S).length >= INNER_CLOCK_NEAR_PERFECT_COUNT;
-}
-
 /**
  * The game's clock starts after loading and the how-to, which the server's clock includes; past
  * that allowance, a last input far behind the server's clock suggests inputs made up offline.
  * Null when the run has no timed last input to compare.
  */
-function lastTimedInputMs(challengeType: string, inputs: unknown): number | null {
+function lastTimedInputMs(challengeType: string, inputs: unknown, params: unknown): number | null {
   if (challengeType === "stacking") return (inputs as { tapsMs: number[] }).tapsMs.at(-1) ?? null;
-  if (challengeType === "inner-clock") return (inputs as { tapMs: number | null }).tapMs;
+  if (challengeType === "inner-clock") return timeBank.lastInputMs(inputs as TimeBankInputs, params as TimeBankParams);
   // Swift Sum's answer is typed after the flash, untimed.
   return null;
 }
@@ -91,13 +83,11 @@ export function detectFlags(args: DetectArgs): FlagReason[] {
   const flags: FlagReason[] = [];
   if (args.challengeType === "stacking") {
     flags.push(...stackingFlags(args.params as StackingParams, (args.inputs as { tapsMs: number[] }).tapsMs));
-  } else if (args.challengeType === "inner-clock") {
-    if (innerClockImplausible(args.score, args.history)) flags.push("inner-clock-implausible");
   } else if (args.challengeType === "flash-count") {
     if (args.answerAfterClearMs != null && args.answerAfterClearMs < FLASH_COUNT_MIN_ANSWER_MS) flags.push("flash-count-instant");
   }
 
-  const last = lastTimedInputMs(args.challengeType, args.inputs);
+  const last = lastTimedInputMs(args.challengeType, args.inputs, args.params);
   if (last !== null && args.serverElapsedMs - TIMING_LOAD_ALLOWANCE_MS - last > TIMING_MISMATCH_MS) flags.push("timing-mismatch");
   return flags;
 }

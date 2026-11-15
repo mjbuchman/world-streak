@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { flashCount } from "@/challenges/flash-count/engine";
-import { innerClock } from "@/challenges/inner-clock/engine";
+import { timeBank } from "@/challenges/inner-clock/timeBank";
 import { paramsFromSeed } from "@/challenges/stacking/engine";
 import { startAttempt, type AttemptStore } from "./start";
 
@@ -25,7 +25,7 @@ const start = (store: AttemptStore, seed = 1234) => startAttempt({ userId, now, 
 
 describe("startAttempt", () => {
   it.each([
-    ["inner-clock", innerClock.paramsFromSeed],
+    ["inner-clock", timeBank.paramsFromSeed],
     ["flash-count", flashCount.paramsFromSeed],
   ] as const)("starts a %s day with that challenge's instance for the seed (T30)", async (challengeType, paramsFor) => {
     const store = fakeStore({ gameDay: vi.fn(async () => ({ challengeType, passTarget: 0.5, closed: false })) });

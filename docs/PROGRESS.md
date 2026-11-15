@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M5 The Daily Three (planned Nov 15).
-- Active task: T167 (split from T140).
+- Active task: T140.
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M5 The Daily Three (T139–T166, approved in advance on Nov 15), starting with T139.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-15 — T167 Time Bank game component (PR #144)
+- `TimeBankGame` wraps `InnerClockGame` per round (new `revealMs` prop); wired in by T140.
+- Review rounds: spec 1, quality 1, tests 1. Merges since the check: 8.
 
 ### 2026-11-15 — T139 Second Sense: Time Bank engine (PR #143)
 - `src/challenges/inner-clock/timeBank.ts` (not registered yet); `lastInputMs` now takes `(inputs, params)`.

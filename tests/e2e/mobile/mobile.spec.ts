@@ -87,7 +87,9 @@ test("Second Sense can be played with a tap, on an area that fits", async ({ pag
   // A tap during the 3-2-1 does not count (T138).
   await expect(page.locator("[data-clock]")).not.toHaveAttribute("data-clock", "countdown");
   await tap(page, area);
-  await expect(page.getByRole("heading", { level: 2 })).toHaveText(/^\d+(\.\d+)? s early$/);
+  // A tap at once misses round 1's 3 to 3.5 s target by about that much: the run either ends at
+  // once or goes on to round 2, depending on the target.
+  await expect(page.getByRole("heading", { level: 2, name: /survived$/ }).or(page.getByText("Round 2 of 8"))).toBeVisible();
   await expectPhoneFriendly(page);
 });
 

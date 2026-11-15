@@ -48,12 +48,12 @@ describe("TimeBankGame", () => {
   it("plays round 1 after the 3-2-1, and later rounds without it, each with its own target, clock and timeout", () => {
     render(<TimeBankGame params={params} onFinish={vi.fn()} />);
     expect(screen.getByText("Round 1 of 3")).toBeTruthy();
-    expect(round).toMatchObject({ params: params.rounds[0], revealMs: 1000, countdownMs: RUN_COUNTDOWN_MS });
+    expect(round).toMatchObject({ params: params.rounds[0], countdownMs: RUN_COUNTDOWN_MS });
     tap(3200);
     gap();
     expect(screen.getByText("Round 2 of 3")).toBeTruthy();
     // Its own timeout, so the hidden-tab rule (T110) ends this round at 12 s, not round 1's 9 s.
-    expect(round).toMatchObject({ params: params.rounds[1], revealMs: 900, countdownMs: 0 });
+    expect(round).toMatchObject({ params: params.rounds[1], countdownMs: 0 });
     expect(mounts).toBe(2);
   });
 

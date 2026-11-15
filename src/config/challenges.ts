@@ -13,7 +13,7 @@ export const CHALLENGE_NAMES: Record<ChallengeType, string> = {
 /** One line on each challenge, for the home card and the practice hub. */
 export const CHALLENGE_TAGLINES: Record<ChallengeType, string> = {
   stacking: "Stack the sliding rows as high as you can.",
-  "inner-clock": "Tap when you think the target time has passed. The clock hides after a second.",
+  "inner-clock": "Tap when each target time has passed. Every miss drains your time bank.",
   "flash-count": "Dots flash for a moment. Say how many there were.",
 };
 
@@ -24,7 +24,7 @@ export function practicePath(type: ChallengeType): string {
 
 /** How to play Second Sense: shown before a practice run (and later before a scored attempt). */
 export const INNER_CLOCK_HOW_TO =
-  "Press Start, then tap when you think the target time has passed. A clock counts the first second, then hides: keep counting in your head. The closer you are, the better.";
+  "Press Start, then tap when you think each round's target time has passed. A clock counts the first moment, then hides: keep counting in your head. Each round's miss comes out of a 3-second time bank; the run ends when a miss is bigger than what is left. Survive as many rounds as you can.";
 
 /** How to play Swift Sum: shown before a practice run (and later before a scored attempt). */
 export const FLASH_COUNT_HOW_TO =

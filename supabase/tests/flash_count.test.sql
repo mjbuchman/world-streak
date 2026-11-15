@@ -11,7 +11,7 @@ select is(
   'its placeholder pass target is a 15% error'
 );
 select col_default_is(
-  'public', 'game_settings', 'default_pass_targets', '{"stacking": 10, "inner-clock": 0.5, "flash-count": 15}',
+  'public', 'game_settings', 'default_pass_targets', '{"stacking": 10, "inner-clock": 4, "flash-count": 15}',
   'a fresh settings row has all three placeholders'
 );
 
