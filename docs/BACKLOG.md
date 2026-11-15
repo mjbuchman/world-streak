@@ -1013,7 +1013,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T143 Echo Path engine
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/echo-path/engine.ts` implements `ChallengeModule` with `direction "higher-better"` and `LIVES = 3`. `paramsFromSeed(seed)` returns `{ cols, rows, startLength, maxLength, stepMs }` (placeholders: a 3 x 3 grid, start length 3, max length 12, step speed from a documented range); `sequenceFor(params, length, tryIndex)` is deterministic and never lights the same tile twice in a row.
@@ -1024,7 +1024,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T144 Echo Path renderer
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T143, T135
 - Acceptance criteria:
   - [ ] `src/challenges/echo-path/render.ts` draws the grid for a given state and elapsed ms: idle tiles, the tile lit during playback (each step `stepMs`, from the elapsed time only), the tile the player just pressed, and a short miss flash; reduced motion drops the flash animation but keeps the lit states. Colours come from the shared canvas token helper (T135).
