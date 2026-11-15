@@ -193,6 +193,20 @@ describe("InnerClockGame", () => {
     expect(shownClock()?.textContent).toBe("");
   });
 
+  it("stops and fades the clock at a shorter reveal when given one (Time Bank's later rounds)", () => {
+    render(<InnerClockGame countdownMs={0} revealMs={600} params={params} onFinish={vi.fn()} />);
+    const shownClock = () => document.querySelector("[data-clock]");
+    clock().mockReturnValue(1000);
+    showStart();
+    clock().mockReturnValue(1599);
+    act(() => frame!(0));
+    expect(shownClock()?.getAttribute("data-clock")).toBe("shown");
+    clock().mockReturnValue(1600);
+    act(() => frame!(0));
+    expect(shownClock()?.getAttribute("data-clock")).toBe("fading");
+    expect(shownClock()?.textContent).toBe("0.6");
+  });
+
   it("times the tap from the start whether or not the clock is fading", () => {
     const onFinish = vi.fn();
     render(<InnerClockGame countdownMs={0} params={params} onFinish={onFinish} />);
