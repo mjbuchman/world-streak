@@ -1002,7 +1002,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T142 Swift Sum plays as Flash Ladder
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T170
 - Acceptance criteria:
   - [ ] The registry's `flash-count` entry uses Flash Ladder; the single-round engine is removed. A migration sets `flash-count` to `higher-better` with a `default_pass_targets` placeholder of 5 and recomputes unedited, unstarted open `flash-count` days (pgTAP).
@@ -1265,7 +1265,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T168 One ladder-range helper for the multi-round engines (maintainer, Nov 15)
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T142
 - Acceptance criteria:
   - [ ] A helper in `src/challenges/shared/` builds the "N rounds, a fixed step per round" range tables, with unit tests; `timeBank.ts` and `flashLadder.ts` use it instead of their own copies, so Echo Path and Fair Split can too.
