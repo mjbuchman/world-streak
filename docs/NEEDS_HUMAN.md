@@ -12,6 +12,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Please confirm: Daily Three planning calls (M5; blocks nothing)
+- What is needed: say if any of these readings of DESIGN.md should change. (1) Second Sense keeps its tap, not a hold. (2) The fraction of lives or budget left is measured when the run ends. (3) A wrong Flash Ladder count retries the same level with a new layout. (4) Fair Split has concave shapes but no holes, and each side of a cut is measured by total area. (5) The pass rate counts only decided days, unlike T17, which counts started attempts. (6) The game played after the day is decided is left out of the pass-target percentile. (7) The results page shows the verdict, each game's score and target, the meter and share; it has no percentiles. (8) The lineup comes from a hash of the date and never repeats the previous day's. (9) Echo Path has no per-tap time limit.
+- Where to put it: reply in chat.
+- Why: the design leaves these open or unclear. The tasks are T139–T166 in the backlog.
+- Agent's recommendation: build as listed. Check them at the M5 play-test.
+
 ### Asymmetric JWT keys at deployment (T58; blocks nothing)
 - What is needed: locally, sign in again; if `npm run dev` then reports a bad key, replace the three lines in `.env.local` with what `npm run env:local` prints (local Supabase now signs its keys with the new ES256 key). At deployment, switch the project to an ECC (P-256) signing key (`docs/DEPLOYMENT.md` §4.4).
 - Where to put it: the Supabase dashboard.

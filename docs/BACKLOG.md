@@ -931,6 +931,316 @@ Goal: see the live prize ($200 plus any rollover) and cycle progress, read the d
   - [ ] Unit tests with mocked time for both games; the e2e specs still pass.
 - Notes: M4 play-test (Nov 12): "add the countdown to all games, it adds a nice polish".
 
+## M5 The Daily Three
+
+Approved in advance by the owner (2026-11-15).
+
+Goal: practise all five games (Teetering Tower, Second Sense: Time Bank, Swift Sum: Flash Ladder, Echo Path, Fair Split); play today's lineup of three once each in order, see the day locked as passed or failed once two games are won or lost (the remaining game still offered), land on the day's results page with a spoiler-free share card; watch the meter count completed days; and, as admin, edit a future day's lineup and each game's pass target.
+
+Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
+
+- Internal type ids: the stretched games keep `inner-clock` and `flash-count` (display names "Second Sense" and "Swift Sum"); the new games are `echo-path` and `fair-split`. Time Bank and Flash Ladder reuse the current rounds as they are: no new round types and no colour or other variants.
+- "Lives left" and "budget left" in the scores are measured when the run ends (the design's literal reading), so a run that fails before the end of the climb scores a whole number and the fraction separates runs that finish the climb. Record it in DECISIONS and flag it (see the ambiguities in T139).
+- Placeholder values (budgets, lives, tolerances, time limits, start lengths, round counts) live in each engine's exported constants and are tuned at the M5 play-test. Each engine task records its placeholders in DECISIONS.
+- Engine tasks are pure modules only; the matching game task wires the registry, the `challenge_types` row and default pass target (migration), the component and the practice page, so `npm run verify` stays green between tasks.
+
+### T139 Second Sense: Time Bank engine
+- Type: feature
+- Status: todo
+- Depends on: T118, T138
+- Acceptance criteria:
+  - [ ] A new pure module (for example `src/challenges/inner-clock/timeBank.ts`, not yet in the registry) implements `ChallengeModule` with `direction "higher-better"`. `paramsFromSeed(seed)` returns `{ budgetMs: 3000, rounds: { targetMs, revealMs, timeoutMs }[] }` with `MAX_ROUNDS` rounds (placeholder 8); each round's target is longer than the one before and its visible clock (`revealMs`) shorter, within documented ranges.
+  - [ ] Inputs `{ tapsMs: (number | null)[] }`, one entry per round played, each measured from that round's start (after the countdown and the documented `ROUND_GAP_MS`). The schema rejects negative or non-finite taps and more than `MAX_ROUNDS` entries. A `null` tap or one after the round's timeout costs the timeout error (as today: `(TIMEOUT_FACTOR - 1) × targetMs`).
+  - [ ] Each round's error is subtracted from the budget; a round survives if its error is at most the budget left. The run ends on the first round that does not (budget left 0) or after the last round. Score = rounds survived + budget left ÷ `budgetMs`, rounded to 3 decimals.
+  - [ ] With explicit params (targets 3000, 4000, 5000 ms; budget 3000; 3 rounds): taps `[3200, 4900, 7000]` score 2 (errors 200, 900, 2000); `[3000, 4000, 8000]` score 3 (the budget runs out exactly, the round survives); `[3100, 4100, 5100]` score 3.9; `[null]` scores 0; `[3200, null]` scores 1.
+  - [ ] `finished` is true once the budget is exhausted or every round has a tap; `lastInputMs` is the sum of the played rounds' taps (a `null` counts its timeout) plus the gaps, so the server's "taps later than real time" check holds.
+  - [ ] Determinism and range tests over seeds 0 to 999; golden scores for 3 seeds with fixed taps; a simulated "decent" player (documented error spread) survives about 5 rounds on average and a full run lasts 45 to 90 s. At least 90% lines and branches.
+- Notes: The design calls it the "current hold-for-the-target game", but the current game is tap-when-the-time-has-passed (T26, T113, T118). Keep the tap, since the design forbids new round types; record it. Time Bank replaces the single-round game (T140 swaps it in). Full review (scoring).
+
+### T140 Second Sense plays as Time Bank
+- Type: feature
+- Status: todo
+- Depends on: T139
+- Acceptance criteria:
+  - [ ] The registry's `inner-clock` entry uses the Time Bank module; the single-round engine and its tests are removed. A migration sets `challenge_types` `inner-clock` to `higher-better` and its `default_pass_targets` placeholder to 4 (rounds), and recomputes unedited, unstarted open `inner-clock` days' targets (pgTAP).
+  - [ ] `InnerClockGame` plays the rounds: the 3-2-1 before round 1, each round's target shown, the clock visible for that round's `revealMs` then fading (T118's fade), a budget bar that drains by each round's error, and a short reveal of the error between rounds. It reports `{ tapsMs }` when the run ends.
+  - [ ] The hidden-tab rule from T110 applies per round (recorded decision unchanged); the cheat check's `inner-clock-implausible` rule is retired here with a note (its replacement is T164).
+  - [ ] Unit tests with mocked time: two rounds, the second ends the run, and the reported taps match; practice `/practice/inner-clock` and its e2e work; the shared how-to text describes the budget. `npm run verify` and `npm run test:e2e` pass.
+- Notes: Full review (migration, scoring). Old stored attempts keep their old inputs; nothing replays them (as with T76).
+
+### T141 Swift Sum: Flash Ladder engine
+- Type: feature
+- Status: todo
+- Depends on: T114, T138
+- Acceptance criteria:
+  - [ ] A new pure module (for example `src/challenges/flash-count/flashLadder.ts`, not yet in the registry) implements `ChallengeModule` with `direction "higher-better"` and `LIVES = 3`. `paramsFromSeed(seed)` returns `MAX_ROUNDS` levels (placeholder 10), each with a `dotCount` and `flashMs`; counts rise and flashes shorten from level to level within documented ranges.
+  - [ ] Dot layouts reuse today's placement code (same spacing invariant, bounded retries); `layoutFor(params, level, tryIndex)` is deterministic, so a retry gets a new layout of the same level.
+  - [ ] Inputs `{ answers: { count: integer 0..999, atMs }[] }` (`atMs` strictly increasing, from the run start). An answer is correct when `|count - dotCount| <= tolerance(dotCount)`, with `tolerance = max(1, floor(dotCount × TOLERANCE_FRACTION))` (placeholder 0.1). A correct answer clears the level; a wrong one costs a life and retries the same level with a new layout.
+  - [ ] Score = levels cleared + lives left ÷ 3 when the run ends (out of lives, or the last level cleared), rounded to 3 decimals. With explicit params (dot counts 10, 14, 18): answers 10, 16, 14, 30, 25 score 2 (lives run out on level 3); 10, 14, 19 score 3 + 3/3 = 4; 9, 14, 18 (9 is within tolerance 1) also score 4.
+  - [ ] `finished`, `lastInputMs` (the last `atMs`) and a schema refusing more than `MAX_ROUNDS + LIVES` answers; determinism, spacing and golden tests (3 seeds); a decent simulated estimator clears about 6 levels. At least 90% lines and branches.
+- Notes: The design says each round is "harder" and a wrong count "costs one of 3 lives"; it does not say whether a wrong count advances. Recommendation used: retry the same level with a new layout, as Echo Path does (judgment call, record and flag). No colour or other variants. Full review (scoring).
+
+### T142 Swift Sum plays as Flash Ladder
+- Type: feature
+- Status: todo
+- Depends on: T141
+- Acceptance criteria:
+  - [ ] The registry's `flash-count` entry uses Flash Ladder; the single-round engine is removed. A migration sets `flash-count` to `higher-better` with a `default_pass_targets` placeholder of 5 and recomputes unedited, unstarted open `flash-count` days (pgTAP).
+  - [ ] `FlashCountGame` runs the levels: the 3-2-1 before level 1, each flash for its `flashMs`, the numeric input, a short "right / off by N" reveal, three life pips, and the next level or retry. The T110 hidden-tab rule applies to every flash.
+  - [ ] The cheat check's `flash-count-instant` rule reads the per-answer `atMs` (an answer less than 800 ms after its flash cleared), with updated tests.
+  - [ ] Unit tests with mocked time (a correct then a wrong answer, then a retry with a new layout); `/practice/flash-count` and its e2e work; `npm run verify` and `npm run test:e2e` pass.
+- Notes: Full review (migration, scoring).
+
+### T143 Echo Path engine
+- Type: feature
+- Status: todo
+- Depends on: T08
+- Acceptance criteria:
+  - [ ] `src/challenges/echo-path/engine.ts` implements `ChallengeModule` with `direction "higher-better"` and `LIVES = 3`. `paramsFromSeed(seed)` returns `{ cols, rows, startLength, maxLength, stepMs }` (placeholders: a 3 x 3 grid, start length 3, max length 12, step speed from a documented range); `sequenceFor(params, length, tryIndex)` is deterministic and never lights the same tile twice in a row.
+  - [ ] Inputs `{ taps: { tile, atMs }[] }` (tiles within the grid, `atMs` strictly increasing). Taps are matched in order against the current sequence; a wrong tile costs a life and the next try is a new sequence of the same length; a cleared sequence adds one step.
+  - [ ] Score = longest length cleared + lives left ÷ 3 when the run ends (out of lives or `maxLength` cleared), rounded to 3 decimals. Tests built from `sequenceFor`: clearing 3, 4 and 5, then three wrong first taps scores 5; clearing every length to `maxLength` with one mistake scores 12 + 2/3; a first wrong tap three times scores 0.
+  - [ ] `finished`, `lastInputMs` and a schema bound on the number of taps; determinism, range (seeds 0 to 999) and golden tests for 3 seeds. At least 90% lines and branches.
+- Notes: No per-tap time limit (as the Tower has none since T87); judgment call, record it. Full review (scoring).
+
+### T144 Echo Path renderer
+- Type: feature
+- Status: todo
+- Depends on: T143, T135
+- Acceptance criteria:
+  - [ ] `src/challenges/echo-path/render.ts` draws the grid for a given state and elapsed ms: idle tiles, the tile lit during playback (each step `stepMs`, from the elapsed time only), the tile the player just pressed, and a short miss flash; reduced motion drops the flash animation but keeps the lit states. Colours come from the shared canvas token helper (T135).
+  - [ ] `hitTile(layout, x, y)` maps a canvas point to a tile index (or null in the gaps), with tile hit areas of at least 44 x 44 CSS px at 390 px width.
+  - [ ] Unit tests for the playback schedule (which tile is lit at given ms) and `hitTile` at tile edges.
+- Notes: Fresh Sport look per `docs/UI_GUIDELINES.md`.
+
+### T145 Echo Path game, practice page and registration
+- Type: feature
+- Status: todo
+- Depends on: T144, T137, T109
+- Acceptance criteria:
+  - [ ] `CHALLENGE_TYPES` and the registry gain `echo-path` (engine and `EchoPathGame` component). A migration adds `challenge_types` `echo-path/higher-better` and a `default_pass_targets` placeholder of 6 (pgTAP).
+  - [ ] `EchoPathGame` (using `useFrameLoop`): the 3-2-1, playback, input phase (pointer taps), life pips and the length reached; it reports `{ taps }` when the run ends. Taps during playback are ignored.
+  - [ ] `/practice/echo-path` uses the practice shell, works signed out, and the practice hub lists it with a one-line description.
+  - [ ] Unit test with mocked time (one cleared round, one mistake); e2e: open the practice page, start, tap a wrong tile three times, and see the result. `npm run verify` and `npm run test:e2e` pass.
+- Notes: Full review (migration). Not in the daily lineup until T150.
+
+### T146 Fair Split geometry
+- Type: feature
+- Status: todo
+- Depends on: T08
+- Acceptance criteria:
+  - [ ] `src/challenges/fair-split/geometry.ts` exports pure `polygonArea` (shoelace), `splitShare(polygon, a, b)` (the share of area on the left of the infinite line through `a` and `b`, by half-plane clipping, correct for concave polygons) and `shapeFor(seed, index, oddness)` (a simple, non-self-intersecting polygon in a 100 x 100 box: convex at low oddness, concave at higher).
+  - [ ] Tests: square 0..100, line x = 50 gives 0.5, x = 51 gives 0.49 or 0.51 by side; an L-shape with a known split; a line missing the shape gives 0 or 1; `shapeFor` over seeds 0 to 999 is simple (no edge crossings), has area of at least 30% of the box, and is deterministic. At least 90% lines and branches.
+- Notes: "Shape oddness (concave, holes later)": recommendation used is concave shapes in the MVP and no holes yet (record and flag). A cut through a concave shape can make more than two pieces; the share is the total area on each side of the line (judgment call, record and flag).
+
+### T147 Fair Split engine
+- Type: feature
+- Status: todo
+- Depends on: T146
+- Acceptance criteria:
+  - [ ] `src/challenges/fair-split/engine.ts` implements `ChallengeModule` with `direction "higher-better"`, `LIVES = 3`, `TOLERANCE_POINTS = 1`, `MAX_SHAPES` (placeholder 12) and a per-cut time limit that shortens with the shape index (placeholders, documented). `paramsFromSeed` returns each shape's polygon and time limit, oddness rising with the index.
+  - [ ] Inputs `{ cuts: { atMs, ax, ay, bx, by }[], endMs }`. Shape *k* appears `GAP_MS` after the previous shape ended; a cut counts if both sides are within ±1 percentage point of 50% (49/51 counts, 48.9/51.1 does not), and a cut that misses the shape, falls outside the tolerance, or comes after the time limit costs a life. A shape with no cut by its limit (judged against the next cut or `endMs`) times out and costs a life.
+  - [ ] Score = shapes cut + lives left ÷ 3 when the run ends, rounded to 3 decimals. Tests with explicit square params: cuts at x = 50, 50.9, 48.5, 50, 47, 53 score 3; a cut at 51.0 counts; a cut after the limit costs a life; three timeouts with `endMs` alone score 0; all `MAX_SHAPES` cut with 2 lives scores 12 + 2/3.
+  - [ ] `finished`, `lastInputMs` (`endMs`), schema bounds; determinism and golden tests for 3 seeds; a simulated cutter with a documented aim error survives about 6 shapes. At least 90% lines and branches.
+- Notes: Full review (scoring).
+
+### T148 Fair Split renderer
+- Type: feature
+- Status: todo
+- Depends on: T147, T135
+- Acceptance criteria:
+  - [ ] `src/challenges/fair-split/render.ts` draws the shape scaled to the canvas, the cut line while dragging, the two pieces after a cut with their percentages, a draining time-limit ring, and a miss state; reduced motion skips the pieces separating.
+  - [ ] Pure helpers map canvas points to shape space and back (round trip within 0.01 units at any canvas size) and clip a drag to the shape's box.
+  - [ ] Unit tests for the coordinate mapping and the timer ring's fraction at given ms.
+
+### T149 Fair Split game, practice page and registration
+- Type: feature
+- Status: todo
+- Depends on: T148, T137, T109
+- Acceptance criteria:
+  - [ ] `CHALLENGE_TYPES` and the registry gain `fair-split` (engine and `FairSplitGame`). A migration adds `challenge_types` `fair-split/higher-better` and a `default_pass_targets` placeholder of 5 (pgTAP).
+  - [ ] `FairSplitGame`: the 3-2-1, a pointer drag (pointerdown to pointerup) makes one cut per shape, the result shows the split, lives and the next shape; a drag shorter than `MIN_DRAG` is ignored; the canvas uses `touch-action: none`. It reports `{ cuts, endMs }` when the run ends, including timeouts.
+  - [ ] `/practice/fair-split` uses the practice shell, works signed out, and is listed in the practice hub.
+  - [ ] Unit test with mocked time and pointer events (one counted cut, one timeout); e2e: drag a cut on the practice page and see the split percentages. `npm run verify` and `npm run test:e2e` pass.
+- Notes: Full review (migration).
+
+### T150 The pool and the lineup rule
+- Type: feature
+- Status: todo
+- Depends on: T31, T140, T142, T145, T149
+- Acceptance criteria:
+  - [ ] A migration adds `game_settings.pool text[]`, default `{stacking,inner-clock,flash-count,echo-path,fair-split}`, each entry checked against `challenge_types`, at least 3 distinct entries.
+  - [ ] SQL `lineup_for(d date, previous text[])` returns three different games from the pool in order, chosen by a documented deterministic hash of the date (the daily seed); if the result equals `previous` exactly (same games, same order), it takes the next lineup in a documented order instead.
+  - [ ] pgTAP: fixed dates give committed lineups; over 365 consecutive days no lineup has a repeated game and no day repeats the previous day's exact lineup; every pool game appears; with a pool of exactly 3 games, consecutive days still differ (order changes).
+  - [ ] The `rotation` column stays for now (T151 stops reading it, T162 removes it from the settings editor).
+- Notes: Full review (migration, streak). "While the pool has only five games, every lineup is allowed"; skill-category balancing is later (Open, not in scope).
+
+### T151 Game-day lineups with a pass target per game
+- Type: feature
+- Status: todo
+- Depends on: T150, T102
+- Acceptance criteria:
+  - [ ] A migration creates `game_day_games` (`game_date references game_days`, `position smallint 1..3`, `challenge_type references challenge_types`, `pass_target numeric not null`, primary key `(game_date, position)`, `unique (game_date, challenge_type)`). RLS: readable by everyone, no client write policies. Existing days are backfilled as one-game lineups (position 1, their challenge and target).
+  - [ ] `ensure_game_day` and the prepare step of `close_game_day` create the three rows from `lineup_for(d, <previous day's lineup>)`, each game's target from `pass_target_for(type)` (percentile, default, streak step, as T22) for that game alone. An existing or admin-edited lineup is never overwritten.
+  - [ ] `game_days.challenge_type` and `pass_target` mirror position 1 until the endpoints move (T154), so the current `/play` keeps working.
+  - [ ] pgTAP: a new day gets three rows with three different games; each game's target follows its own percentile; the next day's lineup differs from today's; idempotent re-runs.
+- Notes: Full review (migration, streak). Depends on **Open** "How pass targets and threshold rise as the streak grows" (configurable step, flat placeholder 0, as T22).
+
+### T152 One scored attempt per game
+- Type: feature
+- Status: todo
+- Depends on: T151
+- Acceptance criteria:
+  - [ ] A migration gives `attempts` a `position` and `challenge_type` (backfilled: position 1 and the day's challenge) and replaces `unique (user_id, game_date)` with `unique (user_id, game_date, position)` plus `unique (user_id, game_date, challenge_type)`.
+  - [ ] Starting game *k* is refused in the database unless games 1 to *k*-1 have attempts (the order the day sets). `record_attempt_result` scores against that game's `game_day_games.pass_target`.
+  - [ ] `pass_target_for` reads scores by `attempts.challenge_type`, so each game's percentile uses only that game's attempts.
+  - [ ] pgTAP: a second attempt at the same game fails with a unique violation; starting game 3 before game 2 is refused; three attempts at the three games go in; a pass is judged against its own game's target.
+- Notes: Full review (migration, attempts). Counters still count per attempt until T153; the single-game `/play` starts position 1 only until T154.
+
+### T153 Day results and completed-day counters
+- Type: feature
+- Status: todo
+- Depends on: T152, T46
+- Acceptance criteria:
+  - [ ] A migration creates `day_results` (`user_id`, `game_date`, `wins`, `losses`, `outcome` null or `passed`/`failed`, `decided_at`, `counted_weight`, primary key `(user_id, game_date)`), maintained only by the attempt functions. RLS: a user selects only their own rows; no client writes.
+  - [ ] A started game counts as a loss until its pass is recorded (leaving early is a loss). The day is decided at two wins or two losses and is then locked: a later game's result never changes the outcome.
+  - [ ] `game_day_counters` gain `completed_days`, `passed_days` and their weighted versions, updated in the same transaction from the change in each player's day state (so a provisional two-loss day that a pass turns into two wins moves from failed to passed). `close_game_day` uses `weighted_passed_days / weighted_completed_days`; a day with no completed days closes broken with a null rate (as T21).
+  - [ ] Entries are inserted when a day is passed (one per passed day), not per passed game.
+  - [ ] `pass_target_for` leaves out games played after the player's day was decided.
+  - [ ] pgTAP: win, win (decided passed after two games, third game recorded but outcome unchanged); loss, win, loss (failed); start game 2 after a loss and abandon it (counted completed and failed); a loss then a pass on game 2 then a pass on game 3 (passed, counted once); weights 0.5; idempotent close.
+- Notes: Full review (migration, attempts, the meter, the streak). Design Decided: pass rate = passed days ÷ completed days. A player who loses game 1 and never returns has no completed day and is not counted (the design's definition); record it and flag it, since T17's "started attempts count" decision assumed one game a day.
+
+### T154 Start and submit for the Daily Three
+- Type: feature
+- Status: todo
+- Depends on: T153
+- Acceptance criteria:
+  - [ ] `POST /api/attempts/start` starts the caller's next game in today's order and returns `{ attemptId, gameDate, position, challengeType, seed, params, passTarget }`. If the previous game was started but not submitted, it stays a loss and the next one starts. With all three games started it returns 409 `{ error: "day-complete" }`.
+  - [ ] `POST /api/attempts/submit` returns `{ score, passed, passTarget, day: { wins, losses, outcome, nextPosition } }`; the existing status codes and checks (401, 400, 404, 409, 422, ignored `passed` fields) hold for every game.
+  - [ ] `GET` of today's state for `/play` (server helper, `src/lib/attempts/today.ts`) returns the lineup, each game's status (not started, in progress, won, lost) and the day outcome.
+  - [ ] Unit tests cover every branch, including the race of two starts for the same position (one row, the other 409), a start after the day is decided (allowed, for the remaining game), and a start after all three; `game_days.challenge_type` and `pass_target` are no longer read here.
+- Notes: Full review (attempts, scoring).
+
+### T155 The meter counts completed days
+- Type: feature
+- Status: todo
+- Depends on: T153
+- Acceptance criteria:
+  - [ ] `/api/meter` serves `passRate = weighted_passed_days / weighted_completed_days` and a `completed` count in place of `attempts`; `isMeterBody`, its drift guard and `tests/e2e/meter.spec.ts` follow in the same PR (see T21's notes on the 30 s cache).
+  - [ ] The gauge's label reads "N players finished" (singular "1 player finished"); "No one has finished yet" replaces "No attempts yet".
+  - [ ] Unit tests for the endpoint and the gauge; `npm run verify` and the meter e2e pass.
+- Notes: Full review (the meter).
+
+### T156 /play runs the Daily Three
+- Type: feature
+- Status: todo
+- Depends on: T154, T155
+- Acceptance criteria:
+  - [ ] `/play` shows today's three games in order with each one's status, and starts the next game with its how-to and "Practice first" link. After each game, a short interstitial shows "Game N of 3: won / lost" and the day so far ("1 win, 1 loss").
+  - [ ] When the day is decided, it says so ("You passed today: two wins" / "Not today: two losses") and offers the remaining game with "Play it anyway" and "See results"; the remaining game is described as not changing the result.
+  - [ ] Reload at any point resumes from the server's state; a game started and left shows as lost with the T74 wording.
+  - [ ] `PlayToday` outcome mapping (T121) covers the new start and submit replies, with table-style unit tests. e2e: sign up, play game 1 with a quick deliberate loss, reload, and see game 2 offered.
+- Notes: UI per `docs/UI_GUIDELINES.md`; rule 8 (no back button or header links during a run) applies to each game.
+
+### T157 The day's results page
+- Type: feature
+- Status: todo
+- Depends on: T156
+- Acceptance criteria:
+  - [ ] Once the player's day is decided, `/play` (or `/play/results`, linked from it) shows the day's verdict, the three games in order with each one's score and pass target and won / lost / not played, the meter, and the share card. Reload shows the same page.
+  - [ ] Signed in with no decided day, the results page redirects to `/play`; signed out, it asks the player to sign in.
+  - [ ] Ad slots follow T44: below the results, never during a run (e2e asserts).
+  - [ ] Unit tests for the page states; e2e: finish a day and see three rows and the verdict.
+- Notes: Depends on **Open** "Results page after the run (percentile, score distribution, history); planned separately". There is no recommendation, so this task builds only the page described above and leaves percentile and score distribution out; record and flag it.
+
+### T158 Share text for the Daily Three
+- Type: feature
+- Status: todo
+- Depends on: T157
+- Acceptance criteria:
+  - [ ] `buildShareText` takes the day result: "I passed today" / "I didn't make it today", three squares in game order (✅ won, ❌ lost, ⬜ not played), the world streak, the meter bar and the call for help (T32, T115).
+  - [ ] It never includes a score, pass target, game name or challenge parameters (tests assert none of the day's values appear); a passed and a failed day differ only in the outcome line and the squares.
+  - [ ] Unit tests for the text and the card; the play e2e updated.
+- Notes: Principle 3: a deliberate failure looks identical to an honest one.
+
+### T159 Perfect day on the results and share card
+- Type: feature
+- Status: todo
+- Depends on: T158
+- Acceptance criteria:
+  - [ ] Winning all three games shows "Perfect day" on the results page and adds a line (for example "⭐ Perfect day") to the share text; two wins does not.
+  - [ ] The flag is derived from the day's attempts (no new stored field) and has no effect on the counters, the meter or entries (unit test).
+  - [ ] Unit tests for the results page and the share text.
+- Notes: Depends on **Open** "Incentive to play the remaining game once the day is decided"; uses the design's example, a "perfect day" on the result and share card. Record and flag it.
+
+### T160 Home, history and rules for the Daily Three
+- Type: feature
+- Status: todo
+- Depends on: T156, T151
+- Acceptance criteria:
+  - [ ] The home pitch reads "Play today's three games; win two to pass; if enough of the world passes, humanity's streak survives." The "Your part today" card lists today's three games in order, with the signed-in player's progress (won / lost / to play) and a Play button.
+  - [ ] `/history` shows each day's lineup (three game names; one for backfilled days) in place of the single challenge name.
+  - [ ] `/rules` says how a day passes (win two of three games, each against its own pass target) and that one entry is earned per passed day.
+  - [ ] Unit tests for the card and the history rows; e2e: home shows three game names; a 390 x 844 phone still shows the Play button without scrolling.
+
+### T161 Admin lineup editor and per-game targets
+- Type: feature
+- Status: todo
+- Depends on: T151, T152, T111
+- Acceptance criteria:
+  - [ ] On `/admin`, each open day shows its three games; for a day nobody has started, an admin can set the three games and their order (three different games from `challenge_types`), and the day is marked edited so the lineup rule leaves it alone.
+  - [ ] Each game's pass target is editable until that game has an attempt (database policy and server action, as T102); the stacking target stays within 1 to 15.
+  - [ ] The single challenge select and the old `game_days.challenge_type` and `pass_target` writes are removed; a migration drops those columns once nothing reads them (a grep in the PR description shows no readers).
+  - [ ] Unit tests for the actions (non-admin refused, duplicate game refused, started day refused, started game's target refused); pgTAP for the policies; e2e: an admin changes tomorrow's lineup and sees it persisted.
+- Notes: Full review (migration, row-level security). Design Decided: "The admin can override a future day's lineup."
+
+### T162 Admin settings: the pool and default targets for five games
+- Type: feature
+- Status: todo
+- Depends on: T150, T149
+- Acceptance criteria:
+  - [ ] `/admin/settings` edits the pool (at least 3 distinct games from `challenge_types`) and a default pass target for each of the five games; the rotation field is removed and a migration drops `game_settings.rotation`.
+  - [ ] The drift guard from T89 covers the new fields; unit tests for the action's validation (pool of 2 refused, unknown game refused).
+- Notes: Full review (migration).
+
+### T163 Local tools and scripts for the Daily Three
+- Type: infra
+- Status: todo
+- Depends on: T153, T161
+- Acceptance criteria:
+  - [ ] `npm run seed:dev -- --players N --pass-rate R` gives each fake player a decided day (three games recorded so that R of them pass the day) and the completed-day counters update; `simulate:days` and `close-day` work with lineups and print the day's lineup with the outcome.
+  - [ ] The admin "Local tools" panel: set today's lineup, clear my day (all three attempts and my day result, with counters corrected), and reset a day; the T116 and T117 guards stay.
+  - [ ] Unit tests for the changed actions and the local-only guard; README play-test notes updated.
+
+### T164 Cheat checks for the multi-round games
+- Type: feature
+- Status: todo
+- Depends on: T140, T142, T145, T149, T154
+- Acceptance criteria:
+  - [ ] `detectFlags` gains rules with thresholds in `src/config/cheat.ts`: `time-bank-implausible` (errors under 10 ms on 5 or more rounds of one run), `echo-path-robotic` (10 or more taps with an interval standard deviation under 5 ms, or any tap under 80 ms after the previous one), `fair-split-implausible` (6 or more cuts within 0.05 points of 50% in one run) and `fair-split-instant` (a counted cut under 300 ms after its shape appeared); `timing-mismatch` covers every game with the countdown allowance (T138).
+  - [ ] Honest-looking fixtures for each game produce no flags; each rule has a positive and a negative test asserting the whole flag list; a rule never fires for another game's attempts. At least 90% lines and branches.
+  - [ ] The submit response shape is unchanged with and without flags.
+- Notes: Thresholds are placeholders (judgment call, record them). Flags protect prize entries only and never change a result or the meter.
+
+### T165 End-to-end coverage of the Daily Three
+- Type: feature
+- Status: todo
+- Depends on: T157, T160, T163
+- Acceptance criteria:
+  - [ ] e2e "win two of three": with today's lineup and targets set by SQL fixture so wins and losses can be forced, a new user wins two games, sees the day passed after game 2, plays the remaining game, and the results page and share text are unchanged by it; `/api/meter` shows 1 player finished.
+  - [ ] e2e "two losses": the day fails after two games and the third is offered.
+  - [ ] e2e "one attempt per game": a second start after all three games returns 409 `day-complete`; a reload resumes mid-day.
+  - [ ] e2e "day survives / breaks" (T49) rewritten for completed days via `seed:dev`; practice of all five games works signed out with no `/api/attempts` calls.
+  - [ ] All e2e tests pass in CI against local Supabase.
+
+### T166 Mobile checks for the new games
+- Type: feature
+- Status: todo
+- Depends on: T145, T149, T156
+- Acceptance criteria:
+  - [ ] On both mobile projects (T47): `/practice/echo-path`, `/practice/fair-split` and the `/play` interstitials and results page have no horizontal scroll; each canvas fits the viewport; Echo Path tiles and every button are at least 44 x 44 CSS px.
+  - [ ] Echo Path completes with `page.touchscreen.tap`; Fair Split completes a cut with a touch drag; both canvases set `touch-action` so pinch and double-tap zoom do not trigger (computed style).
+  - [ ] Any layout fixes needed are included (or split into a follow-up if over the size limit).
+
 ## Maintenance
 
 ### T51 Dev dependency audit and e2e build timing
