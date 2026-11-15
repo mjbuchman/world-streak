@@ -7,7 +7,7 @@ import { adminClient, deleteUsersByEmail } from "../support/supabase";
  * Today played as Swift Sum. It changes today's challenge for everyone, so it runs in its own
  * project after the rest of the suite (playwright.config.ts) and puts the day back afterwards.
  */
-test("a scored Swift Sum day: start, see the dots, enter a count, see the server's result", async ({ page, accounts }) => {
+test("a scored Swift Sum day: start, miss three counts, see the server's result", async ({ page, accounts }) => {
   const today = gameDateAt(new Date());
   const db = adminClient();
   const before = await db.from("game_days").select("challenge_type, edited").eq("game_date", today).maybeSingle();
@@ -21,7 +21,7 @@ test("a scored Swift Sum day: start, see the dots, enter a count, see the server
   } else {
     const created = await db
       .from("game_days")
-      .insert({ game_date: today, challenge_type: "flash-count", pass_target: 15, survival_threshold: 0.6, edited: true });
+      .insert({ game_date: today, challenge_type: "flash-count", pass_target: 5, survival_threshold: 0.6, edited: true });
     if (created.error) throw created.error;
   }
 
@@ -33,14 +33,17 @@ test("a scored Swift Sum day: start, see the dots, enter a count, see the server
     await expect(page.getByRole("heading", { level: 1, name: "Swift Sum" })).toBeVisible();
 
     await page.getByRole("button", { name: "Start" }).click();
-    await expect(page.locator("canvas")).toHaveAttribute("data-showing", "dots");
-    await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
-    await page.getByRole("textbox", { name: "How many dots were there?" }).fill("20");
-    await page.getByRole("button", { name: "Submit" }).click();
+    // 999 is wrong on every level: three misses on level 1 end the run.
+    for (let miss = 0; miss < 3; miss++) {
+      await expect(page.locator("canvas")).toHaveAttribute("data-showing", "dots");
+      await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
+      await page.getByRole("textbox", { name: "How many dots were there?" }).fill("999");
+      await page.getByRole("button", { name: "Submit" }).click();
+    }
 
-    // The server scored the count against today's target.
-    await expect(page.getByRole("heading", { level: 2, name: /^(Passed|Not this time)$/ })).toBeVisible();
-    await expect(page.getByText(/^You were \d+(\.\d+)?% off\. Today's target was within \d+(\.\d+)?%\.$/)).toBeVisible();
+    // The server scored the answers against today's target, in levels.
+    await expect(page.getByRole("heading", { level: 2, name: "Not this time" })).toBeVisible();
+    await expect(page.getByText(/^You scored 0 levels\. Today's target was \d+(\.\d+)? levels?\.$/)).toBeVisible();
   } finally {
     // A started day's challenge is locked (T111): the account, and with it its attempt, goes first.
     await deleteUsersByEmail([email]);

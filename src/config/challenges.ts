@@ -28,7 +28,7 @@ export const INNER_CLOCK_HOW_TO =
 
 /** How to play Swift Sum: shown before a practice run (and later before a scored attempt). */
 export const FLASH_COUNT_HOW_TO =
-  "Press Start and dots flash on the board for a second and a half. Then enter how many you think there were. The closer you are, the better.";
+  "Press Start and dots flash on the board. Enter how many you think there were: close enough clears the level, and each level has more dots and a shorter flash. You have 3 lives; a miss costs one and replays the same level with new dots. Clear as many levels as you can.";
 
 /** How to play the Tower: shown before a practice run and before today's scored attempt. */
 export const STACKING_HOW_TO =

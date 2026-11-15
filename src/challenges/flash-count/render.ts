@@ -1,4 +1,4 @@
-import type { Dot } from "./engine";
+import type { Dot } from "./dots";
 
 export type FlashCountFrame = {
   dots: Dot[];

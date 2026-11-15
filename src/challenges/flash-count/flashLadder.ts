@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createRng } from "../shared/prng";
 import type { ChallengeModule } from "../shared/types";
-import { placeDots, type Dot } from "./engine";
+import { placeDots, type Dot } from "./dots";
 
 /**
  * Swift Sum: Flash Ladder. Levels of the Swift Sum flash (dots flash, say how many), each with
@@ -29,6 +29,8 @@ const FLASH_STEP_MS = 120;
 export const FLASH_MS_RANGE = { min: 1800 - FLASH_STEP_MS * (MAX_ROUNDS - 1), max: 1800 } as const;
 
 export type FlashLadderLevel = { dotCount: number; flashMs: number };
+/** One showing of a level: its count, its flash, and that showing's layout. */
+export type FlashShowing = FlashLadderLevel & { dots: Dot[] };
 
 /** The levels, and the seed every layout is built from (a layout is drawn when it is shown). */
 export type FlashLadderParams = { layoutSeed: number; levels: FlashLadderLevel[] };

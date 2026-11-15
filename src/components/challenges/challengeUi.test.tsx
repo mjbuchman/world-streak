@@ -18,9 +18,9 @@ vi.mock("@/components/inner-clock/TimeBankGame", () => ({
     </button>
   ),
 }));
-vi.mock("@/components/flash-count/FlashCountGame", () => ({
-  FlashCountGame: ({ onFinish }: { onFinish: (inputs: { count: number }) => void }) => (
-    <button type="button" onClick={() => onFinish({ count: 20 })}>
+vi.mock("@/components/flash-count/FlashLadderGame", () => ({
+  FlashLadderGame: ({ onFinish }: { onFinish: (inputs: { answers: { count: number; atMs: number }[] }) => void }) => (
+    <button type="button" onClick={() => onFinish({ answers: [{ count: 20, atMs: 4000 }] })}>
       Dots
     </button>
   ),
@@ -43,10 +43,14 @@ describe("challengeUi", () => {
     expect(challengeUi("inner-clock").howTo).toMatch(/round.*3-second time bank.*Survive as many rounds/);
   });
 
+  it("explains Swift Sum's levels and lives (T142)", () => {
+    expect(challengeUi("flash-count").howTo).toMatch(/level.*3 lives.*same level/);
+  });
+
   it.each([
     ["stacking", "Tower", { tapsMs: [900, 1800] }],
     ["inner-clock", "Clock", { tapsMs: [3200, 4100] }],
-    ["flash-count", "Dots", { count: 20 }],
+    ["flash-count", "Dots", { answers: [{ count: 20, atMs: 4000 }] }],
   ] as const)("plays %s and hands on exactly the inputs its submit expects", (type, button, inputs) => {
     const onFinish = vi.fn();
     render(<>{challengeUi(type).play({ params: {}, passTarget: 1, onFinish })}</>);
@@ -58,7 +62,8 @@ describe("challengeUi", () => {
     ["stacking", 7, 10, "You reached row 7. Today's target was row 10."],
     ["inner-clock", 3.9, 4, "You scored 3.9 rounds. Today's target was 4 rounds."],
     ["inner-clock", 1, 4, "You scored 1 round. Today's target was 4 rounds."],
-    ["flash-count", 12, 15, "You were 12% off. Today's target was within 15%."],
+    ["flash-count", 4.667, 5, "You scored 4.667 levels. Today's target was 5 levels."],
+    ["flash-count", 1, 5, "You scored 1 level. Today's target was 5 levels."],
   ] as const)("sums up a %s result against today's target", (type, score, target, line) => {
     expect(challengeUi(type).summary(score, target)).toBe(line);
   });

@@ -19,9 +19,9 @@ vi.mock("@/components/stacking/StackingGame", () => ({
   },
 }));
 // The other challenges' games: stand-ins that answer with fixed inputs.
-vi.mock("@/components/flash-count/FlashCountGame", () => ({
-  FlashCountGame: ({ onFinish }: { onFinish: (inputs: { count: number }) => void }) => (
-    <button type="button" onClick={() => onFinish({ count: 20 })}>
+vi.mock("@/components/flash-count/FlashLadderGame", () => ({
+  FlashLadderGame: ({ onFinish }: { onFinish: (inputs: { answers: { count: number; atMs: number }[] }) => void }) => (
+    <button type="button" onClick={() => onFinish({ answers: [{ count: 20, atMs: 4000 }] })}>
       Answer 20
     </button>
   ),
@@ -195,10 +195,10 @@ describe("PlayToday with another challenge (T30)", () => {
   });
 
   it("plays the challenge the server started, sends its inputs, and sums up the result in its terms", async () => {
-    const flashParams = { dotCount: 25, flashMs: 1000, dots: [] };
+    const flashParams = { layoutSeed: 1, levels: [{ dotCount: 25, flashMs: 1000 }] };
     respond(
-      json(200, { ...started, challengeType: "flash-count", params: flashParams, passTarget: 15 }),
-      json(200, { score: 20, passed: false, passTarget: 15 }),
+      json(200, { ...started, challengeType: "flash-count", params: flashParams, passTarget: 5 }),
+      json(200, { score: 2, passed: false, passTarget: 5 }),
     );
     const user = userEvent.setup();
     render(<PlayToday challenge="flash-count" initial={{ kind: "ready" }} />);
@@ -207,20 +207,20 @@ describe("PlayToday with another challenge (T30)", () => {
 
     // The submission starts asynchronously after the answer, so wait for its result first.
     expect(await screen.findByRole("heading", { name: "Not this time" })).toBeTruthy();
-    expect(JSON.parse(fetchSpy.mock.calls[1][1]!.body as string)).toEqual({ attemptId, inputs: { count: 20 } });
-    expect(screen.getByText("You were 20% off. Today's target was within 15%.")).toBeTruthy();
+    expect(JSON.parse(fetchSpy.mock.calls[1][1]!.body as string)).toEqual({ attemptId, inputs: { answers: [{ count: 20, atMs: 4000 }] } });
+    expect(screen.getByText("You scored 2 levels. Today's target was 5 levels.")).toBeTruthy();
   });
 
   it("sums up in the terms of the challenge played, even if the page was loaded for another (the day rolled over)", async () => {
     respond(
-      json(200, { ...started, challengeType: "flash-count", params: { dotCount: 25, flashMs: 1000, dots: [] }, passTarget: 15 }),
-      json(200, { score: 4, passed: true, passTarget: 15 }),
+      json(200, { ...started, challengeType: "flash-count", params: { layoutSeed: 1, levels: [{ dotCount: 25, flashMs: 1000 }] }, passTarget: 5 }),
+      json(200, { score: 6, passed: true, passTarget: 5 }),
     );
     const user = userEvent.setup();
     render(<PlayToday challenge="stacking" initial={{ kind: "ready" }} />);
     await user.click(screen.getByRole("button", { name: "Start" }));
     await user.click(await screen.findByRole("button", { name: "Answer 20" }));
-    expect(await screen.findByText("You were 4% off. Today's target was within 15%.")).toBeTruthy();
+    expect(await screen.findByText("You scored 6 levels. Today's target was 5 levels.")).toBeTruthy();
   });
 
   it("refuses to play a challenge this build does not know, saying the start failed", async () => {

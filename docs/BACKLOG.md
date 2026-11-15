@@ -992,7 +992,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T170 Flash Ladder game component (split from T142)
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T141
 - Acceptance criteria:
   - [ ] A `FlashLadderGame` component (not yet wired in) plays the levels with the existing Swift Sum flash (`FlashCountGame`, given each showing's `layoutFor` dots and the level's `flashMs`): the 3-2-1 before level 1 only, the numeric input, a short "Right" / "Off by N" reveal (`REVEAL_MS`), three life pips, then the next level or a retry with a new layout. It reports `{ answers }` (each `atMs` from the component's start) once the engine says the run is finished.
@@ -1002,7 +1002,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T142 Swift Sum plays as Flash Ladder
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T170
 - Acceptance criteria:
   - [ ] The registry's `flash-count` entry uses Flash Ladder; the single-round engine is removed. A migration sets `flash-count` to `higher-better` with a `default_pass_targets` placeholder of 5 and recomputes unedited, unstarted open `flash-count` days (pgTAP).

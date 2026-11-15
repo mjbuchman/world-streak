@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createRng } from "../shared/prng";
-import { MIN_SPACING } from "./engine";
+import { MIN_SPACING } from "./dots";
 import {
   DOT_COUNT_RANGES,
   FLASH_MS_RANGE,

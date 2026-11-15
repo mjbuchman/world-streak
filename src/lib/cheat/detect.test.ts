@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { REVEAL_MS } from "@/challenges/flash-count/flashLadder";
 import { ROUND_GAP_MS } from "@/challenges/inner-clock/timeBank";
 import { COLUMNS, columnAt, simulate, type StackingParams } from "@/challenges/stacking/engine";
 import { createRng } from "@/challenges/shared/prng";
@@ -62,15 +63,23 @@ const clock = (score: number, over: Partial<DetectArgs> = {}): DetectArgs => ({
   ...over,
 });
 
-const sum = (over: Partial<DetectArgs> = {}): DetectArgs => ({
-  challengeType: "flash-count",
-  inputs: { count: 20 },
-  score: 0,
-  params: { dotCount: 20, flashMs: 1500, dots: [] },
-  serverElapsedMs: 60_000,
-  history: [],
-  ...over,
-});
+/**
+ * A Flash Ladder run of two right answers, each `gapsMs` after its flash cleared: the first after
+ * the 3-2-1 and its flash, the second after the reveal and its flash.
+ */
+const sum = (gapsMs = [2_000, 2_000], over: Partial<DetectArgs> = {}): DetectArgs => {
+  const first = RUN_COUNTDOWN_MS + 1_500 + gapsMs[0];
+  const second = first + REVEAL_MS + 1_500 + gapsMs[1];
+  return {
+    challengeType: "flash-count",
+    inputs: { answers: [{ count: 10, atMs: first }, { count: 14, atMs: second }] },
+    score: 3,
+    params: { layoutSeed: 1, levels: [10, 14].map((dotCount) => ({ dotCount, flashMs: 1_500 })) },
+    serverElapsedMs: second + 1_000,
+    history: [],
+    ...over,
+  };
+};
 
 describe("detectFlags on honest-looking runs", () => {
   it.each([1, 2, 3, 4, 5])("flags nothing for human-like Tower taps (seed %i)", (seed) => {
@@ -79,7 +88,6 @@ describe("detectFlags on honest-looking runs", () => {
 
   it("flags nothing for a good, ordinary Second Sense or Swift Sum run", () => {
     expect(detectFlags(clock(1, { history: [{ challengeType: "inner-clock", score: 1 }] }))).toEqual([]);
-    expect(detectFlags(sum({ answerAfterClearMs: 2_400 }))).toEqual([]);
     expect(detectFlags(sum())).toEqual([]);
   });
 });
@@ -151,10 +159,47 @@ describe("Second Sense (Time Bank)", () => {
 });
 
 describe("flash-count-instant", () => {
-  it("flags an answer under 800 ms after the dots cleared, when that is reported", () => {
-    expect(detectFlags(sum({ answerAfterClearMs: 799 }))).toEqual(["flash-count-instant"]);
-    expect(detectFlags(sum({ answerAfterClearMs: 800 }))).toEqual([]);
-    expect(detectFlags(sum({ answerAfterClearMs: null }))).toEqual([]);
+  it("flags an answer under 800 ms after its dots cleared (worked out from the 3-2-1, the reveals and the flashes)", () => {
+    expect(detectFlags(sum([2_000, 799]))).toEqual(["flash-count-instant"]);
+    expect(detectFlags(sum([799, 2_000]))).toEqual(["flash-count-instant"]);
+    expect(detectFlags(sum([800, 800]))).toEqual([]);
+  });
+
+  /**
+   * Levels of 10 dots (a 1 s flash) and 14 dots (a 2.5 s flash): right on level 1, wrong on
+   * level 2, then right on its retry, each answer `gapsMs` after its flash cleared.
+   */
+  function retried(gapsMs: number[]): DetectArgs {
+    const levels = [
+      { dotCount: 10, flashMs: 1_000 },
+      { dotCount: 14, flashMs: 2_500 },
+    ];
+    const first = RUN_COUNTDOWN_MS + 1_000 + gapsMs[0];
+    const second = first + REVEAL_MS + 2_500 + gapsMs[1];
+    const third = second + REVEAL_MS + 2_500 + gapsMs[2];
+    const answers = [
+      { count: 10, atMs: first },
+      { count: 99, atMs: second },
+      { count: 14, atMs: third },
+    ];
+    return sum(undefined, { inputs: { answers }, params: { layoutSeed: 1, levels }, serverElapsedMs: third + 1_000 });
+  }
+
+  it("times each answer from its own level's flash, a retry's included", () => {
+    expect(detectFlags(retried([800, 800, 800]))).toEqual([]);
+    expect(detectFlags(retried([800, 799, 800]))).toEqual(["flash-count-instant"]);
+    expect(detectFlags(retried([800, 800, 799]))).toEqual(["flash-count-instant"]);
+  });
+
+  it("ignores answers after the run ended, whether it ended on the last level or out of lives", () => {
+    const run = sum();
+    const { answers } = run.inputs as { answers: { count: number; atMs: number }[] };
+    const late = { ...run, inputs: { answers: [...answers, { count: 1, atMs: answers[1].atMs + 1 }] } };
+    expect(detectFlags(late)).toEqual([]);
+    // Three misses on level 1 (each 2 s after its flash), then an answer at once.
+    const misses = [0, 1, 2].map((i) => ({ count: 99, atMs: RUN_COUNTDOWN_MS + 1_500 + 2_000 + i * (REVEAL_MS + 1_500 + 2_000) }));
+    const outOfLives = [...misses, { count: 10, atMs: misses[2].atMs + 1 }];
+    expect(detectFlags(sum(undefined, { inputs: { answers: outOfLives }, serverElapsedMs: misses[2].atMs + 1_000 }))).toEqual([]);
   });
 });
 
@@ -187,25 +232,27 @@ describe("timing-mismatch", () => {
     expect(detectFlags(clock(2, { ...twoRounds, serverElapsedMs: lastMs + allowed + 1 }))).toEqual(["timing-mismatch"]);
   });
 
-  it("skips runs with no timed input: no Tower taps, and Swift Sum's untimed answer", () => {
+  it("times a Swift Sum run at its last answer", () => {
+    const run = sum();
+    const lastMs = run.serverElapsedMs - 1_000;
+    expect(detectFlags(sum(undefined, { serverElapsedMs: lastMs + allowed }))).toEqual([]);
+    expect(detectFlags(sum(undefined, { serverElapsedMs: lastMs + allowed + 1 }))).toEqual(["timing-mismatch"]);
+  });
+
+  it("skips a run with no timed input: no Tower taps", () => {
     expect(detectFlags(tower([], { serverElapsedMs: 60_000 }))).toEqual([]);
-    expect(detectFlags(sum({ serverElapsedMs: 600_000 }))).toEqual([]);
   });
 });
 
 describe("each challenge's rules stay with that challenge", () => {
   const nearPerfect = Array.from({ length: 4 }, () => ({ challengeType: "inner-clock", score: 8 }));
 
-  it("a Tower attempt ignores Second Sense history and Swift Sum timing", () => {
-    expect(detectFlags(tower(humanTaps(15), { score: 0.001, history: nearPerfect, answerAfterClearMs: 0 }))).toEqual([]);
-  });
-
-  it("a Second Sense attempt ignores Swift Sum timing", () => {
-    expect(detectFlags(clock(0.3, { answerAfterClearMs: 0 }))).toEqual([]);
+  it("a Tower attempt ignores Second Sense history", () => {
+    expect(detectFlags(tower(humanTaps(15), { score: 0.001, history: nearPerfect }))).toEqual([]);
   });
 
   it("a Swift Sum attempt ignores Second Sense history", () => {
-    expect(detectFlags(sum({ score: 0.001, history: nearPerfect }))).toEqual([]);
+    expect(detectFlags(sum(undefined, { score: 0.001, history: nearPerfect }))).toEqual([]);
   });
 });
 

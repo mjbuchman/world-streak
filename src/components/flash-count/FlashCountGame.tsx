@@ -1,7 +1,7 @@
 "use client";
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
-import type { FlashCountInputs, FlashCountParams } from "@/challenges/flash-count/engine";
+import type { FlashShowing } from "@/challenges/flash-count/flashLadder";
 import { dotsVisible, drawFlashCount } from "@/challenges/flash-count/render";
 import { fitCanvas, readColorTokens } from "@/components/canvas";
 import { FLASH_COUNT_COLOR_TOKENS } from "@/components/canvasTokens";
@@ -20,15 +20,18 @@ function parseCount(text: string): number | null {
   return /^\d{1,3}$/.test(trimmed) ? Number(trimmed) : null;
 }
 
+/** One showing's answer. */
+export type ShowingAnswer = { count: number };
+
 type FlashCountGameProps = {
-  params: FlashCountParams;
-  onFinish: (inputs: FlashCountInputs) => void;
+  params: FlashShowing;
+  onFinish: (answer: ShowingAnswer) => void;
   /** How long the 3-2-1 lasts; 0 skips it (tests of the flash alone). */
   countdownMs?: number;
 };
 
 /**
- * A Swift Sum run: a 3-2-1 countdown builds up to the flash (T119), counted from the first frame
+ * One Swift Sum flash: a 3-2-1 countdown builds up to the flash (T119), counted from the first frame
  * after the canvas is on screen. Right after "1" the dots stay for `flashMs` of elapsed time
  * (whatever the frame rate), then the board clears and the player enters how many there were. If
  * the tab is hidden before the dots have cleared, the countdown and the flash start over on return,
