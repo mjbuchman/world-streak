@@ -103,7 +103,7 @@ describe("Flash Count score", () => {
   it("is lower-better, always finished, and has no timed input", () => {
     expect(flashCount.direction).toBe("lower-better");
     expect(flashCount.finished(at(25), { count: 3 })).toBe(true);
-    expect(flashCount.lastInputMs({ count: 3 })).toBe(0);
+    expect(flashCount.lastInputMs({ count: 3 }, at(25))).toBe(0);
   });
 });
 

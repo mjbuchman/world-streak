@@ -51,7 +51,7 @@ function replay<Params, Inputs>(module: ChallengeModule<Params, Inputs>, seed: n
   const params = module.paramsFromSeed(seed);
   // The game submits only finished runs; anything else is not a real submission.
   if (!module.finished(params, inputs)) return null;
-  return { inputs, params, score: module.score(params, inputs), lastInputMs: module.lastInputMs(inputs) };
+  return { inputs, params, score: module.score(params, inputs), lastInputMs: module.lastInputMs(inputs, params) };
 }
 
 /**

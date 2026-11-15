@@ -21,7 +21,7 @@ describe("challenge types", () => {
     const inputs = counter.inputsSchema.parse({ taps: 5, lastMs: 900 });
     expect(counter.score(counter.paramsFromSeed(17), inputs)).toBe(2);
     expect(counter.finished(counter.paramsFromSeed(17), inputs)).toBe(true);
-    expect(counter.lastInputMs(inputs)).toBe(900);
+    expect(counter.lastInputMs(inputs, counter.paramsFromSeed(17))).toBe(900);
     expectTypeOf(counter.inputsSchema.parse).returns.toEqualTypeOf<{ taps: number; lastMs: number }>();
   });
 });

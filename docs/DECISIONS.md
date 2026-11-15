@@ -362,3 +362,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Choice: `TIMING_LOAD_ALLOWANCE_MS` becomes 15 s plus `RUN_COUNTDOWN_MS` (2.4 s), as the Tower's and Second Sense's clocks now start after the countdown while the server's starts at the attempt's start.
 - Reason: keeps the same 15 s margin for loading and reading as before; without it an honest run that takes a little longer to load would be flagged.
 - How to change it later: `src/config/cheat.ts`.
+
+### 2026-11-15 — Second Sense: Time Bank rules and placeholders (T139)
+- Choice: rounds keep the current tap (the design says "hold", but forbids new round types). Budget 3 s, 8 rounds, round i's target 3 + i to 3.5 + i s, clock visible 1.5 s shrinking 0.15 s a round, 3x timeouts, 1.5 s between rounds. Budget left is measured when the run ends, so a failed run scores a whole number. A missing tap counts as its round's timeout in the run's timing (`lastInputMs` now receives the params).
+- Reason: a simulated player off by 11% on average survives about 5 rounds; a full run lasts about 62-67 s.
+- How to change it later: the constants in `src/challenges/inner-clock/timeBank.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
