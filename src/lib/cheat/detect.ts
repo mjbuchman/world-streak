@@ -82,7 +82,8 @@ function lastTimedInputMs(challengeType: string, inputs: unknown, params: unknow
 /**
  * Each Flash Ladder answer's time after its flash cleared. The clear time is the earliest the game
  * allows: the 3-2-1 or the previous answer's reveal, then the level's flash. Real frames only come
- * later, so an honest answer is never measured as faster than it was.
+ * later, so an honest answer is never measured as faster than it was. Answer times count from
+ * the game's start, before its 3-2-1 (FlashLadderGame, T170).
  */
 function flashLadderAnswerGapsMs(params: FlashLadderParams, { answers }: FlashLadderInputs): number[] {
   const gaps: number[] = [];

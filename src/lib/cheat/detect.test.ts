@@ -165,11 +165,41 @@ describe("flash-count-instant", () => {
     expect(detectFlags(sum([800, 800]))).toEqual([]);
   });
 
-  it("ignores answers after the run ended", () => {
+  /**
+   * Levels of 10 dots (a 1 s flash) and 14 dots (a 2.5 s flash): right on level 1, wrong on
+   * level 2, then right on its retry, each answer `gapsMs` after its flash cleared.
+   */
+  function retried(gapsMs: number[]): DetectArgs {
+    const levels = [
+      { dotCount: 10, flashMs: 1_000 },
+      { dotCount: 14, flashMs: 2_500 },
+    ];
+    const first = RUN_COUNTDOWN_MS + 1_000 + gapsMs[0];
+    const second = first + REVEAL_MS + 2_500 + gapsMs[1];
+    const third = second + REVEAL_MS + 2_500 + gapsMs[2];
+    const answers = [
+      { count: 10, atMs: first },
+      { count: 99, atMs: second },
+      { count: 14, atMs: third },
+    ];
+    return sum(undefined, { inputs: { answers }, params: { layoutSeed: 1, levels }, serverElapsedMs: third + 1_000 });
+  }
+
+  it("times each answer from its own level's flash, a retry's included", () => {
+    expect(detectFlags(retried([800, 800, 800]))).toEqual([]);
+    expect(detectFlags(retried([800, 799, 800]))).toEqual(["flash-count-instant"]);
+    expect(detectFlags(retried([800, 800, 799]))).toEqual(["flash-count-instant"]);
+  });
+
+  it("ignores answers after the run ended, whether it ended on the last level or out of lives", () => {
     const run = sum();
     const { answers } = run.inputs as { answers: { count: number; atMs: number }[] };
     const late = { ...run, inputs: { answers: [...answers, { count: 1, atMs: answers[1].atMs + 1 }] } };
     expect(detectFlags(late)).toEqual([]);
+    // Three misses on level 1 (each 2 s after its flash), then an answer at once.
+    const misses = [0, 1, 2].map((i) => ({ count: 99, atMs: RUN_COUNTDOWN_MS + 1_500 + 2_000 + i * (REVEAL_MS + 1_500 + 2_000) }));
+    const outOfLives = [...misses, { count: 10, atMs: misses[2].atMs + 1 }];
+    expect(detectFlags(sum(undefined, { inputs: { answers: outOfLives }, serverElapsedMs: misses[2].atMs + 1_000 }))).toEqual([]);
   });
 });
 
