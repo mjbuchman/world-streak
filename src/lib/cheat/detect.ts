@@ -1,6 +1,7 @@
 // Cheat checks (T40): pure rules over one scored attempt and the player's recent ones. They
 // protect prize entries only. A flag never changes a pass, a fail or the meter: cheating to pass
 // only helps the streak, and sabotage must look the same as an honest fail (DESIGN.md).
+import { flashLadder, play, REVEAL_MS, type FlashLadderInputs, type FlashLadderParams } from "@/challenges/flash-count/flashLadder";
 import { timeBank, type TimeBankInputs, type TimeBankParams } from "@/challenges/inner-clock/timeBank";
 import { simulate, type StackingParams } from "@/challenges/stacking/engine";
 import {
@@ -12,6 +13,7 @@ import {
   TIMING_LOAD_ALLOWANCE_MS,
   TIMING_MISMATCH_MS,
 } from "@/config/cheat";
+import { RUN_COUNTDOWN_MS } from "@/config/countdown";
 
 export type FlagReason =
   | "stacking-min-interval"
@@ -33,8 +35,6 @@ export type DetectArgs = {
   serverElapsedMs: number;
   /** The player's earlier scored attempts, newest first. */
   history: { challengeType: string; score: number }[];
-  /** Swift Sum: ms from the dots clearing to the answer, when the game reports it. */
-  answerAfterClearMs?: number | null;
 };
 
 const intervals = (taps: readonly number[]) => taps.slice(1).map((tap, i) => tap - taps[i]);
@@ -75,8 +75,24 @@ function stackingFlags(params: StackingParams, taps: readonly number[]): FlagRea
 function lastTimedInputMs(challengeType: string, inputs: unknown, params: unknown): number | null {
   if (challengeType === "stacking") return (inputs as { tapsMs: number[] }).tapsMs.at(-1) ?? null;
   if (challengeType === "inner-clock") return timeBank.lastInputMs(inputs as TimeBankInputs, params as TimeBankParams);
-  // Swift Sum's answer is typed after the flash, untimed.
+  if (challengeType === "flash-count") return flashLadder.lastInputMs(inputs as FlashLadderInputs, params as FlashLadderParams);
   return null;
+}
+
+/**
+ * Each Flash Ladder answer's time after its flash cleared. The clear time is the earliest the game
+ * allows: the 3-2-1 or the previous answer's reveal, then the level's flash. Real frames only come
+ * later, so an honest answer is never measured as faster than it was.
+ */
+function flashLadderAnswerGapsMs(params: FlashLadderParams, { answers }: FlashLadderInputs): number[] {
+  const gaps: number[] = [];
+  for (let i = 0; i < answers.length; i++) {
+    const { cleared, finished } = play(params, { answers: answers.slice(0, i) });
+    if (finished) break;
+    const shownAtMs = i === 0 ? RUN_COUNTDOWN_MS : answers[i - 1].atMs + REVEAL_MS;
+    gaps.push(answers[i].atMs - shownAtMs - params.levels[cleared].flashMs);
+  }
+  return gaps;
 }
 
 export function detectFlags(args: DetectArgs): FlagReason[] {
@@ -84,7 +100,8 @@ export function detectFlags(args: DetectArgs): FlagReason[] {
   if (args.challengeType === "stacking") {
     flags.push(...stackingFlags(args.params as StackingParams, (args.inputs as { tapsMs: number[] }).tapsMs));
   } else if (args.challengeType === "flash-count") {
-    if (args.answerAfterClearMs != null && args.answerAfterClearMs < FLASH_COUNT_MIN_ANSWER_MS) flags.push("flash-count-instant");
+    const gaps = flashLadderAnswerGapsMs(args.params as FlashLadderParams, args.inputs as FlashLadderInputs);
+    if (gaps.some((gap) => gap < FLASH_COUNT_MIN_ANSWER_MS)) flags.push("flash-count-instant");
   }
 
   const last = lastTimedInputMs(args.challengeType, args.inputs, args.params);

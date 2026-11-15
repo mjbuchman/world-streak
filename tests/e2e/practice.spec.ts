@@ -127,22 +127,30 @@ test("Second Sense practice: rounds drain the time bank until a miss empties it"
   expect(scored).toEqual([]);
 });
 
-test("Swift Sum practice: the dots flash, clear, and an answer shows the true count and the error", async ({ page }) => {
+test("Swift Sum practice: three wrong counts on level 1 use up the lives and end the run", async ({ page }) => {
   const scored = attemptRequests(page);
   await gotoReady(page, "/practice/flash-count");
   await page.getByRole("button", { name: "Start" }).click();
-  await expect(page.locator("canvas")).toHaveAttribute("data-showing", "dots");
-  // The flash lasts FLASH_MS (1.5 s); the check keeps looking until the board clears.
-  await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
+  const lives = page.getByRole("img", { name: /lives left$/ });
+  await expect(lives).toHaveAccessibleName("3 of 3 lives left");
 
-  const answer = page.getByRole("textbox", { name: "How many dots were there?" });
-  await expect(answer).toHaveAttribute("inputmode", "numeric");
-  await answer.fill("20");
-  await page.getByRole("button", { name: "Submit" }).click();
+  // 999 is wrong on every level; each miss replays level 1 with new dots, without a 3-2-1.
+  for (const left of [2, 1, 0]) {
+    await expect(page.locator("canvas")).toHaveAttribute("data-showing", "dots");
+    // The flash lasts the level's flashMs; the check keeps looking until the board clears.
+    await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
+    const answer = page.getByRole("textbox", { name: "How many dots were there?" });
+    await expect(answer).toHaveAttribute("inputmode", "numeric");
+    await answer.fill("999");
+    await page.getByRole("button", { name: "Submit" }).click();
+    if (left > 0) {
+      await expect(lives).toHaveAccessibleName(`${left} of 3 lives left`);
+      await expect(page.getByText("Level 1 of 10")).toBeVisible();
+    }
+  }
 
-  await expect(page.getByText(/^You said 20\. There were \d+ dots\.$/)).toBeVisible();
-  // 20 is exactly right only when the instance has 20 dots.
-  await expect(page.getByRole("heading", { level: 2 })).toHaveText(/^(\d+(\.\d+)?% off|Exactly right)$/);
+  await expect(page.getByRole("heading", { level: 2 })).toHaveText("0 levels cleared");
+  await expect(page.getByText("0 of 3 lives left. Score: 0.")).toBeVisible();
   expect(scored).toEqual([]);
 });
 

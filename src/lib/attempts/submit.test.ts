@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { flashCount } from "@/challenges/flash-count/engine";
+import { flashLadder } from "@/challenges/flash-count/flashLadder";
 import { timeBank } from "@/challenges/inner-clock/timeBank";
 import { simulate, stacking } from "@/challenges/stacking/engine";
 import { tapsForAMiss } from "@/challenges/stacking/player";
@@ -72,14 +72,6 @@ describe("submitAttempt", () => {
     expect((await submit({ attemptId, inputs: { tapsMs: goodTaps } }, at(score + 1))).body).toMatchObject({ passed: false });
   });
 
-  it("passes a lower score for a lower-better challenge (Swift Sum), and fails a higher one", async () => {
-    const { dotCount } = flashCount.paramsFromSeed(seed);
-    const day = (passTarget: number) =>
-      fakeStore({ gameDay: vi.fn(async () => ({ challengeType: "flash-count", passTarget, closed: false })) });
-    expect((await submit({ attemptId, inputs: { count: dotCount } }, day(0))).body).toMatchObject({ score: 0, passed: true });
-    expect((await submit({ attemptId, inputs: { count: dotCount * 2 } }, day(99))).body).toMatchObject({ score: 100, passed: false });
-  });
-
   describe("every challenge type, with no type-specific branches (T30)", () => {
     const dayOf = (challengeType: string, passTarget: number) =>
       fakeStore({ gameDay: vi.fn(async () => ({ challengeType, passTarget, closed: false })) });
@@ -96,14 +88,18 @@ describe("submitAttempt", () => {
       expect(fail.body).toEqual({ score: 3, passed: false, passTarget: 4 });
     });
 
-    it("Swift Sum with a target of 15%: the true count passes, a count 50% off fails", async () => {
-      const { dotCount } = flashCount.paramsFromSeed(seed);
-      const pass = await submit({ attemptId, inputs: { count: dotCount } }, dayOf("flash-count", 15));
-      expect(pass.body).toEqual({ score: 0, passed: true, passTarget: 15 });
-      const store = dayOf("flash-count", 15);
-      const fail = await submit({ attemptId, inputs: { count: dotCount * 2 } }, store);
-      expect(fail.body).toEqual({ score: 100, passed: false, passTarget: 15 });
-      expect(store.recordResult).toHaveBeenCalledWith({ attemptId, inputs: { count: dotCount * 2 }, score: 100, passed: false });
+    it("Swift Sum with a target of 5 levels: five right then three misses passes, four fails", async () => {
+      const counts = flashLadder.paramsFromSeed(seed).levels.map((level) => level.dotCount);
+      // n levels exactly right, then three counts of 0 (wrong at any level).
+      const run = (n: number) => ({ answers: [...counts.slice(0, n), 0, 0, 0].map((count, i) => ({ count, atMs: 5_000 * (i + 1) })) });
+      // A minute after the start: later than any of these runs' last answer.
+      const later = new Date(startedAt.getTime() + 60_000);
+      const pass = await submit({ attemptId, inputs: run(5) }, dayOf("flash-count", 5), later);
+      expect(pass.body).toEqual({ score: 5, passed: true, passTarget: 5 });
+      const store = dayOf("flash-count", 5);
+      const fail = await submit({ attemptId, inputs: run(4) }, store, later);
+      expect(fail.body).toEqual({ score: 4, passed: false, passTarget: 5 });
+      expect(store.recordResult).toHaveBeenCalledWith({ attemptId, inputs: run(4), score: 4, passed: false });
     });
 
     it("refuses another challenge's inputs (each type's own schema decides)", async () => {

@@ -374,4 +374,5 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Choice: a wrong count costs a life and retries the same level with a new layout. 3 lives, 10 levels, level i has 8 + 3i to 10 + 3i dots, the flash shrinks from 1.8 s by 0.12 s a level, and the tolerance is 10% (at least 1). Lives left are counted when the run ends.
 - Reason: the design does not say whether a wrong count moves on, so this follows Echo Path. A simulated estimator that is off by up to 16% clears about 6 levels.
 - How to change it later: the constants in `src/challenges/flash-count/flashLadder.ts`.
+- T142: the default pass target is 5 levels. As with Second Sense, the old percentage scores could enter the percentile, but only on local data. `flash-count-instant` works out each flash's clear time from the 3-2-1, the reveals and the flashes, which is the earliest it could have cleared. Every challenge is now higher-better.
 - Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)

@@ -1,11 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { FlashCountInputs, FlashCountParams } from "@/challenges/flash-count/engine";
+import type { FlashLadderInputs, FlashLadderParams } from "@/challenges/flash-count/flashLadder";
 import type { TimeBankInputs, TimeBankParams } from "@/challenges/inner-clock/timeBank";
 import type { ChallengeType } from "@/challenges/shared/types";
 import type { StackingInputs, StackingParams } from "@/challenges/stacking/engine";
-import { FlashCountGame } from "@/components/flash-count/FlashCountGame";
+import { FlashLadderGame } from "@/components/flash-count/FlashLadderGame";
 import { TimeBankGame } from "@/components/inner-clock/TimeBankGame";
 import { reachedRow, targetRow } from "@/components/stacking/rows";
 import { StackingGame } from "@/components/stacking/StackingGame";
@@ -30,7 +30,8 @@ type ChallengeUi<Params, Inputs> = {
 
 /** Time Bank: rounds survived plus the budget left as a fraction ("3.9 rounds"). */
 const rounds = (score: number) => `${score} ${score === 1 ? "round" : "rounds"}`;
-const percent = (score: number) => `${score}%`;
+/** Flash Ladder: levels cleared plus the lives left as a fraction ("4.667 levels"). */
+const levels = (score: number) => `${score} ${score === 1 ? "level" : "levels"}`;
 
 const stacking: ChallengeUi<StackingParams, StackingInputs> = {
   howTo: STACKING_HOW_TO,
@@ -50,12 +51,12 @@ const innerClock: ChallengeUi<TimeBankParams, TimeBankInputs> = {
   summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${rounds(passTarget)}.`,
 };
 
-const flashCount: ChallengeUi<FlashCountParams, FlashCountInputs> = {
+const flashCount: ChallengeUi<FlashLadderParams, FlashLadderInputs> = {
   howTo: FLASH_COUNT_HOW_TO,
   practicePath: practicePath("flash-count"),
-  play: ({ params, onFinish }) => <FlashCountGame params={params} onFinish={onFinish} />,
-  scoreLabel: percent,
-  summary: (score, passTarget) => `You were ${percent(score)} off. Today's target was within ${percent(passTarget)}.`,
+  play: ({ params, onFinish }) => <FlashLadderGame params={params} onFinish={onFinish} />,
+  scoreLabel: levels,
+  summary: (score, passTarget) => `You scored ${levels(score)}. Today's target was ${levels(passTarget)}.`,
 };
 
 const CHALLENGE_UI = { stacking, "inner-clock": innerClock, "flash-count": flashCount } satisfies Record<ChallengeType, unknown>;
