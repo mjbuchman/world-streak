@@ -980,7 +980,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T141 Swift Sum: Flash Ladder engine
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T114, T138
 - Acceptance criteria:
   - [ ] A new pure module (for example `src/challenges/flash-count/flashLadder.ts`, not yet in the registry) implements `ChallengeModule` with `direction "higher-better"` and `LIVES = 3`. `paramsFromSeed(seed)` returns `MAX_ROUNDS` levels (placeholder 10), each with a `dotCount` and `flashMs`; counts rise and flashes shorten from level to level within documented ranges.
@@ -990,14 +990,24 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
   - [ ] `finished`, `lastInputMs` (the last `atMs`) and a schema refusing more than `MAX_ROUNDS + LIVES` answers; determinism, spacing and golden tests (3 seeds); a decent simulated estimator clears about 6 levels. At least 90% lines and branches.
 - Notes: The design says each round is "harder" and a wrong count "costs one of 3 lives"; it does not say whether a wrong count advances. Recommendation used: retry the same level with a new layout, as Echo Path does (judgment call, record and flag). No colour or other variants. Full review (scoring).
 
+### T170 Flash Ladder game component (split from T142)
+- Type: feature
+- Status: in-progress
+- Depends on: T141
+- Acceptance criteria:
+  - [ ] A `FlashLadderGame` component (not yet wired in) plays the levels with the existing Swift Sum flash (`FlashCountGame`, given each showing's `layoutFor` dots and the level's `flashMs`): the 3-2-1 before level 1 only, the numeric input, a short "Right" / "Off by N" reveal (`REVEAL_MS`), three life pips, then the next level or a retry with a new layout. It reports `{ answers }` (each `atMs` from the component's start) once the engine says the run is finished.
+  - [ ] The T110 hidden-tab rule applies to every flash (each showing is a fresh `FlashCountGame`).
+  - [ ] Unit tests with mocked time: a correct then a wrong answer, then a retry with a new layout.
+- Notes: Split from T142 to stay under ~400 lines. Full review (attempts).
+
 ### T142 Swift Sum plays as Flash Ladder
 - Type: feature
 - Status: todo
-- Depends on: T141
+- Depends on: T170
 - Acceptance criteria:
   - [ ] The registry's `flash-count` entry uses Flash Ladder; the single-round engine is removed. A migration sets `flash-count` to `higher-better` with a `default_pass_targets` placeholder of 5 and recomputes unedited, unstarted open `flash-count` days (pgTAP).
-  - [ ] `FlashCountGame` runs the levels: the 3-2-1 before level 1, each flash for its `flashMs`, the numeric input, a short "right / off by N" reveal, three life pips, and the next level or retry. The T110 hidden-tab rule applies to every flash.
-  - [ ] The cheat check's `flash-count-instant` rule reads the per-answer `atMs` (an answer less than 800 ms after its flash cleared), with updated tests.
+  - [ ] Daily play and practice run `FlashLadderGame` (T170); the practice result shows levels cleared and lives left.
+  - [ ] The cheat check's `flash-count-instant` rule reads the per-answer `atMs` (an answer less than 800 ms after its flash cleared, the clear time worked out from the params and the previous answers), with updated tests.
   - [ ] Unit tests with mocked time (a correct then a wrong answer, then a retry with a new layout); `/practice/flash-count` and its e2e work; `npm run verify` and `npm run test:e2e` pass.
 - Notes: Full review (migration, scoring).
 
@@ -1252,6 +1262,25 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
   - [ ] Any layout fixes needed are included (or split into a follow-up if over the size limit).
 
 ## Maintenance
+
+### T168 One ladder-range helper for the multi-round engines (maintainer, Nov 15)
+- Type: maintenance
+- Status: todo
+- Depends on: T142
+- Acceptance criteria:
+  - [ ] A helper in `src/challenges/shared/` builds the "N rounds, a fixed step per round" range tables, with unit tests; `timeBank.ts` and `flashLadder.ts` use it instead of their own copies, so Echo Path and Fair Split can too.
+  - [ ] Exact scores and ranges in the engine tests are unchanged; `npm run verify` passes.
+- Notes: Light review. Schedule before T143 if convenient.
+
+### T169 Remove leftovers after the Swift Sum swap (maintainer, Nov 15)
+- Type: maintenance
+- Status: todo
+- Depends on: T142
+- Acceptance criteria:
+  - [ ] No references remain to the old single-round Second Sense and Swift Sum engines' names, outside git history.
+  - [ ] Exports in `src/challenges/` that nothing uses (tests aside) are removed or made private; README and docs match the new games.
+  - [ ] `npm run verify` passes; coverage thresholds unchanged.
+- Notes: Light review.
 
 ### T51 Dev dependency audit and e2e build timing
 - Type: maintenance

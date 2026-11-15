@@ -1,0 +1,49 @@
+/* Flash Ladder: the level and the lives above the Swift Sum board (T170). */
+.ladder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.level {
+  margin: 0;
+  font-weight: 700;
+}
+
+.lives {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* A life: filled while it lasts, an outline once lost. */
+.pip {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--fs-color-mint);
+  border-radius: 50%;
+  background: var(--fs-color-mint);
+}
+
+.pip[data-lost] {
+  background: transparent;
+  border-color: var(--fs-color-surface-border);
+}
+
+/* "Right" or "Off by N", in the board's place, so the page does not jump between showings. */
+.reveal {
+  min-height: 320px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-headline);
+}

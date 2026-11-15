@@ -13,6 +13,8 @@ import { placeDots, type Dot } from "./engine";
 
 export const LIVES = 3;
 export const MAX_ROUNDS = 10;
+/** How long "Right" or "Off by N" shows after an answer, before the next flash's board. */
+export const REVEAL_MS = 1200;
 /** A count is right within this share of the true count (and always within 1). */
 export const TOLERANCE_FRACTION = 0.1;
 
