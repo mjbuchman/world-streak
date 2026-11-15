@@ -946,7 +946,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T139 Second Sense: Time Bank engine
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T118, T138
 - Acceptance criteria:
   - [ ] A new pure module (for example `src/challenges/inner-clock/timeBank.ts`, not yet in the registry) implements `ChallengeModule` with `direction "higher-better"`. `paramsFromSeed(seed)` returns `{ budgetMs: 3000, rounds: { targetMs, revealMs, timeoutMs }[] }` with `MAX_ROUNDS` rounds (placeholder 8); each round's target is longer than the one before and its visible clock (`revealMs`) shorter, within documented ranges.
