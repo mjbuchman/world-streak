@@ -49,6 +49,8 @@ describe("litTileAt", () => {
     expect(litTileAt(sequence, 400, 400)).toBe(0);
     expect(litTileAt(sequence, 400, 1000)).toBe(8);
     expect(litTileAt(sequence, 400, 1100)).toBeNull();
+    expect(litTileAt(sequence, 600, 449)).toBe(4);
+    expect(litTileAt(sequence, 600, 600)).toBe(0);
   });
 
   it("lights nothing before the start or after the last step", () => {
@@ -78,6 +80,11 @@ describe("boardLayout and hitTile", () => {
     expect(hitTile(layout, 5, 50)).toBeNull();
     expect(hitTile(layout, -1, 50)).toBeNull();
     expect(hitTile(layout, 299, 299)).toBeNull();
+    // A wider canvas centres the board: its first tile starts 50 + 12 px in.
+    const wide = boardLayout(400, 300, 3, 3);
+    expect(hitTile(wide, 61.9, 12)).toBeNull();
+    expect(hitTile(wide, 62, 12)).toBe(0);
+    expect(hitTile(wide, 62, 108)).toBe(3);
   });
 
   it("gives tiles of at least 44 x 44 CSS px on a 390 px phone", () => {
