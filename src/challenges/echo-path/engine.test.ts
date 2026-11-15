@@ -91,6 +91,9 @@ describe("Echo Path score", () => {
   it("ignores taps after the run has ended", () => {
     const over = run(wrongFirst(3, 0), wrongFirst(3, 1), wrongFirst(3, 2), clear(3));
     expect(echoPath.score(params, over)).toBe(0);
+    const short = { ...params, maxLength: 4 };
+    const done = run(sequenceFor(short, 3, 0), sequenceFor(short, 4, 0), [0, 0]);
+    expect(echoPath.score(short, done)).toBe(5);
   });
 
   it("is higher-better and the same every time for the same taps (property)", () => {
@@ -128,6 +131,7 @@ describe("Echo Path inputs", () => {
     ["a fractional tile", run([1.5])],
     ["a negative time", { taps: [{ tile: 1, atMs: -1 }] }],
     ["times that do not rise", { taps: [{ tile: 1, atMs: 5 }, { tile: 2, atMs: 5 }] }],
+    ["times that fall", { taps: [{ tile: 1, atMs: 5 }, { tile: 2, atMs: 4 }] }],
     ["more taps than MAX_TAPS", run(Array<number>(MAX_TAPS + 1).fill(1))],
   ])("reject %s", (_name, inputs) => {
     expect(echoPath.inputsSchema.safeParse(inputs).success).toBe(false);
