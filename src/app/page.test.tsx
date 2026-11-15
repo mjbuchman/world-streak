@@ -66,7 +66,7 @@ describe("Home", () => {
     todaysChallenge.mockResolvedValue("inner-clock");
     render(await Home());
     const card = screen.getByRole("region", { name: "Second Sense" });
-    expect(within(card).getByText(/^Tap when you think the target time has passed/)).toBeTruthy();
+    expect(within(card).getByText(/^Tap when each target time has passed/)).toBeTruthy();
     expect(within(card).getByRole("link", { name: "Practice first" }).getAttribute("href")).toBe("/practice/inner-clock");
     expect(within(card).getByRole("link", { name: "Practice any challenge" }).getAttribute("href")).toBe("/practice");
   });

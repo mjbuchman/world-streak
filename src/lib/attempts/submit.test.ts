@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { flashCount } from "@/challenges/flash-count/engine";
-import { innerClock } from "@/challenges/inner-clock/engine";
+import { timeBank } from "@/challenges/inner-clock/timeBank";
 import { simulate, stacking } from "@/challenges/stacking/engine";
 import { tapsForAMiss } from "@/challenges/stacking/player";
 import { submitAttempt, type SubmitStore } from "./submit";
@@ -72,26 +72,28 @@ describe("submitAttempt", () => {
     expect((await submit({ attemptId, inputs: { tapsMs: goodTaps } }, at(score + 1))).body).toMatchObject({ passed: false });
   });
 
-  it("passes a lower score for a lower-better challenge (Second Sense), and fails a higher one", async () => {
-    const target = innerClock.paramsFromSeed(seed).targetMs;
-    // 0.25 s off the target, against a pass target of 0.3 s (passes) and of 0.2 s (fails).
-    const inputs = { tapMs: target + 250 };
+  it("passes a lower score for a lower-better challenge (Swift Sum), and fails a higher one", async () => {
+    const { dotCount } = flashCount.paramsFromSeed(seed);
     const day = (passTarget: number) =>
-      fakeStore({ gameDay: vi.fn(async () => ({ challengeType: "inner-clock", passTarget, closed: false })) });
-    expect((await submit({ attemptId, inputs }, day(0.3))).body).toEqual({ score: 0.25, passed: true, passTarget: 0.3 });
-    expect((await submit({ attemptId, inputs }, day(0.2))).body).toEqual({ score: 0.25, passed: false, passTarget: 0.2 });
+      fakeStore({ gameDay: vi.fn(async () => ({ challengeType: "flash-count", passTarget, closed: false })) });
+    expect((await submit({ attemptId, inputs: { count: dotCount } }, day(0))).body).toMatchObject({ score: 0, passed: true });
+    expect((await submit({ attemptId, inputs: { count: dotCount * 2 } }, day(99))).body).toMatchObject({ score: 100, passed: false });
   });
 
   describe("every challenge type, with no type-specific branches (T30)", () => {
     const dayOf = (challengeType: string, passTarget: number) =>
       fakeStore({ gameDay: vi.fn(async () => ({ challengeType, passTarget, closed: false })) });
 
-    it("Second Sense with a target of 0.5 s: 0.32 s off passes, 0.6 s off fails", async () => {
-      const target = innerClock.paramsFromSeed(seed).targetMs;
-      const pass = await submit({ attemptId, inputs: { tapMs: target - 320 } }, dayOf("inner-clock", 0.5));
-      expect(pass.body).toEqual({ score: 0.32, passed: true, passTarget: 0.5 });
-      const fail = await submit({ attemptId, inputs: { tapMs: target + 600 } }, dayOf("inner-clock", 0.5));
-      expect(fail.body).toEqual({ score: 0.6, passed: false, passTarget: 0.5 });
+    it("Second Sense with a target of 4 rounds: four on target then a miss passes, three fails", async () => {
+      const targets = timeBank.paramsFromSeed(seed).rounds.map((round) => round.targetMs);
+      // n rounds exactly on target, then a tap 3.001 s late, more than the whole bank.
+      const run = (n: number) => ({ tapsMs: [...targets.slice(0, n), targets[n] + 3001] });
+      // A minute after the start: later than any of these runs could end.
+      const later = new Date(startedAt.getTime() + 60_000);
+      const pass = await submit({ attemptId, inputs: run(4) }, dayOf("inner-clock", 4), later);
+      expect(pass.body).toEqual({ score: 4, passed: true, passTarget: 4 });
+      const fail = await submit({ attemptId, inputs: run(3) }, dayOf("inner-clock", 4), later);
+      expect(fail.body).toEqual({ score: 3, passed: false, passTarget: 4 });
     });
 
     it("Swift Sum with a target of 15%: the true count passes, a count 50% off fails", async () => {
@@ -106,7 +108,7 @@ describe("submitAttempt", () => {
 
     it("refuses another challenge's inputs (each type's own schema decides)", async () => {
       for (const [challengeType, inputs] of [
-        ["inner-clock", { tapsMs: goodTaps }],
+        ["inner-clock", { count: 3 }],
         ["flash-count", { tapMs: 500 }],
         ["stacking", { count: 3 }],
       ] as const) {
@@ -216,17 +218,18 @@ describe("submitAttempt", () => {
       expect(flagged).toEqual(clean);
     });
 
-    it("checks against the player's earlier scores", async () => {
-      const target = innerClock.paramsFromSeed(seed).targetMs;
-      const near = { challengeType: "inner-clock", score: 0.002 };
+    it("reads the player's earlier scores for the checks, and flags no honest Second Sense run", async () => {
+      // No rule reads the history since T140 retired Second Sense's; T164 brings history rules back.
+      const first = timeBank.paramsFromSeed(seed).rounds[0];
       const store = fakeStore({
-        gameDay: vi.fn(async () => ({ challengeType: "inner-clock", passTarget: 0.5, closed: false })),
-        recentScores: vi.fn(async () => [near, near]),
+        gameDay: vi.fn(async () => ({ challengeType: "inner-clock", passTarget: 0, closed: false })),
+        recentScores: vi.fn(async () => [{ challengeType: "inner-clock", score: 9 }]),
       });
-      const at = new Date(startedAt.getTime() + target + 1_000);
-      expect(await submit({ attemptId, inputs: { tapMs: target } }, store, at)).toMatchObject({ status: 200, body: { passed: true } });
+      const inputs = { tapsMs: [first.targetMs + 3001] };
+      const at = new Date(startedAt.getTime() + first.targetMs + 3001 + 1_000);
+      expect(await submit({ attemptId, inputs }, store, at)).toMatchObject({ status: 200, body: { score: 0, passed: true } });
       expect(store.recentScores).toHaveBeenCalledWith(userId, "2026-11-08");
-      expect(store.recordFlags).toHaveBeenCalledWith(attemptId, ["inner-clock-implausible"]);
+      expect(store.recordFlags).not.toHaveBeenCalled();
     });
 
     it("still answers with the result if recording a flag fails (the result is already stored)", async () => {

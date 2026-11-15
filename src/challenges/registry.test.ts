@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CHALLENGES, challengeForGameDay, isChallengeType } from "./registry";
 import { CHALLENGE_TYPES } from "./shared/types";
 import { flashCount } from "./flash-count/engine";
-import { innerClock } from "./inner-clock/engine";
+import { timeBank } from "./inner-clock/timeBank";
 import { stacking } from "./stacking/engine";
 
 describe("challenge registry", () => {
@@ -20,7 +20,7 @@ describe("challenge registry", () => {
 
   it("gives a game day's challenge module", () => {
     expect(challengeForGameDay("2026-11-08", "stacking")).toBe(stacking);
-    expect(challengeForGameDay("2026-11-08", "inner-clock")).toBe(innerClock);
+    expect(challengeForGameDay("2026-11-08", "inner-clock")).toBe(timeBank);
     expect(challengeForGameDay("2026-11-08", "flash-count")).toBe(flashCount);
   });
 

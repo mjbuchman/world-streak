@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { COUNTDOWN_STEP_MS, RUN_COUNTDOWN_MS } from "@/config/countdown";
 import { CLOCK_FADE_MS, InnerClockGame, targetLabel } from "./InnerClockGame";
 
-const params = { targetMs: 5000, timeoutMs: 15_000 };
+const params = { targetMs: 5000, revealMs: 1000, timeoutMs: 15_000 };
 
 // The game starts its clock in the first frame after it is on screen; tests run that frame.
 let frame: FrameRequestCallback | null;
@@ -194,7 +194,7 @@ describe("InnerClockGame", () => {
   });
 
   it("stops and fades the clock at a shorter reveal when given one (Time Bank's later rounds)", () => {
-    render(<InnerClockGame countdownMs={0} revealMs={600} params={params} onFinish={vi.fn()} />);
+    render(<InnerClockGame countdownMs={0} params={{ ...params, revealMs: 600 }} onFinish={vi.fn()} />);
     const shownClock = () => document.querySelector("[data-clock]");
     clock().mockReturnValue(1000);
     showStart();

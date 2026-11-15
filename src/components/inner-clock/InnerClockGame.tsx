@@ -1,7 +1,7 @@
 "use client";
 
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
-import { type InnerClockInputs, type InnerClockParams, REVEAL_MS } from "@/challenges/inner-clock/engine";
+import type { TimeBankRound } from "@/challenges/inner-clock/timeBank";
 import { CountdownNumber, countdownNumber } from "@/components/countdown/CountdownNumber";
 import { runFrames } from "@/components/frameLoop";
 import { usePrefersReducedMotion } from "@/components/ui/useReducedMotion";
@@ -17,27 +17,30 @@ export function targetLabel(targetMs: number): string {
 /** "0.5": whole tenths of a second, rounded down, as a stopwatch shows them. */
 const clockLabel = (ms: number) => (Math.floor(ms / 100) / 10).toFixed(1);
 
-/** After the first second the clock stops and fades out over this long (T118), or just goes with reduced motion. */
+/** After its reveal the clock stops and fades out over this long (T118), or just goes with reduced motion. */
 export const CLOCK_FADE_MS = 400;
 
 type ClockState = { phase: "countdown"; number: number } | { phase: "shown"; ms: number } | { phase: "fading" } | { phase: "hidden" };
 
+/** One round's tap in ms from its start, or null when it timed out. */
+export type RoundTap = { tapMs: number | null };
+
 type InnerClockGameProps = {
-  params: InnerClockParams;
-  onFinish: (inputs: InnerClockInputs) => void;
-  /** How long the 3-2-1 lasts; 0 skips it (tests of the run alone, and Time Bank's later rounds). */
+  /** The round: its target, its timeout, and how long the clock shows before it fades. */
+  params: TimeBankRound;
+  onFinish: (tap: RoundTap) => void;
+  /** How long the 3-2-1 lasts; 0 skips it (tests of the round alone, and Time Bank's later rounds). */
   countdownMs?: number;
-  /** How long the clock shows before it fades; Time Bank shortens it each round. */
-  revealMs?: number;
 };
 
 /**
- * A Second Sense run: one big tap area, with a running clock for the first REVEAL_MS only (an
+ * A Second Sense round: one big tap area, with a running clock for the round's revealMs only (an
  * exact starting point; M3 play-test). A 3-2-1 counts from the first frame after the run is on
  * screen (T138); the clock starts right after "1" (what the player sees as the start), and the
  * run ends with the first tap after that (pointer, Space or Enter) or at the timeout with no tap.
  */
-export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_MS, revealMs = REVEAL_MS }: InnerClockGameProps) {
+export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_MS }: InnerClockGameProps) {
+  const { revealMs } = params;
   const areaRef = useRef<HTMLButtonElement>(null);
   const startedAt = useRef<number | null>(null);
   const done = useRef(false);
@@ -47,7 +50,7 @@ export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_M
     finishRef.current = onFinish;
   });
 
-  // The clock: the countdown in its place, then running for the first REVEAL_MS, then stopped at
+  // The clock: the countdown in its place, then running for revealMs, then stopped at
   // the reveal and fading, then gone.
   const [clockState, setClockState] = useState<ClockState>(() =>
     countdownMs > 0 ? { phase: "countdown", number: COUNTDOWN_FROM } : { phase: "shown", ms: 0 },

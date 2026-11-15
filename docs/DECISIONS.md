@@ -367,4 +367,5 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Choice: rounds keep the current tap (the design says "hold", but forbids new round types). Budget 3 s, 8 rounds, round i's target 3 + i to 3.5 + i s, clock visible 1.5 s shrinking 0.15 s a round, 3x timeouts, 1.5 s between rounds. Budget left is measured when the run ends, so a failed run scores a whole number. A missing tap counts as its round's timeout in the run's timing (`lastInputMs` now receives the params).
 - Reason: a simulated player off by 11% on average survives about 5 rounds; a full run lasts about 62-67 s.
 - How to change it later: the constants in `src/challenges/inner-clock/timeBank.ts`.
+- T140: the default pass target is 4 rounds. Scores from the old single-round game (errors in seconds) stay in `attempts`, so for 14 days they could enter the percentile if 50 or more exist. That only happens on local data, since nothing has launched. Its cheat rule is retired until T164, and a round with no tap now counts in the timing check at its timeout.
 - Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)

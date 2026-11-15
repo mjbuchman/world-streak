@@ -2,75 +2,67 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { InnerClockInputs } from "@/challenges/inner-clock/engine";
+import type { TimeBankInputs } from "@/challenges/inner-clock/timeBank";
 
 // The game itself has its own tests; here a stand-in finishes with whatever the test asks.
-const game = vi.hoisted(() => ({ finishWith: { tapMs: 5320 } as InnerClockInputs }));
-vi.mock("@/components/inner-clock/InnerClockGame", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/components/inner-clock/InnerClockGame")>()),
-  InnerClockGame: ({ onFinish }: { onFinish: (inputs: InnerClockInputs) => void }) => (
+const game = vi.hoisted(() => ({ finishWith: { tapsMs: [3200] } as TimeBankInputs }));
+vi.mock("@/components/inner-clock/TimeBankGame", () => ({
+  TimeBankGame: ({ onFinish }: { onFinish: (inputs: TimeBankInputs) => void }) => (
     <button type="button" onClick={() => onFinish(game.finishWith)}>
-      Fake tap
+      Fake run
     </button>
   ),
 }));
-// A fixed seed whose target is 5,000 ms.
+// Fixed rounds: targets 3, 4 and 5 s with a 3 s bank.
 vi.mock("@/lib/random", () => ({ secureRandomSeed: () => 0 }));
-vi.mock("@/challenges/inner-clock/engine", async (importOriginal) => {
-  const real = await importOriginal<typeof import("@/challenges/inner-clock/engine")>();
-  return { ...real, paramsFromSeed: () => ({ targetMs: 5000, timeoutMs: 15_000 }) };
+vi.mock("@/challenges/inner-clock/timeBank", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/challenges/inner-clock/timeBank")>();
+  const rounds = [3000, 4000, 5000].map((targetMs) => ({ targetMs, revealMs: 1000, timeoutMs: 3 * targetMs }));
+  return { ...real, paramsFromSeed: () => ({ budgetMs: 3000, rounds }) };
 });
 
 import { InnerClockPractice } from "./InnerClockPractice";
 
 afterEach(cleanup);
 
-async function playWith(inputs: InnerClockInputs) {
+async function playWith(inputs: TimeBankInputs) {
   game.finishWith = inputs;
   const user = userEvent.setup();
   render(<InnerClockPractice />);
   await user.click(screen.getByRole("button", { name: "Start" }));
-  await user.click(screen.getByRole("button", { name: "Fake tap" }));
+  await user.click(screen.getByRole("button", { name: "Fake run" }));
   return user;
 }
 
 describe("InnerClockPractice", () => {
-  it("explains the game and shows the target before the start", () => {
+  it("explains the time bank and shows the first target before the start", () => {
     render(<InnerClockPractice />);
-    expect(screen.getByText(/tap when you think the target time has passed/)).toBeTruthy();
-    expect(screen.getByText("Your target: 5 seconds")).toBeTruthy();
+    expect(screen.getByText(/3-second time bank/)).toBeTruthy();
+    expect(screen.getByText("First target: 3 seconds")).toBeTruthy();
   });
 
-  it("reveals the actual time and the error after a late tap, and focuses the result", async () => {
-    await playWith({ tapMs: 5320 });
-    const heading = screen.getByRole("heading", { name: "0.32 s late" });
+  it("shows the rounds survived and the bank left once a miss empties it, and focuses the result", async () => {
+    await playWith({ tapsMs: [3200, 8000] });
+    const heading = screen.getByRole("heading", { name: "1 round survived" });
     expect(document.activeElement).toBe(heading);
-    expect(screen.getByText("You tapped at 5.32 s. The target was 5 s.")).toBeTruthy();
+    expect(screen.getByText("0 s of your 3 s time bank left. Score: 1.")).toBeTruthy();
   });
 
-  it("says early for an early tap, and spot on for an exact one", async () => {
-    await playWith({ tapMs: 4700 });
-    expect(screen.getByRole("heading", { name: "0.3 s early" })).toBeTruthy();
-    cleanup();
-    await playWith({ tapMs: 5000.2 });
-    expect(screen.getByRole("heading", { name: "Spot on" })).toBeTruthy();
+  it("says so when every round survives, with the bank left", async () => {
+    await playWith({ tapsMs: [3100, 4100, 5100] });
+    expect(screen.getByRole("heading", { name: "Every round survived" })).toBeTruthy();
+    expect(screen.getByText("2.7 s of your 3 s time bank left. Score: 3.9.")).toBeTruthy();
   });
 
-  it("explains a run that timed out without a tap", async () => {
-    await playWith({ tapMs: null });
-    expect(screen.getByRole("heading", { name: "Time ran out" })).toBeTruthy();
-    expect(screen.getByText("No tap within 15 s, so it counts as 10 s off.")).toBeTruthy();
-  });
-
-  it("treats a tap after the timeout as no tap, as the engine does", async () => {
-    await playWith({ tapMs: 15_001 });
-    expect(screen.getByRole("heading", { name: "Time ran out" })).toBeTruthy();
+  it("counts a first round that timed out as none survived", async () => {
+    await playWith({ tapsMs: [null] });
+    expect(screen.getByRole("heading", { name: "0 rounds survived" })).toBeTruthy();
   });
 
   it("offers another go, which starts a new run", async () => {
-    const user = await playWith({ tapMs: 5320 });
+    const user = await playWith({ tapsMs: [null] });
     expect(screen.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/");
     await user.click(screen.getByRole("button", { name: "Play again" }));
-    expect(screen.getByRole("button", { name: "Fake tap" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Fake run" })).toBeTruthy();
   });
 });

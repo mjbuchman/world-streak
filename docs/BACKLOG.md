@@ -959,7 +959,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T167 Time Bank game component (split from T140)
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T139
 - Acceptance criteria:
   - [ ] A `TimeBankGame` component (not yet wired in) plays the rounds with the existing Second Sense round (`InnerClockGame`, given each round's `revealMs`): the 3-2-1 before round 1 only, each round's target shown, a budget bar that drains by each round's error, and the round's error shown for `ROUND_GAP_MS` between rounds. It reports `{ tapsMs }` once the engine says the run is finished.
@@ -969,7 +969,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T140 Second Sense plays as Time Bank
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T167
 - Acceptance criteria:
   - [ ] The registry's `inner-clock` entry uses the Time Bank module; the single-round engine and its tests are removed. A migration sets `challenge_types` `inner-clock` to `higher-better` and its `default_pass_targets` placeholder to 4 (rounds), and recomputes unedited, unstarted open `inner-clock` days' targets (pgTAP).

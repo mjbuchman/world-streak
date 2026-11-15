@@ -11,9 +11,9 @@ vi.mock("@/components/stacking/StackingGame", () => ({
     </button>
   ),
 }));
-vi.mock("@/components/inner-clock/InnerClockGame", () => ({
-  InnerClockGame: ({ onFinish }: { onFinish: (inputs: { tapMs: number }) => void }) => (
-    <button type="button" onClick={() => onFinish({ tapMs: 5320 })}>
+vi.mock("@/components/inner-clock/TimeBankGame", () => ({
+  TimeBankGame: ({ onFinish }: { onFinish: (inputs: { tapsMs: number[] }) => void }) => (
+    <button type="button" onClick={() => onFinish({ tapsMs: [3200, 4100] })}>
       Clock
     </button>
   ),
@@ -39,9 +39,13 @@ describe("challengeUi", () => {
     }
   });
 
+  it("explains Second Sense's rounds and time bank (T140)", () => {
+    expect(challengeUi("inner-clock").howTo).toMatch(/round.*3-second time bank.*Survive as many rounds/);
+  });
+
   it.each([
     ["stacking", "Tower", { tapsMs: [900, 1800] }],
-    ["inner-clock", "Clock", { tapMs: 5320 }],
+    ["inner-clock", "Clock", { tapsMs: [3200, 4100] }],
     ["flash-count", "Dots", { count: 20 }],
   ] as const)("plays %s and hands on exactly the inputs its submit expects", (type, button, inputs) => {
     const onFinish = vi.fn();
@@ -52,7 +56,8 @@ describe("challengeUi", () => {
 
   it.each([
     ["stacking", 7, 10, "You reached row 7. Today's target was row 10."],
-    ["inner-clock", 0.32, 0.5, "You were 0.32 s off. Today's target was within 0.5 s."],
+    ["inner-clock", 3.9, 4, "You scored 3.9 rounds. Today's target was 4 rounds."],
+    ["inner-clock", 1, 4, "You scored 1 round. Today's target was 4 rounds."],
     ["flash-count", 12, 15, "You were 12% off. Today's target was within 15%."],
   ] as const)("sums up a %s result against today's target", (type, score, target, line) => {
     expect(challengeUi(type).summary(score, target)).toBe(line);
