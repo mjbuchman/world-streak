@@ -42,6 +42,7 @@ export function TimeBankGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_MS 
     return () => clearTimeout(timer);
   }, [showingError, finished]);
 
+  // Reads this render's taps: safe because each round is a fresh InnerClockGame (key={index}) that finishes once.
   const finishRound = ({ tapMs }: { tapMs: number | null }) => {
     const next = [...tapsMs, tapMs];
     setTapsMs(next);

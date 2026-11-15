@@ -77,6 +77,7 @@ describe("TimeBankGame", () => {
     [3000, "Spot on"],
     [2650, "0.35 s early"],
     [null, "Time ran out"],
+    [9001, "Time ran out"],
   ])("says a tap at %s as %s", (tapMs, label) => {
     render(<TimeBankGame params={{ ...params, budgetMs: 10_000 }} onFinish={vi.fn()} />);
     tap(tapMs);
@@ -108,6 +109,7 @@ describe("TimeBankGame", () => {
     expect(onFinish).not.toHaveBeenCalled();
     tap(5100);
     expect(onFinish).toHaveBeenCalledExactlyOnceWith({ tapsMs: [3100, 4100, 5100] });
+    expect(screen.getByText("Round 3 of 3")).toBeTruthy();
   });
 
   it("passes a custom countdown to round 1 (0 skips it in tests of the run)", () => {
