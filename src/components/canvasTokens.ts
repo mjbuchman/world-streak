@@ -1,3 +1,4 @@
+import type { EchoPathColors } from "@/challenges/echo-path/render";
 import type { FlashCountFrame } from "@/challenges/flash-count/render";
 import type { StackingColors } from "@/challenges/stacking/render";
 
@@ -8,6 +9,14 @@ import type { StackingColors } from "@/challenges/stacking/render";
 export const FLASH_COUNT_COLOR_TOKENS: Record<keyof FlashCountFrame["colors"], string> = {
   board: "--fs-color-meter-surface",
   dot: "--fs-color-mint",
+};
+
+export const ECHO_PATH_COLOR_TOKENS: Record<keyof EchoPathColors, string> = {
+  board: "--fs-color-meter-surface",
+  tile: "--fs-color-surface-strong",
+  lit: "--fs-color-mint",
+  pressed: "--fs-color-mint-light",
+  miss: "--fs-color-tangerine",
 };
 
 export const CANVAS_COLOR_TOKENS: Record<keyof StackingColors, string> = {
