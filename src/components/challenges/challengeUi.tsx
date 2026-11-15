@@ -1,15 +1,17 @@
 "use client";
 
 import type { ReactNode } from "react";
+import type { EchoPathInputs, EchoPathParams } from "@/challenges/echo-path/engine";
 import type { FlashLadderInputs, FlashLadderParams } from "@/challenges/flash-count/flashLadder";
 import type { TimeBankInputs, TimeBankParams } from "@/challenges/inner-clock/timeBank";
 import type { ChallengeType } from "@/challenges/shared/types";
 import type { StackingInputs, StackingParams } from "@/challenges/stacking/engine";
+import { EchoPathGame } from "@/components/echo-path/EchoPathGame";
 import { FlashLadderGame } from "@/components/flash-count/FlashLadderGame";
 import { TimeBankGame } from "@/components/inner-clock/TimeBankGame";
 import { reachedRow, targetRow } from "@/components/stacking/rows";
 import { StackingGame } from "@/components/stacking/StackingGame";
-import { FLASH_COUNT_HOW_TO, INNER_CLOCK_HOW_TO, practicePath, STACKING_HOW_TO } from "@/config/challenges";
+import { ECHO_PATH_HOW_TO, FLASH_COUNT_HOW_TO, INNER_CLOCK_HOW_TO, practicePath, STACKING_HOW_TO } from "@/config/challenges";
 
 /**
  * A scored run of today's challenge. `params` come from the start endpoint for this challenge
@@ -59,7 +61,21 @@ const flashCount: ChallengeUi<FlashLadderParams, FlashLadderInputs> = {
   summary: (score, passTarget) => `You scored ${levels(score)}. Today's target was ${levels(passTarget)}.`,
 };
 
-const CHALLENGE_UI = { stacking, "inner-clock": innerClock, "flash-count": flashCount } satisfies Record<ChallengeType, unknown>;
+/** Echo Path: the longest path repeated plus the lives left as a fraction ("5.667 steps"). */
+const steps = (score: number) => `${score} ${score === 1 ? "step" : "steps"}`;
+
+const echoPath: ChallengeUi<EchoPathParams, EchoPathInputs> = {
+  howTo: ECHO_PATH_HOW_TO,
+  practicePath: practicePath("echo-path"),
+  play: ({ params, onFinish }) => <EchoPathGame params={params} onFinish={onFinish} />,
+  scoreLabel: steps,
+  summary: (score, passTarget) => `You scored ${steps(score)}. Today's target was ${steps(passTarget)}.`,
+};
+
+const CHALLENGE_UI = { stacking, "inner-clock": innerClock, "flash-count": flashCount, "echo-path": echoPath } satisfies Record<
+  ChallengeType,
+  unknown
+>;
 
 /**
  * The screens for a challenge type. As with `challengeForGameDay`, the params and inputs types are

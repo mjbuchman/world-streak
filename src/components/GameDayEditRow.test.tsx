@@ -70,6 +70,7 @@ describe("GameDayEditRow", () => {
       ["stacking", "Teetering Tower"],
       ["inner-clock", "Second Sense"],
       ["flash-count", "Swift Sum"],
+      ["echo-path", "Echo Path"],
     ]);
     await user.selectOptions(select, "flash-count");
     await user.click(screen.getByRole("button", { name: "Save" }));

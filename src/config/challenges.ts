@@ -8,6 +8,7 @@ export const CHALLENGE_NAMES: Record<ChallengeType, string> = {
   stacking: "Teetering Tower",
   "inner-clock": "Second Sense",
   "flash-count": "Swift Sum",
+  "echo-path": "Echo Path",
 };
 
 /** One line on each challenge, for the home card and the practice hub. */
@@ -15,6 +16,7 @@ export const CHALLENGE_TAGLINES: Record<ChallengeType, string> = {
   stacking: "Stack the sliding rows as high as you can.",
   "inner-clock": "Tap when each target time has passed. Every miss drains your time bank.",
   "flash-count": "Dots flash for a moment. Say how many there were.",
+  "echo-path": "Tiles light up in a path. Tap it back, one step longer each time.",
 };
 
 /** Each challenge's practice page (the route folders are named after the types). */
@@ -29,6 +31,10 @@ export const INNER_CLOCK_HOW_TO =
 /** How to play Swift Sum: shown before a practice run (and later before a scored attempt). */
 export const FLASH_COUNT_HOW_TO =
   "Press Start and dots flash on the board. Enter how many you think there were: close enough clears the level, and each level has more dots and a shorter flash. You have 3 lives; a miss costs one and replays the same level with new dots. Clear as many levels as you can.";
+
+/** How to play Echo Path: shown before a practice run and before a scored attempt. */
+export const ECHO_PATH_HOW_TO =
+  "Press Start and watch: tiles on the grid light up one after another. Then tap them back in the same order, or press 1 to 9 for them row by row. Each path you repeat adds a step. You have 3 lives; a wrong tile costs one and gives you a new path of the same length.";
 
 /** How to play the Tower: shown before a practice run and before today's scored attempt. */
 export const STACKING_HOW_TO =
