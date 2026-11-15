@@ -7,8 +7,8 @@ update public.game_settings set rotation = '{stacking}';
 select has_table('public', 'challenge_types', 'challenge_types table exists');
 select results_eq(
   'select type, direction from public.challenge_types order by type',
-  $$values ('flash-count'::text, 'higher-better'::text), ('inner-clock'::text, 'higher-better'::text), ('stacking'::text, 'higher-better'::text)$$,
-  'every challenge is higher-better since Time Bank (T140) and Flash Ladder (T142)'
+  $$values ('echo-path'::text, 'higher-better'::text), ('flash-count'::text, 'higher-better'::text), ('inner-clock'::text, 'higher-better'::text), ('stacking'::text, 'higher-better'::text)$$,
+  'every challenge is higher-better since Time Bank (T140), Flash Ladder (T142) and Echo Path (T145)'
 );
 select ok((select relrowsecurity from pg_class where oid = 'public.challenge_types'::regclass), 'RLS is enabled on challenge_types');
 select table_privs_are('public', 'challenge_types', 'anon', array['SELECT'], 'visitors can only read the challenge types');

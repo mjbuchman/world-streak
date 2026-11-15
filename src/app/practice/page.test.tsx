@@ -6,10 +6,10 @@ import PracticeHub from "./page";
 afterEach(cleanup);
 
 describe("/practice", () => {
-  it("lists the three challenges with one line each, linking to each practice page", () => {
+  it("lists every challenge with one line each, linking to each practice page", () => {
     render(<PracticeHub />);
     const items = within(screen.getByRole("list", { name: "Challenges" })).getAllByRole("listitem");
-    expect(items).toHaveLength(3);
+    expect(items).toHaveLength(4);
     const entries = items.map((item) => {
       const link = within(item).getByRole("link");
       return [link.textContent, link.getAttribute("href"), within(item).getByRole("paragraph").textContent];
@@ -18,6 +18,7 @@ describe("/practice", () => {
       ["Teetering Tower", "/practice/stacking", "Stack the sliding rows as high as you can."],
       ["Second Sense", "/practice/inner-clock", "Tap when each target time has passed. Every miss drains your time bank."],
       ["Swift Sum", "/practice/flash-count", "Dots flash for a moment. Say how many there were."],
+      ["Echo Path", "/practice/echo-path", "Tiles light up in a path. Tap it back, one step longer each time."],
     ]);
   });
 

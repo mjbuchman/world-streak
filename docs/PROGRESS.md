@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M5 The Daily Three (planned Nov 15).
-- Active task: T145, work in progress on branch `task/145-echo-path-registration` (unverified). Done: type, registry, names, how-to, challengeUi, DEFAULT_ROTATION. Left: `/practice/echo-path` page and practice component and test, a migration adding `echo-path` (higher-better, placeholder 6) with pgTAP and pinned-default updates, the practice hub and other tests that enumerate CHALLENGE_TYPES, e2e (VISITOR_PATHS, look.spec tokens, a practice spec), then verify and review.
+- Active task: T145, on branch `task/145-echo-path-registration`. Everything is written. `npm run verify` and `npx supabase test db` (530) pass. Left: rerun `npm run test:e2e:local -- tests/e2e/practice.spec.ts -g "Echo Path"` (its loop was just rewritten) and then the three reviews, PR and merge. In the last local run, two admin.spec sign-in tests failed (sent back to /signin); they look unrelated (parallel sign-ins), so check them in CI.
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M5 The Daily Three (T139–T166, approved in advance on Nov 15), starting with T139.

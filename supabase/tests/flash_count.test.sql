@@ -11,9 +11,11 @@ select is(
   (select (default_pass_targets ->> 'flash-count')::numeric from public.game_settings), 5::numeric,
   'its placeholder pass target is 5 levels'
 );
-select col_default_is(
-  'public', 'game_settings', 'default_pass_targets', '{"stacking": 10, "inner-clock": 4, "flash-count": 5}',
-  'a fresh settings row has all three placeholders'
+-- The whole default is pinned in echo_path.test.sql; here only Swift Sum's part of it.
+select ok(
+  (select column_default from information_schema.columns
+    where table_schema = 'public' and table_name = 'game_settings' and column_name = 'default_pass_targets') like '%"flash-count": 5,%',
+  'a fresh settings row has its placeholder'
 );
 
 -- Below the minimum sample the target is the placeholder.
@@ -40,7 +42,7 @@ select results_eq(
 -- The placeholder was merged in, not swapped for the whole object.
 select is(
   (select default_pass_targets from public.game_settings) - 'flash-count',
-  '{"stacking": 10, "inner-clock": 4}'::jsonb,
+  '{"stacking": 10, "inner-clock": 4, "echo-path": 6}'::jsonb,
   'the other challenges keep their placeholders'
 );
 

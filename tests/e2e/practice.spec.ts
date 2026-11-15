@@ -154,11 +154,35 @@ test("Swift Sum practice: three wrong counts on level 1 use up the lives and end
   expect(scored).toEqual([]);
 });
 
+test("Echo Path practice: watch, then wrong tiles use up the lives and end the run", async ({ page }) => {
+  const scored = attemptRequests(page);
+  await gotoReady(page, "/practice/echo-path");
+  await page.getByRole("button", { name: "Start" }).click();
+  const board = page.getByRole("img", { name: /Get ready|Watch the tiles|Tap the tiles/ });
+  const lives = page.getByRole("img", { name: /lives left$/ });
+  await expect(lives).toHaveAccessibleName("3 of 3 lives left");
+  // Key 1 is tile 1. Pressed twice in a row it is always wrong by the second time (a path never
+  // repeats a tile), so each life goes within two presses, and the path is never repeated.
+  for (const left of [2, 1, 0]) {
+    await expect(board).toHaveAttribute("data-phase", "repeat", { timeout: 15_000 });
+    await board.press("1");
+    // A right first tile leaves the lives as they were; the second press of tile 1 is then wrong.
+    // (After the last life the game, and its lives, give way to the result.)
+    const still = await lives.getAttribute("aria-label", { timeout: 1_000 }).catch(() => null);
+    if (still === `${left + 1} of 3 lives left`) await board.press("1");
+    if (left > 0) await expect(lives).toHaveAccessibleName(`${left} of 3 lives left`);
+  }
+  await expect(page.getByRole("heading", { level: 2 })).toHaveText("No path repeated");
+  await expect(page.getByText("0 of 3 lives left. Score: 0.")).toBeVisible();
+  expect(scored).toEqual([]);
+});
+
 test("the practice hub opens each challenge's practice page", async ({ page }) => {
   for (const [name, path, heading] of [
     ["Teetering Tower", "/practice/stacking", "Practice: Teetering Tower"],
     ["Second Sense", "/practice/inner-clock", "Practice: Second Sense"],
     ["Swift Sum", "/practice/flash-count", "Practice: Swift Sum"],
+    ["Echo Path", "/practice/echo-path", "Practice: Echo Path"],
   ]) {
     await gotoReady(page, "/practice");
     await page.getByRole("list", { name: "Challenges" }).getByRole("link", { name }).click();
