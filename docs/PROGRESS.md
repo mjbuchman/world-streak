@@ -4,11 +4,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M4 play-test follow-ups done (T138, Nov 12).
+- Milestone: M5 The Daily Three (planned Nov 15).
 - Active task: none.
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: no eligible tasks. T39 dropped (no sponsor).
+- Next: M5 The Daily Three (T139–T166, approved in advance on Nov 15), starting with T139.
 
 ## Log
 
