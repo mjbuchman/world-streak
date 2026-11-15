@@ -3,5 +3,6 @@
 insert into public.challenge_types (type, direction) values ('echo-path', 'higher-better');
 
 -- A placeholder until enough scores exist for the percentile (T22): repeat a path of 6.
+-- No WHERE clause: game_settings holds a single row.
 update public.game_settings set default_pass_targets = default_pass_targets || '{"echo-path": 6}';
 alter table public.game_settings alter column default_pass_targets set default '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 6}';
