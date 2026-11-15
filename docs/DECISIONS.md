@@ -283,12 +283,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 
 ### 2026-11-12 — Swift Sum dots and flash (T114)
 - Choice: 12–30 dots (was 15–45) shown for 1.5 s (was 1 s): one by one, a player counts about 6–8 in that time, so the count stays an estimate, but a closer one. The placeholder pass target stays within 15%.
-- How to change it later: `DOT_COUNT_RANGE` and `FLASH_MS` in `src/challenges/flash-count/engine.ts`.
+- How to change it later: `DOT_COUNT_RANGE` and `FLASH_MS` in `src/challenges/flash-count/engine.ts`. (Superseded by Flash Ladder, T141/T142: see `flashLadder.ts`.)
 - Confirmed by human: pending (NEEDS_HUMAN, next play-test).
 
 ### 2026-11-12 — Second Sense clock and targets (T113)
 - Choice: a clock counts up in tenths (rounded down) for the first 1 s (`REVEAL_MS`), then hides and keeps its space; screen readers skip it. Targets are 5–12 s (were 3–9 s), so the timeout reaches 36 s. The placeholder pass target stays within 0.5 s: once 14 days give 50 scores, the percentile sets it (T22), and the admin page can change it.
-- How to change it later: `REVEAL_MS` and `TARGET_RANGE_MS` in `src/challenges/inner-clock/engine.ts`; the placeholder in `game_settings.default_pass_targets`.
+- How to change it later: `REVEAL_MS` and `TARGET_RANGE_MS` in `src/challenges/inner-clock/engine.ts`; the placeholder in `game_settings.default_pass_targets`. (Superseded by Time Bank, T139/T140: see `timeBank.ts`.)
 - Confirmed by human: pending (NEEDS_HUMAN, next play-test).
 
 ### 2026-11-12 — Share text emojis (T115)
