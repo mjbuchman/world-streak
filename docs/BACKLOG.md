@@ -1034,7 +1034,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T171 Echo Path game component (split from T145)
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T144, T137
 - Acceptance criteria:
   - [ ] `EchoPathGame` (not yet wired in; uses `runFrames`): the 3-2-1, playback, input phase (pointer taps on the canvas through `hitTile`), life pips and the length reached; a short pause after a clear or a miss before the next playback; it reports `{ taps }` (each `atMs` from the start) when the run ends. Taps during playback are ignored.
@@ -1043,7 +1043,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T145 Echo Path game, practice page and registration
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T171, T109
 - Acceptance criteria:
   - [ ] `CHALLENGE_TYPES` and the registry gain `echo-path` (engine and `EchoPathGame` component, T171). A migration adds `challenge_types` `echo-path/higher-better` and a `default_pass_targets` placeholder of 6 (pgTAP).
