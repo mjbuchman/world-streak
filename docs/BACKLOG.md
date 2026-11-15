@@ -15,6 +15,20 @@ Planning notes for the builder:
 - **Challenge names** (human, Nov 9, 2026): stacking is **Teetering Tower**, Inner Clock is **Second Sense**, Flash Count is **Swift Sum**. Internal type ids stay `stacking`, `inner-clock` and `flash-count`.
 - Scripts that write data (`seed:dev`, `close-day`, `simulate:days`) must refuse to run unless the Supabase URL points at localhost.
 
+## Batches (Nov 15, 2026)
+
+One branch, review round and PR per batch, in this order (dependencies still apply):
+
+1. Fair Split: T146, T147, T148, T149 (full review)
+2. Lineups: T150, T151 (full)
+3. Per-game attempts and day results: T152, T153 (full)
+4. Daily Three endpoints and meter: T154, T155 (full)
+5. Play flow and results page: T156, T157 (light)
+6. Share, perfect day, home, history and rules: T158, T159, T160 (light)
+7. Admin lineups and settings: T161, T162 (full)
+8. Local tools and cheat checks: T163, T164 (light)
+9. Daily Three e2e and mobile: T165, T166 (light)
+
 ## M1 Foundation and first challenge end to end
 
 Goal: run the app locally against local Supabase, sign up with email and password (adults in the US only), practise the stacking challenge without an account, then play today's scored stacking attempt once. The server replays the attempt and shows pass or fail, and a second attempt the same day is refused.
@@ -1043,7 +1057,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T145 Echo Path game, practice page and registration
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T171, T109
 - Acceptance criteria:
   - [ ] `CHALLENGE_TYPES` and the registry gain `echo-path` (engine and `EchoPathGame` component, T171). A migration adds `challenge_types` `echo-path/higher-better` and a `default_pass_targets` placeholder of 6 (pgTAP).
