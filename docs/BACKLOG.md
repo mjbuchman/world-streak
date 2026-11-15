@@ -1024,7 +1024,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T144 Echo Path renderer
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T143, T135
 - Acceptance criteria:
   - [ ] `src/challenges/echo-path/render.ts` draws the grid for a given state and elapsed ms: idle tiles, the tile lit during playback (each step `stepMs`, from the elapsed time only), the tile the player just pressed, and a short miss flash; reduced motion drops the flash animation but keeps the lit states. Colours come from the shared canvas token helper (T135).
@@ -1032,13 +1032,21 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
   - [ ] Unit tests for the playback schedule (which tile is lit at given ms) and `hitTile` at tile edges.
 - Notes: Fresh Sport look per `docs/UI_GUIDELINES.md`.
 
+### T171 Echo Path game component (split from T145)
+- Type: feature
+- Status: in-progress
+- Depends on: T144, T137
+- Acceptance criteria:
+  - [ ] `EchoPathGame` (not yet wired in; uses `runFrames`): the 3-2-1, playback, input phase (pointer taps on the canvas through `hitTile`), life pips and the length reached; a short pause after a clear or a miss before the next playback; it reports `{ taps }` (each `atMs` from the start) when the run ends. Taps during playback are ignored.
+  - [ ] Unit test with mocked time (one cleared round, one mistake).
+- Notes: Split from T145 to stay under ~400 lines. Full review (attempts).
+
 ### T145 Echo Path game, practice page and registration
 - Type: feature
 - Status: todo
-- Depends on: T144, T137, T109
+- Depends on: T171, T109
 - Acceptance criteria:
-  - [ ] `CHALLENGE_TYPES` and the registry gain `echo-path` (engine and `EchoPathGame` component). A migration adds `challenge_types` `echo-path/higher-better` and a `default_pass_targets` placeholder of 6 (pgTAP).
-  - [ ] `EchoPathGame` (using `useFrameLoop`): the 3-2-1, playback, input phase (pointer taps), life pips and the length reached; it reports `{ taps }` when the run ends. Taps during playback are ignored.
+  - [ ] `CHALLENGE_TYPES` and the registry gain `echo-path` (engine and `EchoPathGame` component, T171). A migration adds `challenge_types` `echo-path/higher-better` and a `default_pass_targets` placeholder of 6 (pgTAP).
   - [ ] `/practice/echo-path` uses the practice shell, works signed out, and the practice hub lists it with a one-line description.
   - [ ] Unit test with mocked time (one cleared round, one mistake); e2e: open the practice page, start, tap a wrong tile three times, and see the result. `npm run verify` and `npm run test:e2e` pass.
 - Notes: Full review (migration). Not in the daily lineup until T150.
