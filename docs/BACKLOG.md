@@ -1013,7 +1013,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T143 Echo Path engine
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/echo-path/engine.ts` implements `ChallengeModule` with `direction "higher-better"` and `LIVES = 3`. `paramsFromSeed(seed)` returns `{ cols, rows, startLength, maxLength, stepMs }` (placeholders: a 3 x 3 grid, start length 3, max length 12, step speed from a documented range); `sequenceFor(params, length, tryIndex)` is deterministic and never lights the same tile twice in a row.
@@ -1274,7 +1274,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T169 Remove leftovers after the Swift Sum swap (maintainer, Nov 15)
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T142
 - Acceptance criteria:
   - [ ] No references remain to the old single-round Second Sense and Swift Sum engines' names, outside git history.
