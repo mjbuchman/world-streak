@@ -58,13 +58,13 @@ export function paramsFromSeed(seed: number): TimeBankParams {
 }
 
 /** The round's error in ms, rounded to the ms; a missing or late tap costs the worst error. */
-function roundErrorMs(round: TimeBankRound, tapMs: number | null): number {
+export function roundErrorMs(round: TimeBankRound, tapMs: number | null): number {
   if (tapMs === null || tapMs > round.timeoutMs) return (TIMEOUT_FACTOR - 1) * round.targetMs;
   return Math.round(Math.abs(tapMs - round.targetMs));
 }
 
 /** Plays the taps against the budget: how many rounds survived, what is left, and whether a round failed. */
-function play(params: TimeBankParams, inputs: TimeBankInputs): { survived: number; leftMs: number; failed: boolean } {
+export function play(params: TimeBankParams, inputs: TimeBankInputs): { survived: number; leftMs: number; failed: boolean } {
   let leftMs = params.budgetMs;
   const played = Math.min(inputs.tapsMs.length, params.rounds.length);
   for (let i = 0; i < played; i++) {

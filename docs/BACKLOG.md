@@ -946,7 +946,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T139 Second Sense: Time Bank engine
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T118, T138
 - Acceptance criteria:
   - [ ] A new pure module (for example `src/challenges/inner-clock/timeBank.ts`, not yet in the registry) implements `ChallengeModule` with `direction "higher-better"`. `paramsFromSeed(seed)` returns `{ budgetMs: 3000, rounds: { targetMs, revealMs, timeoutMs }[] }` with `MAX_ROUNDS` rounds (placeholder 8); each round's target is longer than the one before and its visible clock (`revealMs`) shorter, within documented ranges.
@@ -957,13 +957,23 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
   - [ ] Determinism and range tests over seeds 0 to 999; golden scores for 3 seeds with fixed taps; a simulated "decent" player (documented error spread) survives about 5 rounds on average and a full run lasts 45 to 90 s. At least 90% lines and branches.
 - Notes: The design calls it the "current hold-for-the-target game", but the current game is tap-when-the-time-has-passed (T26, T113, T118). Keep the tap, since the design forbids new round types; record it. Time Bank replaces the single-round game (T140 swaps it in). Full review (scoring).
 
+### T167 Time Bank game component (split from T140)
+- Type: feature
+- Status: in-progress
+- Depends on: T139
+- Acceptance criteria:
+  - [ ] A `TimeBankGame` component (not yet wired in) plays the rounds with the existing Second Sense round (`InnerClockGame`, given each round's `revealMs`): the 3-2-1 before round 1 only, each round's target shown, a budget bar that drains by each round's error, and the round's error shown for `ROUND_GAP_MS` between rounds. It reports `{ tapsMs }` once the engine says the run is finished.
+  - [ ] The hidden-tab rule from T110 applies per round (each round's own timeout).
+  - [ ] Unit tests with mocked time: two rounds, the second ends the run, and the reported taps match.
+- Notes: Split from T140 to stay under ~400 lines. Full review (attempts).
+
 ### T140 Second Sense plays as Time Bank
 - Type: feature
 - Status: todo
-- Depends on: T139
+- Depends on: T167
 - Acceptance criteria:
   - [ ] The registry's `inner-clock` entry uses the Time Bank module; the single-round engine and its tests are removed. A migration sets `challenge_types` `inner-clock` to `higher-better` and its `default_pass_targets` placeholder to 4 (rounds), and recomputes unedited, unstarted open `inner-clock` days' targets (pgTAP).
-  - [ ] `InnerClockGame` plays the rounds: the 3-2-1 before round 1, each round's target shown, the clock visible for that round's `revealMs` then fading (T118's fade), a budget bar that drains by each round's error, and a short reveal of the error between rounds. It reports `{ tapsMs }` when the run ends.
+  - [ ] Daily play and practice run `TimeBankGame` (T167); the practice result shows rounds survived and budget left.
   - [ ] The hidden-tab rule from T110 applies per round (recorded decision unchanged); the cheat check's `inner-clock-implausible` rule is retired here with a note (its replacement is T164).
   - [ ] Unit tests with mocked time: two rounds, the second ends the run, and the reported taps match; practice `/practice/inner-clock` and its e2e work; the shared how-to text describes the budget. `npm run verify` and `npm run test:e2e` pass.
 - Notes: Full review (migration, scoring). Old stored attempts keep their old inputs; nothing replays them (as with T76).

@@ -25,8 +25,10 @@ type ClockState = { phase: "countdown"; number: number } | { phase: "shown"; ms:
 type InnerClockGameProps = {
   params: InnerClockParams;
   onFinish: (inputs: InnerClockInputs) => void;
-  /** How long the 3-2-1 lasts; 0 skips it (tests of the run alone). */
+  /** How long the 3-2-1 lasts; 0 skips it (tests of the run alone, and Time Bank's later rounds). */
   countdownMs?: number;
+  /** How long the clock shows before it fades; Time Bank shortens it each round. */
+  revealMs?: number;
 };
 
 /**
@@ -35,7 +37,7 @@ type InnerClockGameProps = {
  * screen (T138); the clock starts right after "1" (what the player sees as the start), and the
  * run ends with the first tap after that (pointer, Space or Enter) or at the timeout with no tap.
  */
-export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_MS }: InnerClockGameProps) {
+export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_MS, revealMs = REVEAL_MS }: InnerClockGameProps) {
   const areaRef = useRef<HTMLButtonElement>(null);
   const startedAt = useRef<number | null>(null);
   const done = useRef(false);
@@ -79,9 +81,9 @@ export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_M
         return true;
       }
       const elapsed = now - start;
-      if (elapsed < REVEAL_MS) {
+      if (elapsed < revealMs) {
         setClockState({ phase: "shown", ms: elapsed });
-      } else if (!reducedRef.current && elapsed < REVEAL_MS + CLOCK_FADE_MS) {
+      } else if (!reducedRef.current && elapsed < revealMs + CLOCK_FADE_MS) {
         setClockState({ phase: "fading" });
       } else {
         setClockState({ phase: "hidden" });
@@ -107,7 +109,7 @@ export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_M
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [params.timeoutMs, countdownMs]);
+  }, [params.timeoutMs, countdownMs, revealMs]);
 
   const tap = () => {
     if (done.current || startedAt.current === null) return;
@@ -138,7 +140,7 @@ export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_M
         ) : clockState.phase === "shown" ? (
           clockLabel(clockState.ms)
         ) : clockState.phase === "fading" ? (
-          clockLabel(REVEAL_MS)
+          clockLabel(revealMs)
         ) : (
           ""
         )}

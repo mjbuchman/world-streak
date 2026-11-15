@@ -1,0 +1,52 @@
+/* Time Bank: the round and the budget above the Second Sense tap area (T167). */
+.bank {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.round {
+  margin: 0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* The budget: a bar that drains by each round's error. */
+.budget {
+  flex: 1;
+  height: 12px;
+  border: 1px solid var(--fs-color-surface-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: var(--fs-color-mint);
+  transition: width 300ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill {
+    transition: none;
+  }
+}
+
+/* The round's error, in the tap area's place, so the page does not jump between rounds. */
+.error {
+  min-height: 320px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-headline);
+}
