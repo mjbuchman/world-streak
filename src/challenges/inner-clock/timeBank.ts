@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ladderRanges } from "../shared/ladder";
 import { createRng } from "../shared/prng";
 import type { ChallengeModule } from "../shared/types";
 
@@ -25,10 +26,7 @@ export const ROUND_GAP_MS = 1500;
 const TARGET_STEP_MS = 100;
 
 /** Round i's target range: one second longer per round, so the targets always rise. */
-export const TARGET_RANGES_MS: readonly { min: number; max: number }[] = Array.from({ length: MAX_ROUNDS }, (_, i) => ({
-  min: 3000 + 1000 * i,
-  max: 3500 + 1000 * i,
-}));
+export const TARGET_RANGES_MS = ladderRanges(MAX_ROUNDS, 3000, 1000, 500);
 
 /** The visible clock shrinks by REVEAL_STEP_MS a round, from the max down to the min. */
 const REVEAL_STEP_MS = 150;

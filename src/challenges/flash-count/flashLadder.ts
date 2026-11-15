@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ladderRanges } from "../shared/ladder";
 import { createRng } from "../shared/prng";
 import type { ChallengeModule } from "../shared/types";
 import { placeDots, type Dot } from "./dots";
@@ -19,10 +20,7 @@ export const REVEAL_MS = 1200;
 export const TOLERANCE_FRACTION = 0.1;
 
 /** Level i's dot count range: three more dots a level, so the counts always rise. */
-export const DOT_COUNT_RANGES: readonly { min: number; max: number }[] = Array.from({ length: MAX_ROUNDS }, (_, i) => ({
-  min: 8 + 3 * i,
-  max: 10 + 3 * i,
-}));
+export const DOT_COUNT_RANGES = ladderRanges(MAX_ROUNDS, 8, 3, 2);
 
 /** The flash shortens by FLASH_STEP_MS a level, from the max down to the min. */
 const FLASH_STEP_MS = 120;
