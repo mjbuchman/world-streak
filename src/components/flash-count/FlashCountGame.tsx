@@ -21,7 +21,7 @@ function parseCount(text: string): number | null {
 }
 
 /** One showing's answer. */
-export type ShowingAnswer = { count: number };
+type ShowingAnswer = { count: number };
 
 type FlashCountGameProps = {
   params: FlashShowing;

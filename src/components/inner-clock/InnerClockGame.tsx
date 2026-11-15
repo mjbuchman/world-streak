@@ -23,7 +23,7 @@ export const CLOCK_FADE_MS = 400;
 type ClockState = { phase: "countdown"; number: number } | { phase: "shown"; ms: number } | { phase: "fading" } | { phase: "hidden" };
 
 /** One round's tap in ms from its start, or null when it timed out. */
-export type RoundTap = { tapMs: number | null };
+type RoundTap = { tapMs: number | null };
 
 type InnerClockGameProps = {
   /** The round: its target, its timeout, and how long the clock shows before it fades. */

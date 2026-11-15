@@ -1265,7 +1265,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T168 One ladder-range helper for the multi-round engines (maintainer, Nov 15)
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T142
 - Acceptance criteria:
   - [ ] A helper in `src/challenges/shared/` builds the "N rounds, a fixed step per round" range tables, with unit tests; `timeBank.ts` and `flashLadder.ts` use it instead of their own copies, so Echo Path and Fair Split can too.
@@ -1274,7 +1274,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T169 Remove leftovers after the Swift Sum swap (maintainer, Nov 15)
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T142
 - Acceptance criteria:
   - [ ] No references remain to the old single-round Second Sense and Swift Sum engines' names, outside git history.
