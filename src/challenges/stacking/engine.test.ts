@@ -234,8 +234,8 @@ describe("stacking module", () => {
   });
 
   it("reports the last tap's time for the server's timing check, or 0 with no taps", () => {
-    expect(stacking.lastInputMs({ tapsMs: [750, 1250] })).toBe(1250);
-    expect(stacking.lastInputMs({ tapsMs: [] })).toBe(0);
+    expect(stacking.lastInputMs({ tapsMs: [750, 1250] }, steady)).toBe(1250);
+    expect(stacking.lastInputMs({ tapsMs: [] }, steady)).toBe(0);
   });
 
   it("accepts increasing, non-negative taps", () => {

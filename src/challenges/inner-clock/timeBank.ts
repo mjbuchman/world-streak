@@ -89,7 +89,7 @@ export const timeBank: ChallengeModule<TimeBankParams, TimeBankInputs> = {
   finished: (params, inputs) => play(params, inputs).failed || inputs.tapsMs.length >= params.rounds.length,
   inputsSchema,
   direction: "higher-better",
-  // A missing tap adds nothing: its timeout needs the params, and a lower bound never refuses an
-  // honest run. It always ends the run anyway, since its cost is more than the budget.
-  lastInputMs: ({ tapsMs }) => tapsMs.reduce<number>((sum, tapMs, i) => sum + (i > 0 ? ROUND_GAP_MS : 0) + (tapMs ?? 0), 0),
+  // A round with no tap lasted until its timeout.
+  lastInputMs: ({ tapsMs }, params) =>
+    tapsMs.reduce<number>((sum, tapMs, i) => sum + (i > 0 ? ROUND_GAP_MS : 0) + (tapMs ?? params.rounds[i].timeoutMs), 0),
 };

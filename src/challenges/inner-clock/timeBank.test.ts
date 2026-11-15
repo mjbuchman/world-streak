@@ -62,6 +62,7 @@ describe("Time Bank score", () => {
     ["errors 200, 900, then 2,000 with 1,900 left: two rounds", [3200, 4900, 7000], 2],
     ["errors 0, 0, 3,000: the budget runs out exactly and the round survives", [3000, 4000, 8000], 3],
     ["errors of 100 each: three rounds and 0.9 of the budget", [3100, 4100, 5100], 3.9],
+    ["errors 0, 0, 3,001: one past the budget fails the round", [3000, 4000, 8001], 2],
     ["no tap in round 1", [null], 0],
     ["a good round, then no tap", [3200, null], 1],
   ])("%s", (_name, tapsMs, score) => {
@@ -122,7 +123,7 @@ describe("Time Bank balance", () => {
       tapsMs.push(Math.round(round.targetMs * (1 + (rng.next() * 2 - 1) * 0.22)));
       if (timeBank.finished(params, { tapsMs })) break;
     }
-    return { rounds: Math.floor(timeBank.score(params, { tapsMs })), runMs: timeBank.lastInputMs({ tapsMs }) };
+    return { rounds: Math.floor(timeBank.score(params, { tapsMs })), runMs: timeBank.lastInputMs({ tapsMs }, params) };
   }
 
   it("lets a decent player survive about 5 rounds on average", () => {
@@ -136,7 +137,7 @@ describe("Time Bank balance", () => {
   it("lasts 45 to 90 s for a full run of on-target taps", () => {
     for (let seed = 0; seed < 1000; seed++) {
       const params = paramsFromSeed(seed);
-      const runMs = timeBank.lastInputMs({ tapsMs: params.rounds.map((round) => round.targetMs) });
+      const runMs = timeBank.lastInputMs({ tapsMs: params.rounds.map((round) => round.targetMs) }, params);
       expect(runMs).toBeGreaterThanOrEqual(45_000);
       expect(runMs).toBeLessThanOrEqual(90_000);
     }
@@ -173,11 +174,10 @@ describe("Time Bank inputs", () => {
   });
 
   it("time the latest tap from the run start: every tap plus the gaps between rounds", () => {
-    expect(timeBank.lastInputMs({ tapsMs: [] })).toBe(0);
-    expect(timeBank.lastInputMs({ tapsMs: [3200] })).toBe(3200);
-    expect(timeBank.lastInputMs({ tapsMs: [3200, 4900] })).toBe(3200 + ROUND_GAP_MS + 4900);
-    // A missing tap adds nothing: its timeout is not known without the params, and a lower
-    // bound never refuses an honest run. It always ends the run (its cost exceeds any budget).
-    expect(timeBank.lastInputMs({ tapsMs: [3200, null] })).toBe(3200 + ROUND_GAP_MS);
+    expect(timeBank.lastInputMs({ tapsMs: [] }, three)).toBe(0);
+    expect(timeBank.lastInputMs({ tapsMs: [3200] }, three)).toBe(3200);
+    expect(timeBank.lastInputMs({ tapsMs: [3200, 4900] }, three)).toBe(3200 + ROUND_GAP_MS + 4900);
+    // A round with no tap counts until its timeout (3 x 4,000).
+    expect(timeBank.lastInputMs({ tapsMs: [3200, null] }, three)).toBe(3200 + ROUND_GAP_MS + 12_000);
   });
 });

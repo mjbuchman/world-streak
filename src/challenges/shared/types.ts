@@ -31,7 +31,8 @@ export interface ChallengeModule<Params, Inputs> {
   direction: ScoreDirection;
   /**
    * Elapsed ms of the latest input, from the start of the run (0 with no inputs). The server
-   * refuses inputs timed later than the attempt has actually been running.
+   * refuses inputs timed later than the attempt has actually been running. The params let a
+   * multi-round game count a round that timed out at its timeout.
    */
-  lastInputMs: (inputs: Inputs) => number;
+  lastInputMs: (inputs: Inputs, params: Params) => number;
 }

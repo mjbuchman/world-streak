@@ -103,7 +103,7 @@ describe("Inner Clock inputs", () => {
   });
 
   it("times its latest input at the tap, or 0 with none", () => {
-    expect(innerClock.lastInputMs({ tapMs: 5320 })).toBe(5320);
-    expect(innerClock.lastInputMs({ tapMs: null })).toBe(0);
+    expect(innerClock.lastInputMs({ tapMs: 5320 }, at(5000))).toBe(5320);
+    expect(innerClock.lastInputMs({ tapMs: null }, at(5000))).toBe(0);
   });
 });
