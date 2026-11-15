@@ -84,6 +84,9 @@ describe("Flash Ladder layouts", () => {
     expect(layoutFor(params, 2, 1)).toEqual(layoutFor(params, 2, 1));
     expect(layoutFor(params, 2, 1)).not.toEqual(layoutFor(params, 2, 0));
     expect(layoutFor(params, 3, 0)).not.toEqual(layoutFor({ ...params, layoutSeed: params.layoutSeed + 1 }, 3, 0));
+    // Two levels with the same count still get their own layouts.
+    const twins = { layoutSeed: 5, levels: [{ dotCount: 12, flashMs: 1500 }, { dotCount: 12, flashMs: 1400 }] };
+    expect(layoutFor(twins, 0, 0)).not.toEqual(layoutFor(twins, 1, 0));
   });
 });
 
