@@ -8,9 +8,9 @@ World Streak is a free daily browser game where the whole world shares one strea
 
 ## Design principles
 
-The game must be explainable in one sentence: *play today's challenge; if enough of the world passes, humanity's streak survives.*
+The game must be explainable in one sentence: *play today's three games; win two to pass; if enough of the world passes, humanity's streak survives.*
 
-1. **Simplicity over depth.** Pass or fail only. No extra choices, currencies or roles. Depth comes from a fun, well-tuned challenge.
+1. **Simplicity over depth.** Each game is won or lost, and the day is passed or failed. No extra choices, currencies or roles. Depth comes from fun, well-tuned games.
 2. **One shared fate.** Every player's result feeds a single world streak.
 3. **Chaos is allowed, never rewarded.** Players can deliberately fail. The game never labels players or rewards sabotage, and a deliberate failure looks identical to an honest one.
 4. **Honest players have the upper hand.** The survival threshold sits well below the normal pass rate, so breaking the streak takes a large share of players failing.
@@ -18,10 +18,10 @@ The game must be explainable in one sentence: *play today's challenge; if enough
 
 ## Core daily loop
 
-Each game day, every player gets one scored attempt; the streak survives if the day's pass rate meets the survival threshold.
+Each game day, every player gets one scored run of three games; the streak survives if the day's pass rate meets the survival threshold.
 
-1. **Play.** The player opens the game and plays today's challenge once. A practice mode is available but never counts.
-2. **Pass or fail.** The attempt passes if its score meets today's pass target.
+1. **Play.** The player plays today's three games once each, in the order the day sets. Practice is available for every game but never counts.
+2. **Win two of three.** Each game is won if its score meets that game's pass target for the day. Winning two of the three passes the day. Once the day is decided (two wins or two losses), the result is locked; the remaining game is still offered.
 3. **Watch.** A live meter shows the world's pass rate against the survival threshold, so players can check in through the day.
 4. **Deadline.** At a single global deadline the day closes: *survived* (streak +1) or *broken* (streak resets to 0 for everyone).
 5. **Share.** The result card shows the player's own outcome and the world's status without spoilers, and becomes a call for help when the world is close to the line.
@@ -30,9 +30,10 @@ Each game day, every player gets one scored attempt; the streak survives if the 
 
 | Term | Definition |
 | --- | --- |
-| Pass rate | Passed attempts ÷ completed attempts for the game day, among counted accounts |
+| Pass rate | Passed days ÷ completed days for the game day, among counted accounts |
 | Survival threshold | Minimum pass rate for the streak to survive; set well below the normal pass rate (example: 60% when about 80% normally pass) |
-| Completed attempt | An attempt played to the end; abandoning before finishing records nothing |
+| Completed day | A player's day once its result is decided (two wins or two losses). Leaving a game early is a loss for that game |
+| Lineup | The three games for the game day; the same for everyone |
 | World streak | Consecutive game days survived in the current run |
 | Game day | Closes at one global deadline for everyone (*Open:* exact time, suggested midnight UTC) |
 
@@ -42,32 +43,43 @@ If deliberate failures cluster right before the deadline, honest players cannot 
 
 ## Daily challenges
 
-Each day is one short skill challenge from a rotating set; the first three to build are a stacking game, Inner Clock and Flash Count.
+Each day is a lineup of three games drawn from a pool; the pool starts with five.
 
-**Rules for every challenge (Decided)**
+**Rules for every game (Decided)**
 
-- One scored attempt per player per day, under about one minute.
-- Same challenge type and difficulty for everyone that day, but each player's instance is randomized from a per-player seed, so no answer or pattern can be shared.
-- Scored on a continuous scale so pass targets can be set precisely.
-- Pass target is set from real score data as a percentile (for example, the score 80% of recent players reached), and rises as the streak grows.
+- One scored run per player per game, about 45–90 seconds, built as an escalating run that ends when the player fails (or the climb ends).
+- Same lineup, game rules and difficulty for everyone that day, but each player's instance is randomized from a per-player seed, so no answer or pattern can be shared.
+- Scored on a continuous scale (rounds cleared, with what is left of the error budget or lives as the fraction) so pass targets can be set precisely.
+- Each game has its own pass target, set from real score data as a percentile (for example, the score 80% of recent players reached), and rising as the streak grows.
 - Works well on mobile and is fun to watch in short video clips.
 
-**First three challenges (Decided)**
+**Lineup rule (Decided)**
 
-| Challenge | How it plays | Score | Difficulty levers | Notes |
-| --- | --- | --- | --- | --- |
-| Stacking game | A block slides back and forth; tap to drop it on the tower; overhang is trimmed, so the platform shrinks | Blocks stacked | Starting speed, speed ramp, block width | Speed rises with height to cap runs near one minute. Randomize start speed, direction and ramp per player. Use original name and art, not those of existing stacking games |
-| Inner Clock | Tap when you think a target time has passed, with no visible timer | Error in seconds | Target length | Very accessible; strong on video |
-| Flash Count | Dots appear for about one second; enter how many | Error as % of the true count | Dot count, flash duration | Randomize dot count and layout per player |
+- The daily seed picks three different games from the pool and their order.
+- Never repeat the previous day's exact lineup. The admin can override a future day's lineup.
+- While the pool has only five games, every lineup is allowed; skill-category balancing comes when the pool grows.
+
+**The pool (Decided)**
+
+| Game | How it plays | Win condition / score | Difficulty levers |
+| --- | --- | --- | --- |
+| Teetering Tower | Unchanged: a column-grid stacker; tap to drop each row | Reach the target row; score = rows | Speed, ramp |
+| Second Sense: Time Bank | Rounds of the current hold-for-the-target game. Each round's error is subtracted from an error budget (placeholder 3.0 s); the run ends when the budget runs out | Survive N rounds; score = rounds survived + budget left as a fraction | Target length rises, clock fades sooner. No other round types |
+| Swift Sum: Flash Ladder | Rounds of the current count-the-dots game, each harder; a wrong count (outside tolerance) costs one of 3 lives | Clear N rounds; score = rounds cleared + lives left as a fraction | More dots, shorter flash. No colour or other variants |
+| Echo Path | Tiles on a grid light up in a sequence; repeat it. Each cleared round adds one step; a mistake costs one of 3 lives and gives a new sequence of the same length | Reach length N; score = longest sequence cleared + lives left as a fraction | Grid size, sequence speed |
+| Fair Split | An odd shape appears; drag one straight cut across it to split it as close to 50/50 as possible. A cut counts if both pieces are within ±1 percentage point of 50% (49/51 or better); a cut outside that costs one of 3 lives. Each cut has a time limit | Survive N shapes; score = shapes cut + lives left as a fraction | Shape oddness (concave, holes later), time limit |
+
+Placeholder values (budgets, lives, tolerances, time limits, N) live in config and are tuned at play-tests.
 
 **Later candidates (Open)**
 
-Sequence memory, Grid Recall, Spot the Odd One, Freehand Shape accuracy, Angle Sense, Halfway point, Color Recall and Steady Hand tracing. Rotate types through the week so no single skill, device or ability decides everything.
+Light Trail, Odd One Out, Sort Rush, Orbit Shot, Fill Line, True Angle, Color Recall and Steady Hand tracing. Add skill-category balancing to the lineup rule once the pool is big enough.
 
 **Watch-outs**
 
 - Stacking scores compound early mistakes; check the pass target does not fail good players at random.
-- Device and screen lag affect timing challenges; balance them with perception and memory challenges in the rotation.
+- Device and screen lag affect timing games; the lineup mixes them with memory and estimation.
+- Some lineups will be harder than others; per-game adaptive targets keep the day's pass rate steady.
 
 ## Streak cycle and prize
 
@@ -127,6 +139,8 @@ A mobile-first Next.js app in TypeScript, with Supabase for the database and aut
 - The browser runs the module to render and play the challenge; the server re-runs the same module on the submitted inputs (for example tap timestamps or the entered count) to compute the official score. The client never reports its own score.
 - Simulation is driven by elapsed time, never by frame count, so results are identical across 60Hz and 120Hz screens.
 - Every challenge module has unit tests covering known seeds, inputs and expected scores.
+- A run's inputs cover all its rounds, and the server replays the whole run.
+- One scored attempt per account per game per game day, enforced by a unique constraint. The day's result is derived from the player's attempts.
 
 **Live meter (Decided)**
 
@@ -150,8 +164,8 @@ A mobile-first Next.js app in TypeScript, with Supabase for the database and aut
 | Entity | Key fields |
 | --- | --- |
 | User | id, auth provider, created date, weight, flagged |
-| GameDay | date, challenge type, pass target, survival threshold, final pass rate, outcome |
-| Attempt | user, game day, seed, raw input or summary, score, passed, timestamps |
+| GameDay | date, lineup (three games in order), pass target per game, survival threshold, final pass rate, outcome |
+| Attempt | user, game day, game, seed, raw input or summary, score, passed, timestamps |
 | WorldStreak | cycle, current length, best length, start date, end date |
 | Cycle | number, start, end, prize floor, revenue share, cap, rollover in, winner, paid date |
 | Entry | user, cycle, game day (one per passed day) |
@@ -164,7 +178,7 @@ A mobile-first Next.js app in TypeScript, with Supabase for the database and aut
 
 **MVP scope (for the soft launch)**
 
-- Sign-in, the first three games, one scored attempt per day, practice mode.
+- Sign-in, the five-game pool, the daily three with win-two-of-three, practice for every game.
 - Live pass-rate meter, daily close job, world streak display and history list.
 - Spoiler-free share card that becomes a call for help when the world is near the threshold.
 - Ad slots outside the challenge, and a draft official rules page.
@@ -178,4 +192,6 @@ A mobile-first Next.js app in TypeScript, with Supabase for the database and aut
 - [ ] Survival threshold and pass-target percentile for launch
 - [ ] How pass targets and threshold rise as the streak grows
 - [ ] How much new accounts count, and after how many days they count fully
-- [ ] Which challenges join the rotation after the first three
+- [ ] Which games join the pool after the first five
+- [ ] Incentive to play the remaining game once the day is decided (for example a "perfect day" on the result and share card)
+- [ ] Results page after the run (percentile, score distribution, history); planned separately
