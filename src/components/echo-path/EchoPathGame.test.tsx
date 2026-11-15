@@ -72,17 +72,46 @@ describe("EchoPathGame", () => {
     frameAt(1200);
     for (const tile of sequenceFor(params, 3, 0)) tapTile(tile);
     expect(screen.getByText("Length 4 · best 3")).toBeTruthy();
-    // The pause, then the 4-tile playback.
+    // The pause, then the 4-tile playback: a wrong tile in either costs nothing.
+    const wrong = (sequenceFor(params, 4, 0)[0] + 1) % 9;
     frameAt(1200 + BETWEEN_MS - 1);
     expect(phase()).toBe("watch");
+    tapTile(wrong);
+    frameAt(1200 + BETWEEN_MS + 1599);
+    tapTile(wrong);
+    expect(lives()).toBe("3 of 3 lives left");
     frameAt(1200 + BETWEEN_MS + 1600);
     expect(phase()).toBe("repeat");
-    // A wrong first tile: a life goes and length 4 replays with a new sequence.
-    const next = sequenceFor(params, 4, 0);
-    tapTile((next[0] + 1) % 9);
+    // Now a wrong first tile: a life goes and length 4 replays with a new sequence.
+    tapTile(wrong);
     expect(lives()).toBe("2 of 3 lives left");
     expect(phase()).toBe("watch");
-    expect(onFinish).not.toHaveBeenCalled();
+    // Taps during the pause after the miss do not count either.
+    const retry = sequenceFor(params, 4, 1);
+    tapTile((retry[0] + 1) % 9);
+    expect(lives()).toBe("2 of 3 lives left");
+    // After the pause and playback, the new sequence (not the first one) clears length 4, the last.
+    frameAt(clock + BETWEEN_MS + 1600);
+    for (const tile of retry) tapTile(tile);
+    expect(onFinish).toHaveBeenCalledOnce();
+    expect(onFinish.mock.calls[0][0].taps.map((tap: { tile: number }) => tap.tile)).toEqual([...sequenceFor(params, 3, 0), wrong, ...retry]);
+    expect(screen.getByText("Length 4 · best 4")).toBeTruthy();
+  });
+
+  it("takes keys 1 to 9 as taps on the tiles, row by row", () => {
+    const onFinish = vi.fn();
+    render(<EchoPathGame countdownMs={0} params={params} onFinish={onFinish} />);
+    frameAt(0);
+    frameAt(1200);
+    for (const tile of sequenceFor(params, 3, 0)) fireEvent.keyDown(canvas(), { key: String(tile + 1) });
+    expect(screen.getByText("Length 4 · best 3")).toBeTruthy();
+    // Other keys, 0 and held repeats do nothing.
+    frameAt(1200 + BETWEEN_MS + 1600);
+    fireEvent.keyDown(canvas(), { key: "0" });
+    fireEvent.keyDown(canvas(), { key: "a" });
+    fireEvent.keyDown(canvas(), { key: String(((sequenceFor(params, 4, 0)[0] + 1) % 9) + 1), repeat: true });
+    expect(lives()).toBe("3 of 3 lives left");
+    expect(canvas().tabIndex).toBe(0);
   });
 
   it("reports every tap, timed from the first frame, when the run ends", () => {
@@ -118,10 +147,16 @@ describe("EchoPathGame", () => {
     render(<EchoPathGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     frameAt(0);
     frameAt(1200);
+    const [first, ...rest] = sequenceFor(params, 3, 0);
+    const centre = (tile: number) => ({ clientX: 54 + (tile % 3) * 96, clientY: 54 + Math.floor(tile / 3) * 96 });
+    // A right-click on a wrong tile costs nothing; one on the right tile does not count as a step.
+    fireEvent.pointerDown(canvas(), { button: 2, ...centre((first + 1) % 9) });
+    fireEvent.pointerDown(canvas(), { button: 2, ...centre(first) });
     fireEvent.pointerDown(canvas(), { button: 0, clientX: 100, clientY: 54 });
-    fireEvent.pointerDown(canvas(), { button: 2, clientX: 54, clientY: 54 });
     expect(lives()).toBe("3 of 3 lives left");
-    expect(screen.getByText("Length 3 · best 0")).toBeTruthy();
+    // So the sequence still needs all three taps: two would not clear it.
+    for (const tile of rest) tapTile(tile);
+    expect(lives()).toBe("2 of 3 lives left");
   });
 
   it("stops its frame loop when it leaves the screen", () => {

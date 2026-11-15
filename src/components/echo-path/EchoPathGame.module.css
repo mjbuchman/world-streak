@@ -52,3 +52,15 @@
   border-radius: var(--fs-radius-surface);
   cursor: pointer;
 }
+
+.hint {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-text-small);
+  color: var(--fs-color-text-muted);
+}
+
+.board:focus-visible {
+  outline: none;
+  box-shadow: var(--fs-focus-ring);
+}

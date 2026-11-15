@@ -1,7 +1,7 @@
 "use client";
 
-import { type PointerEvent, useEffect, useRef, useState } from "react";
-import { LIVES, MAX_LENGTH, play, sequenceFor, type EchoPathInputs, type EchoPathParams } from "@/challenges/echo-path/engine";
+import { type KeyboardEvent, type PointerEvent, useEffect, useRef, useState } from "react";
+import { LIVES, play, sequenceFor, type EchoPathInputs, type EchoPathParams } from "@/challenges/echo-path/engine";
 import { boardLayout, drawEchoPath, hitTile, litTileAt, missStrength, playbackMs } from "@/challenges/echo-path/render";
 import { fitCanvas, readColorTokens } from "@/components/canvas";
 import { ECHO_PATH_COLOR_TOKENS } from "@/components/canvasTokens";
@@ -85,17 +85,14 @@ export function EchoPathGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_MS 
     return runFrames(tick);
   }, [params, countdownMs]);
 
-  const tap = (event: PointerEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
+  const tapTile = (tile: number) => {
     const current = showing.current;
     const now = performance.now();
-    if (event.button !== 0 || !canvas || !current || startedAt.current === null) return;
-    if (play(params, { taps: taps.current }).finished) return;
+    if (!current || startedAt.current === null) return;
+    // During the playback, and the pause before it, taps do not count.
     if (now - current.startsAt < playbackMs(current.sequence.length, params.stepMs)) return;
-    const rect = canvas.getBoundingClientRect();
-    const tile = hitTile(boardLayout(rect.width, rect.height, params.cols, params.rows), event.clientX - rect.left, event.clientY - rect.top);
-    if (tile === null) return;
     const before = play(params, { taps: taps.current });
+    if (before.finished) return;
     taps.current = [...taps.current, { tile, atMs: now - startedAt.current }];
     const after = play(params, { taps: taps.current });
     pressed.current = { tile, at: now };
@@ -110,13 +107,30 @@ export function EchoPathGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_MS 
     }
   };
 
+  // The main button or a touch only: a right-click is not a tap.
+  const onPointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (event.button !== 0 || !canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const tile = hitTile(boardLayout(rect.width, rect.height, params.cols, params.rows), event.clientX - rect.left, event.clientY - rect.top);
+    if (tile !== null) tapTile(tile);
+  };
+
+  // Keys 1 to 9 tap the tiles row by row, as on a phone keypad read from the top.
+  const onKeyDown = (event: KeyboardEvent<HTMLCanvasElement>) => {
+    const tile = Number(event.key) - 1;
+    if (event.repeat || !Number.isInteger(tile) || tile < 0 || tile >= params.cols * params.rows) return;
+    event.preventDefault();
+    tapTile(tile);
+  };
+
   const label =
     phase === "countdown" ? "Get ready." : phase === "watch" ? "Watch the tiles light up." : phase === "repeat" ? "Tap the tiles in the same order." : "Done.";
   return (
     <div className={styles.game}>
       <div className={styles.status}>
         <p className={styles.length}>
-          Length {Math.min(state.length, MAX_LENGTH)} · best {state.longest}
+          Length {Math.min(state.length, params.maxLength)} · best {state.longest}
         </p>
         <span role="img" aria-label={`${state.lives} of ${LIVES} lives left`} className={styles.lives}>
           {Array.from({ length: LIVES }, (_, i) => (
@@ -125,9 +139,19 @@ export function EchoPathGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_MS 
         </span>
       </div>
       <div className={styles.stage}>
-        <canvas ref={canvasRef} className={styles.board} data-phase={phase} role="img" aria-label={label} onPointerDown={tap} />
+        <canvas
+          ref={canvasRef}
+          className={styles.board}
+          data-phase={phase}
+          role="img"
+          aria-label={label}
+          tabIndex={0}
+          onPointerDown={onPointerDown}
+          onKeyDown={onKeyDown}
+        />
         {countdown !== null && <CountdownNumber key={countdown} value={countdown} />}
       </div>
+      <p className={styles.hint}>Tap the tiles, or press 1 to 9 for them row by row.</p>
     </div>
   );
 }
