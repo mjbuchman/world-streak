@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M5 The Daily Three (planned Nov 15).
-- Active task: batch 2 (T150, T151 lineups). Then batch 3 from the Batches list in docs/BACKLOG.md.
+- Active task: none. Next is batch 3 (T152, T153) on branch `task/152-per-game-attempts`, which already holds these doc updates.
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M5 The Daily Three (T139–T166, approved in advance on Nov 15), starting with T139.
@@ -18,6 +18,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-16 — T150, T151 Lineups (PR #157)
+- Pool, MD5-date lineup rule (no repeat of the day before), `game_day_games` with per-game targets; untouched days follow the settings. Older pgTAP tests pin Tower lineups via a fixture.
+- Maintainer check done (10 merges): T172, T173 added. Merges since the check: 0.
 
 ### 2026-11-16 — T146-T149 Fair Split (PR #156)
 - Geometry, engine, renderer, `FairSplitGame`, `/practice/fair-split`, migration (pass target placeholder 5).
