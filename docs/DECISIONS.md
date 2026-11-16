@@ -394,3 +394,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: the design asks for the daily seed to pick the lineup and leaves the method open; rebuilding untouched days keeps the T102 rule that coming days follow the settings.
 - How to change it later: `lineup_for` and `ensure_game_day` in `supabase/migrations/20261117*`; the pool in `game_settings.pool` (T162 adds it to /admin/settings).
 - Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
+### 2026-11-16 — Day results (T152, T153)
+- Choice: a day is decided by a majority of its lineup (two of three; one of one for the one-game days from before T151). A player who loses game 1 and never comes back has no completed day and does not count. The database judges each game's pass from that game's target and refuses a caller whose `passed` disagrees (WS005). "Played after the day was decided" is read from the order of games, not the clock: a game is left out of the percentile when the player's earlier games already held a majority of wins or losses, an unsubmitted game counting as a loss.
+- Reason: the design's definitions (passed days ÷ completed days; two wins or two losses decide); the order rule needs no timestamps and gives the same answer.
+- How to change it later: `refresh_day_result` and `pass_target_for` in `supabase/migrations/20261117020000_daily_three_attempts.sql`.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)

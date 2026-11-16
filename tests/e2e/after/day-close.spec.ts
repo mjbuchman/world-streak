@@ -38,6 +38,8 @@ async function reopenYesterday(): Promise<string> {
       .update({ closed_at: null, outcome: null, final_pass_rate: null, challenge_type: "stacking", survival_threshold: 0.6, edited: true })
       .eq("game_date", day),
   );
+  // A one-game day, so each seeded player's one game decides their day (T153).
+  await must(db.from("game_day_games").delete().eq("game_date", day).gt("position", 1));
   await must(db.from("streak_runs").delete().gte("id", 0));
   return day;
 }

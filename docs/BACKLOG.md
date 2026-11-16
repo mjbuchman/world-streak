@@ -1130,7 +1130,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T152 One scored attempt per game
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T151
 - Acceptance criteria:
   - [ ] A migration gives `attempts` a `position` and `challenge_type` (backfilled: position 1 and the day's challenge) and replaces `unique (user_id, game_date)` with `unique (user_id, game_date, position)` plus `unique (user_id, game_date, challenge_type)`.
@@ -1141,7 +1141,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T153 Day results and completed-day counters
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T152, T46
 - Acceptance criteria:
   - [ ] A migration creates `day_results` (`user_id`, `game_date`, `wins`, `losses`, `outcome` null or `passed`/`failed`, `decided_at`, `counted_weight`, primary key `(user_id, game_date)`), maintained only by the attempt functions. RLS: a user selects only their own rows; no client writes.
