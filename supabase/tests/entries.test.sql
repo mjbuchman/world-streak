@@ -6,6 +6,7 @@ select col_is_unique('public', 'entries', array['user_id', 'game_date'], 'one en
 
 -- Results are accepted only for today, so cycle 1 moves to cover today for the in-cycle cases.
 \ir fixtures/fixtures.psql
+\ir fixtures/tower_lineup.psql
 create temporary table today as select tests.clear_today() as d;
 update public.cycles set start_date = d - 1, end_date = d + 58 from today where number = 1;
 select tests.make_player('00000000-0000-0000-0000-0000000000e1');

@@ -26,7 +26,7 @@ select col_type_is('public', 'attempts', 'passed', 'boolean', 'passed is boolean
 select col_not_null('public', 'attempts', 'started_at', 'started_at is required');
 select col_default_is('public', 'attempts', 'started_at', 'now()', 'started_at defaults to now()');
 select col_type_is('public', 'attempts', 'submitted_at', 'timestamp with time zone', 'submitted_at is timestamptz');
-select col_is_unique('public', 'attempts', array['user_id', 'game_date'], 'one attempt per user per game date');
+select col_is_unique('public', 'attempts', array['user_id', 'game_date', 'position'], 'one attempt per user per game of a game date');
 
 -- Row-level security and policies.
 select ok((select relrowsecurity from pg_class where oid = 'public.game_days'::regclass), 'RLS is enabled on game_days');
@@ -148,7 +148,7 @@ select results_eq(
 select is((select count(*)::int from public.game_days where game_date = '2001-11-08'), 1, 'a signed-in user can read game days');
 select throws_ok(
   $$insert into public.attempts (user_id, game_date, seed)
-    values ('00000000-0000-0000-0000-00000000000a', '2001-11-09', 4)$$,
+    values ('00000000-0000-0000-0000-00000000000b', '2001-11-08', 4)$$,
   '42501', null, 'a signed-in user cannot insert an attempt directly'
 );
 select throws_ok(

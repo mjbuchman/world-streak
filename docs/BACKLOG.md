@@ -28,6 +28,7 @@ One branch, review round and PR per batch, in this order (dependencies still app
 7. Admin lineups and settings: T161, T162 (full)
 8. Local tools and cheat checks: T163, T164 (light)
 9. Daily Three e2e and mobile: T165, T166 (light)
+10. Maintenance: T172, T173 (light; any time)
 
 ## M1 Foundation and first challenge end to end
 
@@ -1107,7 +1108,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T150 The pool and the lineup rule
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T31, T140, T142, T145, T149
 - Acceptance criteria:
   - [ ] A migration adds `game_settings.pool text[]`, default `{stacking,inner-clock,flash-count,echo-path,fair-split}`, each entry checked against `challenge_types`, at least 3 distinct entries.
@@ -1118,7 +1119,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T151 Game-day lineups with a pass target per game
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T150, T102
 - Acceptance criteria:
   - [ ] A migration creates `game_day_games` (`game_date references game_days`, `position smallint 1..3`, `challenge_type references challenge_types`, `pass_target numeric not null`, primary key `(game_date, position)`, `unique (game_date, challenge_type)`). RLS: readable by everyone, no client write policies. Existing days are backfilled as one-game lineups (position 1, their challenge and target).
@@ -1129,7 +1130,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T152 One scored attempt per game
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T151
 - Acceptance criteria:
   - [ ] A migration gives `attempts` a `position` and `challenge_type` (backfilled: position 1 and the day's challenge) and replaces `unique (user_id, game_date)` with `unique (user_id, game_date, position)` plus `unique (user_id, game_date, challenge_type)`.
@@ -1140,7 +1141,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T153 Day results and completed-day counters
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T152, T46
 - Acceptance criteria:
   - [ ] A migration creates `day_results` (`user_id`, `game_date`, `wins`, `losses`, `outcome` null or `passed`/`failed`, `decided_at`, `counted_weight`, primary key `(user_id, game_date)`), maintained only by the attempt functions. RLS: a user selects only their own rows; no client writes.
@@ -1910,3 +1911,21 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
   - [ ] `FlashCountGame`, `InnerClockGame` and `StackingGame` use it; the `startedAt.current!` assertion in `InnerClockGame` is gone. If `StackingGame` is too entangled with `stackingLoop.ts`, migrate the other two and note why.
   - [ ] Existing component tests pass unchanged; engines and scoring untouched; `npm run verify` passes; no behavior change.
 - Notes: From the maintainer check after T133. Each game hand-rolls its loop (FlashCountGame 78-107, InnerClockGame 55-93, StackingGame 54-116), so a timing or cleanup fix is made three times. Keep under 400 lines.
+
+### T172 Normalize line endings with .gitattributes
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] A root `.gitattributes` sets `* text=auto eol=lf` and marks binary assets (png, ico, woff2) as `binary`.
+  - [ ] The Fair Split snapshot no longer shows as modified from line endings alone; `npm run verify` passes; no behavior change.
+- Notes: From the maintainer check after T151. Git warns "LF will be replaced by CRLF" on many files on Windows. Never stage the owner's local edits (CLAUDE.md, .claude/, .env.example).
+
+### T173 Patch-level dependency bumps
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `@playwright/test` 1.65.1, `jsdom` 31.0.1 and `@testing-library/user-event` 14.6.12 in `package.json` and the lockfile; no major bumps.
+  - [ ] `npm run verify` and `npm run test:e2e` pass; no behavior change.
+- Notes: From the maintainer check after T151 (`npm outdated`).

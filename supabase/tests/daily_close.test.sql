@@ -36,9 +36,9 @@ select results_eq('select * from streak', $$values (1, 1, '2000-01-01'::date)$$,
 
 -- The rate is weighted: 5 plain passes of 10, but 5 of 8 weighted attempts (0.625).
 select tests.play_day('2000-01-02', 10, 5, 0.60);
-update public.game_day_counters set weighted_attempts = 8, weighted_passes = 5 where game_date = '2000-01-02';
+update public.game_day_counters set weighted_completed_days = 8, weighted_passed_days = 5 where game_date = '2000-01-02';
 select is(public.close_game_day('2000-01-02'), 'survived', 'the weighted pass rate decides, not the plain one');
-select is((select final_pass_rate from day where game_date = '2000-01-02'), 0.625::numeric, 'the final rate is weighted passes over weighted attempts');
+select is((select final_pass_rate from day where game_date = '2000-01-02'), 0.625::numeric, 'the final rate is weighted passed days over weighted completed days');
 
 select tests.play_day('2000-01-03', 10, 9, 0.60);
 select is(public.close_game_day('2000-01-03'), 'survived', '9 of 10 survives');
@@ -67,8 +67,8 @@ select results_eq(
 select is(public.close_game_day('2000-01-06'), 'broken', 'a day with no counters row closes as broken');
 -- Only zero-weight accounts played: attempts but no weighted attempts.
 select tests.play_day('2000-01-07', 3, 3, 0.60);
-update public.game_day_counters set weighted_attempts = 0, weighted_passes = 0 where game_date = '2000-01-07';
-select is(public.close_game_day('2000-01-07'), 'broken', 'a day with no weighted attempts closes as broken');
+update public.game_day_counters set weighted_completed_days = 0, weighted_passed_days = 0 where game_date = '2000-01-07';
+select is(public.close_game_day('2000-01-07'), 'broken', 'a day with no weighted completed days closes as broken');
 select is((select final_pass_rate from day where game_date = '2000-01-07'), null::numeric, 'with no final pass rate');
 
 -- A new run after a break.

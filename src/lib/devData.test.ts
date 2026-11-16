@@ -54,8 +54,7 @@ describe("FAKE_PLAYER_EMAIL", () => {
       startAttempt: async (userId) => `attempt-${userId}`,
       recordResult: async () => "recorded",
       dayClosed: async () => false,
-      writePastResult: async () => {},
-      addPastPass: async () => {},
+      recordPastResult: async () => "recorded",
       log: () => {},
     };
     await runSeed({ players: 3, passRate: 0.5, date: null }, Date.now().toString(36), deps);

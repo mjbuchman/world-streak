@@ -61,5 +61,11 @@ language sql as $$
   on conflict (game_date) do update set
     attempts = excluded.attempts, passes = excluded.passes,
     weighted_attempts = excluded.weighted_attempts, weighted_passes = excluded.weighted_passes;
+  -- One-game Tower days: each counted attempt is a completed day.
+  update public.game_day_counters
+     set completed_days = attempt_count, passed_days = pass_count,
+         weighted_completed_days = attempt_count, weighted_passed_days = pass_count
+   where game_date = day;
+  delete from public.game_day_games where game_date = day and position > 1;
   select day;
 $$;

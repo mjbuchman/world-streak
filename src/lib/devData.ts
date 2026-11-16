@@ -50,13 +50,11 @@ export type SeedDeps = {
   recordResult: (attemptId: string, score: number, passed: boolean) => Promise<string>;
   /** Whether the day has been closed (results can no longer change it). */
   dayClosed: (date: string) => Promise<boolean>;
-  /** For another day: write the result directly, since record_attempt_result refuses it. */
-  writePastResult: (attemptId: string, score: number, passed: boolean) => Promise<void>;
   /**
-   * For another day: add one pass, with the attempt's own counted weight, to the day's counters,
-   * as record_attempt_result would have.
+   * For another day: record_attempt_result_unchecked, which skips the today check but keeps the
+   * counters, day result and entry in step (T153); returns its status word.
    */
-  addPastPass: (date: string, attemptId: string) => Promise<void>;
+  recordPastResult: (attemptId: string, score: number, passed: boolean) => Promise<string>;
   log: (message: string) => void;
 };
 
@@ -75,14 +73,9 @@ export async function runSeed(args: SeedArgs, runId: string, deps: SeedDeps): Pr
     const attemptId = await deps.startAttempt(userId, date);
     const passed = passing.has(i);
     const score = nearMissScore(target, passed);
-    if (date === today) {
-      const status = await deps.recordResult(attemptId, score, passed);
-      if (status !== "recorded") throw new Error(`record_attempt_result answered "${status}" for player ${i + 1}.`);
-    } else {
-      // Each pass right after its result, so a run that stops halfway leaves at most one out of step.
-      await deps.writePastResult(attemptId, score, passed);
-      if (passed) await deps.addPastPass(date, attemptId);
-    }
+    const record = date === today ? deps.recordResult : deps.recordPastResult;
+    const status = await record(attemptId, score, passed);
+    if (status !== "recorded") throw new Error(`record_attempt_result answered "${status}" for player ${i + 1}.`);
   }
   deps.log(`Seeded ${args.players} players for ${date}: ${passing.size} passed, ${args.players - passing.size} did not.`);
 }
@@ -91,6 +84,8 @@ const randomSeed = () => crypto.getRandomValues(new Uint32Array(1))[0];
 
 /** The seed steps over a service-role client to the local database. */
 export function supabaseSeedDeps(db: SupabaseClient, log: (message: string) => void = console.log): SeedDeps {
+  const record = async (fn: string, attemptId: string, score: number, passed: boolean) =>
+    check(fn, await db.rpc(fn, { p_attempt_id: attemptId, p_inputs: { seeded: true }, p_score: score, p_passed: passed })) as string;
   return {
     async todayGameDate() {
       return check("game_date_at", await db.rpc("game_date_at", { ts: new Date().toISOString() })) as string;
@@ -117,37 +112,11 @@ export function supabaseSeedDeps(db: SupabaseClient, log: (message: string) => v
       );
       return (row as { id: string }).id;
     },
-    async recordResult(attemptId, score, passed) {
-      const inputs = { seeded: true };
-      return check(
-        "record_attempt_result",
-        await db.rpc("record_attempt_result", { p_attempt_id: attemptId, p_inputs: inputs, p_score: score, p_passed: passed }),
-      ) as string;
-    },
+    recordResult: (attemptId, score, passed) => record("record_attempt_result", attemptId, score, passed),
+    recordPastResult: (attemptId, score, passed) => record("record_attempt_result_unchecked", attemptId, score, passed),
     async dayClosed(date) {
       const row = check("Game day lookup", await db.from("game_days").select("closed_at").eq("game_date", date).single());
       return (row as { closed_at: string | null }).closed_at !== null;
-    },
-    async writePastResult(attemptId, score, passed) {
-      const update = { inputs: { seeded: true }, score, passed, submitted_at: new Date().toISOString() };
-      check("Result update", await db.from("attempts").update(update).eq("id", attemptId));
-    },
-    async addPastPass(date, attemptId) {
-      // The same weight the start was counted with (T17), like record_attempt_result. One seed
-      // run at a time, so this read-then-write cannot race another.
-      const attempt = check(
-        "Attempt weight lookup",
-        await db.from("attempts").select("counted_weight").eq("id", attemptId).single(),
-      ) as { counted_weight: number | string };
-      const row = check(
-        "Counters lookup",
-        await db.from("game_day_counters").select("passes, weighted_passes").eq("game_date", date).single(),
-      ) as { passes: number; weighted_passes: number | string };
-      const update = {
-        passes: row.passes + 1,
-        weighted_passes: dbNumber(row.weighted_passes, "weighted_passes") + dbNumber(attempt.counted_weight, "counted_weight"),
-      };
-      check("Counters update", await db.from("game_day_counters").update(update).eq("game_date", date));
     },
     log,
   };

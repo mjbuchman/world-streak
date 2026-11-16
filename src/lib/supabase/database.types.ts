@@ -25,17 +25,23 @@ export type Database = {
           Tables: {
             "attempts": {
                   Row: {
-                    "counted_weight": number,"game_date": string,"id": string,"inputs": Json | null,"passed": boolean | null,"score": number | null,"seed": number,"started_at": string,"submitted_at": string | null,"user_id": string
+                    "challenge_type": string,"counted_weight": number,"game_date": string,"id": string,"inputs": Json | null,"passed": boolean | null,"position": number,"score": number | null,"seed": number,"started_at": string,"submitted_at": string | null,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "counted_weight": number,"game_date": string,"id"?: string,"inputs"?: Json | null,"passed"?: boolean | null,"score"?: number | null,"seed": number,"started_at"?: string,"submitted_at"?: string | null,"user_id": string
+                    "challenge_type": string,"counted_weight": number,"game_date": string,"id"?: string,"inputs"?: Json | null,"passed"?: boolean | null,"position"?: number,"score"?: number | null,"seed": number,"started_at"?: string,"submitted_at"?: string | null,"user_id": string
                   }
                   Update: {
-                    "counted_weight"?: number,"game_date"?: string,"id"?: string,"inputs"?: Json | null,"passed"?: boolean | null,"score"?: number | null,"seed"?: number,"started_at"?: string,"submitted_at"?: string | null,"user_id"?: string
+                    "challenge_type"?: string,"counted_weight"?: number,"game_date"?: string,"id"?: string,"inputs"?: Json | null,"passed"?: boolean | null,"position"?: number,"score"?: number | null,"seed"?: number,"started_at"?: string,"submitted_at"?: string | null,"user_id"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "attempts_challenge_type_fkey"
+      columns: ["challenge_type"]
+isOneToOne: false
+      referencedRelation: "challenge_types"
+      referencedColumns: ["type"]
+    },{
       foreignKeyName: "attempts_game_date_fkey"
       columns: ["game_date"]
 isOneToOne: false
@@ -109,6 +115,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"day_results": {
+                  Row: {
+                    "counted_weight": number,"decided_at": string | null,"game_date": string,"losses": number,"outcome": string | null,"user_id": string,"wins": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "counted_weight": number,"decided_at"?: string | null,"game_date": string,"losses"?: number,"outcome"?: string | null,"user_id": string,"wins"?: number
+                  }
+                  Update: {
+                    "counted_weight"?: number,"decided_at"?: string | null,"game_date"?: string,"losses"?: number,"outcome"?: string | null,"user_id"?: string,"wins"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "day_results_game_date_fkey"
+      columns: ["game_date"]
+isOneToOne: false
+      referencedRelation: "game_days"
+      referencedColumns: ["game_date"]
+    },{
+      foreignKeyName: "day_results_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"entries": {
                   Row: {
                     "attempt_id": string,"created_at": string,"cycle_number": number,"game_date": string,"id": number,"user_id": string
@@ -155,14 +187,14 @@ isOneToOne: false
                   ]
                 },"game_day_counters": {
                   Row: {
-                    "attempts": number,"game_date": string,"passes": number,"updated_at": string,"weighted_attempts": number,"weighted_passes": number
+                    "attempts": number,"completed_days": number,"game_date": string,"passed_days": number,"passes": number,"updated_at": string,"weighted_attempts": number,"weighted_completed_days": number,"weighted_passed_days": number,"weighted_passes": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "attempts"?: number,"game_date": string,"passes"?: number,"updated_at"?: string,"weighted_attempts"?: number,"weighted_passes"?: number
+                    "attempts"?: number,"completed_days"?: number,"game_date": string,"passed_days"?: number,"passes"?: number,"updated_at"?: string,"weighted_attempts"?: number,"weighted_completed_days"?: number,"weighted_passed_days"?: number,"weighted_passes"?: number
                   }
                   Update: {
-                    "attempts"?: number,"game_date"?: string,"passes"?: number,"updated_at"?: string,"weighted_attempts"?: number,"weighted_passes"?: number
+                    "attempts"?: number,"completed_days"?: number,"game_date"?: string,"passed_days"?: number,"passes"?: number,"updated_at"?: string,"weighted_attempts"?: number,"weighted_completed_days"?: number,"weighted_passed_days"?: number,"weighted_passes"?: number
                   }
                   Relationships: [
                     {
@@ -402,6 +434,9 @@ isOneToOne: false
                            },
 "recount_game_day":
 { Args: { "d": string }; Returns: undefined
+                           },
+"refresh_day_result":
+{ Args: { "d": string,"p_attempt": string,"p_count": boolean,"p_user": string }; Returns: undefined
                            },
 "review_cheat_flag":
 { Args: { "p_decision": string,"p_flag_id": number }; Returns: string

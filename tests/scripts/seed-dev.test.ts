@@ -75,10 +75,10 @@ function fakeDeps(overrides: Partial<SeedDeps> = {}): SeedDeps & { calls: string
       return "recorded";
     }),
     dayClosed: vi.fn(async () => false),
-    writePastResult: vi.fn(async (attemptId: string, score: number, passed: boolean) => {
-      calls.push(`write ${attemptId} ${score} ${passed}`);
+    recordPastResult: vi.fn(async (attemptId: string, score: number, passed: boolean) => {
+      calls.push(`past ${attemptId} ${score} ${passed}`);
+      return "recorded";
     }),
-    addPastPass: vi.fn(async (date: string, attemptId: string) => void calls.push(`pass ${date} ${attemptId}`)),
     log: vi.fn(),
     ...overrides,
   };
@@ -103,25 +103,29 @@ describe("runSeed", () => {
       "record attempt-3 11 true",
       "record attempt-4 9 false",
     ]);
-    expect(deps.writePastResult).not.toHaveBeenCalled();
-    expect(deps.addPastPass).not.toHaveBeenCalled();
+    expect(deps.recordPastResult).not.toHaveBeenCalled();
     expect(deps.log).toHaveBeenLastCalledWith("Seeded 4 players for 2026-11-08: 2 passed, 2 did not.");
   });
 
-  it("writes another day's results directly and counts each pass right after it", async () => {
-    // record_attempt_result only accepts today's game date, so a past day takes the direct path.
+  it("records another day's results through the unchecked function", async () => {
+    // record_attempt_result only accepts today's game date.
     const deps = fakeDeps();
     await runSeed({ players: 4, passRate: 0.5, date: "2026-11-07" }, "run2", deps);
     expect(deps.recordResult).not.toHaveBeenCalled();
-    expect(deps.calls.filter((call) => /^(write|pass) /.test(call))).toEqual([
-      "write attempt-1 11 true",
-      "pass 2026-11-07 attempt-1",
-      "write attempt-2 9 false",
-      "write attempt-3 11 true",
-      "pass 2026-11-07 attempt-3",
-      "write attempt-4 9 false",
+    expect(deps.calls.filter((call) => call.startsWith("past "))).toEqual([
+      "past attempt-1 11 true",
+      "past attempt-2 9 false",
+      "past attempt-3 11 true",
+      "past attempt-4 9 false",
     ]);
     expect(deps.log).toHaveBeenLastCalledWith("Seeded 4 players for 2026-11-07: 2 passed, 2 did not.");
+  });
+
+  it("stops with a clear error if a past result is refused", async () => {
+    const deps = fakeDeps({ recordPastResult: vi.fn(async () => "not-found") });
+    await expect(runSeed({ players: 1, passRate: 1, date: "2026-11-07" }, "run8", deps)).rejects.toThrow(
+      /answered "not-found"/,
+    );
   });
 
   it("refuses to seed a day that is already closed, before creating anyone", async () => {
@@ -251,35 +255,20 @@ describe("supabaseSeedDeps", () => {
     ]);
   });
 
-  it("writes another day's result directly and adds a pass with the attempt's own weight", async () => {
-    const { deps, calls } = fakeClient([
-      { data: null, error: null },
-      { data: { counted_weight: "0.5" }, error: null },
-      { data: { passes: 4, weighted_passes: "4" }, error: null },
-      { data: null, error: null },
+  it("records another day's result through record_attempt_result_unchecked", async () => {
+    const { deps, calls } = fakeClient([{ data: "recorded", error: null }]);
+    expect(await deps.recordPastResult("a1", 9, false)).toBe("recorded");
+    expect(calls[0]).toEqual([
+      "rpc",
+      "record_attempt_result_unchecked",
+      { p_attempt_id: "a1", p_inputs: { seeded: true }, p_score: 9, p_passed: false },
     ]);
-    await deps.writePastResult("a1", 9, false);
-    expect(calls).toContainEqual(["update", expect.objectContaining({ score: 9, passed: false, inputs: { seeded: true } })]);
-    await deps.addPastPass("2026-11-07", "a1");
-    expect(calls).toContainEqual(["select", "counted_weight"]);
-    expect(calls).toContainEqual(["update", { passes: 5, weighted_passes: 4.5 }]);
   });
 
   it.each([null, "abc", ""])("refuses a malformed pass target (%j) instead of seeding NaN scores", async (passTarget) => {
     await expect(fakeClient([{ data: { pass_target: passTarget }, error: null }]).deps.passTarget("2026-11-08")).rejects.toThrow(
       /pass_target/,
     );
-  });
-
-  it.each([
-    ["counted_weight", { counted_weight: null }, { passes: 4, weighted_passes: "4" }],
-    ["weighted_passes", { counted_weight: "1" }, { passes: 4, weighted_passes: "x" }],
-  ])("refuses a malformed %s instead of adding NaN to the counters", async (field, attempt, counters) => {
-    const { deps } = fakeClient([
-      { data: attempt, error: null },
-      { data: counters, error: null },
-    ]);
-    await expect(deps.addPastPass("2026-11-07", "a1")).rejects.toThrow(new RegExp(field));
   });
 
   it("reports whether a day is closed", async () => {
