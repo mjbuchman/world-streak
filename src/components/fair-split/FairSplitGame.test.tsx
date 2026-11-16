@@ -66,7 +66,8 @@ describe("FairSplitGame", () => {
     expect(screen.getByText("Shape 1 of 2 · cut 0")).toBeTruthy();
     frameAt(1000 + RUN_COUNTDOWN_MS);
     expect(phase()).toBe("cut");
-    expect(canvas().getAttribute("aria-label")).toBe("Drag one straight cut across the shape.");  });
+    expect(canvas().getAttribute("aria-label")).toBe("Drag one straight cut across the shape.");
+  });
 
   it("shows a counted cut's split, then the next shape; a timeout costs a life", () => {
     const onFinish = vi.fn();

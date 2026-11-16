@@ -82,6 +82,7 @@ export function play(params: FairSplitParams, { cuts, endMs }: FairSplitInputs) 
   }
   timeOutBefore(endMs);
   const finished = over();
+  // `last` is assigned inside `end`, which TypeScript cannot see, so it still narrows it to null.
   return { shape, lives, appearsAt, deadline: finished ? null : deadline(), last: last as FairSplitOutcome | null, finished };
 }
 
@@ -89,7 +90,7 @@ const coordinate = z.number().min(0).max(BOX);
 const inputsSchema: z.ZodType<FairSplitInputs> = z
   .object({
     cuts: z
-      .array(z.object({ atMs: z.number().nonnegative(), ax: coordinate, ay: coordinate, bx: coordinate, by: coordinate }))
+      .array(z.object({ atMs: z.number().nonnegative().finite(), ax: coordinate, ay: coordinate, bx: coordinate, by: coordinate }))
       .max(MAX_CUTS)
       .refine((cuts) => cuts.every((cut, i) => i === 0 || cut.atMs > cuts[i - 1].atMs), "cut times must rise"),
     endMs: z.number().nonnegative().finite(),
