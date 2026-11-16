@@ -20,7 +20,7 @@ type Caller = Pick<SupabaseClient<Database>, "rpc" | "auth">;
 /** Each fake player takes a moment to create, so one press seeds at most this many (T117). */
 export const MAX_SEED_PLAYERS = 500;
 
-/** The rotation a fresh database starts with (the migration's default); Echo Path joins the daily lineup with T150. */
+/** The rotation a fresh database starts with (the migration's default); Echo Path and Fair Split join the daily lineup with T150. */
 export const DEFAULT_ROTATION: readonly ChallengeType[] = ["stacking", "inner-clock", "flash-count"];
 
 /** Whether the tools may run: only when the app talks to the local Supabase (as the scripts). */

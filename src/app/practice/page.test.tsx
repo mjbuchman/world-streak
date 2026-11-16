@@ -9,7 +9,7 @@ describe("/practice", () => {
   it("lists every challenge with one line each, linking to each practice page", () => {
     render(<PracticeHub />);
     const items = within(screen.getByRole("list", { name: "Challenges" })).getAllByRole("listitem");
-    expect(items).toHaveLength(4);
+    expect(items).toHaveLength(5);
     const entries = items.map((item) => {
       const link = within(item).getByRole("link");
       return [link.textContent, link.getAttribute("href"), within(item).getByRole("paragraph").textContent];
@@ -19,6 +19,7 @@ describe("/practice", () => {
       ["Second Sense", "/practice/inner-clock", "Tap when each target time has passed. Every miss drains your time bank."],
       ["Swift Sum", "/practice/flash-count", "Dots flash for a moment. Say how many there were."],
       ["Echo Path", "/practice/echo-path", "Tiles light up in a path. Tap it back, one step longer each time."],
+      ["Fair Split", "/practice/fair-split", "Cut each odd shape in half with one straight line, before time runs out."],
     ]);
   });
 

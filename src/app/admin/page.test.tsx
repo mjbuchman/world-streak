@@ -88,6 +88,7 @@ describe("/admin", () => {
       ["inner-clock", "Second Sense"],
       ["flash-count", "Swift Sum"],
       ["echo-path", "Echo Path"],
+      ["fair-split", "Fair Split"],
     ]);
     for (const name of ["Clear my attempt today", "Reset day", "Restore the rotation", "Seed players", "Close day", "Remove fake players"]) {
       expect(within(tools).getByRole("button", { name })).toBeTruthy();

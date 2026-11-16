@@ -382,3 +382,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - How to change it later: the constants in `src/challenges/flash-count/flashLadder.ts`.
 - T142: the default pass target is 5 levels. As with Second Sense, the old percentage scores could enter the percentile, but only on local data. `flash-count-instant` works out each flash's clear time from the 3-2-1, the reveals and the flashes, which is the earliest it could have cleared. Every challenge is now higher-better.
 - Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
+### 2026-11-16 — Fair Split rules and placeholders (T146-T149)
+- Choice: concave shapes (8 to 12 corners, dents deepening over the first 7 shapes), no holes yet. A cut through a concave shape can make several pieces; the share is the total area on each side of the line. 12 shapes, 3 lives, ±1 point of 50% (with a 1e-9 allowance so 49/51 counts despite rounding), time limit 7 s shortening 0.3 s a shape to at least 4 s, 1.2 s between shapes. A miss or timeout costs a life and brings the same shape back (as Swift Sum retries its level). A drag shorter than 24 px, or whose line misses the 100 x 100 box, is ignored rather than costing a life. Default pass target 5 shapes.
+- Reason: the design recommends concave shapes and no holes for the MVP and leaves the rest open. A simulated cutter with an aim error of up to 1 unit averages about 6 shapes.
+- How to change it later: the constants in `src/challenges/fair-split/engine.ts` and `geometry.ts`; the pass target in the admin settings.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)

@@ -71,6 +71,7 @@ describe("GameDayEditRow", () => {
       ["inner-clock", "Second Sense"],
       ["flash-count", "Swift Sum"],
       ["echo-path", "Echo Path"],
+      ["fair-split", "Fair Split"],
     ]);
     await user.selectOptions(select, "flash-count");
     await user.click(screen.getByRole("button", { name: "Save" }));

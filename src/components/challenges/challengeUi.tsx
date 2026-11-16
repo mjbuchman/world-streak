@@ -2,16 +2,18 @@
 
 import type { ReactNode } from "react";
 import type { EchoPathInputs, EchoPathParams } from "@/challenges/echo-path/engine";
+import type { FairSplitInputs, FairSplitParams } from "@/challenges/fair-split/engine";
 import type { FlashLadderInputs, FlashLadderParams } from "@/challenges/flash-count/flashLadder";
 import type { TimeBankInputs, TimeBankParams } from "@/challenges/inner-clock/timeBank";
 import type { ChallengeType } from "@/challenges/shared/types";
 import type { StackingInputs, StackingParams } from "@/challenges/stacking/engine";
 import { EchoPathGame } from "@/components/echo-path/EchoPathGame";
+import { FairSplitGame } from "@/components/fair-split/FairSplitGame";
 import { FlashLadderGame } from "@/components/flash-count/FlashLadderGame";
 import { TimeBankGame } from "@/components/inner-clock/TimeBankGame";
 import { reachedRow, targetRow } from "@/components/stacking/rows";
 import { StackingGame } from "@/components/stacking/StackingGame";
-import { ECHO_PATH_HOW_TO, FLASH_COUNT_HOW_TO, INNER_CLOCK_HOW_TO, practicePath, STACKING_HOW_TO } from "@/config/challenges";
+import { ECHO_PATH_HOW_TO, FAIR_SPLIT_HOW_TO, FLASH_COUNT_HOW_TO, INNER_CLOCK_HOW_TO, practicePath, STACKING_HOW_TO } from "@/config/challenges";
 
 /**
  * A scored run of today's challenge. `params` come from the start endpoint for this challenge
@@ -72,10 +74,24 @@ const echoPath: ChallengeUi<EchoPathParams, EchoPathInputs> = {
   summary: (score, passTarget) => `You scored ${steps(score)}. Today's target was ${steps(passTarget)}.`,
 };
 
-const CHALLENGE_UI = { stacking, "inner-clock": innerClock, "flash-count": flashCount, "echo-path": echoPath } satisfies Record<
-  ChallengeType,
-  unknown
->;
+/** Fair Split: shapes cut plus the lives left as a fraction ("6.333 shapes"). */
+const shapes = (score: number) => `${score} ${score === 1 ? "shape" : "shapes"}`;
+
+const fairSplit: ChallengeUi<FairSplitParams, FairSplitInputs> = {
+  howTo: FAIR_SPLIT_HOW_TO,
+  practicePath: practicePath("fair-split"),
+  play: ({ params, onFinish }) => <FairSplitGame params={params} onFinish={onFinish} />,
+  scoreLabel: shapes,
+  summary: (score, passTarget) => `You scored ${shapes(score)}. Today's target was ${shapes(passTarget)}.`,
+};
+
+const CHALLENGE_UI = {
+  stacking,
+  "inner-clock": innerClock,
+  "flash-count": flashCount,
+  "echo-path": echoPath,
+  "fair-split": fairSplit,
+} satisfies Record<ChallengeType, unknown>;
 
 /**
  * The screens for a challenge type. As with `challengeForGameDay`, the params and inputs types are

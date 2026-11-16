@@ -11,8 +11,8 @@ select is(
   'its placeholder pass target is a path of 6'
 );
 select col_default_is(
-  'public', 'game_settings', 'default_pass_targets', '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 6}',
-  'a fresh settings row has all four placeholders'
+  'public', 'game_settings', 'default_pass_targets', '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 6, "fair-split": 5}',
+  'a fresh settings row has its placeholder (and those added since)'
 );
 select is(
   (select rotation from public.game_settings), '{stacking,inner-clock,flash-count}'::text[],

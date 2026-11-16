@@ -1,6 +1,6 @@
 import { paramsFromSeed } from "../../src/challenges/stacking/engine";
 import { FALL_MS } from "../../src/challenges/stacking/render";
-import { CANVAS_COLOR_TOKENS, ECHO_PATH_COLOR_TOKENS, FLASH_COUNT_COLOR_TOKENS } from "../../src/components/canvasTokens";
+import { CANVAS_COLOR_TOKENS, ECHO_PATH_COLOR_TOKENS, FAIR_SPLIT_COLOR_TOKENS, FLASH_COUNT_COLOR_TOKENS } from "../../src/components/canvasTokens";
 import { expect, test } from "./support/fixtures";
 import { gotoReady, signUpViaForm } from "./support/pages";
 import { pinSeed, playTaps, skipCountdown, tapsForAMiss } from "./support/tower";
@@ -85,6 +85,7 @@ for (const { game, path, canvasName, names } of [
   { game: "Teetering Tower", path: "/practice/stacking", canvasName: /Teetering Tower game area/, names: Object.values(CANVAS_COLOR_TOKENS) },
   { game: "Swift Sum", path: "/practice/flash-count", canvasName: /Get ready|Count the dots|The dots are gone/, names: Object.values(FLASH_COUNT_COLOR_TOKENS) },
   { game: "Echo Path", path: "/practice/echo-path", canvasName: /Get ready|Watch the tiles|Tap the tiles/, names: Object.values(ECHO_PATH_COLOR_TOKENS) },
+  { game: "Fair Split", path: "/practice/fair-split", canvasName: /Get ready|Drag one straight cut/, names: Object.values(FAIR_SPLIT_COLOR_TOKENS) },
 ]) {
   test(`the ${game} canvas finds its colour tokens`, async ({ page }) => {
     await gotoReady(page, path);
