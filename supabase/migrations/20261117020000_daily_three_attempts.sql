@@ -74,6 +74,8 @@ create table public.day_results (
   primary key (user_id, game_date),
   constraint day_results_decided_when check ((outcome is null) = (decided_at is null))
 );
+-- The counters' recount and the close read a day's results by date.
+create index day_results_game_date on public.day_results (game_date);
 alter table public.day_results enable row level security;
 create policy day_results_select_own on public.day_results
   for select to authenticated

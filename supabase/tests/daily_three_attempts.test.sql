@@ -1,5 +1,5 @@
 begin;
-select plan(42);
+select plan(43);
 \ir fixtures/fixtures.psql
 
 -- One scored attempt per game (T152).
@@ -90,6 +90,8 @@ select is(tests.day(2), '1 2 failed', 'loss, win, loss fails the day');
 select tests.play(3, 1, 3);
 select tests.start_game(3, 2);
 select is(tests.day(3), '0 2 failed', 'an abandoned game 2 after a loss fails the day');
+select tests.play(3, 3, 6);
+select is(tests.day(3), '1 2 failed', 'and a pass on game 3 leaves it failed');
 
 -- Player 4: a loss, then passes on games 2 and 3. Starting game 2 is a provisional second loss.
 select tests.play(4, 1, 3);
