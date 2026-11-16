@@ -132,9 +132,7 @@ export async function submitAttempt({
   if (recorded !== "recorded") return FROM_RECORD_STATUS[recorded];
   // After the result is stored, and never changing it: flags only guard prize entries.
   await flagAttempt(store, { id: attemptId, userId, gameDate: attempt.gameDate, challengeType: game.challengeType, elapsedMs }, replayed);
-  const progress = {
-    ...(await store.dayResult(userId, attempt.gameDate)),
-    nextPosition: nextPosition(day, await store.dayAttempts(userId, attempt.gameDate)),
-  };
+  const [result, attempts] = await Promise.all([store.dayResult(userId, attempt.gameDate), store.dayAttempts(userId, attempt.gameDate)]);
+  const progress = { ...result, nextPosition: nextPosition(day, attempts) };
   return { status: 200, body: { score: replayed.score, passed, passTarget: game.passTarget, day: progress } };
 }
