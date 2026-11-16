@@ -173,6 +173,32 @@ isOneToOne: true
       referencedColumns: ["game_date"]
     }
                   ]
+                },"game_day_games": {
+                  Row: {
+                    "challenge_type": string,"game_date": string,"pass_target": number,"position": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "challenge_type": string,"game_date": string,"pass_target": number,"position": number
+                  }
+                  Update: {
+                    "challenge_type"?: string,"game_date"?: string,"pass_target"?: number,"position"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "game_day_games_challenge_type_fkey"
+      columns: ["challenge_type"]
+isOneToOne: false
+      referencedRelation: "challenge_types"
+      referencedColumns: ["type"]
+    },{
+      foreignKeyName: "game_day_games_game_date_fkey"
+      columns: ["game_date"]
+isOneToOne: false
+      referencedRelation: "game_days"
+      referencedColumns: ["game_date"]
+    }
+                  ]
                 },"game_days": {
                   Row: {
                     "challenge_type": string,"closed_at": string | null,"edited": boolean,"final_pass_rate": number | null,"game_date": string,"outcome": string | null,"pass_target": number,"survival_threshold": number
@@ -195,14 +221,14 @@ isOneToOne: false
                   ]
                 },"game_settings": {
                   Row: {
-                    "default_pass_targets": NonNullable<Json>,"default_survival_threshold": number,"full_weight_after_days": number,"id": boolean,"new_account_weight": number,"pass_target_percentile": number,"pass_target_streak_step": number,"percentile_lookback_days": number,"percentile_min_sample": number,"rotation": (string)[],"threshold_streak_step": number
+                    "default_pass_targets": NonNullable<Json>,"default_survival_threshold": number,"full_weight_after_days": number,"id": boolean,"new_account_weight": number,"pass_target_percentile": number,"pass_target_streak_step": number,"percentile_lookback_days": number,"percentile_min_sample": number,"pool": (string)[],"rotation": (string)[],"threshold_streak_step": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "default_pass_targets"?: NonNullable<Json>,"default_survival_threshold"?: number,"full_weight_after_days"?: number,"id"?: boolean,"new_account_weight"?: number,"pass_target_percentile"?: number,"pass_target_streak_step"?: number,"percentile_lookback_days"?: number,"percentile_min_sample"?: number,"rotation"?: (string)[],"threshold_streak_step"?: number
+                    "default_pass_targets"?: NonNullable<Json>,"default_survival_threshold"?: number,"full_weight_after_days"?: number,"id"?: boolean,"new_account_weight"?: number,"pass_target_percentile"?: number,"pass_target_streak_step"?: number,"percentile_lookback_days"?: number,"percentile_min_sample"?: number,"pool"?: (string)[],"rotation"?: (string)[],"threshold_streak_step"?: number
                   }
                   Update: {
-                    "default_pass_targets"?: NonNullable<Json>,"default_survival_threshold"?: number,"full_weight_after_days"?: number,"id"?: boolean,"new_account_weight"?: number,"pass_target_percentile"?: number,"pass_target_streak_step"?: number,"percentile_lookback_days"?: number,"percentile_min_sample"?: number,"rotation"?: (string)[],"threshold_streak_step"?: number
+                    "default_pass_targets"?: NonNullable<Json>,"default_survival_threshold"?: number,"full_weight_after_days"?: number,"id"?: boolean,"new_account_weight"?: number,"pass_target_percentile"?: number,"pass_target_streak_step"?: number,"percentile_lookback_days"?: number,"percentile_min_sample"?: number,"pool"?: (string)[],"rotation"?: (string)[],"threshold_streak_step"?: number
                   }
                   Relationships: [
                     
@@ -326,6 +352,9 @@ isOneToOne: false
 "cycle_for":
 { Args: { "d": string }; Returns: number
                            },
+"daily_seed":
+{ Args: { "d": string }; Returns: number
+                           },
 "deadline_utc_hour":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
@@ -340,6 +369,15 @@ isOneToOne: false
                            },
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"lineup_at":
+{ Args: { "i": number,"pool": (string)[] }; Returns: (string)[]
+                           },
+"lineup_for":
+{ Args: { "d": string,"previous": (string)[] }; Returns: (string)[]
+                           },
+"lineup_of":
+{ Args: { "d": string }; Returns: (string)[]
                            },
 "my_entry_count":
 { Args: { "cycle": number }; Returns: number

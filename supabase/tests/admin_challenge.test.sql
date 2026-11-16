@@ -1,7 +1,7 @@
 begin;
 select plan(11);
--- These days start as Tower days; the rotation (T31) has its own tests in rotation.test.sql.
-update public.game_settings set rotation = '{stacking}';
+-- These days start as Tower days; the lineup rule has its own tests in lineups.test.sql.
+\ir fixtures/tower_lineup.psql
 
 -- Fixtures: an admin and a player; an unstarted, a started and a closed day; no streak.
 \ir fixtures/fixtures.psql

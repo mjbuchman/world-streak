@@ -1067,7 +1067,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T146 Fair Split geometry
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/fair-split/geometry.ts` exports pure `polygonArea` (shoelace), `splitShare(polygon, a, b)` (the share of area on the left of the infinite line through `a` and `b`, by half-plane clipping, correct for concave polygons) and `shapeFor(seed, index, oddness)` (a simple, non-self-intersecting polygon in a 100 x 100 box: convex at low oddness, concave at higher).
@@ -1076,7 +1076,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T147 Fair Split engine
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T146
 - Acceptance criteria:
   - [ ] `src/challenges/fair-split/engine.ts` implements `ChallengeModule` with `direction "higher-better"`, `LIVES = 3`, `TOLERANCE_POINTS = 1`, `MAX_SHAPES` (placeholder 12) and a per-cut time limit that shortens with the shape index (placeholders, documented). `paramsFromSeed` returns each shape's polygon and time limit, oddness rising with the index.
@@ -1087,7 +1087,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T148 Fair Split renderer
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T147, T135
 - Acceptance criteria:
   - [ ] `src/challenges/fair-split/render.ts` draws the shape scaled to the canvas, the cut line while dragging, the two pieces after a cut with their percentages, a draining time-limit ring, and a miss state; reduced motion skips the pieces separating.
@@ -1096,7 +1096,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T149 Fair Split game, practice page and registration
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T148, T137, T109
 - Acceptance criteria:
   - [ ] `CHALLENGE_TYPES` and the registry gain `fair-split` (engine and `FairSplitGame`). A migration adds `challenge_types` `fair-split/higher-better` and a `default_pass_targets` placeholder of 5 (pgTAP).
@@ -1107,7 +1107,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T150 The pool and the lineup rule
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T31, T140, T142, T145, T149
 - Acceptance criteria:
   - [ ] A migration adds `game_settings.pool text[]`, default `{stacking,inner-clock,flash-count,echo-path,fair-split}`, each entry checked against `challenge_types`, at least 3 distinct entries.
@@ -1118,7 +1118,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T151 Game-day lineups with a pass target per game
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T150, T102
 - Acceptance criteria:
   - [ ] A migration creates `game_day_games` (`game_date references game_days`, `position smallint 1..3`, `challenge_type references challenge_types`, `pass_target numeric not null`, primary key `(game_date, position)`, `unique (game_date, challenge_type)`). RLS: readable by everyone, no client write policies. Existing days are backfilled as one-game lineups (position 1, their challenge and target).
