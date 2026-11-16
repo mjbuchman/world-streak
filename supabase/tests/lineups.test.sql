@@ -1,5 +1,5 @@
 begin;
-select plan(33);
+select plan(38);
 
 -- The pool (T150).
 select col_default_is(
@@ -102,35 +102,61 @@ select results_eq(
   'game_days mirrors the first game'
 );
 
+-- A day's rows (position, game, target) as text, to compare before and after.
+create function tests.rows_of(d date) returns text
+language sql as $$
+  select array_agg(array[position::text, challenge_type, pass_target::text] order by position)::text
+    from public.game_day_games where game_date = d;
+$$;
+
 -- Idempotent, and the next day differs.
+select tests.rows_of('2031-03-01') as first_rows \gset
 select public.ensure_game_day('2031-03-01');
-select is((select count(*) from public.game_day_games where game_date = '2031-03-01'), 3::bigint, 're-running leaves three rows');
+select is(tests.rows_of('2031-03-01'), :'first_rows', 're-running leaves the same games, order and targets');
 select public.ensure_game_day('2031-03-02');
 select isnt(public.lineup_of('2031-03-02'), public.lineup_of('2031-03-01'), 'the next day''s lineup differs from today''s');
 
--- An untouched day follows the settings; an edited one keeps its lineup.
+-- An untouched day follows the settings; an edited, started or closed one keeps its lineup.
 update public.game_settings set pool = default;
 select public.ensure_game_day('2031-03-02');
 select is(public.lineup_of('2031-03-02'), public.lineup_for('2031-03-02', public.lineup_of('2031-03-01')), 'an untouched day follows a new pool');
+select public.ensure_game_day('2031-03-03');
 update public.game_days set edited = true where game_date = '2031-03-01';
-update public.game_settings set pool = '{echo-path,fair-split,flash-count}';
-select public.ensure_game_day('2031-03-01');
-select ok(public.lineup_of('2031-03-01') @> '{stacking,inner-clock}', 'an edited day''s lineup is never overwritten');
+select tests.start('00000000-0000-0000-0000-000000000201', '00000000-0000-0000-0000-000000000001', '2031-03-02', 1);
+update public.game_days set closed_at = now(), outcome = 'broken' where game_date = '2031-03-03';
+select tests.rows_of('2031-03-01') as edited_rows, tests.rows_of('2031-03-02') as started_rows, tests.rows_of('2031-03-03') as closed_rows \gset
+update public.game_settings set pool = '{echo-path,fair-split,flash-count}', default_pass_targets = default_pass_targets || '{"stacking": 12, "echo-path": 9}';
+select public.ensure_game_day(d) from (values ('2031-03-01'::date), ('2031-03-02'), ('2031-03-03')) as days(d);
+select is(tests.rows_of('2031-03-01'), :'edited_rows', 'an edited day''s lineup and targets are never overwritten');
+select is(tests.rows_of('2031-03-02'), :'started_rows', 'nor a started day''s');
+select is(tests.rows_of('2031-03-03'), :'closed_rows', 'nor a closed day''s');
 
 -- An edit of game_days' challenge moves to the first game, swapping with the game it brings forward.
-select public.lineup_of('2031-03-01') as before \gset
+select public.lineup_of('2031-03-01') as before,
+  (select pass_target from public.game_day_games where game_date = '2031-03-01' and position = 1) as first_target \gset
 update public.game_days set challenge_type = (public.lineup_of('2031-03-01'))[3], pass_target = 7 where game_date = '2031-03-01';
 select is(public.lineup_of('2031-03-01'), array[(:'before'::text[])[3], (:'before'::text[])[2], (:'before'::text[])[1]],
   'the first and third games swap places');
 select is((select pass_target from public.game_day_games where game_date = '2031-03-01' and position = 1), 7::numeric,
   'the first game takes the edited target');
+select is((select pass_target from public.game_day_games where game_date = '2031-03-01' and position = 3), :'first_target'::numeric,
+  'the displaced game keeps its own target');
 
--- The close prepares the next day's three games (2031-02-28 has no open day before it).
+-- The close prepares the next day from the closing day's lineup (2031-02-28 has no open day
+-- before it). Its lineup is set to the one the rule picks first for 2031-03-01, so the close
+-- must pass it as `previous` to avoid a repeat.
 update public.game_days set closed_at = now(), outcome = 'broken' where closed_at is null and game_date < '2031-02-28';
 delete from public.game_days where game_date = '2031-03-01';
+delete from public.game_day_games where game_date = '2031-02-28';
+insert into public.game_day_games (game_date, position, challenge_type, pass_target)
+select '2031-02-28', n, t, 1 from unnest(public.lineup_for('2031-03-01', null)) with ordinality as u(t, n);
 select is(public.close_game_day_unchecked('2031-02-28'), 'broken', 'setup: the day closes');
-select is((select count(distinct challenge_type) from public.game_day_games where game_date = '2031-03-01'), 3::bigint,
-  'the close prepares the next day with three different games');
+select is(public.lineup_of('2031-03-01'), public.lineup_for('2031-03-01', public.lineup_of('2031-02-28')),
+  'the close prepares the next day by the rule, with the closing day as previous');
+select isnt(public.lineup_of('2031-03-01'), public.lineup_of('2031-02-28'), 'so it does not repeat the closing day''s lineup');
+select is(
+  (select count(*) from public.game_day_games where game_date = '2031-03-01' and pass_target = public.pass_target_for(challenge_type, '2031-03-01', 0)),
+  3::bigint, 'each of its three games has its own target');
 
 select * from finish();
 rollback;
