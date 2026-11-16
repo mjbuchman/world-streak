@@ -1,11 +1,12 @@
 import { echoPath } from "./echo-path/engine";
+import { fairSplit } from "./fair-split/engine";
 import { flashLadder } from "./flash-count/flashLadder";
 import { timeBank } from "./inner-clock/timeBank";
 import { CHALLENGE_TYPES, type ChallengeModule, type ChallengeType } from "./shared/types";
 import { stacking } from "./stacking/engine";
 
 /** Every challenge's engine, by type. The server builds and scores attempts through this. */
-export const CHALLENGES = { stacking, "inner-clock": timeBank, "flash-count": flashLadder, "echo-path": echoPath } satisfies Record<ChallengeType, unknown>;
+export const CHALLENGES = { stacking, "inner-clock": timeBank, "flash-count": flashLadder, "echo-path": echoPath, "fair-split": fairSplit } satisfies Record<ChallengeType, unknown>;
 
 /** Narrows a stored challenge type (plain text in the database) to one the server knows. */
 export function isChallengeType(value: string): value is ChallengeType {

@@ -1,0 +1,62 @@
+/* Fair Split: the shape count and lives above a square board (T149). */
+.game {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.count {
+  margin: 0;
+  font-weight: 700;
+}
+
+.lives {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* A life: filled while it lasts, an outline once lost. */
+.pip {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--fs-color-mint);
+  border-radius: 50%;
+  background: var(--fs-color-mint);
+}
+
+.pip[data-lost] {
+  background: transparent;
+  border-color: var(--fs-color-surface-border);
+}
+
+/* The board, as wide as the page allows up to 420 px, with the countdown over its middle. */
+.stage {
+  position: relative;
+  width: min(100%, 420px);
+  margin: 0 auto;
+}
+
+.board {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  /* A drag is a cut: no scrolling or zooming the page from the board. */
+  touch-action: none;
+  border-radius: var(--fs-radius-surface);
+  cursor: crosshair;
+}
+
+.hint {
+  margin: 0;
+  min-height: 1.5em;
+  text-align: center;
+  font-size: var(--fs-text-small);
+  color: var(--fs-color-text-muted);
+}

@@ -177,12 +177,29 @@ test("Echo Path practice: watch, then wrong tiles use up the lives and end the r
   expect(scored).toEqual([]);
 });
 
+test("Fair Split practice: a dragged cut shows both sides' percentages", async ({ page }) => {
+  const scored = attemptRequests(page);
+  await gotoReady(page, "/practice/fair-split");
+  await page.getByRole("button", { name: "Start" }).click();
+  const board = page.locator("canvas[data-phase]");
+  await expect(board).toHaveAttribute("data-phase", "cut", { timeout: 10_000 });
+  const box = (await board.boundingBox())!;
+  const middle = box.x + box.width / 2;
+  await page.mouse.move(middle, box.y + 4);
+  await page.mouse.down();
+  await page.mouse.move(middle, box.y + box.height - 4, { steps: 8 });
+  await page.mouse.up();
+  await expect(page.getByText(/^\d+\.\d% and \d+\.\d%\./)).toBeVisible();
+  expect(scored).toEqual([]);
+});
+
 test("the practice hub opens each challenge's practice page", async ({ page }) => {
   for (const [name, path, heading] of [
     ["Teetering Tower", "/practice/stacking", "Practice: Teetering Tower"],
     ["Second Sense", "/practice/inner-clock", "Practice: Second Sense"],
     ["Swift Sum", "/practice/flash-count", "Practice: Swift Sum"],
     ["Echo Path", "/practice/echo-path", "Practice: Echo Path"],
+    ["Fair Split", "/practice/fair-split", "Practice: Fair Split"],
   ]) {
     await gotoReady(page, "/practice");
     await page.getByRole("list", { name: "Challenges" }).getByRole("link", { name }).click();

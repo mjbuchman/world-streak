@@ -23,6 +23,7 @@ const VALID: Record<string, string> = {
   "target-inner-clock": "0.5",
   "target-flash-count": "15",
   "target-echo-path": "6",
+  "target-fair-split": "5",
   rotation: "stacking, inner-clock, flash-count",
 };
 
@@ -49,7 +50,7 @@ describe("saveGameSettings", () => {
           percentile_min_sample: 50,
           new_account_weight: 1,
           full_weight_after_days: 0,
-          default_pass_targets: { stacking: 10, "inner-clock": 0.5, "flash-count": 15, "echo-path": 6 },
+          default_pass_targets: { stacking: 10, "inner-clock": 0.5, "flash-count": 15, "echo-path": 6, "fair-split": 5 },
           rotation: ["stacking", "inner-clock", "flash-count"],
         },
       ],
@@ -83,7 +84,7 @@ describe("saveGameSettings", () => {
     ["a missing field", { percentile_min_sample: "" }, "Minimum sample is required."],
     ["a negative pass target", { "target-flash-count": "-1" }, "Swift Sum's default pass target must be 0 or more."],
     ["a Tower target off the board", { "target-stacking": "16" }, "Teetering Tower's default pass target must be a row from 1 to 15."],
-    ["an unknown challenge in the rotation", { rotation: "stacking, chess" }, 'The rotation can only name stacking, inner-clock, flash-count, echo-path; "chess" is not one.'],
+    ["an unknown challenge in the rotation", { rotation: "stacking, chess" }, 'The rotation can only name stacking, inner-clock, flash-count, echo-path, fair-split; "chess" is not one.'],
     ["an empty rotation", { rotation: " , " }, "The rotation needs at least one challenge."],
   ])("refuses %s, writing nothing", async (_name, over, message) => {
     const { db, calls } = fakeDb([ADMIN]);
@@ -128,7 +129,7 @@ describe("readSettingsForm", () => {
       threshold_streak_step: "0.01",
       percentile_lookback_days: 14,
       percentile_min_sample: 50,
-      default_pass_targets: { stacking: 10, "inner-clock": 0.5, "flash-count": 15, "echo-path": 6 },
+      default_pass_targets: { stacking: 10, "inner-clock": 0.5, "flash-count": 15, "echo-path": 6, "fair-split": 5 },
       new_account_weight: 1,
       full_weight_after_days: 0,
       rotation: ["stacking", "inner-clock", "flash-count"],

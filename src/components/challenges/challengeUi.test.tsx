@@ -26,6 +26,14 @@ vi.mock("@/components/flash-count/FlashLadderGame", () => ({
   ),
 }));
 
+vi.mock("@/components/fair-split/FairSplitGame", () => ({
+  FairSplitGame: ({ onFinish }: { onFinish: (inputs: { cuts: unknown[]; endMs: number }) => void }) => (
+    <button type="button" onClick={() => onFinish({ cuts: [], endMs: 9000 })}>
+      Shapes
+    </button>
+  ),
+}));
+
 vi.mock("@/components/echo-path/EchoPathGame", () => ({
   EchoPathGame: ({ onFinish }: { onFinish: (inputs: { taps: { tile: number; atMs: number }[] }) => void }) => (
     <button type="button" onClick={() => onFinish({ taps: [{ tile: 4, atMs: 3000 }] })}>
@@ -60,6 +68,7 @@ describe("challengeUi", () => {
     ["inner-clock", "Clock", { tapsMs: [3200, 4100] }],
     ["flash-count", "Dots", { answers: [{ count: 20, atMs: 4000 }] }],
     ["echo-path", "Tiles", { taps: [{ tile: 4, atMs: 3000 }] }],
+    ["fair-split", "Shapes", { cuts: [], endMs: 9000 }],
   ] as const)("plays %s and hands on exactly the inputs its submit expects", (type, button, inputs) => {
     const onFinish = vi.fn();
     render(<>{challengeUi(type).play({ params: {}, passTarget: 1, onFinish })}</>);
@@ -75,6 +84,8 @@ describe("challengeUi", () => {
     ["flash-count", 1, 5, "You scored 1 level. Today's target was 5 levels."],
     ["echo-path", 5.667, 6, "You scored 5.667 steps. Today's target was 6 steps."],
     ["echo-path", 1, 6, "You scored 1 step. Today's target was 6 steps."],
+    ["fair-split", 6.333, 5, "You scored 6.333 shapes. Today's target was 5 shapes."],
+    ["fair-split", 1, 5, "You scored 1 shape. Today's target was 5 shapes."],
   ] as const)("sums up a %s result against today's target", (type, score, target, line) => {
     expect(challengeUi(type).summary(score, target)).toBe(line);
   });

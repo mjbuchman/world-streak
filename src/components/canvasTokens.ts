@@ -1,4 +1,5 @@
 import type { EchoPathColors } from "@/challenges/echo-path/render";
+import type { FairSplitColors } from "@/challenges/fair-split/render";
 import type { FlashCountFrame } from "@/challenges/flash-count/render";
 import type { StackingColors } from "@/challenges/stacking/render";
 
@@ -17,6 +18,18 @@ export const ECHO_PATH_COLOR_TOKENS: Record<keyof EchoPathColors, string> = {
   lit: "--fs-color-mint",
   pressed: "--fs-color-mint-light",
   miss: "--fs-color-tangerine",
+};
+
+export const FAIR_SPLIT_COLOR_TOKENS: Record<keyof FairSplitColors, string> = {
+  board: "--fs-color-meter-surface",
+  shape: "--fs-color-mint",
+  left: "--fs-color-mint",
+  right: "--fs-color-mint-light",
+  line: "--fs-color-tangerine",
+  ring: "--fs-color-tangerine",
+  track: "--fs-color-surface-strong",
+  miss: "--fs-color-tangerine",
+  text: "--fs-color-text",
 };
 
 export const CANVAS_COLOR_TOKENS: Record<keyof StackingColors, string> = {
