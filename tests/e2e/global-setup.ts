@@ -1,4 +1,5 @@
 import { chromium, type FullConfig, type Page } from "@playwright/test";
+import { gameDateAt } from "../../src/lib/gameDay";
 import { E2E_PASSWORD, gotoReady, signUpViaForm, submitAndWait } from "./support/pages";
 import { adminClient, deleteUsersByEmail } from "./support/supabase";
 
@@ -30,26 +31,34 @@ async function signOut(page: Page): Promise<void> {
   await page.getByRole("banner").getByRole("link", { name: "Sign in" }).waitFor();
 }
 
-/** Before the workers start: pin the rotation, and warm the dev server locally. Playwright runs the returned step after them. */
+/** Before the workers start: pin today to the Tower, and warm the dev server locally. Playwright runs the returned step after them. */
 export default async function globalSetup(config: FullConfig): Promise<() => Promise<void>> {
-  const restoreRotation = await pinTowerRotation();
+  const restoreToday = await pinTowerToday();
   if (!process.env.CI) await warmUp(config);
-  return restoreRotation;
+  return restoreToday;
 }
 
 /**
- * Most specs play today as the Tower, so the run pins the rotation (T31) to it, in CI too: on a
- * fresh database the first start creates today's day by the rotation. Specs about another
- * challenge set their day themselves (tests/e2e/after/). Returns the step that puts it back.
+ * Most specs play today as the Tower, so the run makes it today's first game (the one /play
+ * plays until T154), in CI too, marked edited as an admin's choice would be so the lineup rule
+ * (T151) leaves it alone. Specs about another challenge set their day themselves
+ * (tests/e2e/after/). Returns the step that puts it back once the specs' accounts are gone.
  */
-async function pinTowerRotation(): Promise<() => Promise<void>> {
+async function pinTowerToday(): Promise<() => Promise<void>> {
   const db = adminClient();
-  const before = await db.from("game_settings").select("rotation").single();
+  const today = gameDateAt(new Date());
+  const ensured = await db.rpc("ensure_game_day", { d: today });
+  if (ensured.error) throw ensured.error;
+  const before = await db.from("game_days").select("challenge_type, edited").eq("game_date", today).single();
   if (before.error) throw before.error;
-  const pinned = await db.from("game_settings").update({ rotation: ["stacking"] }).eq("id", true);
+  const pinned = await db.from("game_days").update({ challenge_type: "stacking", edited: true }).eq("game_date", today);
   if (pinned.error) throw pinned.error;
   return async () => {
-    const restored = await db.from("game_settings").update({ rotation: before.data.rotation }).eq("id", true);
+    // A day still holding attempts has its games locked (T111), so it stays the Tower.
+    const left = await db.from("attempts").select("id", { count: "exact", head: true }).eq("game_date", today);
+    if (left.error) throw left.error;
+    if (left.count) return;
+    const restored = await db.from("game_days").update(before.data).eq("game_date", today);
     if (restored.error) throw restored.error;
   };
 }

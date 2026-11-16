@@ -4,7 +4,8 @@ select plan(21);
 -- The simulation's functions (T37): they play and close days that are not today, so cycle 1
 -- (2027-01-01 onwards) can be tested on its real dates.
 \ir fixtures/fixtures.psql
-update public.game_settings set rotation = '{stacking}', percentile_min_sample = 2147483647;
+\ir fixtures/tower_lineup.psql
+update public.game_settings set percentile_min_sample = 2147483647;
 -- A local database may hold an earlier simulation; the rollback brings it back.
 delete from public.attempts where game_date >= '2027-01-01';
 delete from public.game_day_counters where game_date >= '2027-01-01';

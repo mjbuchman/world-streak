@@ -4,7 +4,8 @@ select plan(15);
 -- close_game_day refuses days before their deadline, so cycle 1 moves to the past for these
 -- tests: 2000-01-01 to 2000-02-29 is 60 days too (a leap year), as 2027-01-01 to 2027-03-01 is.
 \ir fixtures/fixtures.psql
-update public.game_settings set rotation = '{stacking}', percentile_min_sample = 2147483647;
+\ir fixtures/tower_lineup.psql
+update public.game_settings set percentile_min_sample = 2147483647;
 update public.game_days set closed_at = now(), outcome = 'broken' where closed_at is null and game_date < '1999-12-30';
 delete from public.streak_runs;
 update public.cycles set start_date = '2000-01-01', end_date = '2000-02-29' where number = 1;

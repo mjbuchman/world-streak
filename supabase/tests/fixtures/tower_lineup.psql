@@ -1,0 +1,11 @@
+-- Pins every day to a one-game Tower lineup, as the one-challenge rotation did before T151, for
+-- tests about other things; new tests should play real lineups instead. Include it right after `begin;` with
+--   \ir fixtures/tower_lineup.psql
+-- The replacement is part of the test's transaction, so it rolls back with it.
+create or replace function public.lineup_for(d date, previous text[]) returns text[]
+language sql
+stable
+set search_path = ''
+as $$
+  select '{stacking}'::text[];
+$$;

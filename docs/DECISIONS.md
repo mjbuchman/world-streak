@@ -388,3 +388,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: the design recommends concave shapes and no holes for the MVP and leaves the rest open. A simulated cutter with an aim error of up to 1 unit averages about 6 shapes.
 - How to change it later: the constants in `src/challenges/fair-split/engine.ts` and `geometry.ts`; the pass target in the admin settings.
 - Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
+### 2026-11-16 — Lineup hash and untouched days (T150, T151)
+- Choice: the daily seed is the first 32 bits of the date's MD5; the lineup is number seed mod n(n-1)(n-2) of the pool's ordered lineups, the next number if it repeats the day before. A day nobody has touched (not edited, started or closed) is rebuilt from the rule and settings on each prepare, as the rotation's days were (T102); other lineups are never overwritten. The migration backfills every day as a one-game lineup, then rebuilds untouched open days to three games.
+- Reason: the design asks for the daily seed to pick the lineup and leaves the method open; rebuilding untouched days keeps the T102 rule that coming days follow the settings.
+- How to change it later: `lineup_for` and `ensure_game_day` in `supabase/migrations/20261117*`; the pool in `game_settings.pool` (T162 adds it to /admin/settings).
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
