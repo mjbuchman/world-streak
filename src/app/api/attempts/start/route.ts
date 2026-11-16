@@ -5,8 +5,9 @@ import { secureRandomSeed } from "@/lib/random";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 /**
- * POST /api/attempts/start: issues today's scored attempt (its seed and challenge parameters)
- * to the signed-in player. It takes no body: the player, day and seed all come from the server.
+ * POST /api/attempts/start: issues the signed-in player's next game of today's lineup (its
+ * position, seed, challenge parameters and target). It takes no body: the player, day, game and
+ * seed all come from the server.
  */
 export const POST = withServerErrors("Starting an attempt failed", async () => {
   const auth = await requireUser();

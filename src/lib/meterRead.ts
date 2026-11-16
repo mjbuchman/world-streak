@@ -8,8 +8,8 @@ import type { Database } from "@/lib/supabase/database.types";
 
 /**
  * Reads today's meter: the day's threshold and its running counters in one query, and the world
- * streak (T21) alongside it. It never counts attempt rows (the counters are kept as attempts
- * start and pass, T17). Pass the service-role client: the counters are server-only, so that the
+ * streak (T21) alongside it. It never counts rows (the counters are kept as players' days are
+ * decided, T153). Pass the service-role client: the counters are server-only, so that the
  * hidden window means something.
  */
 export async function readMeter(db: Pick<SupabaseClient<Database>, "from" | "rpc">, now: Date): Promise<MeterBody> {
@@ -17,7 +17,7 @@ export async function readMeter(db: Pick<SupabaseClient<Database>, "from" | "rpc
   const [dayReply, streakReply] = await Promise.all([
     db
       .from("game_days")
-      .select("survival_threshold, game_day_counters(attempts, weighted_attempts, weighted_passes)")
+      .select("survival_threshold, game_day_counters(completed_days, weighted_completed_days, weighted_passed_days)")
       .eq("game_date", gameDate)
       .maybeSingle(),
     db.rpc("world_streak").single(),
@@ -34,15 +34,15 @@ export async function readMeter(db: Pick<SupabaseClient<Database>, "from" | "rpc
   // The generated embed type cannot say "object or array", hence the cast below.
   const embedded: unknown = day?.game_day_counters ?? null;
   const counters = (Array.isArray(embedded) ? (embedded[0] ?? null) : embedded) as Record<
-    "attempts" | "weighted_attempts" | "weighted_passes",
+    "completed_days" | "weighted_completed_days" | "weighted_passed_days",
     unknown
   > | null;
   // No row yet means nobody has started; a row with a bad value is an error, not a zero.
   return meterBody(now, gameDate, {
     threshold: day ? dbNumber(day.survival_threshold, "survival_threshold") : null,
-    attempts: counters ? dbInteger(counters.attempts, "attempts") : 0,
-    weightedAttempts: counters ? dbNumber(counters.weighted_attempts, "weighted_attempts") : 0,
-    weightedPasses: counters ? dbNumber(counters.weighted_passes, "weighted_passes") : 0,
+    completed: counters ? dbInteger(counters.completed_days, "completed_days") : 0,
+    weightedCompleted: counters ? dbNumber(counters.weighted_completed_days, "weighted_completed_days") : 0,
+    weightedPassed: counters ? dbNumber(counters.weighted_passed_days, "weighted_passed_days") : 0,
     streak: { current: dbInteger(streak.current, "current"), best: dbInteger(streak.best, "best") },
   });
 }

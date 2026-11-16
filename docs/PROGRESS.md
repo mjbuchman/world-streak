@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M5 The Daily Three (planned Nov 15).
-- Active task: none. Next is batch 3 (T152, T153) on branch `task/152-per-game-attempts`, which already holds these doc updates.
+- Active task: batch 4 (T154, T155) on branch `task/154-daily-three-flow`, which already holds these doc updates.
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M5 The Daily Three (T139–T166, approved in advance on Nov 15), starting with T139.
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-16 — T152, T153 Per-game attempts and day results (PR #158)
+- Attempts per position and game (in order, WS004), `day_results` (majority of the lineup, a started game counts as a loss), completed-day counters, close rate = passed days ÷ completed days, one entry per passed day. Dev seed now records past days through `record_attempt_result_unchecked`.
+- Review rounds: spec 1, quality 1, tests 1. CI: one real fix (seed bypassed day results), one runner port-clash rerun.
+- Notes: WS005 (caller's `passed` disagrees) is a bridge, to be dropped in T154. Merges since the check: 1.
 
 ### 2026-11-16 — T150, T151 Lineups (PR #157)
 - Pool, MD5-date lineup rule (no repeat of the day before), `game_day_games` with per-game targets; untouched days follow the settings. Older pgTAP tests pin Tower lineups via a fixture.

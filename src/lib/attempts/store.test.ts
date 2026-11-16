@@ -51,72 +51,98 @@ describe("supabaseAttemptStore", () => {
     expect(calls).toEqual([["rpc", "ensure_game_day", { d: "2026-11-08" }]]);
   });
 
-  it("gameDay reads the challenge, the target as a number, and whether the day is closed", async () => {
-    // PostgREST returns numeric columns as JSON numbers or strings depending on size.
-    const open = fakeDb({ data: { challenge_type: "stacking", pass_target: "10", closed_at: null }, error: null });
-    expect(await open.store.gameDay("2026-11-08")).toEqual({ challengeType: "stacking", passTarget: 10, closed: false });
+  it("gameDay reads the lineup in order with each target as a number, and whether the day is closed", async () => {
+    // PostgREST returns numeric columns as JSON numbers or strings depending on size; embedded
+    // rows come in no particular order.
+    const games = [
+      { position: 2, challenge_type: "inner-clock", pass_target: "4" },
+      { position: 1, challenge_type: "stacking", pass_target: 10 },
+      { position: 3, challenge_type: "flash-count", pass_target: 7.5 },
+    ];
+    const open = fakeDb({ data: { closed_at: null, game_day_games: games }, error: null });
+    expect(await open.store.gameDay("2026-11-08")).toEqual({
+      closed: false,
+      games: [
+        { position: 1, challengeType: "stacking", passTarget: 10 },
+        { position: 2, challengeType: "inner-clock", passTarget: 4 },
+        { position: 3, challengeType: "flash-count", passTarget: 7.5 },
+      ],
+    });
     expect(open.calls).toEqual([
       ["from", "game_days"],
-      ["select", "challenge_type, pass_target, closed_at"],
+      ["select", "closed_at, game_day_games(position, challenge_type, pass_target)"],
       ["eq", "game_date", "2026-11-08"],
-      ["single"],
+      ["maybeSingle"],
     ]);
-    const closed = fakeDb({ data: { challenge_type: "stacking", pass_target: 7.5, closed_at: "2026-11-09T00:00:05+00:00" }, error: null });
-    expect(await closed.store.gameDay("2026-11-08")).toEqual({ challengeType: "stacking", passTarget: 7.5, closed: true });
+    const closed = fakeDb({ data: { closed_at: "2026-11-09T00:00:05+00:00", game_day_games: [] }, error: null });
+    expect(await closed.store.gameDay("2026-11-08")).toEqual({ closed: true, games: [] });
+    expect(await fakeDb({ data: null, error: null }).store.gameDay("2026-11-08")).toBeNull();
   });
 
   it.each([null, "abc", ""])("gameDay throws on a malformed pass target (%j) instead of returning NaN or 0", async (passTarget) => {
-    const { store } = fakeDb({ data: { challenge_type: "stacking", pass_target: passTarget, closed_at: null }, error: null });
+    const games = [{ position: 1, challenge_type: "stacking", pass_target: passTarget }];
+    const { store } = fakeDb({ data: { closed_at: null, game_day_games: games }, error: null });
     await expect(store.gameDay("2026-11-08")).rejects.toThrow(/pass_target/);
   });
 
-  it("findAttemptForDay throws on a malformed stored score or target", async () => {
-    const submitted = { passed: true, submitted_at: "2026-11-08T10:00:00Z" };
-    const badScore = fakeDb({ data: { ...submitted, score: null, game_days: { pass_target: 10 } }, error: null });
-    await expect(badScore.store.findAttemptForDay("u1", "2026-11-08")).rejects.toThrow(/score/);
-    const badTarget = fakeDb({ data: { ...submitted, score: 7, game_days: { pass_target: "x" } }, error: null });
-    await expect(badTarget.store.findAttemptForDay("u1", "2026-11-08")).rejects.toThrow(/pass_target/);
-  });
-
-  it("findAttemptById throws on a seed that is not a whole number", async () => {
-    const row = { user_id: "u1", game_date: "2026-11-08", seed: "42", started_at: "2026-11-08T12:00:00+00:00", submitted_at: null };
-    await expect(fakeDb({ data: row, error: null }).store.findAttemptById("a1")).rejects.toThrow(/seed/);
-  });
-
-  it("findAttemptForDay reads the player's attempt that day, with the stored result once submitted", async () => {
-    const open = fakeDb({ data: { score: null, passed: null, submitted_at: null, game_days: { pass_target: 10 } }, error: null });
-    expect(await open.store.findAttemptForDay("u1", "2026-11-08")).toEqual({ submitted: false });
-    expect(open.calls).toEqual([
+  it("dayAttempts reads the player's attempts that day in order, with each stored result", async () => {
+    const rows = [
+      { position: 1, score: "7", passed: false, submitted_at: "2026-11-08T10:00:00Z" },
+      { position: 2, score: 12, passed: true, submitted_at: "2026-11-08T10:05:00Z" },
+      { position: 3, score: null, passed: null, submitted_at: null },
+    ];
+    const { store, calls } = fakeDb({ data: rows, error: null });
+    expect(await store.dayAttempts("u1", "2026-11-08")).toEqual([
+      { position: 1, submitted: true, score: 7, passed: false },
+      { position: 2, submitted: true, score: 12, passed: true },
+      { position: 3, submitted: false },
+    ]);
+    expect(calls).toEqual([
       ["from", "attempts"],
-      ["select", "score, passed, submitted_at, game_days(pass_target)"],
+      ["select", "position, score, passed, submitted_at"],
+      ["eq", "user_id", "u1"],
+      ["eq", "game_date", "2026-11-08"],
+      ["order", "position"],
+    ]);
+    expect(await fakeDb({ data: [], error: null }).store.dayAttempts("u1", "2026-11-08")).toEqual([]);
+  });
+
+  it("dayAttempts throws on a malformed stored score", async () => {
+    const row = { position: 1, score: null, passed: true, submitted_at: "2026-11-08T10:00:00Z" };
+    await expect(fakeDb({ data: [row], error: null }).store.dayAttempts("u1", "2026-11-08")).rejects.toThrow(/score/);
+  });
+
+  it("dayResult reads the player's day, or an empty one before their first start", async () => {
+    const { store, calls } = fakeDb({ data: { wins: 2, losses: 1, outcome: "passed" }, error: null });
+    expect(await store.dayResult("u1", "2026-11-08")).toEqual({ wins: 2, losses: 1, outcome: "passed" });
+    expect(calls).toEqual([
+      ["from", "day_results"],
+      ["select", "wins, losses, outcome"],
       ["eq", "user_id", "u1"],
       ["eq", "game_date", "2026-11-08"],
       ["maybeSingle"],
     ]);
-
-    const row = { score: "7", passed: false, submitted_at: "2026-11-08T10:00:00Z", game_days: { pass_target: "10" } };
-    expect(await fakeDb({ data: row, error: null }).store.findAttemptForDay("u1", "2026-11-08")).toEqual({
-      submitted: true,
-      score: 7,
-      passed: false,
-      passTarget: 10,
-    });
-    const pass = { score: 12, passed: true, submitted_at: "2026-11-08T10:00:00Z", game_days: { pass_target: 10 } };
-    expect(await fakeDb({ data: pass, error: null }).store.findAttemptForDay("u1", "2026-11-08")).toEqual({
-      submitted: true,
-      score: 12,
-      passed: true,
-      passTarget: 10,
-    });
-    expect(await fakeDb({ data: null, error: null }).store.findAttemptForDay("u1", "2026-11-08")).toBeNull();
+    const undecided = fakeDb({ data: { wins: 0, losses: 1, outcome: null }, error: null });
+    expect(await undecided.store.dayResult("u1", "2026-11-08")).toEqual({ wins: 0, losses: 1, outcome: null });
+    expect(await fakeDb({ data: null, error: null }).store.dayResult("u1", "2026-11-08")).toEqual({ wins: 0, losses: 0, outcome: null });
   });
 
-  it("insertAttempt stores the seed and returns the new id", async () => {
+  it("dayResult throws on an outcome it does not know", async () => {
+    const { store } = fakeDb({ data: { wins: 2, losses: 0, outcome: "survived" }, error: null });
+    await expect(store.dayResult("u1", "2026-11-08")).rejects.toThrow(/survived/);
+  });
+
+  it("findAttemptById throws on a seed that is not a whole number", async () => {
+    const row = { user_id: "u1", game_date: "2026-11-08", position: 1, seed: "42", started_at: "2026-11-08T12:00:00+00:00", submitted_at: null };
+    await expect(fakeDb({ data: row, error: null }).store.findAttemptById("a1")).rejects.toThrow(/seed/);
+  });
+
+  it("insertAttempt stores the game's position and the seed, and returns the new id", async () => {
     const { store, calls } = fakeDb({ data: { id: "attempt-1" }, error: null });
-    expect(await store.insertAttempt({ userId: "u1", gameDate: "2026-11-08", seed: 42 })).toEqual({ id: "attempt-1" });
+    expect(await store.insertAttempt({ userId: "u1", gameDate: "2026-11-08", position: 2, seed: 42 })).toEqual({ id: "attempt-1" });
     expect(calls).toEqual([
       ["from", "attempts"],
-      ["insert", { user_id: "u1", game_date: "2026-11-08", seed: 42 }],
+      ["insert", { user_id: "u1", game_date: "2026-11-08", position: 2, seed: 42 }],
       ["select", "id"],
       ["single"],
     ]);
@@ -124,27 +150,28 @@ describe("supabaseAttemptStore", () => {
 
   it("insertAttempt reports a unique violation as a duplicate", async () => {
     const { store } = fakeDb({ data: null, error: { code: "23505", message: "duplicate key" } });
-    expect(await store.insertAttempt({ userId: "u1", gameDate: "2026-11-08", seed: 42 })).toBe("duplicate");
+    expect(await store.insertAttempt({ userId: "u1", gameDate: "2026-11-08", position: 1, seed: 42 })).toBe("duplicate");
   });
 
   it("insertAttempt reports the database's closed-day refusal (WS001) as day-closed", async () => {
     const { store } = fakeDb({ data: null, error: { code: "WS001", message: "game day 2026-11-08 is closed" } });
-    expect(await store.insertAttempt({ userId: "u1", gameDate: "2026-11-08", seed: 42 })).toBe("day-closed");
+    expect(await store.insertAttempt({ userId: "u1", gameDate: "2026-11-08", position: 1, seed: 42 })).toBe("day-closed");
   });
 
-  it("findAttemptById reads the attempt's owner, day, seed, start time and submission state", async () => {
-    const row = { user_id: "u1", game_date: "2026-11-08", seed: 42, started_at: "2026-11-08T12:00:00+00:00", submitted_at: null };
+  it("findAttemptById reads the attempt's owner, day, game, seed, start time and submission state", async () => {
+    const row = { user_id: "u1", game_date: "2026-11-08", position: 2, seed: 42, started_at: "2026-11-08T12:00:00+00:00", submitted_at: null };
     const { store, calls } = fakeDb({ data: row, error: null });
     expect(await store.findAttemptById("a1")).toEqual({
       userId: "u1",
       gameDate: "2026-11-08",
+      position: 2,
       seed: 42,
       startedAt: new Date("2026-11-08T12:00:00Z"),
       submitted: false,
     });
     expect(calls).toEqual([
       ["from", "attempts"],
-      ["select", "user_id, game_date, seed, started_at, submitted_at"],
+      ["select", "user_id, game_date, position, seed, started_at, submitted_at"],
       ["eq", "id", "a1"],
       ["maybeSingle"],
     ]);
@@ -166,8 +193,8 @@ describe("supabaseAttemptStore", () => {
   it("recentScores reads the player's scored attempts before that day, newest first, with their challenge", async () => {
     const { store, calls } = fakeDb({
       data: [
-        { score: "0.004", game_days: { challenge_type: "inner-clock" } },
-        { score: 7, game_days: { challenge_type: "stacking" } },
+        { score: "0.004", challenge_type: "inner-clock" },
+        { score: 7, challenge_type: "stacking" },
       ],
       error: null,
     });
@@ -177,7 +204,7 @@ describe("supabaseAttemptStore", () => {
     ]);
     expect(calls).toEqual([
       ["from", "attempts"],
-      ["select", "score, game_days(challenge_type)"],
+      ["select", "score, challenge_type"],
       ["eq", "user_id", "u1"],
       ["lt", "game_date", "2026-11-08"],
       ["not", "score", "is", null],
@@ -202,8 +229,9 @@ describe("supabaseAttemptStore", () => {
     await expect(store.hasProfile("u1")).rejects.toThrow("Profile lookup failed: connection refused");
     await expect(store.ensureGameDay("2026-11-08")).rejects.toThrow("ensure_game_day failed: connection refused");
     await expect(store.gameDay("2026-11-08")).rejects.toThrow("Game day lookup failed: connection refused");
-    await expect(store.findAttemptForDay("u1", "2026-11-08")).rejects.toThrow("Day attempt lookup failed: connection refused");
-    await expect(store.insertAttempt({ userId: "u1", gameDate: "2026-11-08", seed: 1 })).rejects.toThrow(
+    await expect(store.dayAttempts("u1", "2026-11-08")).rejects.toThrow("Day attempts lookup failed: connection refused");
+    await expect(store.dayResult("u1", "2026-11-08")).rejects.toThrow("Day result lookup failed: connection refused");
+    await expect(store.insertAttempt({ userId: "u1", gameDate: "2026-11-08", position: 1, seed: 1 })).rejects.toThrow(
       "Attempt insert failed: connection refused",
     );
     await expect(store.findAttemptById("a1")).rejects.toThrow("Attempt lookup by id failed: connection refused");

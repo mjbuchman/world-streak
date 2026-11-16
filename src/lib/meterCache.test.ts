@@ -4,11 +4,11 @@ import type { MeterBody } from "./meter";
 import { createMeterCache } from "./meterCache";
 
 const START = Date.parse("2026-11-08T12:00:00Z");
-const body = (attempts: number): MeterBody => ({
+const body = (completed: number): MeterBody => ({
   gameDate: "2026-11-08",
   status: "open",
   passRate: 0.5,
-  attempts,
+  completed,
   threshold: 0.6,
   closesAt: "2026-11-09T00:00:00.000Z",
   streak: { current: 1, best: 2 },
@@ -28,7 +28,7 @@ describe("createMeterCache", () => {
     const { cache, read } = setup();
     const answers = await Promise.all(Array.from({ length: 500 }, () => cache.get()));
     expect(read).toHaveBeenCalledTimes(1);
-    expect(new Set(answers.map((answer) => answer?.body.status === "open" && answer.body.attempts))).toEqual(new Set([1]));
+    expect(new Set(answers.map((answer) => answer?.body.status === "open" && answer.body.completed))).toEqual(new Set([1]));
     expect(answers.every((answer) => answer?.stale === false)).toBe(true);
   });
 
@@ -39,7 +39,7 @@ describe("createMeterCache", () => {
     await cache.get();
     expect(read).toHaveBeenCalledTimes(1);
     advance(1);
-    expect(await cache.get()).toMatchObject({ body: { attempts: 2 }, stale: false });
+    expect(await cache.get()).toMatchObject({ body: { completed: 2 }, stale: false });
     expect(read).toHaveBeenCalledTimes(2);
   });
 
@@ -101,6 +101,6 @@ describe("createMeterCache", () => {
     read.mockRejectedValueOnce(new Error("down"));
     advance(METER_CACHE_SECONDS * 1000);
     expect(await cache.get()).toMatchObject({ stale: true });
-    expect(await cache.get()).toMatchObject({ body: { attempts: 2 }, stale: false });
+    expect(await cache.get()).toMatchObject({ body: { completed: 2 }, stale: false });
   });
 });

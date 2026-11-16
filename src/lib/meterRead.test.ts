@@ -50,17 +50,18 @@ function fakeDb(day: Result, streak: Result = STREAK_OK) {
 }
 
 describe("readMeter", () => {
-  it("reads the day and its counters in one query, never the attempts table", async () => {
+  it("reads the day and its completed-day counters in one query, never the attempts table (T155)", async () => {
+    // The old attempt counters are still on the row; the meter must not read them.
     const data = {
       survival_threshold: "0.60",
-      game_day_counters: { attempts: 4, weighted_attempts: "4", weighted_passes: "3" },
+      game_day_counters: { completed_days: 4, weighted_completed_days: "4", weighted_passed_days: "3" },
     };
     const fake = fakeDb({ data, error: null });
     expect(await readMeter(fake.db, open)).toEqual({
       gameDate: "2026-11-08",
       status: "open",
       passRate: 0.75,
-      attempts: 4,
+      completed: 4,
       threshold: 0.6,
       closesAt,
       streak: { current: 4, best: 9 },
@@ -68,7 +69,7 @@ describe("readMeter", () => {
     expect(fake.streakCalls).toEqual([["rpc", "world_streak"], ["single"]]);
     expect(fake.calls).toEqual([
       ["from", "game_days"],
-      ["select", "survival_threshold, game_day_counters(attempts, weighted_attempts, weighted_passes)"],
+      ["select", "survival_threshold, game_day_counters(completed_days, weighted_completed_days, weighted_passed_days)"],
       ["eq", "game_date", "2026-11-08"],
       ["maybeSingle"],
     ]);
@@ -96,40 +97,40 @@ describe("readMeter", () => {
   });
 
   it("reads the counters whether they come back as an object or a one-element array", async () => {
-    const counters = { attempts: 4, weighted_attempts: 4, weighted_passes: 3 };
+    const counters = { completed_days: 4, weighted_completed_days: 4, weighted_passed_days: 3 };
     const asArray = fakeDb({ data: { survival_threshold: 0.6, game_day_counters: [counters] }, error: null });
-    expect(await readMeter(asArray.db, open)).toMatchObject({ passRate: 0.75, attempts: 4 });
+    expect(await readMeter(asArray.db, open)).toMatchObject({ passRate: 0.75, completed: 4 });
     const empty = fakeDb({ data: { survival_threshold: 0.6, game_day_counters: [] }, error: null });
-    expect(await readMeter(empty.db, open)).toMatchObject({ passRate: null, attempts: 0 });
+    expect(await readMeter(empty.db, open)).toMatchObject({ passRate: null, completed: 0 });
   });
 
-  it("shows no attempts yet when the day has no counters row", async () => {
+  it("shows no one finished yet when the day has no counters row", async () => {
     const { db } = fakeDb({ data: { survival_threshold: 0.6, game_day_counters: null }, error: null });
-    expect(await readMeter(db, open)).toMatchObject({ status: "open", passRate: null, attempts: 0, threshold: 0.6 });
+    expect(await readMeter(db, open)).toMatchObject({ status: "open", passRate: null, completed: 0, threshold: 0.6 });
   });
 
   it("has no threshold to show before today's game day exists", async () => {
     const { db } = fakeDb({ data: null, error: null });
-    expect(await readMeter(db, open)).toMatchObject({ status: "open", passRate: null, attempts: 0, threshold: null });
+    expect(await readMeter(db, open)).toMatchObject({ status: "open", passRate: null, completed: 0, threshold: null });
   });
 
   it.each([
     ["threshold", { survival_threshold: null, game_day_counters: null }, /survival_threshold/],
     ["threshold", { survival_threshold: "x", game_day_counters: null }, /survival_threshold/],
     [
-      "weighted attempts",
-      { survival_threshold: 0.6, game_day_counters: { attempts: 4, weighted_attempts: null, weighted_passes: 3 } },
-      /weighted_attempts/,
+      "weighted completed count",
+      { survival_threshold: 0.6, game_day_counters: { completed_days: 4, weighted_completed_days: null, weighted_passed_days: 3 } },
+      /weighted_completed_days/,
     ],
     [
-      "weighted passes",
-      { survival_threshold: 0.6, game_day_counters: { attempts: 4, weighted_attempts: 4, weighted_passes: null } },
-      /weighted_passes/,
+      "weighted passed count",
+      { survival_threshold: 0.6, game_day_counters: { completed_days: 4, weighted_completed_days: 4, weighted_passed_days: null } },
+      /weighted_passed_days/,
     ],
     [
-      "attempt count",
-      { survival_threshold: 0.6, game_day_counters: { attempts: 1.5, weighted_attempts: 4, weighted_passes: 3 } },
-      /for attempts,/,
+      "completed count",
+      { survival_threshold: 0.6, game_day_counters: { completed_days: 1.5, weighted_completed_days: 4, weighted_passed_days: 3 } },
+      /for completed_days,/,
     ],
   ])("throws on a malformed %s instead of showing NaN or 0", async (_, data, message) => {
     const { db } = fakeDb({ data, error: null });

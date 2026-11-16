@@ -1130,7 +1130,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T152 One scored attempt per game
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T151
 - Acceptance criteria:
   - [ ] A migration gives `attempts` a `position` and `challenge_type` (backfilled: position 1 and the day's challenge) and replaces `unique (user_id, game_date)` with `unique (user_id, game_date, position)` plus `unique (user_id, game_date, challenge_type)`.
@@ -1141,7 +1141,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T153 Day results and completed-day counters
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T152, T46
 - Acceptance criteria:
   - [ ] A migration creates `day_results` (`user_id`, `game_date`, `wins`, `losses`, `outcome` null or `passed`/`failed`, `decided_at`, `counted_weight`, primary key `(user_id, game_date)`), maintained only by the attempt functions. RLS: a user selects only their own rows; no client writes.
@@ -1154,7 +1154,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T154 Start and submit for the Daily Three
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T153
 - Acceptance criteria:
   - [ ] `POST /api/attempts/start` starts the caller's next game in today's order and returns `{ attemptId, gameDate, position, challengeType, seed, params, passTarget }`. If the previous game was started but not submitted, it stays a loss and the next one starts. With all three games started it returns 409 `{ error: "day-complete" }`.
@@ -1165,7 +1165,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T155 The meter counts completed days
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T153
 - Acceptance criteria:
   - [ ] `/api/meter` serves `passRate = weighted_passed_days / weighted_completed_days` and a `completed` count in place of `attempts`; `isMeterBody`, its drift guard and `tests/e2e/meter.spec.ts` follow in the same PR (see T21's notes on the 30 s cache).
@@ -1253,6 +1253,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
   - [ ] `npm run seed:dev -- --players N --pass-rate R` gives each fake player a decided day (three games recorded so that R of them pass the day) and the completed-day counters update; `simulate:days` and `close-day` work with lineups and print the day's lineup with the outcome.
   - [ ] The admin "Local tools" panel: set today's lineup, clear my day (all three attempts and my day result, with counters corrected), and reset a day; the T116 and T117 guards stay.
   - [ ] Unit tests for the changed actions and the local-only guard; README play-test notes updated.
+  - [ ] `tests/e2e/flows.spec.ts` again expects the meter to count all 11 days (the 10 fake players' and the real player's); T155 narrowed it to the real player's day.
 
 ### T164 Cheat checks for the multi-round games
 - Type: feature

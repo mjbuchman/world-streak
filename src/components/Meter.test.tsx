@@ -19,7 +19,7 @@ const open = (over: Record<string, unknown> = {}) => ({
   gameDate: "2026-11-08",
   status: "open",
   passRate: 0.72,
-  attempts: 1234,
+  completed: 1234,
   threshold: 0.6,
   closesAt,
   streak: { current: 4, best: 9 },
@@ -67,12 +67,12 @@ describe("Meter", () => {
     expect(meter.getAttribute("aria-valuenow")).toBe("72");
     expect(meter.getAttribute("aria-valuemin")).toBe("0");
     expect(meter.getAttribute("aria-valuemax")).toBe("100");
-    expect(meter.getAttribute("aria-valuetext")).toBe("72% passing · 60% needed · 1,234 attempts");
+    expect(meter.getAttribute("aria-valuetext")).toBe("72% passing · 60% needed · 1,234 players finished");
     expect(screen.getByText("72%")).toBeTruthy();
     expect(screen.getByText("passing right now")).toBeTruthy();
     expect(screen.getByText("12 points above the line")).toBeTruthy();
     expect(screen.getByText("60% needed")).toBeTruthy();
-    expect(screen.getByText("1,234 attempts")).toBeTruthy();
+    expect(screen.getByText("1,234 players finished")).toBeTruthy();
     expect(screen.getByText("Today, the whole world")).toBeTruthy();
     expect(container.querySelector("[data-gauge-fill]")?.getAttribute("stroke-dasharray")).toBe("72 100");
     expect(container.querySelector("[data-gauge-tick]")?.getAttribute("transform")).toBe("rotate(108 150 150)");
@@ -143,37 +143,37 @@ describe("Meter", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("says no attempts yet, with the threshold, before anyone has played", async () => {
-    fetchSpy.mockResolvedValue(json(open({ passRate: null, attempts: 0 })));
+  it("says no one has finished yet, with the threshold, before anyone's day is decided", async () => {
+    fetchSpy.mockResolvedValue(json(open({ passRate: null, completed: 0 })));
     const { container } = render(<Meter />);
     await flush();
-    expect(screen.getByText("No attempts yet")).toBeTruthy();
+    expect(screen.getByText("No one has finished yet")).toBeTruthy();
     expect(screen.getByText("60% needed")).toBeTruthy();
     expect(screen.queryByText(/the line/)).toBeNull();
-    expect(screen.queryByText(/attempts?$/)).toBeNull();
+    expect(screen.queryByText(/finished$/)).toBeNull();
     // Screen readers get the same words, threshold included.
-    expect(screen.getByRole("meter").getAttribute("aria-valuetext")).toBe("No attempts yet · 60% needed");
+    expect(screen.getByRole("meter").getAttribute("aria-valuetext")).toBe("No one has finished yet · 60% needed");
     expect(container.querySelector("[data-gauge-fill]")?.getAttribute("stroke-dasharray")).toBe("0 100");
     expect(screen.getByRole("region", { name: "Today's meter" }).dataset.state).toBe("none");
   });
 
   it("shows no threshold tick, needed line or verdict before today's game day exists", async () => {
-    fetchSpy.mockResolvedValue(json(open({ passRate: 0.7, attempts: 3, threshold: null })));
+    fetchSpy.mockResolvedValue(json(open({ passRate: 0.7, completed: 3, threshold: null })));
     const { container } = render(<Meter />);
     await flush();
     expect(screen.getByText("70%")).toBeTruthy();
     expect(container.querySelector("[data-gauge-tick]")).toBeNull();
     expect(screen.queryByText(/needed|the line/)).toBeNull();
-    expect(screen.getByRole("meter").getAttribute("aria-valuetext")).toBe("70% passing · 3 attempts");
+    expect(screen.getByRole("meter").getAttribute("aria-valuetext")).toBe("70% passing · 3 players finished");
     expect(screen.getByRole("region", { name: "Today's meter" }).dataset.state).toBe("none");
   });
 
-  it("says 1 attempt, not 1 attempts", async () => {
-    fetchSpy.mockResolvedValue(json(open({ passRate: 1, attempts: 1 })));
+  it("says 1 player finished, not 1 players", async () => {
+    fetchSpy.mockResolvedValue(json(open({ passRate: 1, completed: 1 })));
     render(<Meter />);
     await flush();
-    expect(screen.getByText("1 attempt")).toBeTruthy();
-    expect(screen.getByRole("meter").getAttribute("aria-valuetext")).toBe("100% passing · 60% needed · 1 attempt");
+    expect(screen.getByText("1 player finished")).toBeTruthy();
+    expect(screen.getByRole("meter").getAttribute("aria-valuetext")).toBe("100% passing · 60% needed · 1 player finished");
   });
 
   it("animates the arc with the slow motion token, which reduced motion sets to 0 (tokens.css)", () => {
@@ -233,9 +233,9 @@ describe("Meter", () => {
   it("shows the latest reading after each poll", async () => {
     render(<Meter />);
     await flush();
-    fetchSpy.mockResolvedValue(json(open({ passRate: 0.5, attempts: 2000 })));
+    fetchSpy.mockResolvedValue(json(open({ passRate: 0.5, completed: 2000 })));
     await advance(60_000);
-    expect(reading()).toBe("50% passing · 60% needed · 2,000 attempts");
+    expect(reading()).toBe("50% passing · 60% needed · 2,000 players finished");
   });
 
   it("says the meter is unavailable when the first fetch fails, and keeps the last reading after that", async () => {
@@ -245,10 +245,10 @@ describe("Meter", () => {
     expect(screen.getByText("The meter is unavailable right now.")).toBeTruthy();
 
     await advance(60_000);
-    expect(reading()).toBe("72% passing · 60% needed · 1,234 attempts");
+    expect(reading()).toBe("72% passing · 60% needed · 1,234 players finished");
     fetchSpy.mockResolvedValueOnce(json({ error: "server-error" }, 500));
     await advance(60_000);
-    expect(reading()).toBe("72% passing · 60% needed · 1,234 attempts");
+    expect(reading()).toBe("72% passing · 60% needed · 1,234 players finished");
   });
 
   it("stops polling when it unmounts, and ignores the tab coming back afterwards", async () => {
@@ -273,9 +273,9 @@ describe("Meter", () => {
       { status: "open" },
       { status: "closed", closesAt, threshold: 0.6 },
       open({ closesAt: "soon" }),
-      open({ attempts: "many" }),
-      open({ attempts: -1 }),
-      open({ attempts: 1.5 }),
+      open({ completed: "many" }),
+      open({ completed: -1 }),
+      open({ completed: 1.5 }),
       open({ threshold: "x" }),
       open({ passRate: "x" }),
       null,
@@ -293,30 +293,30 @@ describe("Meter", () => {
   it("never lets a slow older reply overwrite a newer one", async () => {
     let answerFirst: (response: Response) => void = () => undefined;
     fetchSpy.mockImplementationOnce(() => new Promise((resolve) => (answerFirst = resolve)));
-    fetchSpy.mockResolvedValueOnce(json(open({ passRate: 0.5, attempts: 2000 })));
+    fetchSpy.mockResolvedValueOnce(json(open({ passRate: 0.5, completed: 2000 })));
     render(<Meter />);
     await flush();
     // The tab is hidden and shown again before the first reply arrives: a second request goes out.
     setVisibility("hidden");
     setVisibility("visible");
     await flush();
-    expect(reading()).toBe("50% passing · 60% needed · 2,000 attempts");
+    expect(reading()).toBe("50% passing · 60% needed · 2,000 players finished");
 
     await act(async () => answerFirst(json(open())));
-    expect(reading()).toBe("50% passing · 60% needed · 2,000 attempts");
+    expect(reading()).toBe("50% passing · 60% needed · 2,000 players finished");
   });
 
   it("asks for the next day's reading at the deadline", async () => {
     vi.setSystemTime(new Date("2026-11-08T23:59:59Z"));
     fetchSpy.mockResolvedValueOnce(json(open()));
-    fetchSpy.mockResolvedValueOnce(json(open({ gameDate: "2026-11-09", closesAt: "2026-11-10T00:00:00.000Z", passRate: null, attempts: 0 })));
+    fetchSpy.mockResolvedValueOnce(json(open({ gameDate: "2026-11-09", closesAt: "2026-11-10T00:00:00.000Z", passRate: null, completed: 0 })));
     render(<Meter />);
     await flush();
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     await advance(1_000);
     expect(fetchSpy).toHaveBeenCalledTimes(2);
-    expect(reading()).toBe("No attempts yet · 60% needed");
+    expect(reading()).toBe("No one has finished yet · 60% needed");
   });
 
   it("reloads once at the deadline while a cached reply still says the past deadline, then polls as usual", async () => {

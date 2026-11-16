@@ -13,13 +13,14 @@ const percent = (fraction: number) => Math.round(fraction * 100);
 
 type OpenBody = Extract<MeterBody, { status: "open" }>;
 
-const attemptCount = (attempts: number) => `${attempts.toLocaleString("en-US")} ${attempts === 1 ? "attempt" : "attempts"}`;
+const NO_ONE_FINISHED = "No one has finished yet";
+const finishedCount = (players: number) => `${players.toLocaleString("en-US")} ${players === 1 ? "player" : "players"} finished`;
 
-/** "72% passing · 60% needed · 1,234 attempts", leaving out whatever is not known yet. */
+/** "72% passing · 60% needed · 1,234 players finished", leaving out whatever is not known yet. */
 function label(body: OpenBody): string {
-  const parts = [body.passRate === null ? "No attempts yet" : `${percent(body.passRate)}% passing`];
+  const parts = [body.passRate === null ? NO_ONE_FINISHED : `${percent(body.passRate)}% passing`];
   if (body.threshold !== null) parts.push(`${percent(body.threshold)}% needed`);
-  if (body.attempts > 0) parts.push(attemptCount(body.attempts));
+  if (body.completed > 0) parts.push(finishedCount(body.completed));
   return parts.join(" · ");
 }
 
@@ -187,7 +188,7 @@ export function Meter() {
         </svg>
         <div className={styles.reading}>
           {body.passRate === null ? (
-            <p className={styles.empty}>No attempts yet</p>
+            <p className={styles.empty}>{NO_ONE_FINISHED}</p>
           ) : (
             <>
               <p className={styles.rate}>{rate}%</p>
@@ -197,7 +198,7 @@ export function Meter() {
         </div>
       </div>
       {where && <p className={styles.verdict}>{where.verdict}</p>}
-      {(body.threshold !== null || body.attempts > 0) && (
+      {(body.threshold !== null || body.completed > 0) && (
         <div className={styles.counts}>
           {body.threshold !== null && (
             <p className={styles.needed}>
@@ -205,7 +206,7 @@ export function Meter() {
               {percent(body.threshold)}% needed
             </p>
           )}
-          {body.attempts > 0 && <p>{attemptCount(body.attempts)}</p>}
+          {body.completed > 0 && <p>{finishedCount(body.completed)}</p>}
         </div>
       )}
     </Frame>

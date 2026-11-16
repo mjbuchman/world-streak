@@ -142,11 +142,8 @@ test("a player plays today's attempt once and sees the server's result, also aft
   await page.reload();
   await expect(page.getByRole("heading", { name: shownVerdict!, exact: true })).toBeVisible();
   await expect(page.getByText(shownSummary!)).toBeVisible();
+  // The endpoint would now start game 2 (attempts.spec.ts); /play offers it from T156.
   await expect(page.getByRole("button", { name: "Start" })).toHaveCount(0);
-
-  const again = await page.request.post("/api/attempts/start");
-  expect(again.status()).toBe(409);
-  expect(await again.json()).toEqual({ error: "already-started", submitted: true });
 });
 
 test("a player who left an attempt unfinished cannot start again", async ({ page, accounts }) => {

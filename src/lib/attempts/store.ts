@@ -3,7 +3,7 @@ import { dbInteger, dbNumber } from "@/lib/db/numeric";
 import type { Database, Json, TablesInsert } from "@/lib/supabase/database.types";
 import type { AttemptStore } from "./start";
 import { RECORD_STATUSES, type RecordStatus, type SubmitStore } from "./submit";
-import type { DayAttempt, GameDay } from "./types";
+import type { DayResult, GameAttempt, GameDay } from "./types";
 
 const UNIQUE_VIOLATION = "23505";
 // Raised by the attempt insert trigger when the game day is already closed (migration T93).
@@ -18,7 +18,7 @@ const RECENT_SCORES = 20;
 /**
  * The attempt store over Supabase, for starting and submitting attempts. Pass the service-role
  * client: players have no write access to attempts or game days under row-level security, by
- * design. `findAttemptForDay` alone also works with a player's own client (see `todaysAttempt`).
+ * design. `gameDay`, `dayAttempts` and `dayResult` also work with a player's own client (see `todaysDay`).
  */
 export function supabaseAttemptStore(db: Pick<SupabaseClient<Database>, "from" | "rpc">): AttemptStore & SubmitStore {
   return {
@@ -33,41 +33,63 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient<Database>, "from" |
       if (error) throwDbError("ensure_game_day", error);
     },
 
-    async gameDay(gameDate): Promise<GameDay> {
+    async gameDay(gameDate): Promise<GameDay | null> {
       const { data, error } = await db
         .from("game_days")
-        .select("challenge_type, pass_target, closed_at")
+        .select("closed_at, game_day_games(position, challenge_type, pass_target)")
         .eq("game_date", gameDate)
-        .single();
+        .maybeSingle();
       if (error) throwDbError("Game day lookup", error);
-      return { challengeType: data.challenge_type, passTarget: dbNumber(data.pass_target, "pass_target"), closed: data.closed_at !== null };
+      if (!data) return null;
+      const games = data.game_day_games
+        .map((game) => ({
+          position: dbInteger(game.position, "position"),
+          challengeType: game.challenge_type,
+          passTarget: dbNumber(game.pass_target, "pass_target"),
+        }))
+        .sort((a, b) => a.position - b.position);
+      return { closed: data.closed_at !== null, games };
     },
 
-    async findAttemptForDay(userId, gameDate): Promise<DayAttempt | null> {
+    async dayAttempts(userId, gameDate): Promise<GameAttempt[]> {
       const { data, error } = await db
         .from("attempts")
-        .select("score, passed, submitted_at, game_days(pass_target)")
+        .select("position, score, passed, submitted_at")
+        .eq("user_id", userId)
+        .eq("game_date", gameDate)
+        .order("position");
+      if (error) throwDbError("Day attempts lookup", error);
+      return data.map((row) => {
+        const position = dbInteger(row.position, "position");
+        if (row.submitted_at === null) return { position, submitted: false };
+        return { position, submitted: true, score: dbNumber(row.score, "score"), passed: row.passed === true };
+      });
+    },
+
+    async dayResult(userId, gameDate): Promise<DayResult> {
+      const { data, error } = await db
+        .from("day_results")
+        .select("wins, losses, outcome")
         .eq("user_id", userId)
         .eq("game_date", gameDate)
         .maybeSingle();
-      if (error) throwDbError("Day attempt lookup", error);
-      if (!data) return null;
-      if (data.submitted_at === null) return { submitted: false };
-      return {
-        submitted: true,
-        score: dbNumber(data.score, "score"),
-        passed: data.passed === true,
-        passTarget: dbNumber(data.game_days.pass_target, "pass_target"),
-      };
+      if (error) throwDbError("Day result lookup", error);
+      if (!data) return { wins: 0, losses: 0, outcome: null };
+      if (data.outcome !== null && data.outcome !== "passed" && data.outcome !== "failed") {
+        throw new Error(`Day result has unknown outcome "${data.outcome}"`);
+      }
+      return { wins: dbInteger(data.wins, "wins"), losses: dbInteger(data.losses, "losses"), outcome: data.outcome };
     },
 
-    async insertAttempt({ userId, gameDate, seed }) {
+    async insertAttempt({ userId, gameDate, position, seed }) {
       const { data, error } = await db
         .from("attempts")
-        // counted_weight is NOT NULL but stamped by a trigger (T46), which the generated types cannot see.
-        .insert({ user_id: userId, game_date: gameDate, seed } as TablesInsert<"attempts">)
+        // counted_weight and challenge_type are NOT NULL but set by triggers (T46, T152), which the
+        // generated types cannot see.
+        .insert({ user_id: userId, game_date: gameDate, position, seed } as TablesInsert<"attempts">)
         .select("id")
         .single();
+      // Either unique constraint: the position, or its game (the trigger takes it from the lineup).
       if (error?.code === UNIQUE_VIOLATION) return "duplicate";
       if (error?.code === DAY_CLOSED) return "day-closed";
       if (error) throwDbError("Attempt insert", error);
@@ -77,7 +99,7 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient<Database>, "from" |
     async findAttemptById(attemptId) {
       const { data, error } = await db
         .from("attempts")
-        .select("user_id, game_date, seed, started_at, submitted_at")
+        .select("user_id, game_date, position, seed, started_at, submitted_at")
         .eq("id", attemptId)
         .maybeSingle();
       if (error) throwDbError("Attempt lookup by id", error);
@@ -85,6 +107,7 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient<Database>, "from" |
       return {
         userId: data.user_id,
         gameDate: data.game_date,
+        position: dbInteger(data.position, "position"),
         seed: dbInteger(data.seed, "seed"),
         startedAt: new Date(data.started_at),
         submitted: data.submitted_at !== null,
@@ -105,10 +128,10 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient<Database>, "from" |
     },
 
     async recentScores(userId, gameDate) {
-      // Enough to hold the latest five of any one challenge while the rotation mixes three.
+      // Enough to hold the latest five of any one challenge while the lineups mix five.
       const { data, error } = await db
         .from("attempts")
-        .select("score, game_days(challenge_type)")
+        .select("score, challenge_type")
         .eq("user_id", userId)
         .lt("game_date", gameDate)
         .not("score", "is", null)
@@ -116,7 +139,7 @@ export function supabaseAttemptStore(db: Pick<SupabaseClient<Database>, "from" |
         .limit(RECENT_SCORES);
       if (error) throwDbError("Recent scores lookup", error);
       return data.map((row) => ({
-        challengeType: row.game_days.challenge_type,
+        challengeType: row.challenge_type,
         score: dbNumber(row.score, "score"),
       }));
     },

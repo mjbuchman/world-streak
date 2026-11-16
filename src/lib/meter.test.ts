@@ -21,42 +21,42 @@ const open = new Date("2026-11-08T20:59:59Z");
 const hidden = new Date("2026-11-08T21:00:00Z");
 const closesAt = "2026-11-09T00:00:00.000Z";
 
-// 12 attempts, some at reduced weight: the rate uses the weighted counts (7.5 / 10), not 12.
+// 12 completed days, some at reduced weight: the rate uses the weighted counts (7.5 / 10), not 12.
 const streak = { current: 4, best: 9 };
-const row: MeterRow = { threshold: 0.6, attempts: 12, weightedAttempts: 10, weightedPasses: 7.5, streak };
+const row: MeterRow = { threshold: 0.6, completed: 12, weightedCompleted: 10, weightedPassed: 7.5, streak };
 
 describe("meterBody", () => {
-  it("is open before the final hours, with the weighted pass rate and the attempt count", () => {
+  it("is open before the final hours, with the weighted rate of passed days and the completed count (T155)", () => {
     expect(meterBody(open, "2026-11-08", row)).toEqual({
       gameDate: "2026-11-08",
       status: "open",
       passRate: 0.75,
-      attempts: 12,
+      completed: 12,
       threshold: 0.6,
       closesAt,
       streak,
     });
   });
 
-  it("is hidden from three hours before the deadline, with no pass rate or attempt count at all, but the streak", () => {
+  it("is hidden from three hours before the deadline, with no pass rate or completed count at all, but the streak", () => {
     const body = meterBody(hidden, "2026-11-08", row);
     expect(body).toEqual({ gameDate: "2026-11-08", status: "hidden", threshold: 0.6, closesAt, streak });
     expect("passRate" in body).toBe(false);
-    expect("attempts" in body).toBe(false);
+    expect("completed" in body).toBe(false);
   });
 
   it("stays hidden right up to the deadline", () => {
     expect(meterBody(new Date("2026-11-08T23:59:59.999Z"), "2026-11-08", row).status).toBe("hidden");
   });
 
-  it("gives a null pass rate, not NaN, when nobody has played yet", () => {
-    const body = meterBody(open, "2026-11-08", { ...row, attempts: 0, weightedAttempts: 0, weightedPasses: 0 });
-    expect(body).toMatchObject({ status: "open", passRate: null, attempts: 0 });
+  it("gives a null pass rate, not NaN, when nobody has finished yet", () => {
+    const body = meterBody(open, "2026-11-08", { ...row, completed: 0, weightedCompleted: 0, weightedPassed: 0 });
+    expect(body).toMatchObject({ status: "open", passRate: null, completed: 0 });
   });
 
-  it("gives a null pass rate when every attempt so far has zero weight", () => {
-    const body = meterBody(open, "2026-11-08", { ...row, attempts: 3, weightedAttempts: 0, weightedPasses: 0 });
-    expect(body).toMatchObject({ passRate: null, attempts: 3 });
+  it("gives a null pass rate when every completed day so far has zero weight", () => {
+    const body = meterBody(open, "2026-11-08", { ...row, completed: 3, weightedCompleted: 0, weightedPassed: 0 });
+    expect(body).toMatchObject({ passRate: null, completed: 3 });
   });
 });
 
@@ -66,7 +66,7 @@ describe("isMeterBody", () => {
   const noStreak = { current: 0, best: 0 };
   const bodies = [
     ["open with a rate", meterBody(open, "2026-11-08", row)],
-    ["open with no rate yet", meterBody(open, "2026-11-08", { ...row, weightedAttempts: 0, weightedPasses: 0 })],
+    ["open with no rate yet", meterBody(open, "2026-11-08", { ...row, weightedCompleted: 0, weightedPassed: 0 })],
     ["open before the day's row exists", meterBody(open, "2026-11-08", { ...row, threshold: null })],
     ["open with no streak yet", meterBody(open, "2026-11-08", { ...row, streak: noStreak })],
     ["hidden", meterBody(hidden, "2026-11-08", row)],
@@ -100,8 +100,9 @@ describe("isMeterBody", () => {
     ["an unparseable deadline", { ...openBody, closesAt: "soon" }],
     ["a text threshold", { ...openBody, threshold: "0.6" }],
     ["an infinite rate", { ...openBody, passRate: Infinity }],
-    ["a fractional attempt count", { ...openBody, attempts: 1.5 }],
-    ["a negative attempt count", { ...openBody, attempts: -1 }],
+    ["a fractional completed count", { ...openBody, completed: 1.5 }],
+    ["a negative completed count", { ...openBody, completed: -1 }],
+    ["the old attempt count in place of the completed count", { ...openBody, completed: undefined, attempts: 12 }],
     ["an unknown status", { ...openBody, status: "closed" }],
   ])("rejects a reply with %s", (_name, reply) => {
     expect(isMeterBody(reply)).toBe(false);
@@ -142,7 +143,7 @@ describe("with METER_HIDE_HOURS at 0: shown until the deadline (T103)", () => {
 
   it.each(["2026-11-08T00:00:00Z", "2026-11-08T21:00:00Z", "2026-11-08T23:59:59.999Z"])("is open at %s", (now) => {
     const body = meterBody(new Date(now), "2026-11-08", row);
-    expect(body).toMatchObject({ status: "open", passRate: 0.75, attempts: 12 });
+    expect(body).toMatchObject({ status: "open", passRate: 0.75, completed: 12 });
   });
 
   it("hides from nothing earlier than the deadline itself", () => {

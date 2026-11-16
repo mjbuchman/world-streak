@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
-import { DEFAULT_CHALLENGE, todaysAttempt, todaysChallenge } from "./today";
+import { DEFAULT_CHALLENGE, todaysAttempt, todaysChallenge, todaysDay } from "./today";
 
 type Result = { data: unknown; error: { message: string } | null };
 
@@ -36,50 +36,143 @@ const userId = "u1";
 // 23:30 UTC on Nov 8 is still game date Nov 8.
 const now = new Date("2026-11-08T23:30:00Z");
 
-describe("todaysAttempt", () => {
-  it("is ready when the player has no attempt for today's game date", async () => {
-    const { db, calls } = fakeDb({ data: null, error: null });
-    expect(await todaysAttempt(db, userId, now)).toEqual({ kind: "ready" });
-    expect(calls).toEqual([
-      ["from", "attempts"],
-      ["select", "score, passed, submitted_at, game_days(pass_target)"],
-      ["eq", "user_id", userId],
-      ["eq", "game_date", "2026-11-08"],
-      ["maybeSingle"],
-    ]);
+/** A player's client whose reads of each table answer that table's result. */
+function fakeTables(results: { game_days?: Result; attempts?: Result; day_results?: Result }) {
+  const calls: unknown[][] = [];
+  const db = {
+    from: (table: keyof typeof results) => {
+      const result = results[table] ?? { data: null, error: null };
+      const query: object = new Proxy(
+        {},
+        {
+          get(_, method) {
+            if (method === "then") return (resolve: (value: Result) => void) => resolve(result);
+            return (...args: unknown[]) => {
+              calls.push([table, method, ...args]);
+              return query;
+            };
+          },
+        },
+      );
+      return query;
+    },
+    rpc: () => {
+      throw new Error("todaysDay must not call an rpc");
+    },
+  };
+  return { db: db as unknown as SupabaseClient, calls };
+}
+
+const lineup = {
+  closed_at: null,
+  game_day_games: [
+    { position: 1, challenge_type: "stacking", pass_target: 10 },
+    { position: 2, challenge_type: "inner-clock", pass_target: "4" },
+    { position: 3, challenge_type: "flash-count", pass_target: 5 },
+  ],
+};
+const games = [
+  { position: 1, challengeType: "stacking", passTarget: 10 },
+  { position: 2, challengeType: "inner-clock", passTarget: 4 },
+  { position: 3, challengeType: "flash-count", passTarget: 5 },
+];
+const attempt = (position: number, score: number | null, passed: boolean | null) => ({
+  position,
+  score,
+  passed,
+  submitted_at: score === null ? null : "2026-11-08T12:00:00+00:00",
+});
+const ok = (data: unknown): Result => ({ data, error: null });
+
+describe("todaysDay", () => {
+  it("gives every game as not started before the player's first start", async () => {
+    const { db, calls } = fakeTables({ game_days: ok(lineup), attempts: ok([]) });
+    expect(await todaysDay(db, userId, now)).toEqual({
+      gameDate: "2026-11-08",
+      games: games.map((game) => ({ ...game, status: "not-started" })),
+      outcome: null,
+      nextPosition: 1,
+    });
+    // The lineup, the player's own attempts and their own day result, all for today's game date.
+    expect(calls).toContainEqual(["game_days", "eq", "game_date", "2026-11-08"]);
+    expect(calls).toContainEqual(["attempts", "eq", "user_id", userId]);
+    expect(calls).toContainEqual(["day_results", "eq", "user_id", userId]);
   });
 
-  it("gives the stored result, and the day's target, once the attempt was submitted", async () => {
-    const row = { score: 7, passed: false, submitted_at: "2026-11-08T12:00:00+00:00", game_days: { pass_target: "10" } };
-    const { db } = fakeDb({ data: row, error: null });
-    expect(await todaysAttempt(db, userId, now)).toEqual({ kind: "submitted", score: 7, passed: false, passTarget: 10 });
+  it("gives each game's status (won, lost, in progress, not started), its score, the outcome and the next game", async () => {
+    const { db } = fakeTables({
+      game_days: ok(lineup),
+      attempts: ok([attempt(1, 12, true), attempt(2, null, null)]),
+      day_results: ok({ wins: 1, losses: 1, outcome: null }),
+    });
+    expect(await todaysDay(db, userId, now)).toEqual({
+      gameDate: "2026-11-08",
+      games: [
+        { ...games[0], status: "won", score: 12 },
+        { ...games[1], status: "in-progress" },
+        { ...games[2], status: "not-started" },
+      ],
+      outcome: null,
+      nextPosition: 3,
+    });
   });
 
-  it("keeps a stored pass as a pass", async () => {
-    const row = { score: 12, passed: true, submitted_at: "2026-11-08T12:00:00+00:00", game_days: { pass_target: 10 } };
-    const { db } = fakeDb({ data: row, error: null });
-    expect(await todaysAttempt(db, userId, now)).toEqual({ kind: "submitted", score: 12, passed: true, passTarget: 10 });
+  it("gives a decided day, with no next game once all three have started", async () => {
+    const { db } = fakeTables({
+      game_days: ok(lineup),
+      attempts: ok([attempt(1, 3, false), attempt(2, 1, false), attempt(3, 7, true)]),
+      day_results: ok({ wins: 1, losses: 2, outcome: "failed" }),
+    });
+    const day = await todaysDay(db, userId, now);
+    expect(day.games.map((game) => game.status)).toEqual(["lost", "lost", "won"]);
+    expect(day).toMatchObject({ outcome: "failed", nextPosition: null });
+  });
+
+  it("gives an empty lineup, with game 1 next, while nobody has started today (the day does not exist yet)", async () => {
+    const { db } = fakeTables({ attempts: ok([]) });
+    expect(await todaysDay(db, userId, now)).toEqual({ gameDate: "2026-11-08", games: [], outcome: null, nextPosition: 1 });
   });
 
   it("looks up the game date at the deadline, not the calendar date", async () => {
     // One ms before the midnight UTC deadline is still Nov 8; the deadline itself is Nov 9.
-    const before = fakeDb({ data: null, error: null });
-    await todaysAttempt(before.db, userId, new Date("2026-11-08T23:59:59.999Z"));
-    expect(before.calls).toContainEqual(["eq", "game_date", "2026-11-08"]);
-    const at = fakeDb({ data: null, error: null });
-    await todaysAttempt(at.db, userId, new Date("2026-11-09T00:00:00.000Z"));
-    expect(at.calls).toContainEqual(["eq", "game_date", "2026-11-09"]);
-  });
-
-  it("is abandoned when the attempt was started but never submitted", async () => {
-    const row = { score: null, passed: null, submitted_at: null, game_days: { pass_target: 10 } };
-    const { db } = fakeDb({ data: row, error: null });
-    expect(await todaysAttempt(db, userId, now)).toEqual({ kind: "abandoned" });
+    const before = fakeTables({ attempts: ok([]) });
+    expect((await todaysDay(before.db, userId, new Date("2026-11-08T23:59:59.999Z"))).gameDate).toBe("2026-11-08");
+    const at = fakeTables({ attempts: ok([]) });
+    expect((await todaysDay(at.db, userId, new Date("2026-11-09T00:00:00.000Z"))).gameDate).toBe("2026-11-09");
+    expect(at.calls).toContainEqual(["game_days", "eq", "game_date", "2026-11-09"]);
   });
 
   it("throws on a database error, rather than offering a Start that would fail", async () => {
-    const { db } = fakeDb({ data: null, error: { message: "connection refused" } });
-    await expect(todaysAttempt(db, userId, now)).rejects.toThrow(/connection refused/);
+    const { db } = fakeTables({ attempts: { data: null, error: { message: "connection refused" } } });
+    await expect(todaysDay(db, userId, now)).rejects.toThrow(/connection refused/);
+  });
+});
+
+describe("todaysAttempt (the one-game /play until T156)", () => {
+  const firstGame = (attempts: unknown[]) => fakeTables({ game_days: ok(lineup), attempts: ok(attempts) }).db;
+
+  it("is ready before game 1 starts, and before the day exists", async () => {
+    expect(await todaysAttempt(firstGame([]), userId, now)).toEqual({ kind: "ready" });
+    expect(await todaysAttempt(fakeTables({ attempts: ok([]) }).db, userId, now)).toEqual({ kind: "ready" });
+  });
+
+  it("gives game 1's stored result and its own target", async () => {
+    expect(await todaysAttempt(firstGame([attempt(1, 7, false), attempt(2, 9, true)]), userId, now)).toEqual({
+      kind: "submitted",
+      score: 7,
+      passed: false,
+      passTarget: 10,
+    });
+    expect(await todaysAttempt(firstGame([attempt(1, 12, true)]), userId, now)).toEqual({
+      kind: "submitted",
+      score: 12,
+      passed: true,
+      passTarget: 10,
+    });
+  });
+
+  it("is abandoned when game 1 was started but never submitted", async () => {
+    expect(await todaysAttempt(firstGame([attempt(1, null, null)]), userId, now)).toEqual({ kind: "abandoned" });
   });
 });
 
@@ -98,13 +191,14 @@ describe("todaysChallenge", () => {
     return { db, calls: day$.calls, rpcCalls };
   }
 
-  it("reads today's challenge from the public game day, without asking the rotation", async () => {
+  it("reads today's first game from the public lineup, without asking the rotation", async () => {
     const { db, calls, rpcCalls } = fakeChallengeDb({ data: { challenge_type: "flash-count" }, error: null });
     expect(await todaysChallenge(db, now)).toBe("flash-count");
     expect(calls).toEqual([
-      ["from", "game_days"],
+      ["from", "game_day_games"],
       ["select", "challenge_type"],
       ["eq", "game_date", "2026-11-08"],
+      ["eq", "position", 1],
       ["maybeSingle"],
     ]);
     expect(rpcCalls).toEqual([]);

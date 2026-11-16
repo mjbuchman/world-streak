@@ -23,9 +23,10 @@ export type MeterStreak = { current: number; best: number };
 export type MeterRow = {
   /** Null only before the day's row exists (no one has started yet, and the close job has not prepared it). */
   threshold: number | null;
-  attempts: number;
-  weightedAttempts: number;
-  weightedPasses: number;
+  /** Players whose day is decided (T155): the meter counts completed days, not attempts. */
+  completed: number;
+  weightedCompleted: number;
+  weightedPassed: number;
   streak: MeterStreak;
 };
 
@@ -34,7 +35,7 @@ export type MeterBody =
       gameDate: string;
       status: "open";
       passRate: number | null;
-      attempts: number;
+      completed: number;
       threshold: number | null;
       closesAt: string;
       streak: MeterStreak;
@@ -62,12 +63,12 @@ export function isMeterBody(value: unknown): value is MeterBody {
   if (typeof body.closesAt !== "string" || Number.isNaN(Date.parse(body.closesAt))) return false;
   if (!isNumberOrNull(body.threshold) || !isMeterStreak(body.streak)) return false;
   if (body.status === "hidden") return true;
-  return body.status === "open" && isNumberOrNull(body.passRate) && isCount(body.attempts);
+  return body.status === "open" && isNumberOrNull(body.passRate) && isCount(body.completed);
 }
 
 /**
  * The meter at `now`. In the final METER_HIDE_HOURS before the deadline the response carries no
- * pass rate or attempt count at all; the counters themselves are server-only, so this answer is
+ * pass rate or completed count at all; the counters themselves are server-only, so this answer is
  * the only way to read them.
  */
 export function meterBody(now: Date, gameDate: string, row: MeterRow): MeterBody {
@@ -76,9 +77,9 @@ export function meterBody(now: Date, gameDate: string, row: MeterRow): MeterBody
   if (now.getTime() >= meterHiddenFrom(deadline).getTime()) {
     return { gameDate, status: "hidden", threshold: row.threshold, closesAt, streak: row.streak };
   }
-  // With no weighted attempts yet the rate is unknown, not 0% and not NaN.
-  const passRate = row.weightedAttempts > 0 ? row.weightedPasses / row.weightedAttempts : null;
-  return { gameDate, status: "open", passRate, attempts: row.attempts, threshold: row.threshold, closesAt, streak: row.streak };
+  // With no completed days yet the rate is unknown, not 0% and not NaN.
+  const passRate = row.weightedCompleted > 0 ? row.weightedPassed / row.weightedCompleted : null;
+  return { gameDate, status: "open", passRate, completed: row.completed, threshold: row.threshold, closesAt, streak: row.streak };
 }
 
 /** When `body` stops being true: the hidden window starting (an open reading), or the deadline. */
