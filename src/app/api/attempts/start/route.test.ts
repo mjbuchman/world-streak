@@ -44,10 +44,10 @@ describe("POST /api/attempts/start", () => {
       return array;
     };
     vi.spyOn(crypto, "getRandomValues").mockImplementation(fill as typeof crypto.getRandomValues);
-    startAttempt.mockResolvedValue({ status: 409, body: { error: "already-started", submitted: true } });
+    startAttempt.mockResolvedValue({ status: 409, body: { error: "day-complete" } });
     const response = await POST();
     expect(response.status).toBe(409);
-    expect(await response.json()).toEqual({ error: "already-started", submitted: true });
+    expect(await response.json()).toEqual({ error: "day-complete" });
 
     expect(supabaseAttemptStore).toHaveBeenCalledWith(adminClient);
     const [{ userId, now, store: usedStore, randomSeed }] = startAttempt.mock.calls[0];

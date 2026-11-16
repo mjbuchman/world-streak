@@ -6,7 +6,8 @@ import type { StartResult } from "@/lib/attempts/start";
 import type { SubmitResult } from "@/lib/attempts/submit";
 // Type-only imports: no server code reaches the browser bundle.
 
-export type Verdict = Extract<SubmitResult, { status: 200 }>["body"];
+// The one-game page reads only the game's own result; T156 adds the day.
+export type Verdict = Pick<Extract<SubmitResult, { status: 200 }>["body"], "score" | "passed" | "passTarget">;
 
 type Started = Extract<StartResult, { status: 200 }>["body"];
 

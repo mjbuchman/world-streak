@@ -8,7 +8,7 @@ const open = (passRate: number | null, threshold: number | null = 0.6): MeterBod
   gameDate: "2026-11-12",
   status: "open",
   passRate,
-  attempts: 1234,
+  completed: 1234,
   threshold,
   closesAt,
   streak,

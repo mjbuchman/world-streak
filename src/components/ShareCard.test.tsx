@@ -10,7 +10,7 @@ const meter = {
   gameDate: "2026-11-12",
   status: "open",
   passRate: 0.63,
-  attempts: 50,
+  completed: 50,
   threshold: 0.6,
   closesAt: "2026-11-13T00:00:00.000Z",
   streak: { current: 3, best: 9 },

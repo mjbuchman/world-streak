@@ -5,18 +5,20 @@ import { INPUT_TIMING_SLACK_MS } from "@/config/attempts";
 import { detectFlags, type FlagReason } from "@/lib/cheat/detect";
 import { gameDateAt } from "@/lib/gameDay";
 import { passes } from "@/lib/scoring/pass";
-import type { GameDay } from "./types";
+import { requireGameDay, type AttemptStore } from "./start";
+import { nextPosition, type DayResult } from "./types";
 
 /** What `record_attempt_result` can answer. */
 export const RECORD_STATUSES = ["recorded", "already-submitted", "day-closed", "not-found"] as const;
 export type RecordStatus = (typeof RECORD_STATUSES)[number];
 
 /** The database operations submitting an attempt needs (see `supabaseAttemptStore`). */
-export type SubmitStore = {
+export type SubmitStore = Pick<AttemptStore, "gameDay" | "dayAttempts"> & {
   findAttemptById: (
     attemptId: string,
-  ) => Promise<{ userId: string; gameDate: string; seed: number; startedAt: Date; submitted: boolean } | null>;
-  gameDay: (gameDate: string) => Promise<GameDay>;
+  ) => Promise<{ userId: string; gameDate: string; position: number; seed: number; startedAt: Date; submitted: boolean } | null>;
+  /** The player's day so far; no wins, no losses and no outcome before their first start. */
+  dayResult: (userId: string, gameDate: string) => Promise<DayResult>;
   /** Writes the result atomically and only once; reports why not if it cannot. */
   recordResult: (result: { attemptId: string; inputs: unknown; score: number; passed: boolean }) => Promise<RecordStatus>;
   /** The player's scored attempts before `gameDate`, newest first, for the cheat checks. */
@@ -27,8 +29,11 @@ export type SubmitStore = {
 
 type ErrorCode = "invalid-body" | "invalid-inputs" | "not-found" | "already-submitted" | "day-closed" | "implausible-timing";
 
+/** The player's day after a recorded game, and the game to start next (null after the last). */
+export type DayProgress = DayResult & { nextPosition: number | null };
+
 export type SubmitResult =
-  | { status: 200; body: { score: number; passed: boolean; passTarget: number } }
+  | { status: 200; body: { score: number; passed: boolean; passTarget: number; day: DayProgress } }
   | { status: 400 | 404 | 409 | 422; body: { error: ErrorCode } };
 
 // Only these two fields are read. Anything else the client sends (a claimed score or pass) is
@@ -105,9 +110,11 @@ export async function submitAttempt({
   if (attempt.submitted) return fail(409, "already-submitted");
 
   // Submissions after the deadline record nothing, even for an attempt started before it.
-  const day = await store.gameDay(attempt.gameDate);
+  const day = await requireGameDay(store, attempt.gameDate);
   if (day.closed || attempt.gameDate !== gameDateAt(now)) return fail(409, "day-closed");
-  const challenge = challengeForGameDay(attempt.gameDate, day.challengeType);
+  const game = day.games.find((candidate) => candidate.position === attempt.position);
+  if (!game) throw new Error(`Game day ${attempt.gameDate} has no game ${attempt.position}`);
+  const challenge = challengeForGameDay(attempt.gameDate, game.challengeType);
 
   const replayed = replay(challenge, attempt.seed, request.data.inputs);
   if (!replayed) return fail(400, "invalid-inputs");
@@ -119,10 +126,15 @@ export async function submitAttempt({
   const elapsedMs = now.getTime() - attempt.startedAt.getTime();
   if (replayed.lastInputMs > elapsedMs + INPUT_TIMING_SLACK_MS) return fail(422, "implausible-timing");
 
-  const passed = passes(replayed.score, day.passTarget, challenge.direction);
+  // The database judges the same way against the same target, and refuses a mismatch (WS005).
+  const passed = passes(replayed.score, game.passTarget, challenge.direction);
   const recorded = await store.recordResult({ attemptId, inputs: replayed.inputs, score: replayed.score, passed });
   if (recorded !== "recorded") return FROM_RECORD_STATUS[recorded];
   // After the result is stored, and never changing it: flags only guard prize entries.
-  await flagAttempt(store, { id: attemptId, userId, gameDate: attempt.gameDate, challengeType: day.challengeType, elapsedMs }, replayed);
-  return { status: 200, body: { score: replayed.score, passed, passTarget: day.passTarget } };
+  await flagAttempt(store, { id: attemptId, userId, gameDate: attempt.gameDate, challengeType: game.challengeType, elapsedMs }, replayed);
+  const progress = {
+    ...(await store.dayResult(userId, attempt.gameDate)),
+    nextPosition: nextPosition(day, await store.dayAttempts(userId, attempt.gameDate)),
+  };
+  return { status: 200, body: { score: replayed.score, passed, passTarget: game.passTarget, day: progress } };
 }

@@ -1253,6 +1253,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
   - [ ] `npm run seed:dev -- --players N --pass-rate R` gives each fake player a decided day (three games recorded so that R of them pass the day) and the completed-day counters update; `simulate:days` and `close-day` work with lineups and print the day's lineup with the outcome.
   - [ ] The admin "Local tools" panel: set today's lineup, clear my day (all three attempts and my day result, with counters corrected), and reset a day; the T116 and T117 guards stay.
   - [ ] Unit tests for the changed actions and the local-only guard; README play-test notes updated.
+  - [ ] `tests/e2e/flows.spec.ts` again expects the meter to count all 11 days (the 10 fake players' and the real player's); T155 narrowed it to the real player's day.
 
 ### T164 Cheat checks for the multi-round games
 - Type: feature

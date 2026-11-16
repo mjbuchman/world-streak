@@ -11,7 +11,18 @@ test("a signed-out request to start an attempt is refused", async ({ request }) 
   expect(await response.json()).toEqual({ error: "unauthenticated" });
 });
 
-test("an eligible player starts today's attempt once; a second start is refused", async ({ page, accounts }) => {
+/** Today's lineup, in order, as the database holds it. */
+async function lineup(gameDate: string) {
+  const { data, error } = await adminClient()
+    .from("game_day_games")
+    .select("position, challenge_type, pass_target")
+    .eq("game_date", gameDate)
+    .order("position");
+  if (error) throw error;
+  return data.map((game) => ({ position: game.position, challengeType: game.challenge_type, passTarget: Number(game.pass_target) }));
+}
+
+test("an eligible player starts today's games in lineup order, each once, then no more (T154)", async ({ page, accounts }) => {
   const email = accounts.uniqueEmail();
   await signUpViaForm(page, { email });
   await expect(page).toHaveURL("/");
@@ -22,23 +33,31 @@ test("an eligible player starts today's attempt once; a second start is refused"
   const after = gameDateAt(new Date());
   expect(first.status()).toBe(200);
   const body = await first.json();
-  expect(body.challengeType).toBe("stacking");
+  // Game 1 is pinned to the Tower for the run (global-setup.ts).
+  expect(body).toMatchObject({ position: 1, challengeType: "stacking" });
   // A run that crosses the deadline could see either date.
   expect([before, after]).toContain(body.gameDate);
   expect(body.params).toEqual(paramsFromSeed(body.seed));
 
   // The database row holds the same seed the player was given.
   const user = await findUserByEmail(email);
-  const { data: rows, error } = await adminClient().from("attempts").select("id, seed, submitted_at").eq("user_id", user!.id);
+  const { data: rows, error } = await adminClient().from("attempts").select("id, position, seed, submitted_at").eq("user_id", user!.id);
   if (error) throw error;
-  expect(rows).toEqual([{ id: body.attemptId, seed: body.seed, submitted_at: null }]);
-  // Today's target comes with the instance, read from the game day the start just created.
-  const { data: day } = await adminClient().from("game_days").select("pass_target").eq("game_date", body.gameDate).single();
-  expect(body.passTarget).toBe(Number(day!.pass_target));
+  expect(rows).toEqual([{ id: body.attemptId, position: 1, seed: body.seed, submitted_at: null }]);
+  // Each game's target comes with its instance, read from the lineup the start just created.
+  const games = await lineup(body.gameDate);
+  expect(games).toHaveLength(3);
+  expect(body.passTarget).toBe(games[0].passTarget);
 
-  const second = await page.request.post("/api/attempts/start");
-  expect(second.status()).toBe(409);
-  expect(await second.json()).toEqual({ error: "already-started", submitted: false });
+  // Game 1 was left unfinished (it stays a loss); the next starts are games 2 and 3.
+  for (const game of games.slice(1)) {
+    const next = await page.request.post("/api/attempts/start");
+    expect(next.status()).toBe(200);
+    expect(await next.json()).toMatchObject({ ...game, gameDate: body.gameDate });
+  }
+  const done = await page.request.post("/api/attempts/start");
+  expect(done.status()).toBe(409);
+  expect(await done.json()).toEqual({ error: "day-complete" });
 });
 
 test("the server scores a submission itself and accepts it only once", async ({ page, accounts }) => {
@@ -71,12 +90,12 @@ test("the server scores a submission itself and accepts it only once", async ({ 
     data: { attemptId, inputs: { tapsMs }, score: 99, passed: true },
   });
   expect(submitted.status()).toBe(200);
-  // Judged against the day's stored target (it follows recent scores and admin edits, T22, T99);
-  // a deliberate miss stacks far fewer rows than any target the day can have.
-  const { data: day } = await adminClient().from("game_days").select("pass_target").eq("game_date", gameDate).single();
-  const passTarget = Number(day!.pass_target);
+  // Judged against game 1's stored target (it follows recent scores and admin edits, T22, T99);
+  // a deliberate miss stacks far fewer rows than any target the game can have.
+  const { passTarget } = (await lineup(gameDate))[0];
   expect(score).toBeLessThan(passTarget);
-  expect(await submitted.json()).toEqual({ score, passed: false, passTarget });
+  // The day so far comes back too: one loss, game 2 next.
+  expect(await submitted.json()).toEqual({ score, passed: false, passTarget, day: { wins: 0, losses: 1, outcome: null, nextPosition: 2 } });
 
   const { data: row, error } = await adminClient()
     .from("attempts")
@@ -91,8 +110,9 @@ test("the server scores a submission itself and accepts it only once", async ({ 
   expect(again.status()).toBe(409);
   expect(await again.json()).toEqual({ error: "already-submitted" });
 
+  // Game 1 cannot be played again; a start moves on to game 2.
   const restart = await page.request.post("/api/attempts/start");
-  expect(await restart.json()).toEqual({ error: "already-started", submitted: true });
+  expect(await restart.json()).toMatchObject({ position: 2 });
 });
 
 test("a signed-out submission is refused", async ({ request }) => {
