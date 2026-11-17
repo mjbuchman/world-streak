@@ -1268,7 +1268,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T165 End-to-end coverage of the Daily Three
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T157, T160, T163
 - Acceptance criteria:
   - [ ] e2e "win two of three": with today's lineup and targets set by SQL fixture so wins and losses can be forced, a new user wins two games, sees the day passed after game 2, plays the remaining game, and the results page and share text are unchanged by it; `/api/meter` shows 1 player finished.
@@ -1279,7 +1279,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T166 Mobile checks for the new games
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T145, T149, T156
 - Acceptance criteria:
   - [ ] On both mobile projects (T47): `/practice/echo-path`, `/practice/fair-split` and the `/play` interstitials and results page have no horizontal scroll; each canvas fits the viewport; Echo Path tiles and every button are at least 44 x 44 CSS px.
