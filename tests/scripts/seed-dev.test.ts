@@ -3,11 +3,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 // TypeScript maps the .mjs specifier to the .mts source.
 import {
+  gameWins,
   main,
+  nearMissScore,
   parseSeedArgs,
   passingIndices,
   runSeed,
   supabaseSeedDeps,
+  type LineupGame,
   type SeedDeps,
 } from "../../scripts/seed-dev.mjs";
 
@@ -53,6 +56,32 @@ describe("passingIndices", () => {
   });
 });
 
+describe("gameWins", () => {
+  it("wins a bare majority of the games for a passed day, and loses one for a failed day", () => {
+    expect(gameWins(3, true)).toEqual([true, true, false]);
+    expect(gameWins(3, false)).toEqual([false, false, true]);
+    expect(gameWins(1, true)).toEqual([true]);
+    expect(gameWins(1, false)).toEqual([false]);
+  });
+});
+
+describe("nearMissScore", () => {
+  it("scores just past the target on the winning side, whichever way the game counts", () => {
+    expect(nearMissScore(10, true, true)).toBe(11);
+    expect(nearMissScore(10, false, true)).toBe(9);
+    expect(nearMissScore(2, true, false)).toBe(1);
+    expect(nearMissScore(2, false, false)).toBe(3);
+    expect(nearMissScore(0.5, true, false)).toBe(0);
+  });
+});
+
+/** Tower (higher is better), Second Sense (lower is better), Echo Path. */
+const LINEUP: LineupGame[] = [
+  { position: 1, challenge: "stacking", target: 10, higherBetter: true },
+  { position: 2, challenge: "inner-clock", target: 2, higherBetter: false },
+  { position: 3, challenge: "echo-path", target: 6, higherBetter: true },
+];
+
 function fakeDeps(overrides: Partial<SeedDeps> = {}): SeedDeps & { calls: string[] } {
   const calls: string[] = [];
   let users = 0;
@@ -61,13 +90,13 @@ function fakeDeps(overrides: Partial<SeedDeps> = {}): SeedDeps & { calls: string
     calls,
     todayGameDate: vi.fn(async () => "2026-11-08"),
     ensureGameDay: vi.fn(async (date: string) => void calls.push(`ensure ${date}`)),
-    passTarget: vi.fn(async () => 10),
+    lineup: vi.fn(async () => LINEUP),
     createPlayer: vi.fn(async (email: string) => {
       calls.push(`player ${email}`);
       return `user-${++users}`;
     }),
-    startAttempt: vi.fn(async (userId: string, date: string) => {
-      calls.push(`start ${userId} ${date}`);
+    startAttempt: vi.fn(async (userId: string, date: string, position: number) => {
+      calls.push(`start ${userId} ${date} ${position}`);
       return `attempt-${++attempts}`;
     }),
     recordResult: vi.fn(async (attemptId: string, score: number, passed: boolean) => {
@@ -85,26 +114,33 @@ function fakeDeps(overrides: Partial<SeedDeps> = {}): SeedDeps & { calls: string
 }
 
 describe("runSeed", () => {
-  it("creates fresh players with profiles and records today's results through record_attempt_result", async () => {
+  it("plays every game of the lineup in order for fresh players, so the right share pass the day", async () => {
     const deps = fakeDeps();
-    await runSeed({ players: 4, passRate: 0.5, date: null }, "run1", deps);
+    await runSeed({ players: 2, passRate: 0.5, date: null }, "run1", deps);
 
-    expect(deps.calls[0]).toBe("ensure 2026-11-08");
-    expect(deps.calls.filter((call) => call.startsWith("player "))).toEqual([
+    expect(deps.calls).toEqual([
+      "ensure 2026-11-08",
       "player seed-run1-1@example.test",
-      "player seed-run1-2@example.test",
-      "player seed-run1-3@example.test",
-      "player seed-run1-4@example.test",
-    ]);
-    // Passing players score above the day's target of 10, the others below it.
-    expect(deps.calls.filter((call) => call.startsWith("record "))).toEqual([
+      // A passed day: games 1 and 2 won (Second Sense counts lower as better), game 3 lost.
+      "start user-1 2026-11-08 1",
       "record attempt-1 11 true",
-      "record attempt-2 9 false",
-      "record attempt-3 11 true",
+      "start user-1 2026-11-08 2",
+      "record attempt-2 1 true",
+      "start user-1 2026-11-08 3",
+      "record attempt-3 5 false",
+      "player seed-run1-2@example.test",
+      // A failed day: games 1 and 2 lost, game 3 won.
+      "start user-2 2026-11-08 1",
       "record attempt-4 9 false",
+      "start user-2 2026-11-08 2",
+      "record attempt-5 3 false",
+      "start user-2 2026-11-08 3",
+      "record attempt-6 7 true",
     ]);
     expect(deps.recordPastResult).not.toHaveBeenCalled();
-    expect(deps.log).toHaveBeenLastCalledWith("Seeded 4 players for 2026-11-08: 2 passed, 2 did not.");
+    expect(deps.log).toHaveBeenLastCalledWith(
+      "Seeded 2 players for 2026-11-08 (Teetering Tower, Second Sense, Echo Path): 1 passed the day, 1 did not.",
+    );
   });
 
   it("records another day's results through the unchecked function", async () => {
@@ -112,20 +148,25 @@ describe("runSeed", () => {
     const deps = fakeDeps();
     await runSeed({ players: 4, passRate: 0.5, date: "2026-11-07" }, "run2", deps);
     expect(deps.recordResult).not.toHaveBeenCalled();
-    expect(deps.calls.filter((call) => call.startsWith("past "))).toEqual([
-      "past attempt-1 11 true",
-      "past attempt-2 9 false",
-      "past attempt-3 11 true",
-      "past attempt-4 9 false",
-    ]);
-    expect(deps.log).toHaveBeenLastCalledWith("Seeded 4 players for 2026-11-07: 2 passed, 2 did not.");
+    expect(deps.calls.filter((call) => call.startsWith("past "))).toHaveLength(12);
+    expect(deps.log).toHaveBeenLastCalledWith(
+      "Seeded 4 players for 2026-11-07 (Teetering Tower, Second Sense, Echo Path): 2 passed the day, 2 did not.",
+    );
   });
 
   it("stops with a clear error if a past result is refused", async () => {
     const deps = fakeDeps({ recordPastResult: vi.fn(async () => "not-found") });
     await expect(runSeed({ players: 1, passRate: 1, date: "2026-11-07" }, "run8", deps)).rejects.toThrow(
-      /answered "not-found"/,
+      'The result of game 1 on 2026-11-07 answered "not-found".',
     );
+  });
+
+  it("refuses a day without a lineup, before creating anyone", async () => {
+    const deps = fakeDeps({ lineup: vi.fn(async () => []) });
+    await expect(runSeed({ players: 1, passRate: 1, date: "2026-11-07" }, "run9", deps)).rejects.toThrow(
+      "Game day 2026-11-07 has no games.",
+    );
+    expect(deps.createPlayer).not.toHaveBeenCalled();
   });
 
   it("refuses to seed a day that is already closed, before creating anyone", async () => {
@@ -146,9 +187,9 @@ describe("runSeed", () => {
   });
 
   it("scores a fail at 0 rather than below it when the target is 0", async () => {
-    const deps = fakeDeps({ passTarget: vi.fn(async () => 0) });
+    const deps = fakeDeps({ lineup: vi.fn(async () => [{ position: 1, challenge: "stacking", target: 0, higherBetter: true }]) });
     await runSeed({ players: 1, passRate: 0, date: "2026-11-08" }, "run3", deps);
-    expect(deps.recordResult).toHaveBeenCalledWith("attempt-1", 0, false);
+    expect(deps.recordResult).toHaveBeenCalledExactlyOnceWith("attempt-1", 0, false);
   });
 
   it("uses the database's own game date when no date is given, and the given one otherwise", async () => {
@@ -160,13 +201,13 @@ describe("runSeed", () => {
     const given = fakeDeps();
     await runSeed({ players: 1, passRate: 1, date: "2026-11-07" }, "run7", given);
     expect(given.ensureGameDay).toHaveBeenCalledWith("2026-11-07");
-    expect(given.startAttempt).toHaveBeenCalledWith("user-1", "2026-11-07");
+    expect(given.startAttempt).toHaveBeenCalledWith("user-1", "2026-11-07", 1);
   });
 
   it("stops with a clear error if a result is refused", async () => {
     const deps = fakeDeps({ recordResult: vi.fn(async () => "day-closed") });
     await expect(runSeed({ players: 2, passRate: 1, date: "2026-11-08" }, "run4", deps)).rejects.toThrow(
-      /record_attempt_result answered "day-closed"/,
+      'The result of game 1 on 2026-11-08 answered "day-closed".',
     );
   });
 });
@@ -219,12 +260,21 @@ describe("supabaseSeedDeps", () => {
     expect(calls[0]).toEqual(["rpc", "game_date_at", { ts: expect.any(String) }]);
   });
 
-  it("creates the game day and reads its pass target as a number", async () => {
-    const { deps, calls } = fakeClient([{ data: null, error: null }, { data: { pass_target: "10" }, error: null }]);
+  it("creates the game day and reads its lineup in order, targets as numbers", async () => {
+    const rows = [
+      { position: 1, challenge_type: "stacking", pass_target: "10", challenge_types: { direction: "higher-better" } },
+      { position: 2, challenge_type: "flash-count", pass_target: "4.5", challenge_types: { direction: "lower-better" } },
+    ];
+    const { deps, calls } = fakeClient([{ data: null, error: null }, { data: rows, error: null }]);
     await deps.ensureGameDay("2026-11-08");
-    expect(await deps.passTarget("2026-11-08")).toBe(10);
+    expect(await deps.lineup("2026-11-08")).toEqual([
+      { position: 1, challenge: "stacking", target: 10, higherBetter: true },
+      { position: 2, challenge: "flash-count", target: 4.5, higherBetter: false },
+    ]);
     expect(calls).toContainEqual(["rpc", "ensure_game_day", { d: "2026-11-08" }]);
+    expect(calls).toContainEqual(["from", "game_day_games"]);
     expect(calls).toContainEqual(["eq", "game_date", "2026-11-08"]);
+    expect(calls).toContainEqual(["order", "position"]);
   });
 
   it("creates a confirmed account with a random password, then its eligible profile", async () => {
@@ -237,11 +287,11 @@ describe("supabaseSeedDeps", () => {
     expect(calls).toContainEqual(["insert", { id: "u1", birth_date: "1990-01-01", country: "US" }]);
   });
 
-  it("inserts an attempt with an unsigned 32-bit seed and returns its id", async () => {
+  it("inserts an attempt for one game with an unsigned 32-bit seed and returns its id", async () => {
     const { deps, calls } = fakeClient([{ data: { id: "a1" }, error: null }]);
-    expect(await deps.startAttempt("u1", "2026-11-08")).toBe("a1");
+    expect(await deps.startAttempt("u1", "2026-11-08", 2)).toBe("a1");
     const insert = calls.find(([method]) => method === "insert")![1] as { user_id: string; game_date: string; seed: number };
-    expect(insert).toMatchObject({ user_id: "u1", game_date: "2026-11-08" });
+    expect(insert).toMatchObject({ user_id: "u1", game_date: "2026-11-08", position: 2 });
     expect(Number.isInteger(insert.seed) && insert.seed >= 0 && insert.seed <= 0xffffffff).toBe(true);
   });
 
@@ -266,9 +316,8 @@ describe("supabaseSeedDeps", () => {
   });
 
   it.each([null, "abc", ""])("refuses a malformed pass target (%j) instead of seeding NaN scores", async (passTarget) => {
-    await expect(fakeClient([{ data: { pass_target: passTarget }, error: null }]).deps.passTarget("2026-11-08")).rejects.toThrow(
-      /pass_target/,
-    );
+    const rows = [{ position: 1, challenge_type: "stacking", pass_target: passTarget, challenge_types: { direction: "higher-better" } }];
+    await expect(fakeClient([{ data: rows, error: null }]).deps.lineup("2026-11-08")).rejects.toThrow(/pass_target/);
   });
 
   it("reports whether a day is closed", async () => {
@@ -282,7 +331,7 @@ describe("supabaseSeedDeps", () => {
     await expect(fakeClient([failure]).deps.createPlayer("x@example.test")).rejects.toThrow(
       "Creating x@example.test failed: connection refused",
     );
-    await expect(fakeClient([failure]).deps.startAttempt("u1", "2026-11-08")).rejects.toThrow("Attempt insert failed");
+    await expect(fakeClient([failure]).deps.startAttempt("u1", "2026-11-08", 1)).rejects.toThrow("Attempt insert failed");
   });
 });
 

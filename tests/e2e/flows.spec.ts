@@ -15,8 +15,8 @@ test.afterAll(async () => {
   await removeFakePlayers(db);
 });
 
-// Until T163 gives fake players a decided day, only the real player's day reaches the meter.
-test("today: 10 fake players, then a new player loses two games, and the meter counts their decided day", async ({ page, accounts }) => {
+// Fake players play the whole lineup (T163), so each of their days is decided and counts too.
+test("today: 10 fake players, then a new player loses two games, and the meter counts all 11 decided days", async ({ page, accounts }) => {
   test.setTimeout(90_000);
   const today = gameDateAt(new Date());
   const counted = async () => {
@@ -42,12 +42,13 @@ test("today: 10 fake players, then a new player loses two games, and the meter c
   // Game 1 was a deliberate miss; game 2 started and left is the second loss that decides the day.
   expect((await page.request.post("/api/attempts/start")).status()).toBe(200);
 
-  // Other specs play today too, so the meter counts at least this one more. The endpoint keeps
+  expect(await counted()).toBeGreaterThanOrEqual(before + 10);
+  // Other specs play today too, so the meter counts at least these 11 more. The endpoint keeps
   // each reading for one cache window (T48), so the count can take that long to show.
   await expect
     .poll(async () => ((await (await page.request.get("/api/meter")).json()) as { completed?: number }).completed ?? 0, {
       timeout: (METER_CACHE_SECONDS + 10) * 1000,
       intervals: [1000],
     })
-    .toBeGreaterThanOrEqual(before + 1);
+    .toBeGreaterThanOrEqual(before + 11);
 });

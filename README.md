@@ -205,21 +205,21 @@ npm run dev                      # start the app at http://localhost:3000
 
 http://localhost:3000/api/health should return `{"db":"ok"}`. Local Supabase Studio (a database browser) is at http://127.0.0.1:54323. `npm run db:reset` wipes the local database and re-applies every migration in `supabase/migrations/`.
 
-**Play-testing:** each account gets one scored attempt per game day, and the day changes at midnight UTC (7 pm US Eastern, 8 pm during daylight saving). For another go the same day, sign up with a new email, or delete your row in the `attempts` table in Studio (the admin page's local tools can clear it too). `npm run db:reset` wipes everything, accounts included.
+**Play-testing:** each account plays the day's three games once per game day, and the day changes at midnight UTC (7 pm US Eastern, 8 pm during daylight saving). For another go the same day, sign up with a new email, or use **Clear my day** in the admin page's local tools. `npm run db:reset` wipes everything, accounts included.
 
 **Fake players (to watch the meter move):**
 
 ```bash
-npm run seed:dev -- --players 200 --pass-rate 0.7                    # today: 200 players, 140 pass
+npm run seed:dev -- --players 200 --pass-rate 0.7                    # today: 200 players, 140 pass the day
 npm run seed:dev -- --players 50 --pass-rate 0.4 --date 2026-11-01   # another (open) day
 ```
 
-It creates fresh fake accounts (`seed-…@example.test`, with profiles) and submitted attempts, so the day's counters and the meter on http://localhost:3000 change at once. Run it again to add another batch. It refuses a day that is already closed. It reads `.env.local` and refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` is localhost, so it can never touch a real project. The meter shows its numbers right up to the deadline (to hide them in the final hours again, set `METER_HIDE_HOURS` in `src/config/meter.ts`). `npm run db:reset` removes every fake player. Each player takes a moment to create, so 200 take about a minute.
+It creates fresh fake accounts (`seed-…@example.test`, with profiles) that each play the day's whole lineup: a passing player wins a majority of the three games, the others lose a majority, so every fake day is decided and the day's counters and the meter on http://localhost:3000 change at once. Run it again to add another batch. It refuses a day that is already closed. It reads `.env.local` and refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` is localhost, so it can never touch a real project. The meter shows its numbers right up to the deadline (to hide them in the final hours again, set `METER_HIDE_HOURS` in `src/config/meter.ts`). `npm run db:reset` removes every fake player. Each player takes a moment to create, so 200 take about a minute.
 
 **The daily close:** the database closes each game day itself at the midnight UTC deadline (a `pg_cron` job, with a catch-up run every 5 minutes), recording the outcome, updating the world streak and preparing the next day. Locally this means past days close on their own within 5 minutes of `npx supabase start`. To close one by hand and see the result:
 
 ```bash
-npm run close-day -- --date 2026-11-10   # prints e.g. "2026-11-10 survived. World streak: 3 (best 5)."
+npm run close-day -- --date 2026-11-10   # prints e.g. "2026-11-10 (Teetering Tower, Echo Path, Fair Split) survived. World streak: 3 (best 5)."
 ```
 
 Only a day whose deadline has passed can close, and days close in order (close earlier ones first). Closing a closed day again just prints its outcome. Like `seed:dev`, it reads `.env.local` and refuses anything but a localhost URL.
@@ -231,9 +231,9 @@ npm run db:reset
 npm run simulate:days -- --from 2027-01-01 --days 30 --players 50 --pass-rate 0.8
 ```
 
-It closes the empty days before `--from` (broken), creates 50 fake players, and for each day lets all of them play (80% pass, earning entries) and closes it, ahead of its deadline (two requests per player per day, so 50 players for 30 days take a minute or two). Afterwards the world streak is 30 and cycle 1 has reached its goal on 2027-01-30 (check `/` and `/admin`). The draw opens only once a won cycle's last day is in the real past, so to try it, move cycle 1 into the past right after the reset (Studio's SQL editor at http://localhost:54323: `update cycles set start_date = '2026-08-01', end_date = '2026-09-29' where number = 1;`), run `npm run simulate:days -- --from 2026-08-01 --days 60 --players 50 --pass-rate 0.8`, then open `/admin/draw` as the admin. It refuses a day before `--from` that someone has played, and a day from `--from` on that is already closed: run `npm run db:reset` first. It changes past and future days for good, so run `npm run db:reset` again when you are done. Like the other scripts, it refuses anything but a localhost URL.
+It closes the empty days before `--from` (broken), creates 50 fake players, and for each day lets all of them play its three games (80% pass the day, earning entries) and closes it, ahead of its deadline (six requests per player per day, so 50 players for 30 days take a minute or two). Afterwards the world streak is 30 and cycle 1 has reached its goal on 2027-01-30 (check `/` and `/admin`). The draw opens only once a won cycle's last day is in the real past, so to try it, move cycle 1 into the past right after the reset (Studio's SQL editor at http://localhost:54323: `update cycles set start_date = '2026-08-01', end_date = '2026-09-29' where number = 1;`), run `npm run simulate:days -- --from 2026-08-01 --days 60 --players 50 --pass-rate 0.8`, then open `/admin/draw` as the admin. It refuses a day before `--from` that someone has played, and a day from `--from` on that is already closed: run `npm run db:reset` first. It changes past and future days for good, so run `npm run db:reset` again when you are done. Like the other scripts, it refuses anything but a localhost URL.
 
-**Admin page:** sign in as `admin@local.test` with the password `admin-local-only` and open http://localhost:3000/admin to see today and the next 7 game days. That account comes from `supabase/seed.sql`, which `npm run db:reset` applies. To add it without wiping your local data, run `npx supabase db query -f supabase/seed.sql`. It exists only locally; everyone else gets a 404 at `/admin`. Against the local Supabase, `/admin` also has **Local tools**: set a day's challenge, clear your own attempt today (to play again), reset an open day, restore the pool, seed fake players, close a day and remove the fake players. They do what the commands below do, so you need not remember those.
+**Admin page:** sign in as `admin@local.test` with the password `admin-local-only` and open http://localhost:3000/admin to see today and the next 7 game days. That account comes from `supabase/seed.sql`, which `npm run db:reset` applies. To add it without wiping your local data, run `npx supabase db query -f supabase/seed.sql`. It exists only locally; everyone else gets a 404 at `/admin`. Against the local Supabase, `/admin` also has **Local tools**: set a day's three games (each with its usual pass target), clear your own day today (to play it again), reset an open day, restore the pool, seed fake players, close a day and remove the fake players. They do what the commands below do, so you need not remember those.
 
 **Checks** (the same ones CI runs):
 

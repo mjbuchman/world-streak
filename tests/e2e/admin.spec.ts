@@ -89,7 +89,7 @@ test("an admin swaps the first two games of a coming day, and the new order stay
   }
 });
 
-test("an admin clears their own attempt today with the local tools, and can play again", async ({ page }) => {
+test("an admin clears their own day with the local tools, and can play again", async ({ page }) => {
   const db = adminClient();
   const today = gameDateAt(new Date());
   try {
@@ -101,8 +101,8 @@ test("an admin clears their own attempt today with the local tools, and can play
 
     await gotoReady(page, "/admin");
     const tools = page.getByRole("region", { name: "Local tools" });
-    await submitAndWait(page, tools.getByRole("button", { name: "Clear my attempt today" }));
-    await expect(tools.getByRole("status")).toHaveText("Your attempt today is gone. You can play again.");
+    await submitAndWait(page, tools.getByRole("button", { name: "Clear my day" }));
+    await expect(tools.getByRole("status")).toHaveText(/^Your day is cleared \([1-3] games?\)\. You can play it again\.$/);
 
     await gotoReady(page, "/play");
     await expect(page.getByRole("heading", { name: /^Game 1 of 3: / })).toBeVisible();

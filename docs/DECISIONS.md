@@ -412,3 +412,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: the Open item's suggestion; the rule's lineup is the one the first start will create unless the settings change first.
 - How to change it later: `isPerfectDay` and `buildShareText` in `src/lib/share.ts`, `src/app/play/results/page.tsx`, `todaysLineup` in `src/lib/attempts/today.ts`.
 - Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls, item 14)
+
+### 2026-11-17 — Cheat checks for the multi-round games (T164)
+- Choice: the backlog's placeholder thresholds. Second Sense is flagged for 5 or more rounds of one run tapped under 10 ms off target. Echo Path is flagged for any tap under 80 ms after the last one, or 10 or more taps whose intervals have a standard deviation under 5 ms. Fair Split is flagged for 6 or more judged cuts within 0.05 points of 50%, or a counted cut under 300 ms after its shape appeared. The timing check now covers every game through each engine's `lastInputMs`, with the same 15 s + 3-2-1 allowance. Cuts the game never judged (in the pause before a shape, or after the run ended) are ignored. As before, a flag only holds prize entries for review.
+- Reason: Open item (thresholds), no recommendation in the design; these are the backlog's numbers.
+- How to change it later: `src/config/cheat.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)

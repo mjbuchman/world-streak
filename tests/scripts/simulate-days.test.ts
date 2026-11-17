@@ -53,17 +53,22 @@ function fakeDeps(state: { open: Record<string, number>; closed: string[] }) {
     ensureGameDay: async (date) => {
       state.open[date] ??= 0;
     },
-    passTarget: async () => 10,
+    lineup: async () => [
+      { position: 1, challenge: "stacking", target: 10, higherBetter: true },
+      { position: 2, challenge: "flash-count", target: 4, higherBetter: false },
+      { position: 3, challenge: "echo-path", target: 6, higherBetter: true },
+    ],
     createPlayer: async (email) => {
       calls.push(`player ${email}`);
       return email;
     },
-    startAttempt: async (userId, date) => {
+    startAttempt: async (userId, date, position) => {
       state.open[date] += 1;
-      return `${userId}/${date}/${++attempt}`;
+      return `${userId}/${date}/${position}/${++attempt}`;
     },
     recordResult: async (id, score, passed) => {
-      calls.push(`result ${id.split("/")[1]} ${score} ${passed}`);
+      const [, date, position] = id.split("/");
+      calls.push(`result ${date} game ${position} ${score} ${passed}`);
       return "recorded";
     },
     closeDay: async (date) => {
@@ -93,20 +98,19 @@ describe("runSimulation", () => {
       "close 2027-01-03",
     ]);
     expect(calls.filter((c) => c.startsWith("player"))).toEqual([1, 2, 3, 4].map((n) => `player seed-r-${n}@example.test`));
-    // Two of four pass each day, just over the target; the others just under.
-    expect(calls.filter((c) => c.startsWith("result 2027-01-02"))).toEqual([
-      "result 2027-01-02 11 true",
-      "result 2027-01-02 9 false",
-      "result 2027-01-02 11 true",
-      "result 2027-01-02 9 false",
-    ]);
+    // Two of four pass each day (two games won just past the target), the others fail it.
+    const passedDay = ["game 1 11 true", "game 2 3 true", "game 3 5 false"];
+    const failedDay = ["game 1 9 false", "game 2 5 false", "game 3 7 true"];
+    expect(calls.filter((c) => c.startsWith("result 2027-01-02"))).toEqual(
+      [...passedDay, ...failedDay, ...passedDay, ...failedDay].map((result) => `result 2027-01-02 ${result}`),
+    );
     // Every day's results come before its close.
-    expect(calls.indexOf("close 2027-01-02")).toBeGreaterThan(calls.lastIndexOf("result 2027-01-02 9 false"));
+    expect(calls.indexOf("close 2027-01-02")).toBeGreaterThan(calls.lastIndexOf("result 2027-01-02 game 3 7 true"));
     expect(log.mock.calls).toEqual([
       ["Closed 2 empty days before 2027-01-01 (broken)."],
-      ["2027-01-01 survived."],
-      ["2027-01-02 survived."],
-      ["2027-01-03 survived."],
+      ["2027-01-01 (Teetering Tower, Swift Sum, Echo Path) survived."],
+      ["2027-01-02 (Teetering Tower, Swift Sum, Echo Path) survived."],
+      ["2027-01-03 (Teetering Tower, Swift Sum, Echo Path) survived."],
       ["Simulated 3 days with 4 players. World streak: 30 (best 30)."],
     ]);
   });
@@ -131,7 +135,7 @@ describe("runSimulation", () => {
     const { deps } = fakeDeps({ open: {}, closed: [] });
     deps.recordResult = async () => "day-closed";
     await expect(runSimulation({ from: "2027-01-01", days: 1, players: 1, passRate: 1 }, "r", deps)).rejects.toThrow(
-      'The result for player 1 on 2027-01-01 answered "day-closed".',
+      'The result of game 1 on 2027-01-01 answered "day-closed".',
     );
   });
 });

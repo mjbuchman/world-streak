@@ -1,15 +1,27 @@
 // Cheat checks (T40): pure rules over one scored attempt and the player's recent ones. They
 // protect prize entries only. A flag never changes a pass, a fail or the meter: cheating to pass
 // only helps the streak, and sabotage must look the same as an honest fail (DESIGN.md).
-import { flashLadder, play, REVEAL_MS, type FlashLadderInputs, type FlashLadderParams } from "@/challenges/flash-count/flashLadder";
-import { timeBank, type TimeBankInputs, type TimeBankParams } from "@/challenges/inner-clock/timeBank";
+import type { EchoPathInputs } from "@/challenges/echo-path/engine";
+import { isFair, play as playFairSplit, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
+import { splitShare } from "@/challenges/fair-split/geometry";
+import { play, REVEAL_MS, type FlashLadderInputs, type FlashLadderParams } from "@/challenges/flash-count/flashLadder";
+import { roundErrorMs, type TimeBankInputs, type TimeBankParams } from "@/challenges/inner-clock/timeBank";
+import { challengeForGameDay, isChallengeType } from "@/challenges/registry";
 import { simulate, type StackingParams } from "@/challenges/stacking/engine";
 import {
+  ECHO_PATH_MIN_TAP_INTERVAL_MS,
+  ECHO_PATH_RHYTHM_MAX_SD_MS,
+  ECHO_PATH_RHYTHM_MIN_TAPS,
+  FAIR_SPLIT_MIN_CUT_MS,
+  FAIR_SPLIT_PRECISE_CUTS,
+  FAIR_SPLIT_PRECISE_POINTS,
   FLASH_COUNT_MIN_ANSWER_MS,
   STACKING_MIN_TAP_INTERVAL_MS,
   STACKING_PERFECT_RUN_ROWS,
   STACKING_RHYTHM_MAX_SD_MS,
   STACKING_RHYTHM_MIN_TAPS,
+  TIME_BANK_PRECISE_ERROR_MS,
+  TIME_BANK_PRECISE_ROUNDS,
   TIMING_LOAD_ALLOWANCE_MS,
   TIMING_MISMATCH_MS,
 } from "@/config/cheat";
@@ -20,8 +32,12 @@ export type FlagReason =
   | "stacking-robotic-rhythm"
   | "stacking-perfect-run"
   // "inner-clock-implausible" was retired with the single-round Second Sense (T140); older flags
-  // keep it as stored text. Time Bank's own check comes with T164.
+  // keep it as stored text. Time Bank's own check is "time-bank-implausible" (T164).
+  | "time-bank-implausible"
   | "flash-count-instant"
+  | "echo-path-robotic"
+  | "fair-split-implausible"
+  | "fair-split-instant"
   | "timing-mismatch";
 
 export type DetectArgs = {
@@ -67,16 +83,53 @@ function stackingFlags(params: StackingParams, taps: readonly number[]): FlagRea
   return flags;
 }
 
+/** Taps faster than a hand moves, or evenly spaced like a script. */
+function robotic(tapsMs: readonly number[], minIntervalMs: number, minTaps: number, maxSdMs: number): boolean {
+  const gaps = intervals(tapsMs);
+  return gaps.some((gap) => gap < minIntervalMs) || (tapsMs.length >= minTaps && standardDeviation(gaps) < maxSdMs);
+}
+
+/** Many Time Bank rounds of one run tapped almost exactly on target. */
+function timeBankImplausible(params: TimeBankParams, { tapsMs }: TimeBankInputs): boolean {
+  const precise = params.rounds
+    .slice(0, tapsMs.length)
+    .filter((round, i) => tapsMs[i] !== null && roundErrorMs(round, tapsMs[i]) < TIME_BANK_PRECISE_ERROR_MS);
+  return precise.length >= TIME_BANK_PRECISE_ROUNDS;
+}
+
+/**
+ * Each Fair Split cut the game judged: how far from half it was (in points), whether it counted
+ * and how long after its shape appeared. Cuts in the pause before a shape, or after the run
+ * ended, were never judged, so they are left out.
+ */
+function judgedCuts(params: FairSplitParams, { cuts }: FairSplitInputs) {
+  return cuts.flatMap((cut, i) => {
+    const before = playFairSplit(params, { cuts: cuts.slice(0, i), endMs: cut.atMs });
+    if (before.finished || cut.atMs < before.appearsAt) return [];
+    const share = splitShare(params.shapes[before.shape].polygon, { x: cut.ax, y: cut.ay }, { x: cut.bx, y: cut.by });
+    return [{ offPoints: Math.abs(share * 100 - 50), counted: isFair(share), afterMs: cut.atMs - before.appearsAt }];
+  });
+}
+
+function fairSplitFlags(params: FairSplitParams, inputs: FairSplitInputs): FlagReason[] {
+  const judged = judgedCuts(params, inputs);
+  const flags: FlagReason[] = [];
+  if (judged.filter((cut) => cut.offPoints <= FAIR_SPLIT_PRECISE_POINTS).length >= FAIR_SPLIT_PRECISE_CUTS) {
+    flags.push("fair-split-implausible");
+  }
+  if (judged.some((cut) => cut.counted && cut.afterMs < FAIR_SPLIT_MIN_CUT_MS)) flags.push("fair-split-instant");
+  return flags;
+}
+
 /**
  * The game's clock starts after loading and the how-to, which the server's clock includes; past
  * that allowance, a last input far behind the server's clock suggests inputs made up offline.
- * Null when the run has no timed last input to compare.
+ * Null for an unknown game, or a run with no timed input yet (the engines report 0).
  */
 function lastTimedInputMs(challengeType: string, inputs: unknown, params: unknown): number | null {
-  if (challengeType === "stacking") return (inputs as { tapsMs: number[] }).tapsMs.at(-1) ?? null;
-  if (challengeType === "inner-clock") return timeBank.lastInputMs(inputs as TimeBankInputs, params as TimeBankParams);
-  if (challengeType === "flash-count") return flashLadder.lastInputMs(inputs as FlashLadderInputs, params as FlashLadderParams);
-  return null;
+  if (!isChallengeType(challengeType)) return null;
+  const last = challengeForGameDay("", challengeType).lastInputMs(inputs, params);
+  return last > 0 ? last : null;
 }
 
 /**
@@ -96,14 +149,30 @@ function flashLadderAnswerGapsMs(params: FlashLadderParams, { answers }: FlashLa
   return gaps;
 }
 
-export function detectFlags(args: DetectArgs): FlagReason[] {
-  const flags: FlagReason[] = [];
-  if (args.challengeType === "stacking") {
-    flags.push(...stackingFlags(args.params as StackingParams, (args.inputs as { tapsMs: number[] }).tapsMs));
-  } else if (args.challengeType === "flash-count") {
-    const gaps = flashLadderAnswerGapsMs(args.params as FlashLadderParams, args.inputs as FlashLadderInputs);
-    if (gaps.some((gap) => gap < FLASH_COUNT_MIN_ANSWER_MS)) flags.push("flash-count-instant");
+/** The rules of the attempt's own game: one game's rule never looks at another's attempt. */
+function gameFlags({ challengeType, inputs, params }: DetectArgs): FlagReason[] {
+  switch (challengeType) {
+    case "stacking":
+      return stackingFlags(params as StackingParams, (inputs as { tapsMs: number[] }).tapsMs);
+    case "inner-clock":
+      return timeBankImplausible(params as TimeBankParams, inputs as TimeBankInputs) ? ["time-bank-implausible"] : [];
+    case "flash-count": {
+      const gaps = flashLadderAnswerGapsMs(params as FlashLadderParams, inputs as FlashLadderInputs);
+      return gaps.some((gap) => gap < FLASH_COUNT_MIN_ANSWER_MS) ? ["flash-count-instant"] : [];
+    }
+    case "echo-path": {
+      const tapsMs = (inputs as EchoPathInputs).taps.map((tap) => tap.atMs);
+      return robotic(tapsMs, ECHO_PATH_MIN_TAP_INTERVAL_MS, ECHO_PATH_RHYTHM_MIN_TAPS, ECHO_PATH_RHYTHM_MAX_SD_MS) ? ["echo-path-robotic"] : [];
+    }
+    case "fair-split":
+      return fairSplitFlags(params as FairSplitParams, inputs as FairSplitInputs);
+    default:
+      return [];
   }
+}
+
+export function detectFlags(args: DetectArgs): FlagReason[] {
+  const flags = gameFlags(args);
 
   const last = lastTimedInputMs(args.challengeType, args.inputs, args.params);
   if (last !== null && args.serverElapsedMs - TIMING_LOAD_ALLOWANCE_MS - last > TIMING_MISMATCH_MS) flags.push("timing-mismatch");

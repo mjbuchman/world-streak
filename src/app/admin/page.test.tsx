@@ -87,18 +87,19 @@ describe("/admin", () => {
     ]);
     render(await AdminPage());
     const tools = screen.getByRole("region", { name: "Local tools" });
-    const setChallenge = within(tools).getByRole("form", { name: "Set a day's challenge" });
-    const options = (name: string) =>
-      within(setChallenge).getByRole<HTMLSelectElement>("combobox", { name }).querySelectorAll("option");
-    expect([...options("Day")].map((option) => option.textContent)).toEqual(["Nov 12, 2026"]);
-    expect([...options("Challenge")].map((option) => [option.value, option.textContent])).toEqual([
+    const setLineup = within(tools).getByRole("form", { name: "Set a day's lineup" });
+    const select = (name: string) => within(setLineup).getByRole<HTMLSelectElement>("combobox", { name });
+    expect([...select("Day").querySelectorAll("option")].map((option) => option.textContent)).toEqual(["Nov 12, 2026"]);
+    expect([...select("Game 1").querySelectorAll("option")].map((option) => [option.value, option.textContent])).toEqual([
       ["stacking", "Teetering Tower"],
       ["inner-clock", "Second Sense"],
       ["flash-count", "Swift Sum"],
       ["echo-path", "Echo Path"],
       ["fair-split", "Fair Split"],
     ]);
-    for (const name of ["Clear my attempt today", "Reset day", "Restore the pool", "Seed players", "Close day", "Remove fake players"]) {
+    // Three different games to start with, so the form is valid as it stands.
+    expect(["Game 1", "Game 2", "Game 3"].map((name) => select(name).value)).toEqual(["stacking", "inner-clock", "flash-count"]);
+    for (const name of ["Set lineup", "Clear my day", "Reset day", "Restore the pool", "Seed players", "Close day", "Remove fake players"]) {
       expect(within(tools).getByRole("button", { name })).toBeTruthy();
     }
     const seed = within(tools).getByRole("form", { name: "Seed fake players" });

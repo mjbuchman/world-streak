@@ -10,7 +10,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
-import { check, nearMissScore, passingIndices, supabaseCloseDayDeps, supabaseSeedDeps } from "../src/lib/devData.ts";
+import {
+  check,
+  lineupNames,
+  passingIndices,
+  playDay,
+  supabaseCloseDayDeps,
+  supabaseSeedDeps,
+  type LineupGame,
+} from "../src/lib/devData.ts";
 import { addDays, isCalendarDate } from "./lib/dates.mts";
 import { assertLocalSupabaseUrl, createServiceClient } from "./lib/localSupabase.mts";
 
@@ -57,9 +65,9 @@ export type SimulateDeps = {
   /** The earliest closed game day on or after `date`, or null. */
   firstClosedFrom: (date: string) => Promise<string | null>;
   ensureGameDay: (date: string) => Promise<void>;
-  passTarget: (date: string) => Promise<number>;
+  lineup: (date: string) => Promise<LineupGame[]>;
   createPlayer: (email: string) => Promise<string>;
-  startAttempt: (userId: string, date: string) => Promise<string>;
+  startAttempt: (userId: string, date: string, position: number) => Promise<string>;
   /** record_attempt_result_unchecked; returns its status word. */
   recordResult: (attemptId: string, score: number, passed: boolean) => Promise<string>;
   /** close_game_day_unchecked; returns the outcome. */
@@ -101,14 +109,12 @@ export async function runSimulation(args: SimulateArgs, runId: string, deps: Sim
   for (let day = 0; day < args.days; day++) {
     const date = addDays(args.from, day);
     await deps.ensureGameDay(date);
-    const target = await deps.passTarget(date);
+    const lineup = await deps.lineup(date);
     for (const [i, userId] of players.entries()) {
-      const attemptId = await deps.startAttempt(userId, date);
-      const passed = passing.has(i);
-      const status = await deps.recordResult(attemptId, nearMissScore(target, passed), passed);
-      if (status !== "recorded") throw new Error(`The result for player ${i + 1} on ${date} answered "${status}".`);
+      await playDay(deps.startAttempt, deps.recordResult, userId, date, lineup, passing.has(i));
     }
-    deps.log(`${date} ${await deps.closeDay(date)}.`);
+    const names = lineupNames(lineup.map((game) => game.challenge));
+    deps.log(`${date} (${names}) ${await deps.closeDay(date)}.`);
   }
   const streak = await deps.worldStreak();
   deps.log(`Simulated ${args.days} days with ${args.players} players. World streak: ${streak.current} (best ${streak.best}).`);
@@ -137,7 +143,7 @@ export function supabaseSimulateDeps(db: SupabaseClient, log: (message: string) 
       return rows[0]?.game_date ?? null;
     },
     ensureGameDay: seed.ensureGameDay,
-    passTarget: seed.passTarget,
+    lineup: seed.lineup,
     createPlayer: seed.createPlayer,
     startAttempt: seed.startAttempt,
     async recordResult(attemptId, score, passed) {

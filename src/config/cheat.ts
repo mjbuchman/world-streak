@@ -19,6 +19,22 @@ export const STACKING_PERFECT_RUN_ROWS = 12;
 /** Swift Sum: an answer this soon after the dots cleared is faster than typing, when reported. */
 export const FLASH_COUNT_MIN_ANSWER_MS = 800;
 
+/** Second Sense: this many rounds of one run each tapped under this error (ms) look scripted (T164). */
+export const TIME_BANK_PRECISE_ROUNDS = 5;
+export const TIME_BANK_PRECISE_ERROR_MS = 10;
+
+/** Echo Path: two taps closer than this are faster than a person can move to the next tile (T164). */
+export const ECHO_PATH_MIN_TAP_INTERVAL_MS = 80;
+/** With at least this many taps, intervals this even (standard deviation, ms) look scripted. */
+export const ECHO_PATH_RHYTHM_MIN_TAPS = 10;
+export const ECHO_PATH_RHYTHM_MAX_SD_MS = 5;
+
+/** Fair Split: this many cuts of one run within this many points of 50% look computed (T164). */
+export const FAIR_SPLIT_PRECISE_CUTS = 6;
+export const FAIR_SPLIT_PRECISE_POINTS = 0.05;
+/** A counted cut this soon after its shape appeared is faster than a person can aim and drag. */
+export const FAIR_SPLIT_MIN_CUT_MS = 300;
+
 /**
  * Loading and reading before a run starts (15 s), and the 3-2-1 before its own clock starts
  * (T138), which the server's clock includes and the game's does not.
