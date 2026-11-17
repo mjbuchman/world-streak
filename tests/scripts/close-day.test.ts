@@ -16,13 +16,17 @@ describe("parseCloseDayArgs", () => {
 });
 
 describe("runCloseDay", () => {
-  it("closes the day and reports its outcome and the world streak", async () => {
+  it("closes the day and reports its lineup, outcome and the world streak", async () => {
     const deps: CloseDayDeps = {
       closeDay: vi.fn(async () => "survived"),
+      lineup: vi.fn(async () => ["stacking", "flash-count", "mystery-game"]),
       worldStreak: vi.fn(async () => ({ current: 3, best: 5 })),
     };
-    expect(await runCloseDay("2026-11-10", deps)).toBe("2026-11-10 survived. World streak: 3 (best 5).");
+    expect(await runCloseDay("2026-11-10", deps)).toBe(
+      "2026-11-10 (Teetering Tower, Swift Sum, mystery-game) survived. World streak: 3 (best 5).",
+    );
     expect(deps.closeDay).toHaveBeenCalledWith("2026-11-10");
+    expect(deps.lineup).toHaveBeenCalledWith("2026-11-10");
   });
 });
 
@@ -49,6 +53,16 @@ describe("supabaseCloseDayDeps", () => {
     expect(await deps.closeDay("2026-11-10")).toBe("broken");
     expect(await deps.worldStreak()).toEqual({ current: 0, best: 4 });
     expect(calls).toEqual([["close_game_day", { d: "2026-11-10" }], ["world_streak"]]);
+  });
+
+  it("reads the day's lineup through lineup_of, and none for a day without games", async () => {
+    const { deps, calls } = fakeClient([
+      { data: ["echo-path", "fair-split", "inner-clock"], error: null },
+      { data: null, error: null },
+    ]);
+    expect(await deps.lineup("2026-11-10")).toEqual(["echo-path", "fair-split", "inner-clock"]);
+    expect(await deps.lineup("2026-11-11")).toEqual([]);
+    expect(calls).toEqual([["lineup_of", { d: "2026-11-10" }], ["lineup_of", { d: "2026-11-11" }]]);
   });
 
   it("passes the database's refusal on, for example a day before its deadline", async () => {
@@ -94,6 +108,7 @@ describe("main", () => {
   it("closes the day on the local database and prints one result line", async () => {
     const { db, calls } = fakeClient([
       { data: "survived", error: null },
+      { data: ["stacking", "echo-path", "fair-split"], error: null },
       { data: { current: 1, best: 1, current_start_date: "2026-11-10" }, error: null },
     ]);
     const makeClient = vi.fn(() => db);
@@ -101,7 +116,7 @@ describe("main", () => {
     await main(local, args, makeClient, log);
     expect(makeClient).toHaveBeenCalledWith(local.NEXT_PUBLIC_SUPABASE_URL, "key");
     expect(calls[0]).toEqual(["close_game_day", { d: "2026-11-10" }]);
-    expect(log.mock.calls).toEqual([["2026-11-10 survived. World streak: 1 (best 1)."]]);
+    expect(log.mock.calls).toEqual([["2026-11-10 (Teetering Tower, Echo Path, Fair Split) survived. World streak: 1 (best 1)."]]);
   });
 
   it("exits non-zero with a one-line message when run against a real project", () => {

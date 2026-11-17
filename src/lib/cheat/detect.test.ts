@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { play as playFairSplit, type FairSplitCut, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
 import { REVEAL_MS } from "@/challenges/flash-count/flashLadder";
 import { ROUND_GAP_MS } from "@/challenges/inner-clock/timeBank";
 import { COLUMNS, columnAt, simulate, type StackingParams } from "@/challenges/stacking/engine";
 import { createRng } from "@/challenges/shared/prng";
-import { STACKING_RHYTHM_MAX_SD_MS } from "@/config/cheat";
+import { ECHO_PATH_RHYTHM_MAX_SD_MS, STACKING_RHYTHM_MAX_SD_MS } from "@/config/cheat";
 import { RUN_COUNTDOWN_MS } from "@/config/countdown";
 import { detectFlags, type DetectArgs } from "./detect";
 
@@ -81,14 +82,63 @@ const sum = (gapsMs = [2_000, 2_000], over: Partial<DetectArgs> = {}): DetectArg
   };
 };
 
+/** A Time Bank run of 3 s rounds, each tapped `errorsMs[i]` late (null: no tap). */
+const bank = (errorsMs: (number | null)[], over: Partial<DetectArgs> = {}): DetectArgs => {
+  const rounds = Array.from({ length: 8 }, () => ({ targetMs: 3_000, revealMs: 1_000, timeoutMs: 9_000 }));
+  const tapsMs = errorsMs.map((error) => (error === null ? null : 3_000 + error));
+  const lastMs = tapsMs.reduce<number>((sum, tap, i) => sum + (i > 0 ? ROUND_GAP_MS : 0) + (tap ?? 9_000), 0);
+  return clock(errorsMs.length, { inputs: { tapsMs }, params: { budgetMs: 3_000, rounds }, serverElapsedMs: lastMs + 4_000, ...over });
+};
+
+/** An Echo Path run tapped at these times (the tiles do not matter to its rule). */
+const echo = (tapsMs: number[], over: Partial<DetectArgs> = {}): DetectArgs => ({
+  challengeType: "echo-path",
+  inputs: { taps: tapsMs.map((atMs, i) => ({ tile: i % 9, atMs })) },
+  score: 3,
+  params: { cols: 3, rows: 3, startLength: 3, maxLength: 12, stepMs: 500, sequenceSeed: 1 },
+  serverElapsedMs: (tapsMs.at(-1) ?? 0) + 4_000,
+  history: [],
+  ...over,
+});
+
+const SQUARE = [
+  { x: 0, y: 0 },
+  { x: 100, y: 0 },
+  { x: 100, y: 100 },
+  { x: 0, y: 100 },
+];
+const squares: FairSplitParams = { shapes: Array.from({ length: 12 }, () => ({ polygon: SQUARE, limitMs: 5_000 })) };
+
+/**
+ * A Fair Split run on squares: vertical cuts at `xs` (50 is exactly half; each unit off is one
+ * point), each `afterMs[i]` (default 1.5 s) after its shape appeared.
+ */
+function split(xs: number[], afterMs: number[] = [], over: Partial<DetectArgs> = {}): DetectArgs {
+  const cuts: FairSplitCut[] = [];
+  xs.forEach((x, i) => {
+    const { appearsAt } = playFairSplit(squares, { cuts, endMs: cuts.at(-1)?.atMs ?? 0 });
+    cuts.push({ atMs: appearsAt + (afterMs[i] ?? 1_500), ax: x, ay: 0, bx: x, by: 100 });
+  });
+  const endMs = cuts.at(-1)?.atMs ?? 0;
+  return { challengeType: "fair-split", inputs: { cuts, endMs }, score: 3, params: squares, serverElapsedMs: endMs + 4_000, history: [], ...over };
+}
+
+/** Human-like cuts: 0.2 to 0.9 points off half, either side. */
+const HUMAN_XS = [50.4, 49.3, 50.8, 49.8, 50.2, 49.1, 50.6, 49.5];
+
 describe("detectFlags on honest-looking runs", () => {
   it.each([1, 2, 3, 4, 5])("flags nothing for human-like Tower taps (seed %i)", (seed) => {
     expect(detectFlags(tower(humanTaps(15, seed)))).toEqual([]);
   });
 
-  it("flags nothing for a good, ordinary Second Sense or Swift Sum run", () => {
-    expect(detectFlags(clock(1, { history: [{ challengeType: "inner-clock", score: 1 }] }))).toEqual([]);
+  it.each([1, 2, 3])("flags nothing for human-like Echo Path taps (seed %i)", (seed) => {
+    expect(detectFlags(echo(humanTaps(25, seed)))).toEqual([]);
+  });
+
+  it("flags nothing for a good, ordinary run of each other game", () => {
+    expect(detectFlags(bank([40, -120, 15, 230, -60, 90, -25, 150]))).toEqual([]);
     expect(detectFlags(sum())).toEqual([]);
+    expect(detectFlags(split(HUMAN_XS, [1_400, 900, 2_100, 1_200, 700, 1_800, 1_000, 2_500]))).toEqual([]);
   });
 });
 
@@ -151,10 +201,80 @@ describe("stacking-perfect-run", () => {
   });
 });
 
-describe("Second Sense (Time Bank)", () => {
-  it("has no rule of its own until T164: even perfect runs again and again are not flagged", () => {
-    const perfect = Array.from({ length: 5 }, () => ({ challengeType: "inner-clock", score: 1 }));
-    expect(detectFlags(clock(1, { history: perfect }))).toEqual([]);
+describe("time-bank-implausible", () => {
+  it("flags 5 rounds of one run tapped under 10 ms off, either side", () => {
+    expect(detectFlags(bank([9, -3, 120, 0, -9, 5]))).toEqual(["time-bank-implausible"]);
+  });
+
+  it("allows 4 such rounds, and 10 ms exactly", () => {
+    expect(detectFlags(bank([9, -3, 120, 0, -9, 150]))).toEqual([]);
+    expect(detectFlags(bank([10, -10, 10, -10, 10]))).toEqual([]);
+  });
+
+  it("does not count a round with no tap", () => {
+    expect(detectFlags(bank([2, 2, 2, 2, null]))).toEqual([]);
+  });
+
+  it("looks at this run only, not earlier ones", () => {
+    const perfect = Array.from({ length: 5 }, () => ({ challengeType: "inner-clock", score: 8 }));
+    expect(detectFlags(bank([40, -120, 15], { history: perfect }))).toEqual([]);
+  });
+});
+
+describe("echo-path-robotic", () => {
+  it("flags two taps closer than 80 ms, and allows exactly 80", () => {
+    const taps = humanTaps(6);
+    expect(detectFlags(echo([...taps, taps[5] + 79]))).toEqual(["echo-path-robotic"]);
+    expect(detectFlags(echo([...taps, taps[5] + 80]))).toEqual([]);
+  });
+
+  // An even number of intervals alternating 400 ± d has a standard deviation of exactly d.
+  const alternating = (count: number, d: number) => {
+    const taps = [1_000];
+    while (taps.length < count) taps.push(taps.at(-1)! + 400 + (taps.length % 2 === 0 ? d : -d));
+    return taps;
+  };
+
+  it("flags 10 or more taps whose intervals vary under 5 ms, and allows exactly 5", () => {
+    expect(detectFlags(echo(alternating(10, 0)))).toEqual(["echo-path-robotic"]);
+    expect(detectFlags(echo(alternating(11, ECHO_PATH_RHYTHM_MAX_SD_MS - 0.01)))).toEqual(["echo-path-robotic"]);
+    expect(detectFlags(echo(alternating(11, ECHO_PATH_RHYTHM_MAX_SD_MS)))).toEqual([]);
+  });
+
+  it("ignores 9 such taps", () => {
+    expect(detectFlags(echo(alternating(9, 0)))).toEqual([]);
+  });
+});
+
+describe("fair-split-implausible", () => {
+  it("flags 6 cuts of one run within 0.05 points of half", () => {
+    expect(detectFlags(split([50, 50.04, 49.96, 50.6, 50, 50.03, 49.97]))).toEqual(["fair-split-implausible"]);
+  });
+
+  it("allows 5 such cuts, and cuts 0.06 points off", () => {
+    expect(detectFlags(split([50, 50.04, 49.96, 50.6, 50, 50.03, 49.2]))).toEqual([]);
+    expect(detectFlags(split([50.06, 49.94, 50.06, 49.94, 50.06, 49.94]))).toEqual([]);
+  });
+
+  it("ignores cuts in the pause before a shape, which the game never judged", () => {
+    const run = split(HUMAN_XS.slice(0, 2));
+    const { cuts, endMs } = run.inputs as FairSplitInputs;
+    // Each exact cut lands 100 ms after the previous one, inside its 1.2 s pause.
+    const paused = cuts.flatMap((cut) => [cut, ...[1, 2, 3].map((k) => ({ ...cut, atMs: cut.atMs + k * 100, ax: 50, bx: 50 }))]);
+    expect(detectFlags({ ...run, inputs: { cuts: paused, endMs: Math.max(endMs, paused.at(-1)!.atMs) } })).toEqual([]);
+  });
+});
+
+describe("fair-split-instant", () => {
+  it("flags a counted cut under 300 ms after its shape appeared, and allows exactly 300", () => {
+    expect(detectFlags(split(HUMAN_XS.slice(0, 3), [1_500, 299, 1_500]))).toEqual(["fair-split-instant"]);
+    expect(detectFlags(split(HUMAN_XS.slice(0, 3), [1_500, 300, 1_500]))).toEqual([]);
+  });
+
+  it("ignores a quick cut that missed, and one after the run ended", () => {
+    expect(detectFlags(split([50.4, 60, 49.5], [1_500, 100, 1_500]))).toEqual([]);
+    // Three misses end the run; a fast fair cut after that was never judged.
+    expect(detectFlags(split([60, 60, 60, 50.4], [1_500, 1_500, 1_500, 100]))).toEqual([]);
   });
 });
 
@@ -239,8 +359,19 @@ describe("timing-mismatch", () => {
     expect(detectFlags(sum(undefined, { serverElapsedMs: lastMs + allowed + 1 }))).toEqual(["timing-mismatch"]);
   });
 
-  it("skips a run with no timed input: no Tower taps", () => {
+  it("times an Echo Path run at its last tap and a Fair Split run at its end", () => {
+    const taps = humanTaps(8);
+    expect(detectFlags(echo(taps, { serverElapsedMs: taps.at(-1)! + allowed }))).toEqual([]);
+    expect(detectFlags(echo(taps, { serverElapsedMs: taps.at(-1)! + allowed + 1 }))).toEqual(["timing-mismatch"]);
+    const run = split(HUMAN_XS.slice(0, 2));
+    const endMs = (run.inputs as FairSplitInputs).endMs;
+    expect(detectFlags({ ...run, serverElapsedMs: endMs + allowed })).toEqual([]);
+    expect(detectFlags({ ...run, serverElapsedMs: endMs + allowed + 1 })).toEqual(["timing-mismatch"]);
+  });
+
+  it("skips a run with no timed input: no Tower taps, no Echo Path taps", () => {
     expect(detectFlags(tower([], { serverElapsedMs: 60_000 }))).toEqual([]);
+    expect(detectFlags(echo([], { serverElapsedMs: 60_000 }))).toEqual([]);
   });
 });
 
@@ -253,6 +384,16 @@ describe("each challenge's rules stay with that challenge", () => {
 
   it("a Swift Sum attempt ignores Second Sense history", () => {
     expect(detectFlags(sum(undefined, { score: 0.001, history: nearPerfect }))).toEqual([]);
+  });
+
+  // Inputs that would trip a rule, read as another game's: Tower taps 100 ms apart are robotic for
+  // the Tower and Echo Path, but mean nothing to Second Sense, whose rounds count from their own start.
+  it("a rule never fires for another game's attempt", () => {
+    const fast = Array.from({ length: 12 }, (_, i) => 1_000 + i * 100);
+    expect(detectFlags(echo(fast))).toEqual(["echo-path-robotic"]);
+    expect(detectFlags(bank([0, 0, 0, 0, 0], { challengeType: "echo-path", inputs: { taps: [] } }))).toEqual([]);
+    expect(detectFlags({ ...split([50, 50, 50, 50, 50, 50]), challengeType: "flash-count", inputs: { answers: [] } })).toEqual([]);
+    expect(detectFlags({ ...echo(fast), challengeType: "fair-split", inputs: { cuts: [], endMs: 1_000 }, params: squares })).toEqual([]);
   });
 });
 

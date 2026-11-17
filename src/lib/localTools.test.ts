@@ -46,7 +46,7 @@ afterEach(() => vi.unstubAllEnvs());
 describe("every tool shows a failed step as a refusal (T120)", () => {
   const boom = { data: null, error: { message: "boom" } };
   it.each([
-    ["clear-my-attempt", {}, "Attempt lookup failed: boom"],
+    ["clear-my-day", {}, "Deleting your games failed: boom"],
     ["reset-day", { gameDate: "2026-11-12" }, "Game day lookup failed: boom"],
     ["restore-pool", {}, "Saving the pool failed: boom"],
   ])("%s", async (tool, fields, message) => {
@@ -102,7 +102,8 @@ describe("runLocalTool guards", () => {
 
   it.each([
     [{ tool: "drop-tables" }],
-    [{ tool: "set-challenge", gameDate: "2026-11-12", challenge: "chess" }],
+    [{ tool: "set-lineup", gameDate: "2026-11-12", game1: "chess", game2: "echo-path", game3: "fair-split" }],
+    [{ tool: "set-challenge", gameDate: "2026-11-12", challenge: "stacking" }],
     [{ tool: "reset-day", gameDate: "tomorrow" }],
   ])("refuses an unknown tool or bad input: %o", async (fields) => {
     const { db, calls } = fakeDb([]);
@@ -111,39 +112,66 @@ describe("runLocalTool guards", () => {
   });
 });
 
-describe("set-challenge", () => {
-  const setTo = (challenge: string) => form({ tool: "set-challenge", gameDate: "2026-11-13", challenge });
+describe("set-lineup", () => {
+  const setTo = (game1: string, game2 = "echo-path", game3 = "fair-split") =>
+    form({ tool: "set-lineup", gameDate: "2026-11-13", game1, game2, game3 });
+  const OPEN_DAY = ok({ closed_at: null, survival_threshold: "0.65" });
 
-  it("gives an unstarted open day the challenge and its pass target, marked edited", async () => {
-    const { db, calls } = fakeDb([ok(), OPEN, NOBODY, ok({ current: 4, best: 9 }), ok(15), ok()]);
-    expect(await runLocalTool(caller(), db, setTo("flash-count"), NOW, fakeData())).toEqual({ ok: true, message: "Nov 13, 2026 is now Swift Sum." });
+  it("gives an unstarted open day the three games with their pass targets, through the admin save", async () => {
+    const { db, calls } = fakeDb([ok(), OPEN_DAY, NOBODY, ok({ current: 4, best: 9 }), ok(15), ok("6"), ok(7), ok(true)]);
+    expect(await runLocalTool(caller(), db, setTo("flash-count"), NOW, fakeData())).toEqual({
+      ok: true,
+      message: "Nov 13, 2026 is now Swift Sum, Echo Path, Fair Split.",
+    });
     expect(calls[0]).toEqual([["rpc", "ensure_game_day", { d: "2026-11-13" }]]);
-    expect(calls[4]).toEqual([["rpc", "pass_target_for", { challenge: "flash-count", d: "2026-11-13", streak: 4 }]]);
-    expect(calls[5]).toEqual([
-      ["from", "game_days"],
-      ["update", { challenge_type: "flash-count", pass_target: 15, edited: true }],
-      ["eq", "game_date", "2026-11-13"],
-      ["is", "closed_at", null],
+    expect(calls.slice(4, 7)).toEqual([
+      [["rpc", "pass_target_for", { challenge: "flash-count", d: "2026-11-13", streak: 4 }]],
+      [["rpc", "pass_target_for", { challenge: "echo-path", d: "2026-11-13", streak: 4 }]],
+      [["rpc", "pass_target_for", { challenge: "fair-split", d: "2026-11-13", streak: 4 }]],
     ]);
+    // save_game_day keeps the day's threshold and marks it edited, so the lineup rule leaves it alone.
+    expect(calls[7]).toEqual([
+      ["rpc", "save_game_day", { d: "2026-11-13", games: ["flash-count", "echo-path", "fair-split"], targets: [15, 6, 7], threshold: 0.65 }],
+    ]);
+    expect(calls).toHaveLength(8);
   });
 
-  it("refuses a started day, so no attempt is left on another challenge", async () => {
-    const { db, calls } = fakeDb([ok(), OPEN, ok({ attempts: 2 })]);
+  it("refuses the same game twice before touching anything", async () => {
+    const { db, calls } = fakeDb([]);
+    expect(await runLocalTool(caller(), db, setTo("echo-path"), NOW, fakeData())).toEqual({
+      ok: false,
+      message: "Pick three different games.",
+    });
+    expect(calls).toEqual([]);
+  });
+
+  it("refuses a started day, so no game is left on another challenge", async () => {
+    const { db, calls } = fakeDb([ok(), OPEN_DAY, ok({ attempts: 2 })]);
     expect(await runLocalTool(caller(), db, setTo("stacking"), NOW, fakeData())).toEqual({
       ok: false,
-      message: "Nov 13, 2026 has started. Reset it first, then change its challenge.",
+      message: "Nov 13, 2026 has started. Reset it first, then change its lineup.",
     });
     expect(calls).toHaveLength(3);
   });
 
   it("refuses a closed day", async () => {
     const { db } = fakeDb([ok(), CLOSED, NOBODY]);
-    expect((await runLocalTool(caller(), db, setTo("stacking"), NOW, fakeData())).message).toBe("Nov 13, 2026 has closed, so its challenge can no longer change.");
+    expect((await runLocalTool(caller(), db, setTo("stacking"), NOW, fakeData())).message).toBe(
+      "Nov 13, 2026 has closed, so its lineup can no longer change.",
+    );
   });
 
   it("refuses a day that does not exist", async () => {
     const { db } = fakeDb([ok(), ok(null), ok(null)]);
     expect(await runLocalTool(caller(), db, setTo("stacking"), NOW, fakeData())).toEqual({ ok: false, message: "Unknown game day." });
+  });
+
+  it("says so when the save changed nothing (the day closed meanwhile)", async () => {
+    const { db } = fakeDb([ok(), OPEN_DAY, NOBODY, ok({ current: 0, best: 0 }), ok(10), ok(6), ok(7), ok(false)]);
+    expect(await runLocalTool(caller(), db, setTo("stacking"), NOW, fakeData())).toEqual({
+      ok: false,
+      message: "Nov 13, 2026 could not be saved; it may have closed.",
+    });
   });
 
   it("shows a database failure as a refusal, rather than claiming success", async () => {
@@ -155,37 +183,29 @@ describe("set-challenge", () => {
   });
 });
 
-describe("clear-my-attempt", () => {
-  const clear = form({ tool: "clear-my-attempt" });
-  const counters = ok({ attempts: 5, passes: 3, weighted_attempts: "4.5", weighted_passes: "2.5" });
+describe("clear-my-day", () => {
+  const clear = form({ tool: "clear-my-day" });
 
-  it("deletes the caller's attempt today and takes a pass back out of the counters", async () => {
-    const { db, calls } = fakeDb([ok({ id: "a-1", passed: true, counted_weight: "0.5" }), counters, ok(), ok()]);
-    expect(await runLocalTool(caller(), db, clear, NOW, fakeData())).toEqual({ ok: true, message: "Your attempt today is gone. You can play again." });
-    expect(calls[0]).toEqual([
-      ["from", "attempts"],
-      ["select", "id, passed, counted_weight"],
-      ["eq", "user_id", "user-1"],
-      ["eq", "game_date", "2026-11-12"],
-      ["maybeSingle"],
-    ]);
-    expect(calls[2]).toEqual([["from", "attempts"], ["delete"], ["eq", "id", "a-1"]]);
-    expect(calls[3]).toEqual([
-      ["from", "game_day_counters"],
-      ["update", { attempts: 4, passes: 2, weighted_attempts: 4, weighted_passes: 2 }],
-      ["eq", "game_date", "2026-11-12"],
+  it("deletes all the caller's games today (their day result goes with them) and recounts the day", async () => {
+    const { db, calls } = fakeDb([ok([{ id: "a-1" }, { id: "a-2" }, { id: "a-3" }]), ok()]);
+    expect(await runLocalTool(caller(), db, clear, NOW, fakeData())).toEqual({
+      ok: true,
+      message: "Your day is cleared (3 games). You can play it again.",
+    });
+    expect(calls).toEqual([
+      [["from", "attempts"], ["delete"], ["eq", "user_id", "user-1"], ["eq", "game_date", "2026-11-12"], ["select", "id"]],
+      [["rpc", "recount_game_day", { d: "2026-11-12" }]],
     ]);
   });
 
-  it("takes only the attempt back for a fail or an unfinished run", async () => {
-    const { db, calls } = fakeDb([ok({ id: "a-1", passed: null, counted_weight: 1 }), counters, ok(), ok()]);
-    await runLocalTool(caller(), db, clear, NOW, fakeData());
-    expect(calls[3][1]).toEqual(["update", { attempts: 4, passes: 3, weighted_attempts: 3.5, weighted_passes: 2.5 }]);
+  it("counts a single game in the singular", async () => {
+    const { db } = fakeDb([ok([{ id: "a-1" }]), ok()]);
+    expect((await runLocalTool(caller(), db, clear, NOW, fakeData())).message).toBe("Your day is cleared (1 game). You can play it again.");
   });
 
-  it("says so when there is nothing to clear", async () => {
-    const { db, calls } = fakeDb([ok(null)]);
-    expect(await runLocalTool(caller(), db, clear, NOW, fakeData())).toEqual({ ok: false, message: "You have no attempt today." });
+  it("says so when there is nothing to clear, without recounting", async () => {
+    const { db, calls } = fakeDb([ok([])]);
+    expect(await runLocalTool(caller(), db, clear, NOW, fakeData())).toEqual({ ok: false, message: "You have not played today." });
     expect(calls).toHaveLength(1);
   });
 
@@ -199,7 +219,7 @@ describe("clear-my-attempt", () => {
 describe("reset-day", () => {
   const reset = form({ tool: "reset-day", gameDate: "2026-11-12" });
 
-  it("deletes the day's attempts, zeroes its counters and puts it back on the lineup rule", async () => {
+  it("deletes the day's attempts (and day results), recounts it to zero and puts it back on the lineup rule", async () => {
     const { db, calls } = fakeDb([OPEN, ok({ attempts: 7 }), ok(), ok(), ok(), ok()]);
     expect(await runLocalTool(caller(), db, reset, NOW, fakeData())).toEqual({
       ok: true,
@@ -207,7 +227,7 @@ describe("reset-day", () => {
     });
     expect(calls.slice(2)).toEqual([
       [["from", "attempts"], ["delete"], ["eq", "game_date", "2026-11-12"]],
-      [["from", "game_day_counters"], ["update", { attempts: 0, passes: 0, weighted_attempts: 0, weighted_passes: 0 }], ["eq", "game_date", "2026-11-12"]],
+      [["rpc", "recount_game_day", { d: "2026-11-12" }]],
       [["from", "game_days"], ["update", { edited: false }], ["eq", "game_date", "2026-11-12"], ["is", "closed_at", null]],
       [["rpc", "ensure_game_day", { d: "2026-11-12" }]],
     ]);

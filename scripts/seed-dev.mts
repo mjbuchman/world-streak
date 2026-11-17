@@ -1,6 +1,7 @@
 /**
- * Creates a batch of fake players with submitted attempts on the LOCAL database, so the meter
- * has something to show: `npm run seed:dev -- --players 200 --pass-rate 0.7 [--date YYYY-MM-DD]`.
+ * Creates a batch of fake players who each play the day's whole lineup on the LOCAL database, so
+ * the meter has decided days to show: `npm run seed:dev -- --players 200 --pass-rate 0.7 [--date YYYY-MM-DD]`
+ * (the pass rate is the share of players who pass the day).
  * The admin page's local tools do the same (T117); the shared code is `src/lib/devData.ts`.
  *
  * It reads NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from .env.local (the npm script
@@ -9,11 +10,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
-import { passingIndices, runSeed, supabaseSeedDeps, type SeedArgs, type SeedDeps } from "../src/lib/devData.ts";
+import {
+  gameWins,
+  nearMissScore,
+  passingIndices,
+  runSeed,
+  supabaseSeedDeps,
+  type LineupGame,
+  type SeedArgs,
+  type SeedDeps,
+} from "../src/lib/devData.ts";
 import { isCalendarDate } from "./lib/dates.mts";
 import { assertLocalSupabaseUrl, createServiceClient } from "./lib/localSupabase.mts";
 
-export { passingIndices, runSeed, supabaseSeedDeps, type SeedArgs, type SeedDeps };
+export { gameWins, nearMissScore, passingIndices, runSeed, supabaseSeedDeps, type LineupGame, type SeedArgs, type SeedDeps };
 
 /** At most this many players per run, so a typo cannot create a million accounts. */
 const MAX_PLAYERS = 10_000;

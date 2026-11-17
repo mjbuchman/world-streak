@@ -32,9 +32,12 @@ const refuse = (message: string): ToolState => ({ ok: false, message });
 const done = (message: string): ToolState => ({ ok: true, message });
 
 const gameDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Unknown game day.");
+const game = z.enum(CHALLENGE_TYPES, "Unknown challenge.");
 const toolSchema = z.discriminatedUnion("tool", [
-  z.object({ tool: z.literal("set-challenge"), gameDate, challenge: z.enum(CHALLENGE_TYPES, "Unknown challenge.") }),
-  z.object({ tool: z.literal("clear-my-attempt") }),
+  z
+    .object({ tool: z.literal("set-lineup"), gameDate, game1: game, game2: game, game3: game })
+    .refine(({ game1, game2, game3 }) => new Set([game1, game2, game3]).size === 3, "Pick three different games."),
+  z.object({ tool: z.literal("clear-my-day") }),
   z.object({ tool: z.literal("reset-day"), gameDate }),
   z.object({ tool: z.literal("restore-pool") }),
   z.object({
@@ -51,88 +54,64 @@ const toolSchema = z.discriminatedUnion("tool", [
   z.object({ tool: z.literal("remove-fake-players") }),
 ]);
 
-/** A day's closed flag and whether anybody has started it; null if the day does not exist. */
-async function dayStatus(db: Db, date: string): Promise<{ closed: boolean; started: boolean } | null> {
+/** A day's closed flag, threshold and whether anybody has started it; null if the day does not exist. */
+async function dayStatus(db: Db, date: string): Promise<{ closed: boolean; started: boolean; threshold: unknown } | null> {
   const [day, counters] = await Promise.all([
-    db.from("game_days").select("closed_at").eq("game_date", date).maybeSingle(),
+    db.from("game_days").select("closed_at, survival_threshold").eq("game_date", date).maybeSingle(),
     db.from("game_day_counters").select("attempts").eq("game_date", date).maybeSingle(),
   ]);
   const dayRow = check("Game day lookup", day);
   const counterRow = check("Counters lookup", counters);
   if (!dayRow) return null;
   const attempts = counterRow ? dbInteger(counterRow.attempts, "attempts") : 0;
-  return { closed: dayRow.closed_at !== null, started: attempts > 0 };
+  return { closed: dayRow.closed_at !== null, started: attempts > 0, threshold: dayRow.survival_threshold };
 }
 
-/** Gives an open day nobody has started another challenge, with that challenge's pass target. */
-async function setChallenge(db: Db, date: string, challenge: ChallengeType): Promise<ToolState> {
-  const ensured = await db.rpc("ensure_game_day", { d: date });
-  check("Preparing the game day", ensured);
+/**
+ * Gives an open day nobody has started three games, each with its usual pass target, through the
+ * admin editor's own save (T161), which marks the day edited so the lineup rule leaves it alone.
+ */
+async function setLineup(db: Db, date: string, games: ChallengeType[]): Promise<ToolState> {
+  check("Preparing the game day", await db.rpc("ensure_game_day", { d: date }));
   const status = await dayStatus(db, date);
   if (!status) return refuse("Unknown game day.");
-  if (status.closed) return refuse(`${dayLabel(date)} has closed, so its challenge can no longer change.`);
-  if (status.started) return refuse(`${dayLabel(date)} has started. Reset it first, then change its challenge.`);
+  if (status.closed) return refuse(`${dayLabel(date)} has closed, so its lineup can no longer change.`);
+  if (status.started) return refuse(`${dayLabel(date)} has started. Reset it first, then change its lineup.`);
 
   const streak = await db.rpc("world_streak").single();
   check("World streak lookup", streak);
   const current = dbInteger(streak.data?.current, "current");
-  const target = await db.rpc("pass_target_for", { challenge, d: date, streak: current });
-  check("Pass target lookup", target);
-
-  // Edited, so the lineup rule leaves it alone.
-  const saved = await db
-    .from("game_days")
-    .update({ challenge_type: challenge, pass_target: dbNumber(target.data, "pass_target"), edited: true })
-    .eq("game_date", date)
-    .is("closed_at", null);
-  check("Saving the challenge", saved);
-  return done(`${dayLabel(date)} is now ${CHALLENGE_NAMES[challenge]}.`);
+  const targets = await Promise.all(
+    games.map(async (challenge) =>
+      dbNumber(check("Pass target lookup", await db.rpc("pass_target_for", { challenge, d: date, streak: current })), "pass_target"),
+    ),
+  );
+  const params = { d: date, games, targets, threshold: dbNumber(status.threshold, "survival_threshold") };
+  if (!check("Saving the lineup", await db.rpc("save_game_day", params))) {
+    return refuse(`${dayLabel(date)} could not be saved; it may have closed.`);
+  }
+  return done(`${dayLabel(date)} is now ${games.map((type) => CHALLENGE_NAMES[type]).join(", ")}.`);
 }
 
-/** Deletes the caller's own attempt today and takes it back out of the day's counters. */
-async function clearMyAttempt(caller: Caller, db: Db, now: Date): Promise<ToolState> {
+/**
+ * Deletes the caller's own games today. Their day result goes with them (a trigger), and the
+ * recount takes both out of the day's counters.
+ */
+async function clearMyDay(caller: Caller, db: Db, now: Date): Promise<ToolState> {
   const { data: auth, error: authError } = await caller.auth.getUser();
   if (authError || !auth.user) return refuse("Sign in again, then try once more.");
   const today = gameDateAt(now);
 
-  const found = await db
-    .from("attempts")
-    .select("id, passed, counted_weight")
-    .eq("user_id", auth.user.id)
-    .eq("game_date", today)
-    .maybeSingle();
-  const attempt = check("Attempt lookup", found);
-  if (!attempt) return refuse("You have no attempt today.");
-
-  const counters = await db
-    .from("game_day_counters")
-    .select("attempts, passes, weighted_attempts, weighted_passes")
-    .eq("game_date", today)
-    .single();
-  const row = check("Counters lookup", counters);
-  // Rows from before weights were stamped count as weight 0 (T17), so they take nothing back.
-  const weight = attempt.counted_weight === null ? 0 : dbNumber(attempt.counted_weight, "counted_weight");
-  const passed = attempt.passed === true;
-
-  const deleted = await db.from("attempts").delete().eq("id", attempt.id);
-  check("Deleting the attempt", deleted);
-  // Local only, one person at a time: this read-then-write cannot race another change.
-  const updated = await db
-    .from("game_day_counters")
-    .update({
-      attempts: Math.max(0, dbInteger(row.attempts, "attempts") - 1),
-      passes: Math.max(0, dbInteger(row.passes, "passes") - (passed ? 1 : 0)),
-      weighted_attempts: Math.max(0, dbNumber(row.weighted_attempts, "weighted_attempts") - weight),
-      weighted_passes: Math.max(0, dbNumber(row.weighted_passes, "weighted_passes") - (passed ? weight : 0)),
-    })
-    .eq("game_date", today);
-  check("Updating the counters", updated);
-  return done("Your attempt today is gone. You can play again.");
+  const deleted = await db.from("attempts").delete().eq("user_id", auth.user.id).eq("game_date", today).select("id");
+  const games = check("Deleting your games", deleted);
+  if (games.length === 0) return refuse("You have not played today.");
+  check("Recounting the day", await db.rpc("recount_game_day", { d: today }));
+  return done(`Your day is cleared (${games.length} ${games.length === 1 ? "game" : "games"}). You can play it again.`);
 }
 
 /**
- * Empties an open day: no attempts, zero counters, and back on the lineup rule. A closed day is
- * refused, because the world streak already counts its outcome.
+ * Empties an open day: no attempts or day results, recounted to zero, and back on the lineup
+ * rule. A closed day is refused, because the world streak already counts its outcome.
  */
 async function resetDay(db: Db, date: string): Promise<ToolState> {
   const status = await dayStatus(db, date);
@@ -141,11 +120,7 @@ async function resetDay(db: Db, date: string): Promise<ToolState> {
 
   const deleted = await db.from("attempts").delete().eq("game_date", date);
   check("Deleting the attempts", deleted);
-  const zeroed = await db
-    .from("game_day_counters")
-    .update({ attempts: 0, passes: 0, weighted_attempts: 0, weighted_passes: 0 })
-    .eq("game_date", date);
-  check("Clearing the counters", zeroed);
+  check("Recounting the day", await db.rpc("recount_game_day", { d: date }));
   const unedited = await db.from("game_days").update({ edited: false }).eq("game_date", date).is("closed_at", null);
   check("Clearing the edit", unedited);
   // Now untouched, so this sets the lineup rule's games and targets again.
@@ -181,10 +156,10 @@ export async function runLocalTool(caller: Caller, db: Db, form: FormData, now: 
 
 async function runTool(caller: Caller, db: Db, input: z.infer<typeof toolSchema>, now: Date, data: DevData): Promise<ToolState> {
   switch (input.tool) {
-    case "set-challenge":
-      return setChallenge(db, input.gameDate, input.challenge);
-    case "clear-my-attempt":
-      return clearMyAttempt(caller, db, now);
+    case "set-lineup":
+      return setLineup(db, input.gameDate, [input.game1, input.game2, input.game3]);
+    case "clear-my-day":
+      return clearMyDay(caller, db, now);
     case "reset-day":
       return resetDay(db, input.gameDate);
     case "restore-pool":

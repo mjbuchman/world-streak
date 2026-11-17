@@ -47,31 +47,39 @@ export function LocalTools({ days, challenges, yesterday, maxPlayers }: LocalToo
     <div className={styles.tools}>
       <p className={styles.note}>For play-testing on this computer only. They never run against a real project.</p>
 
-      <form action={formAction} className={styles.tool} aria-label="Set a day's challenge">
-        <input type="hidden" name="tool" value="set-challenge" />
-        <DaySelect id="challenge-day" days={days} />
-        <div className={formStyles.field}>
-          <label htmlFor="challenge-type" className={formStyles.label}>
-            Challenge
-          </label>
-          <select id="challenge-type" name="challenge" className={formStyles.input} defaultValue={challenges[0]?.type}>
-            {challenges.map((challenge) => (
-              <option key={challenge.type} value={challenge.type}>
-                {challenge.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      <form action={formAction} className={styles.tool} aria-label="Set a day's lineup">
+        <input type="hidden" name="tool" value="set-lineup" />
+        <DaySelect id="lineup-day" days={days} />
+        {[1, 2, 3].map((position) => (
+          <div key={position} className={formStyles.field}>
+            <label htmlFor={`lineup-game${position}`} className={formStyles.label}>
+              Game {position}
+            </label>
+            <select
+              id={`lineup-game${position}`}
+              name={`game${position}`}
+              className={formStyles.input}
+              defaultValue={challenges[position - 1]?.type}
+            >
+              {challenges.map((challenge) => (
+                <option key={challenge.type} value={challenge.type}>
+                  {challenge.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ))}
+        <p className={styles.what}>Each game gets its usual pass target. Only for a day nobody has started.</p>
         <Button type="submit" variant="secondary" loading={pending}>
-          Set challenge
+          Set lineup
         </Button>
       </form>
 
-      <form action={formAction} className={styles.tool} aria-label="Clear my attempt today">
-        <input type="hidden" name="tool" value="clear-my-attempt" />
-        <p className={styles.what}>Delete your own attempt today, so you can play again.</p>
+      <form action={formAction} className={styles.tool} aria-label="Clear my day">
+        <input type="hidden" name="tool" value="clear-my-day" />
+        <p className={styles.what}>Delete your own games and result today, so you can play the day again.</p>
         <Button type="submit" variant="secondary" loading={pending}>
-          Clear my attempt today
+          Clear my day
         </Button>
       </form>
 
