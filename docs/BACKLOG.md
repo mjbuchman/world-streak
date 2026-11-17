@@ -1175,7 +1175,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T156 /play runs the Daily Three
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T154, T155
 - Acceptance criteria:
   - [ ] `/play` shows today's three games in order with each one's status, and starts the next game with its how-to and "Practice first" link. After each game, a short interstitial shows "Game N of 3: won / lost" and the day so far ("1 win, 1 loss").
@@ -1186,7 +1186,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T157 The day's results page
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T156
 - Acceptance criteria:
   - [ ] Once the player's day is decided, `/play` (or `/play/results`, linked from it) shows the day's verdict, the three games in order with each one's score and pass target and won / lost / not played, the meter, and the share card. Reload shows the same page.

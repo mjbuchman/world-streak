@@ -91,10 +91,10 @@ test("an admin clears their own attempt today with the local tools, and can play
   const today = gameDateAt(new Date());
   try {
     await signInAsAdmin(page);
-    // An attempt today (new, or one the admin already has locally): /play then offers no second go.
+    // An attempt today (new, or ones the admin already has locally): /play then moves past game 1.
     expect([200, 409]).toContain((await page.request.post("/api/attempts/start")).status());
     await gotoReady(page, "/play");
-    await expect(page.getByRole("button", { name: "Start" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: /^Game 1 of 3: / })).toHaveCount(0);
 
     await gotoReady(page, "/admin");
     const tools = page.getByRole("region", { name: "Local tools" });
@@ -102,6 +102,7 @@ test("an admin clears their own attempt today with the local tools, and can play
     await expect(tools.getByRole("status")).toHaveText("Your attempt today is gone. You can play again.");
 
     await gotoReady(page, "/play");
+    await expect(page.getByRole("heading", { name: /^Game 1 of 3: / })).toBeVisible();
     await expect(page.getByRole("button", { name: "Start" })).toBeVisible();
   } finally {
     // If the tool failed, do not leave the shared admin with an attempt today.

@@ -30,7 +30,7 @@ test("a scored Swift Sum day: start, miss three counts, see the server's result"
     await signUpViaForm(page, { email });
     await expect(page).toHaveURL("/");
     await gotoReady(page, "/play");
-    await expect(page.getByRole("heading", { level: 1, name: "Swift Sum" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Game 1 of 3: Swift Sum" })).toBeVisible();
 
     await page.getByRole("button", { name: "Start" }).click();
     // 999 is wrong on every level: three misses on level 1 end the run.
@@ -42,7 +42,7 @@ test("a scored Swift Sum day: start, miss three counts, see the server's result"
     }
 
     // The server scored the answers against today's target, in levels.
-    await expect(page.getByRole("heading", { level: 2, name: "Not this time" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Game 1 of 3: lost" })).toBeVisible();
     await expect(page.getByText(/^You scored 0 levels\. Today's target was \d+(\.\d+)? levels?\.$/)).toBeVisible();
   } finally {
     // A started day's challenge is locked (T111): the account, and with it its attempt, goes first.

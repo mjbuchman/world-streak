@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
-import { DEFAULT_CHALLENGE, todaysAttempt, todaysChallenge, todaysDay } from "./today";
+import { DEFAULT_CHALLENGE, todaysChallenge, todaysDay } from "./today";
 
 type Result = { data: unknown; error: { message: string } | null };
 
@@ -90,6 +90,8 @@ describe("todaysDay", () => {
     expect(await todaysDay(db, userId, now)).toEqual({
       gameDate: "2026-11-08",
       games: games.map((game) => ({ ...game, status: "not-started" })),
+      wins: 0,
+      losses: 0,
       outcome: null,
       nextPosition: 1,
     });
@@ -112,6 +114,9 @@ describe("todaysDay", () => {
         { ...games[1], status: "in-progress" },
         { ...games[2], status: "not-started" },
       ],
+      // The day so far, as day_results counts it (a started game is a loss until it passes).
+      wins: 1,
+      losses: 1,
       outcome: null,
       nextPosition: 3,
     });
@@ -125,12 +130,19 @@ describe("todaysDay", () => {
     });
     const day = await todaysDay(db, userId, now);
     expect(day.games.map((game) => game.status)).toEqual(["lost", "lost", "won"]);
-    expect(day).toMatchObject({ outcome: "failed", nextPosition: null });
+    expect(day).toMatchObject({ wins: 1, losses: 2, outcome: "failed", nextPosition: null });
   });
 
   it("gives an empty lineup, with game 1 next, while nobody has started today (the day does not exist yet)", async () => {
     const { db } = fakeTables({ attempts: ok([]) });
-    expect(await todaysDay(db, userId, now)).toEqual({ gameDate: "2026-11-08", games: [], outcome: null, nextPosition: 1 });
+    expect(await todaysDay(db, userId, now)).toEqual({
+      gameDate: "2026-11-08",
+      games: [],
+      wins: 0,
+      losses: 0,
+      outcome: null,
+      nextPosition: 1,
+    });
   });
 
   it("looks up the game date at the deadline, not the calendar date", async () => {
@@ -148,33 +160,6 @@ describe("todaysDay", () => {
   });
 });
 
-describe("todaysAttempt (the one-game /play until T156)", () => {
-  const firstGame = (attempts: unknown[]) => fakeTables({ game_days: ok(lineup), attempts: ok(attempts) }).db;
-
-  it("is ready before game 1 starts, and before the day exists", async () => {
-    expect(await todaysAttempt(firstGame([]), userId, now)).toEqual({ kind: "ready" });
-    expect(await todaysAttempt(fakeTables({ attempts: ok([]) }).db, userId, now)).toEqual({ kind: "ready" });
-  });
-
-  it("gives game 1's stored result and its own target", async () => {
-    expect(await todaysAttempt(firstGame([attempt(1, 7, false), attempt(2, 9, true)]), userId, now)).toEqual({
-      kind: "submitted",
-      score: 7,
-      passed: false,
-      passTarget: 10,
-    });
-    expect(await todaysAttempt(firstGame([attempt(1, 12, true)]), userId, now)).toEqual({
-      kind: "submitted",
-      score: 12,
-      passed: true,
-      passTarget: 10,
-    });
-  });
-
-  it("is abandoned when game 1 was started but never submitted", async () => {
-    expect(await todaysAttempt(firstGame([attempt(1, null, null)]), userId, now)).toEqual({ kind: "abandoned" });
-  });
-});
 
 describe("todaysChallenge", () => {
   /** A client whose game day read answers `day` and whose rotation call answers `rotation`. */

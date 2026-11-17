@@ -30,6 +30,8 @@ type ChallengeUi<Params, Inputs> = {
   scoreLabel: (score: number) => string;
   /** The result's line under the verdict: the player's score against today's target. */
   summary: (score: number, passTarget: number) => string;
+  /** Today's target alone ("row 10", "5 levels"), for a game with no score on the results page. */
+  target: (passTarget: number) => string;
 };
 
 /** Time Bank: rounds survived plus the budget left as a fraction ("3.9 rounds"). */
@@ -45,6 +47,7 @@ const stacking: ChallengeUi<StackingParams, StackingInputs> = {
   ),
   scoreLabel: reachedRow,
   summary: (score, passTarget) => `${reachedRow(score)}. Today's target was ${targetRow(passTarget)}.`,
+  target: targetRow,
 };
 
 const innerClock: ChallengeUi<TimeBankParams, TimeBankInputs> = {
@@ -53,6 +56,7 @@ const innerClock: ChallengeUi<TimeBankParams, TimeBankInputs> = {
   play: ({ params, onFinish }) => <TimeBankGame params={params} onFinish={onFinish} />,
   scoreLabel: rounds,
   summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${rounds(passTarget)}.`,
+  target: rounds,
 };
 
 const flashCount: ChallengeUi<FlashLadderParams, FlashLadderInputs> = {
@@ -61,6 +65,7 @@ const flashCount: ChallengeUi<FlashLadderParams, FlashLadderInputs> = {
   play: ({ params, onFinish }) => <FlashLadderGame params={params} onFinish={onFinish} />,
   scoreLabel: levels,
   summary: (score, passTarget) => `You scored ${levels(score)}. Today's target was ${levels(passTarget)}.`,
+  target: levels,
 };
 
 /** Echo Path: the longest path repeated plus the lives left as a fraction ("5.667 steps"). */
@@ -72,6 +77,7 @@ const echoPath: ChallengeUi<EchoPathParams, EchoPathInputs> = {
   play: ({ params, onFinish }) => <EchoPathGame params={params} onFinish={onFinish} />,
   scoreLabel: steps,
   summary: (score, passTarget) => `You scored ${steps(score)}. Today's target was ${steps(passTarget)}.`,
+  target: steps,
 };
 
 /** Fair Split: shapes cut plus the lives left as a fraction ("6.333 shapes"). */
@@ -83,6 +89,7 @@ const fairSplit: ChallengeUi<FairSplitParams, FairSplitInputs> = {
   play: ({ params, onFinish }) => <FairSplitGame params={params} onFinish={onFinish} />,
   scoreLabel: shapes,
   summary: (score, passTarget) => `You scored ${shapes(score)}. Today's target was ${shapes(passTarget)}.`,
+  target: shapes,
 };
 
 const CHALLENGE_UI = {
