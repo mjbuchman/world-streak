@@ -34,7 +34,6 @@ export function meterBar(passRate: number, threshold: number): string {
   return fill.repeat(filled) + "⬜".repeat(BAR_SQUARES - filled);
 }
 
-
 /** How the world is doing, plus a call for help when it is near (or under) the line; none if unknown. */
 function worldLines(meter: MeterBody | null): string[] {
   if (!meter) return [];

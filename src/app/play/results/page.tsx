@@ -7,9 +7,9 @@ import { LinkButton } from "@/components/ui/LinkButton";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
 import { todaysDay } from "@/lib/attempts/today";
+import { isPerfectDay } from "@/lib/share";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { DayGames } from "../DayGames";
-import { isPerfectDay } from "@/lib/share";
 import { daySoFar, dayVerdict, shareGame } from "../outcomes";
 import styles from "../play.module.css";
 

@@ -95,9 +95,10 @@ export function statusLabel(status: GameStatus["status"]): string {
 }
 
 /** A game as the share text shows it: one started and left counts as lost, like its label. */
+const SHARE_GAMES: Record<GameStatus["status"], ShareGame> = { won: "won", lost: "lost", "in-progress": "lost", "not-started": "not-played" };
+
 export function shareGame(status: GameStatus["status"]): ShareGame {
-  const games: Record<GameStatus["status"], ShareGame> = { won: "won", lost: "lost", "in-progress": "lost", "not-started": "not-played" };
-  return games[status];
+  return SHARE_GAMES[status];
 }
 
 // The human-approved wording for a started, unsubmitted run (T74, T91), for one game of three:

@@ -41,10 +41,10 @@ async function homeGames(db: Db, userId: string | undefined, now: Date): Promise
 export default async function Home() {
   // Outside the try: reading the request cookies is how Next.js learns the page is dynamic.
   const db = await createSupabaseServerClient();
-  const { data } = await db.auth.getClaims();
   // A failed read shows the default game rather than an error page; /play reads it again.
   let games: HomeGame[] = [{ challengeType: DEFAULT_CHALLENGE, status: "to-play" }];
   try {
+    const { data } = await db.auth.getClaims();
     games = await homeGames(db, data?.claims.sub, new Date());
   } catch (error) {
     console.error(error);
