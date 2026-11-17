@@ -1248,7 +1248,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T163 Local tools and scripts for the Daily Three
 - Type: infra
-- Status: in-progress
+- Status: done
 - Depends on: T153, T161
 - Acceptance criteria:
   - [ ] `npm run seed:dev -- --players N --pass-rate R` gives each fake player a decided day (three games recorded so that R of them pass the day) and the completed-day counters update; `simulate:days` and `close-day` work with lineups and print the day's lineup with the outcome.
