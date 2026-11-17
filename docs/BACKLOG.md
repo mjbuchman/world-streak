@@ -1154,7 +1154,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T154 Start and submit for the Daily Three
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T153
 - Acceptance criteria:
   - [ ] `POST /api/attempts/start` starts the caller's next game in today's order and returns `{ attemptId, gameDate, position, challengeType, seed, params, passTarget }`. If the previous game was started but not submitted, it stays a loss and the next one starts. With all three games started it returns 409 `{ error: "day-complete" }`.
@@ -1165,7 +1165,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T155 The meter counts completed days
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T153
 - Acceptance criteria:
   - [ ] `/api/meter` serves `passRate = weighted_passed_days / weighted_completed_days` and a `completed` count in place of `attempts`; `isMeterBody`, its drift guard and `tests/e2e/meter.spec.ts` follow in the same PR (see T21's notes on the 30 s cache).
@@ -1175,7 +1175,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T156 /play runs the Daily Three
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T154, T155
 - Acceptance criteria:
   - [ ] `/play` shows today's three games in order with each one's status, and starts the next game with its how-to and "Practice first" link. After each game, a short interstitial shows "Game N of 3: won / lost" and the day so far ("1 win, 1 loss").
@@ -1186,7 +1186,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T157 The day's results page
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T156
 - Acceptance criteria:
   - [ ] Once the player's day is decided, `/play` (or `/play/results`, linked from it) shows the day's verdict, the three games in order with each one's score and pass target and won / lost / not played, the meter, and the share card. Reload shows the same page.

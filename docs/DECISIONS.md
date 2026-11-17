@@ -400,3 +400,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: the design's definitions (passed days ÷ completed days; two wins or two losses decide); the order rule needs no timestamps and gives the same answer.
 - How to change it later: `refresh_day_result` and `pass_target_for` in `supabase/migrations/20261117020000_daily_three_attempts.sql`.
 - Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
+### 2026-11-16 — /play and the results page (T156, T157)
+- Choice: the results page (`/play/results`) shows the verdict, each game's score and target (a game left unfinished as "Lost", one never started as "Not played"), the share card, the meter and then the ad slot; no percentiles, score distribution or history (the Open item has no recommendation). /play has no ad, meter or share card any more. Before the day's lineup exists (nobody has started yet and the nightly job has not run), /play names only game 1, with no list. Both pages read the day fresh on every load, so a day failed only by an open game shows as failed until that game is submitted.
+- Reason: the acceptance criteria; the lineup is created by the first start, so there is nothing else to list.
+- How to change it later: `src/app/play/results/page.tsx`, `src/app/play/PlayToday.tsx`, wording in `src/app/play/outcomes.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls, items 7 and 13)

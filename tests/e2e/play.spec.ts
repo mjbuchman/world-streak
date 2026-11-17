@@ -37,14 +37,18 @@ test("a run finished after the attempt was submitted elsewhere shows the stored 
   await skipCountdown(page);
   await playTaps(page, taps);
   await page.clock.runFor(FALL_MS + 50);
-  await expect(page.getByRole("heading", { name: "Not this time" })).toBeVisible();
-  await expect(page.locator("[data-big-score]")).toHaveText(String(simulate(instance.params, taps).score));
+  // The refreshed day lists game 1 as stored, with game 2 next.
+  const games = page.getByRole("list", { name: "Today's games" }).getByRole("listitem");
+  await expect(games.first()).toHaveText(/^Game 1: Teetering Tower(Won|Lost)$/);
+  await expect(page.getByRole("heading", { name: /^Game 2 of 3: / })).toBeVisible();
+  const { data: stored } = await adminClient().from("attempts").select("score").eq("id", instance.attemptId).single();
+  expect(stored?.score).toBe(simulate(instance.params, taps).score);
 });
 
 test("a signed-out visitor is asked to sign in, or to practice", async ({ page }) => {
   await gotoReady(page, "/play");
   const main = page.getByRole("main");
-  await expect(main.getByText("Sign in to play today's scored attempt.")).toBeVisible();
+  await expect(main.getByText("Sign in to play today's three games.")).toBeVisible();
   await expect(main.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/signin");
   await expect(main.getByRole("link", { name: "Practice" })).toHaveAttribute("href", "/practice/stacking");
   await expect(main.getByRole("button", { name: "Start" })).toHaveCount(0);
@@ -63,7 +67,7 @@ test("a signed-in player without a profile is sent to complete it", async ({ pag
   await expect(page).toHaveURL("/complete-profile");
 });
 
-test("a player plays today's attempt once and sees the server's result, also after a reload", async ({ page, accounts }) => {
+test("a player loses game 1 on purpose, sees the server's result, and after a reload is offered game 2", async ({ page, accounts }) => {
   const email = accounts.uniqueEmail();
   await signUpViaForm(page, { email });
   await expect(page).toHaveURL("/");
@@ -71,14 +75,10 @@ test("a player plays today's attempt once and sees the server's result, also aft
   // A paused clock drives the game, so the taps land at exactly known times however long the
   // start request takes (an installed clock otherwise keeps running in real time).
   await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
-  // A stand-in share sheet that keeps what it was given.
-  await page.addInitScript(() => {
-    navigator.share = async (data) => {
-      (window as unknown as { sharedText?: string }).sharedText = data?.text;
-    };
-  });
   await gotoReady(page, "/play");
-  await expect(page.getByText(/one scored attempt today/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Game 1 of 3: Teetering Tower" })).toBeVisible();
+  await expect(page.getByText(/Win two of the three games to pass the day/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Practice first" })).toHaveAttribute("href", "/practice/stacking");
   // A way back before the run, none during it (leaving mid-run would lose the attempt).
   const back = page.getByRole("main").getByRole("link", { name: "Back", exact: true });
   await expect(back).toHaveAttribute("href", "/");
@@ -107,7 +107,7 @@ test("a player plays today's attempt once and sees the server's result, also aft
   // The missed row falls away before the result appears.
   await page.clock.runFor(FALL_MS + 50);
 
-  const verdict = page.getByRole("heading", { name: "Not this time" });
+  const verdict = page.getByRole("heading", { name: "Game 1 of 3: lost" });
   await expect(verdict).toBeVisible();
   await expect(verdict).toBeFocused();
   const summary = page.getByText(`${reachedRow(score)}. Today's target was ${targetRow(passTarget)}.`);
@@ -124,29 +124,21 @@ test("a player plays today's attempt once and sees the server's result, also aft
   expect(verdictBox).not.toBeNull();
   expect(scoreBox?.y ?? Infinity).toBeLessThan(verdictBox?.y ?? -Infinity);
   await expect(page.getByRole("banner").getByRole("button", { name: "Sign out" })).toBeVisible();
-  // The share card (T32, T115): just the button; the text it shares has the outcome, never the
-  // score or the target.
-  const share = page.getByRole("region", { name: "Share your day" });
-  await expect(share).toHaveText("Share");
-  await share.getByRole("button", { name: "Share" }).click();
-  const sharedText = () => page.evaluate(() => (window as unknown as { sharedText?: string }).sharedText ?? "");
-  await expect.poll(sharedText).toContain("I didn't make it today.");
-  expect(await sharedText()).not.toMatch(/row|score|target/i);
+  await expect(page.getByText("The day so far: 0 wins, 1 loss.")).toBeVisible();
   // What was shown is what the server stored: the engine's score for exactly those taps.
   const { data: stored } = await adminClient().from("attempts").select("score, passed").eq("id", instance.attemptId).single();
   expect(stored).toEqual({ score, passed: false });
-  const shownVerdict = await verdict.textContent();
-  const shownSummary = await summary.textContent();
 
-  // The page shows the same stored result (verdict and numbers) after a reload, with no way to play again.
+  // After a reload the day resumes from the server: game 1 lost, game 2 offered.
   await page.reload();
-  await expect(page.getByRole("heading", { name: shownVerdict!, exact: true })).toBeVisible();
-  await expect(page.getByText(shownSummary!)).toBeVisible();
-  // The endpoint would now start game 2 (attempts.spec.ts); /play offers it from T156.
-  await expect(page.getByRole("button", { name: "Start" })).toHaveCount(0);
+  const games = page.getByRole("list", { name: "Today's games" }).getByRole("listitem");
+  await expect(games).toHaveCount(3);
+  await expect(games.first()).toHaveText("Game 1: Teetering TowerLost");
+  await expect(page.getByRole("heading", { name: /^Game 2 of 3: / })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start" })).toBeVisible();
 });
 
-test("a player who left an attempt unfinished cannot start again", async ({ page, accounts }) => {
+test("a game started and left counts as lost, with the next one offered", async ({ page, accounts }) => {
   const email = accounts.uniqueEmail();
   await signUpViaForm(page, { email });
   await expect(page).toHaveURL("/");
@@ -155,8 +147,61 @@ test("a player who left an attempt unfinished cannot start again", async ({ page
   await gotoReady(page, "/play");
   await expect(
     page.getByText(
-      "You started today's attempt but haven't finished it here. If it's still open in another tab, finish it there before the day ends. Otherwise it counts as not passed. Come back tomorrow.",
+      "You started game 1 but haven't finished it here. If it's still open in another tab, finish it there before the day ends. Otherwise it counts as lost.",
     ),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Start" })).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Today's games" }).getByRole("listitem").first()).toHaveText("Game 1: Teetering TowerLost");
+  await expect(page.getByRole("heading", { name: /^Game 2 of 3: / })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start" })).toBeVisible();
+});
+
+test("a decided day's results: the verdict, three rows and the share card, also after a reload",async ({ page, accounts }) => {
+  await signUpViaForm(page, { email: accounts.uniqueEmail() });
+  await expect(page).toHaveURL("/");
+  // Not decided yet: the results belong to /play.
+  await gotoReady(page, "/play/results");
+  await expect(page).toHaveURL("/play");
+  // A stand-in share sheet that keeps what it was given.
+  await page.addInitScript(() => {
+    navigator.share = async (data) => {
+      (window as unknown as { sharedText?: string }).sharedText = data?.text;
+    };
+  });
+
+  // Games 1 and 2 started and left: two losses decide the day.
+  for (let game = 1; game <= 2; game++) expect((await page.request.post("/api/attempts/start")).status()).toBe(200);
+  await gotoReady(page, "/play");
+  await expect(page.getByRole("heading", { name: "Not today: two losses" })).toBeVisible();
+  await expect(page.getByText(/won't change the result/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Play it anyway" })).toBeVisible();
+  await page.getByRole("link", { name: "See results" }).click();
+
+  await expect(page).toHaveURL("/play/results");
+  await expect(page.getByRole("heading", { name: "Not today: two losses" })).toBeVisible();
+  const rows = page.getByRole("list", { name: "Today's games" }).getByRole("listitem");
+  await expect(rows).toHaveCount(3);
+  await expect(rows.nth(0)).toContainText("Lost");
+  await expect(rows.nth(1)).toContainText("Lost");
+  await expect(rows.nth(2)).toContainText("Not played");
+  await expect(rows.nth(2)).toContainText("Today's target was");
+  // The share card (T32, T115): just the button; the text it shares has the outcome, never a
+  // score or a target.
+  const share = page.getByRole("region", { name: "Share your day" });
+  await expect(share).toHaveText("Share");
+  await share.getByRole("button", { name: "Share" }).click();
+  const sharedText = () => page.evaluate(() => (window as unknown as { sharedText?: string }).sharedText ?? "");
+  await expect.poll(sharedText).toContain("I didn't make it today.");
+  expect(await sharedText()).not.toMatch(/row|score|target/i);
+
+  // A reload shows the same page.
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Not today: two losses" })).toBeVisible();
+  await expect(rows).toHaveCount(3);
+});
+
+test("a signed-out visitor to the results is asked to sign in", async ({ page }) => {
+  await gotoReady(page, "/play/results");
+  const main = page.getByRole("main");
+  await expect(main.getByText("Sign in to see your results for today.")).toBeVisible();
+  await expect(main.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/signin");
 });

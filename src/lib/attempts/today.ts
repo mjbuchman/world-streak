@@ -25,7 +25,7 @@ function knownType(gameDate: string, type: unknown): ChallengeType {
  */
 export async function todaysChallenge(supabase: Db, now: Date): Promise<ChallengeType> {
   const gameDate = gameDateAt(now);
-  // The lineup's first game, until /play runs all three (T156).
+  // The lineup's first game: what the home page and a signed-out /play name.
   const { data, error } = await supabase
     .from("game_day_games")
     .select("challenge_type")
@@ -39,26 +39,15 @@ export async function todaysChallenge(supabase: Db, now: Date): Promise<Challeng
   return knownType(gameDate, rotation.data);
 }
 
-/** What `/play` shows a signed-in player for today's game date. */
-export type PlayStatus =
-  | { kind: "ready" }
-  | { kind: "submitted"; score: number; passed: boolean; passTarget: number }
-  /**
-   * Started but not submitted. It cannot be restarted. Runs have no time limit (T87), so it may
-   * still be finished in another tab before the deadline; otherwise it counts as not passed.
-   */
-  | { kind: "abandoned" };
-
 /** One game of today's lineup as the player stands with it. */
 export type GameStatus = LineupGame &
   ({ status: "not-started" | "in-progress" } | { status: "won" | "lost"; score: number });
 
 /** What `/play` shows a signed-in player for today: the lineup in order, and their day. */
-export type TodaysDay = {
+export type TodaysDay = DayResult & {
   gameDate: string;
   /** Empty while nobody has started today, so the day and its lineup do not exist yet. */
   games: GameStatus[];
-  outcome: DayResult["outcome"];
   /** The game a start would begin, or null once all of them have started. */
   nextPosition: number | null;
 };
@@ -82,20 +71,11 @@ export async function todaysDay(supabase: Db, userId: string, now: Date): Promis
     store.dayAttempts(userId, gameDate),
     store.dayResult(userId, gameDate),
   ]);
-  if (!day) return { gameDate, games: [], outcome: null, nextPosition: 1 };
+  if (!day) return { ...result, gameDate, games: [], nextPosition: 1 };
   return {
+    ...result,
     gameDate,
     games: day.games.map((game) => gameStatus(game, attempts.find((attempt) => attempt.position === game.position))),
-    outcome: result.outcome,
     nextPosition: nextPosition(day, attempts),
   };
-}
-
-/** Today's first game for the one-game `/play`, until it runs all three (T156). */
-export async function todaysAttempt(supabase: Db, userId: string, now: Date): Promise<PlayStatus> {
-  const first = (await todaysDay(supabase, userId, now)).games[0];
-  if (first?.status === "won" || first?.status === "lost") {
-    return { kind: "submitted", score: first.score, passed: first.status === "won", passTarget: first.passTarget };
-  }
-  return first?.status === "in-progress" ? { kind: "abandoned" } : { kind: "ready" };
 }

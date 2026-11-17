@@ -1,31 +1,33 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { AdSlot } from "@/components/AdSlot";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
-import { CHALLENGE_NAMES, practicePath } from "@/config/challenges";
-import { todaysAttempt, todaysChallenge } from "@/lib/attempts/today";
+import { practicePath } from "@/config/challenges";
+import { todaysChallenge, todaysDay } from "@/lib/attempts/today";
 import { landingPath } from "@/lib/profiles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PlayToday } from "./PlayToday";
 import styles from "./play.module.css";
 
-export const metadata: Metadata = { title: "Today's challenge" };
+const PLAY_TITLE = "Today's games";
+export const metadata: Metadata = { title: PLAY_TITLE };
 
-/** Today's scored attempt, of whichever challenge today is. Signed-out visitors are pointed to sign-in and practice. */
+/**
+ * Today's Daily Three, game by game (T156); the ad slot is on the results page (T157), never
+ * here. Signed-out visitors are pointed to sign-in and practice.
+ */
 export default async function PlayPage() {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims.sub;
   const challenge = await todaysChallenge(supabase, new Date());
-  const title = CHALLENGE_NAMES[challenge];
 
   if (!userId) {
     return (
-      <PageShell title={title} backHref="/">
+      <PageShell title={PLAY_TITLE} backHref="/">
         <Surface>
-          <p>Sign in to play today&apos;s scored attempt.</p>
+          <p>Sign in to play today&apos;s three games.</p>
           <div className={styles.actions}>
             <LinkButton href="/signin">Sign in</LinkButton>
             <LinkButton href={practicePath(challenge)} variant="secondary">
@@ -37,14 +39,14 @@ export default async function PlayPage() {
     );
   }
 
-  // A scored attempt needs eligibility details (the start endpoint refuses without them too).
+  // A scored game needs eligibility details (the start endpoint refuses without them too).
   if ((await landingPath(supabase, userId)) === "/complete-profile") redirect("/complete-profile");
-  const status = await todaysAttempt(supabase, userId, new Date());
+  const day = await todaysDay(supabase, userId, new Date());
 
   return (
-    <PageShell title={title} backHref="/">
-      {/* Not keyed: PlayToday follows a refreshed status itself, and never mid-run (T69). */}
-      <PlayToday challenge={challenge} initial={status} afterResult={<AdSlot name="play-result" />} />
+    <PageShell title={PLAY_TITLE} backHref="/">
+      {/* Not keyed: PlayToday follows a refreshed day itself, and never mid-run (T69). */}
+      <PlayToday firstGame={challenge} initial={day} />
     </PageShell>
   );
 }

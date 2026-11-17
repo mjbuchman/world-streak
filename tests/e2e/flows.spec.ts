@@ -38,7 +38,7 @@ test("today: 10 fake players, then a new player loses two games, and the meter c
   await skipCountdown(page);
   await playTaps(page, tapsForAMiss(instance.params));
   await page.clock.runFor(FALL_MS + 50);
-  await expect(page.getByRole("heading", { level: 2, name: /^(Passed|Not this time)$/ })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: /^Game 1 of 3: (won|lost)$/ })).toBeVisible();
   // Game 1 was a deliberate miss; game 2 started and left is the second loss that decides the day.
   expect((await page.request.post("/api/attempts/start")).status()).toBe(200);
 
