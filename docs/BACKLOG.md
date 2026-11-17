@@ -1248,7 +1248,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T163 Local tools and scripts for the Daily Three
 - Type: infra
-- Status: in-progress
+- Status: done
 - Depends on: T153, T161
 - Acceptance criteria:
   - [ ] `npm run seed:dev -- --players N --pass-rate R` gives each fake player a decided day (three games recorded so that R of them pass the day) and the completed-day counters update; `simulate:days` and `close-day` work with lineups and print the day's lineup with the outcome.
@@ -1258,7 +1258,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T164 Cheat checks for the multi-round games
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T140, T142, T145, T149, T154
 - Acceptance criteria:
   - [ ] `detectFlags` gains rules with thresholds in `src/config/cheat.ts`: `time-bank-implausible` (errors under 10 ms on 5 or more rounds of one run), `echo-path-robotic` (10 or more taps with an interval standard deviation under 5 ms, or any tap under 80 ms after the previous one), `fair-split-implausible` (6 or more cuts within 0.05 points of 50% in one run) and `fair-split-instant` (a counted cut under 300 ms after its shape appeared); `timing-mismatch` covers every game with the countdown allowance (T138).
@@ -1268,7 +1268,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T165 End-to-end coverage of the Daily Three
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T157, T160, T163
 - Acceptance criteria:
   - [ ] e2e "win two of three": with today's lineup and targets set by SQL fixture so wins and losses can be forced, a new user wins two games, sees the day passed after game 2, plays the remaining game, and the results page and share text are unchanged by it; `/api/meter` shows 1 player finished.
@@ -1279,7 +1279,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T166 Mobile checks for the new games
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T145, T149, T156
 - Acceptance criteria:
   - [ ] On both mobile projects (T47): `/practice/echo-path`, `/practice/fair-split` and the `/play` interstitials and results page have no horizontal scroll; each canvas fits the viewport; Echo Path tiles and every button are at least 44 x 44 CSS px.

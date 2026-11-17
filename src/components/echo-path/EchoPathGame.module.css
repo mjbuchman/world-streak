@@ -47,8 +47,8 @@
   display: block;
   width: 100%;
   aspect-ratio: 1;
-  /* No double-tap zoom on a phone (T47). */
-  touch-action: manipulation;
+  /* Quick taps on a phone never zoom the page, by double tap or pinch (T166). */
+  touch-action: none;
   border-radius: var(--fs-radius-surface);
   cursor: pointer;
 }

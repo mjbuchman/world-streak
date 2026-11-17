@@ -27,8 +27,16 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
       testMatch: "mobile/**/*.spec.ts",
     },
-    // Tests that change today's game day for everyone (its challenge): only after the rest.
-    { name: "after", use: { ...devices["Desktop Chrome"] }, testMatch: "after/**/*.spec.ts", dependencies: ["chromium"] },
+    // Tests that change today's game day for everyone (its lineup): only after the rest, phones
+    // included, since an attempt on today locks the lineup and targets these tests set. One file at
+    // a time: removing the fake players recounts today, which would skew another file's meter check.
+    {
+      name: "after",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: "after/**/*.spec.ts",
+      dependencies: ["chromium", "pixel-7", "phone-390"],
+      workers: 1,
+    },
   ],
   webServer: {
     // CI tests the production build; locally the dev server is faster to start and reuse.
