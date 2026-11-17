@@ -25,5 +25,12 @@
   { "column": "new_account_weight", "value": 1, "accepted": true },
   { "column": "new_account_weight", "value": 1.01, "accepted": false },
   { "column": "full_weight_after_days", "value": 0, "accepted": true },
-  { "column": "full_weight_after_days", "value": -1, "accepted": false }
+  { "column": "full_weight_after_days", "value": -1, "accepted": false },
+  { "column": "pool", "value": ["stacking", "inner-clock", "flash-count"], "accepted": true },
+  { "column": "pool", "value": ["stacking", "inner-clock"], "accepted": false },
+  { "column": "pool", "value": ["stacking", "stacking", "inner-clock"], "accepted": false },
+  { "column": "pool", "value": ["stacking", "inner-clock", "chess"], "accepted": false },
+  { "column": "default_pass_targets", "value": { "stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 6, "fair-split": 5 }, "accepted": true },
+  { "column": "default_pass_targets", "value": { "inner-clock": 4 }, "accepted": false },
+  { "column": "default_pass_targets", "value": { "stacking": 10, "fair-split": -1 }, "accepted": false }
 ]

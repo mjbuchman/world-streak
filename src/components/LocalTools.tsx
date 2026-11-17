@@ -78,17 +78,17 @@ export function LocalTools({ days, challenges, yesterday, maxPlayers }: LocalToo
       <form action={formAction} className={styles.tool} aria-label="Reset a day">
         <input type="hidden" name="tool" value="reset-day" />
         <DaySelect id="reset-day" days={days} />
-        <p className={styles.what}>Delete everyone&apos;s attempts that day and put it back on the rotation.</p>
+        <p className={styles.what}>Delete everyone&apos;s attempts that day and put it back on the lineup rule.</p>
         <Button type="submit" variant="secondary" loading={pending}>
           Reset day
         </Button>
       </form>
 
-      <form action={formAction} className={styles.tool} aria-label="Restore the rotation">
-        <input type="hidden" name="tool" value="restore-rotation" />
-        <p className={styles.what}>Put the daily rotation back to every challenge in turn (the end-to-end tests pin it while they run).</p>
+      <form action={formAction} className={styles.tool} aria-label="Restore the pool">
+        <input type="hidden" name="tool" value="restore-pool" />
+        <p className={styles.what}>Put the daily pool back to every game.</p>
         <Button type="submit" variant="secondary" loading={pending}>
-          Restore the rotation
+          Restore the pool
         </Button>
       </form>
 

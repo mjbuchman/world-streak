@@ -94,7 +94,11 @@ export function supabaseSeedDeps(db: SupabaseClient, log: (message: string) => v
       check("ensure_game_day", await db.rpc("ensure_game_day", { d: date }));
     },
     async passTarget(date) {
-      const row = check("Game day lookup", await db.from("game_days").select("pass_target").eq("game_date", date).single());
+      // Game 1's: the seeded attempts are first games (the admin edits the lineup, not game_days, since T161).
+      const row = check(
+        "Game day lookup",
+        await db.from("game_day_games").select("pass_target").eq("game_date", date).eq("position", 1).single(),
+      );
       // Strict, like the app: a malformed target would otherwise seed NaN scores.
       return dbNumber((row as { pass_target: unknown }).pass_target, "pass_target");
     },

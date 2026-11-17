@@ -20,9 +20,9 @@ select is(
   '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 6}'::jsonb,
   'the other challenges keep their placeholders'
 );
-select is(
-  (select rotation from public.game_settings), '{stacking,inner-clock,flash-count}'::text[],
-  'it is not in the daily rotation yet (T150)'
+select ok(
+  (select 'fair-split' = any(pool) from public.game_settings),
+  'it is in the daily pool (T150)'
 );
 
 update public.game_settings set percentile_min_sample = 2147483647, pass_target_streak_step = 0;

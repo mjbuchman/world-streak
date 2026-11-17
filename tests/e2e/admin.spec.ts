@@ -57,32 +57,35 @@ test("an admin changes tomorrow's survival threshold to 55%, and it stays saved"
   }
 });
 
-test("an admin gives a coming day another challenge, and it takes that challenge's target", async ({ page }) => {
+test("an admin swaps the first two games of a coming day, and the new order stays saved", async ({ page }) => {
   // The last day listed, so no other test plays it.
   const day = addDays(gameDateAt(new Date()), 7);
+  const label = dayLabel(day);
   const db = adminClient();
-  const before = await db.from("game_days").select("challenge_type, pass_target, edited").eq("game_date", day).maybeSingle();
-  if (before.error) throw before.error;
   try {
     await signInAsAdmin(page);
     await gotoReady(page, "/admin");
-    const select = page.getByRole("combobox", { name: `Challenge for ${dayLabel(day)}` });
-    const other = (await select.inputValue()) === "flash-count" ? "inner-clock" : "flash-count";
-    await select.selectOption(other);
-    const row = page.getByRole("row").filter({ has: select });
+    const game = (n: number) => page.getByRole("combobox", { name: `Game ${n} for ${label}` });
+    const [first, second] = [await game(1).inputValue(), await game(2).inputValue()];
+    await game(1).selectOption(second);
+    await game(2).selectOption(first);
+    const row = page.getByRole("row").filter({ has: game(1) });
     await submitAndWait(page, row.getByRole("button", { name: "Save" }));
-    await expect(row.getByRole("status")).toContainText(`Saved ${dayLabel(day)}. It is now`);
+    await expect(row.getByRole("status")).toContainText(`Saved ${label}. Its games are now`);
 
-    const after = await db.from("game_days").select("challenge_type, pass_target, edited").eq("game_date", day).single();
+    const after = await db.from("game_day_games").select("position, challenge_type").eq("game_date", day).order("position");
     if (after.error) throw after.error;
-    expect(after.data).toMatchObject({ challenge_type: other, edited: true });
-    await expect(page.getByRole("spinbutton", { name: `Pass target for ${dayLabel(day)}` })).toHaveValue(String(after.data.pass_target));
+    expect(after.data.slice(0, 2)).toEqual([
+      { position: 1, challenge_type: second },
+      { position: 2, challenge_type: first },
+    ]);
+    await page.reload();
+    await expect(game(1)).toHaveValue(second);
+    await expect(game(2)).toHaveValue(first);
   } finally {
-    if (before.data) {
-      await db.from("game_days").update(before.data).eq("game_date", day);
-    } else {
-      await db.from("game_days").update({ edited: false }).eq("game_date", day);
-    }
+    // Back on the lineup rule: no longer edited, so preparing the day rebuilds its lineup.
+    await db.from("game_days").update({ edited: false }).eq("game_date", day);
+    await db.rpc("ensure_game_day", { d: day });
   }
 });
 
@@ -237,7 +240,7 @@ test("an admin opens the settings from /admin and saves them as they are", async
   await gotoReady(page, "/admin");
   await page.getByRole("link", { name: "Game settings" }).click();
   await expect(page).toHaveURL("/admin/settings");
-  await expect(page.getByRole("textbox", { name: "Rotation" })).not.toHaveValue("");
+  await expect(page.getByRole("textbox", { name: "Pool" })).not.toHaveValue("");
   // Saving the values unchanged leaves the shared local settings as other tests expect them.
   await submitAndWait(page, page.getByRole("button", { name: "Save settings" }));
   await expect(page.getByRole("status")).toHaveText("Settings saved.");

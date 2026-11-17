@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { CHALLENGE_TYPES, type ChallengeType } from "@/challenges/shared/types";
 import { numericSchema } from "@/lib/db/numeric";
 
 /** Game-wide settings from the single `game_settings` row (see its migration for meanings). */
@@ -14,6 +15,8 @@ export type GameSettings = {
   defaultPassTargets: Record<string, number>;
   newAccountWeight: number;
   fullWeightAfterDays: number;
+  /** The games a day's lineup is drawn from (T150). */
+  pool: ChallengeType[];
 };
 
 // Numeric columns take numbers or decimal strings (see numericSchema); integer columns always
@@ -34,6 +37,11 @@ const rowSchema = z.object({
     .refine((targets) => "stacking" in targets, "must include stacking"),
   new_account_weight: fraction,
   full_weight_after_days: z.number().int().min(0),
+  // The table checks the size; its trigger refuses unknown and repeated games (T150).
+  pool: z
+    .array(z.enum(CHALLENGE_TYPES))
+    .min(3)
+    .refine((pool) => new Set(pool).size === pool.length, "names a game more than once"),
 });
 
 const SETTINGS_COLUMNS = Object.keys(rowSchema.shape).join(", ");
@@ -53,6 +61,7 @@ export function parseGameSettings(row: unknown): GameSettings {
     defaultPassTargets: r.default_pass_targets,
     newAccountWeight: r.new_account_weight,
     fullWeightAfterDays: r.full_weight_after_days,
+    pool: r.pool,
   };
 }
 

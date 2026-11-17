@@ -20,8 +20,8 @@ type Caller = Pick<SupabaseClient<Database>, "rpc" | "auth">;
 /** Each fake player takes a moment to create, so one press seeds at most this many (T117). */
 export const MAX_SEED_PLAYERS = 500;
 
-/** The rotation a fresh database starts with (the migration's default); Echo Path and Fair Split join the daily lineup with T150. */
-export const DEFAULT_ROTATION: readonly ChallengeType[] = ["stacking", "inner-clock", "flash-count"];
+/** The pool a fresh database starts with (the migration's default, T150): every game. */
+export const DEFAULT_POOL: readonly ChallengeType[] = CHALLENGE_TYPES;
 
 /** Whether the tools may run: only when the app talks to the local Supabase (as the scripts). */
 export function localToolsEnabled(url = process.env.NEXT_PUBLIC_SUPABASE_URL): boolean {
@@ -36,7 +36,7 @@ const toolSchema = z.discriminatedUnion("tool", [
   z.object({ tool: z.literal("set-challenge"), gameDate, challenge: z.enum(CHALLENGE_TYPES, "Unknown challenge.") }),
   z.object({ tool: z.literal("clear-my-attempt") }),
   z.object({ tool: z.literal("reset-day"), gameDate }),
-  z.object({ tool: z.literal("restore-rotation") }),
+  z.object({ tool: z.literal("restore-pool") }),
   z.object({
     tool: z.literal("seed"),
     gameDate,
@@ -79,7 +79,7 @@ async function setChallenge(db: Db, date: string, challenge: ChallengeType): Pro
   const target = await db.rpc("pass_target_for", { challenge, d: date, streak: current });
   check("Pass target lookup", target);
 
-  // Edited, so the rotation leaves it alone.
+  // Edited, so the lineup rule leaves it alone.
   const saved = await db
     .from("game_days")
     .update({ challenge_type: challenge, pass_target: dbNumber(target.data, "pass_target"), edited: true })
@@ -131,7 +131,7 @@ async function clearMyAttempt(caller: Caller, db: Db, now: Date): Promise<ToolSt
 }
 
 /**
- * Empties an open day: no attempts, zero counters, and back on the rotation. A closed day is
+ * Empties an open day: no attempts, zero counters, and back on the lineup rule. A closed day is
  * refused, because the world streak already counts its outcome.
  */
 async function resetDay(db: Db, date: string): Promise<ToolState> {
@@ -148,16 +148,16 @@ async function resetDay(db: Db, date: string): Promise<ToolState> {
   check("Clearing the counters", zeroed);
   const unedited = await db.from("game_days").update({ edited: false }).eq("game_date", date).is("closed_at", null);
   check("Clearing the edit", unedited);
-  // Now untouched, so this sets the rotation's challenge and target again.
+  // Now untouched, so this sets the lineup rule's games and targets again.
   const ensured = await db.rpc("ensure_game_day", { d: date });
   check("Preparing the game day", ensured);
-  return done(`${dayLabel(date)} is reset: no attempts, and it follows the rotation again.`);
+  return done(`${dayLabel(date)} is reset: no attempts, and it follows the lineup rule again.`);
 }
 
-async function restoreRotation(db: Db): Promise<ToolState> {
-  const saved = await db.from("game_settings").update({ rotation: [...DEFAULT_ROTATION] }).eq("id", true);
-  check("Saving the rotation", saved);
-  return done(`The rotation is back to ${DEFAULT_ROTATION.map((type) => CHALLENGE_NAMES[type]).join(", ")}.`);
+async function restorePool(db: Db): Promise<ToolState> {
+  const saved = await db.from("game_settings").update({ pool: [...DEFAULT_POOL] }).eq("id", true);
+  check("Saving the pool", saved);
+  return done(`The pool is back to ${DEFAULT_POOL.map((type) => CHALLENGE_NAMES[type]).join(", ")}.`);
 }
 
 /**
@@ -187,8 +187,8 @@ async function runTool(caller: Caller, db: Db, input: z.infer<typeof toolSchema>
       return clearMyAttempt(caller, db, now);
     case "reset-day":
       return resetDay(db, input.gameDate);
-    case "restore-rotation":
-      return restoreRotation(db);
+    case "restore-pool":
+      return restorePool(db);
     case "seed":
       return seedPlayers(input.gameDate, input.players, input.passPercent / 100, data);
     case "close-day":

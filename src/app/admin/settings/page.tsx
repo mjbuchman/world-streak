@@ -20,7 +20,11 @@ export default async function SettingsPage() {
       label: `${CHALLENGE_NAMES[type]} default pass target`,
       hint: "Used until there are enough recent scores for this challenge.",
     })),
-    { name: "rotation", label: "Rotation", hint: `Challenges in daily order, separated by commas: ${CHALLENGE_TYPES.join(", ")}.` },
+    {
+      name: "pool",
+      label: "Pool",
+      hint: `Games each day's three are drawn from, at least three, separated by commas: ${CHALLENGE_TYPES.join(", ")}.`,
+    },
   ];
   return (
     <PageShell title="Settings" backHref="/admin">

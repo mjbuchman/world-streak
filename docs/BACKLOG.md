@@ -29,6 +29,7 @@ One branch, review round and PR per batch, in this order (dependencies still app
 8. Local tools and cheat checks: T163, T164 (light)
 9. Daily Three e2e and mobile: T165, T166 (light)
 10. Maintenance: T172, T173 (light; any time)
+11. Drop the old game_days columns: T174 (full; after T163)
 
 ## M1 Foundation and first challenge end to end
 
@@ -1197,7 +1198,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T158 Share text for the Daily Three
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T157
 - Acceptance criteria:
   - [ ] `buildShareText` takes the day result: "I passed today" / "I didn't make it today", three squares in game order (✅ won, ❌ lost, ⬜ not played), the world streak, the meter bar and the call for help (T32, T115).
@@ -1207,7 +1208,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T159 Perfect day on the results and share card
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T158
 - Acceptance criteria:
   - [ ] Winning all three games shows "Perfect day" on the results page and adds a line (for example "⭐ Perfect day") to the share text; two wins does not.
@@ -1217,7 +1218,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T160 Home, history and rules for the Daily Three
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T156, T151
 - Acceptance criteria:
   - [ ] The home pitch reads "Play today's three games; win two to pass; if enough of the world passes, humanity's streak survives." The "Your part today" card lists today's three games in order, with the signed-in player's progress (won / lost / to play) and a Play button.
@@ -1227,7 +1228,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T161 Admin lineup editor and per-game targets
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T151, T152, T111
 - Acceptance criteria:
   - [ ] On `/admin`, each open day shows its three games; for a day nobody has started, an admin can set the three games and their order (three different games from `challenge_types`), and the day is marked edited so the lineup rule leaves it alone.
@@ -1238,7 +1239,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T162 Admin settings: the pool and default targets for five games
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T150, T149
 - Acceptance criteria:
   - [ ] `/admin/settings` edits the pool (at least 3 distinct games from `challenge_types`) and a default pass target for each of the five games; the rotation field is removed and a migration drops `game_settings.rotation`.
@@ -1930,3 +1931,12 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
   - [ ] `@playwright/test` 1.65.1, `jsdom` 31.0.1 and `@testing-library/user-event` 14.6.12 in `package.json` and the lockfile; no major bumps.
   - [ ] `npm run verify` and `npm run test:e2e` pass; no behavior change.
 - Notes: From the maintainer check after T151 (`npm outdated`).
+
+### T174 Drop the old single-game columns from game_days (split from T161)
+- Type: maintenance
+- Status: todo
+- Depends on: T163
+- Acceptance criteria:
+  - [ ] Nothing reads or writes `game_days.challenge_type` or `game_days.pass_target` (the local tools' "set a day's challenge", `tests/e2e/global-setup.ts`, `tests/e2e/after/` and `today.ts` move to `game_day_games`); a grep in the PR description shows no readers.
+  - [ ] A migration drops both columns, the `mirror_first_game` trigger and the `game_days_change_challenge` trigger; pgTAP and `npm run db:types` updated; `npm run verify` and e2e pass.
+- Notes: Full review (migration). T161 stopped the admin editor writing these columns, but the local tools and e2e setup still pin today through them until T163 rewrites the tools.

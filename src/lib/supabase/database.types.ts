@@ -253,14 +253,14 @@ isOneToOne: false
                   ]
                 },"game_settings": {
                   Row: {
-                    "default_pass_targets": NonNullable<Json>,"default_survival_threshold": number,"full_weight_after_days": number,"id": boolean,"new_account_weight": number,"pass_target_percentile": number,"pass_target_streak_step": number,"percentile_lookback_days": number,"percentile_min_sample": number,"pool": (string)[],"rotation": (string)[],"threshold_streak_step": number
+                    "default_pass_targets": NonNullable<Json>,"default_survival_threshold": number,"full_weight_after_days": number,"id": boolean,"new_account_weight": number,"pass_target_percentile": number,"pass_target_streak_step": number,"percentile_lookback_days": number,"percentile_min_sample": number,"pool": (string)[],"threshold_streak_step": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "default_pass_targets"?: NonNullable<Json>,"default_survival_threshold"?: number,"full_weight_after_days"?: number,"id"?: boolean,"new_account_weight"?: number,"pass_target_percentile"?: number,"pass_target_streak_step"?: number,"percentile_lookback_days"?: number,"percentile_min_sample"?: number,"pool"?: (string)[],"rotation"?: (string)[],"threshold_streak_step"?: number
+                    "default_pass_targets"?: NonNullable<Json>,"default_survival_threshold"?: number,"full_weight_after_days"?: number,"id"?: boolean,"new_account_weight"?: number,"pass_target_percentile"?: number,"pass_target_streak_step"?: number,"percentile_lookback_days"?: number,"percentile_min_sample"?: number,"pool"?: (string)[],"threshold_streak_step"?: number
                   }
                   Update: {
-                    "default_pass_targets"?: NonNullable<Json>,"default_survival_threshold"?: number,"full_weight_after_days"?: number,"id"?: boolean,"new_account_weight"?: number,"pass_target_percentile"?: number,"pass_target_streak_step"?: number,"percentile_lookback_days"?: number,"percentile_min_sample"?: number,"pool"?: (string)[],"rotation"?: (string)[],"threshold_streak_step"?: number
+                    "default_pass_targets"?: NonNullable<Json>,"default_survival_threshold"?: number,"full_weight_after_days"?: number,"id"?: boolean,"new_account_weight"?: number,"pass_target_percentile"?: number,"pass_target_streak_step"?: number,"percentile_lookback_days"?: number,"percentile_min_sample"?: number,"pool"?: (string)[],"threshold_streak_step"?: number
                   }
                   Relationships: [
                     
@@ -440,6 +440,14 @@ isOneToOne: false
                            },
 "review_cheat_flag":
 { Args: { "p_decision": string,"p_flag_id": number }; Returns: string
+                           },
+"save_game_day":
+{ Args: { "d": string,"games": (string)[],"targets": (number)[],"threshold": number }; Returns: boolean
+                           },
+"started_games":
+{ Args: { "first_day": string,"last_day": string }; Returns: {
+              "game_date": string,"game_position": number
+            }[]
                            },
 "world_streak":
 { Args: Record<PropertyKey, never>; Returns: {
