@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M5 The Daily Three (planned Nov 15).
-- Active task: batch 6 (T158, T159, T160) on branch `task/158-share-home-history`, which already holds these doc updates.
+- Active task: batch 7 (T161, T162, full review) on branch `task/161-admin-lineups-settings`, which already holds these doc updates.
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M5 The Daily Three (T139–T166, approved in advance on Nov 15), starting with T139.
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-17 — T158, T159, T160 Share text, perfect day, home, history and rules (PR #161)
+- Share text with a square per game and "⭐ Perfect day"; results page perfect-day line; home "Your part today" card with the lineup (rule fallback via `todaysLineup`); history shows lineups; rules for win two of three.
+- Review rounds: quality 1 (light). CI passed first time.
+- Notes: merges since the last maintainer check: 5. Decision in DECISIONS (T158–T160), item 14 in NEEDS_HUMAN.
 
 ### 2026-11-16 — T156, T157 Daily Three play flow and results page (PR #160)
 - /play runs the three games in order (lineup, between-game screen, decided day); new /play/results with verdict, rows, share, meter and the ad slot.
