@@ -29,6 +29,7 @@ One branch, review round and PR per batch, in this order (dependencies still app
 8. Local tools and cheat checks: T163, T164 (light)
 9. Daily Three e2e and mobile: T165, T166 (light)
 10. Maintenance: T172, T173 (light; any time)
+11. Drop the old game_days columns: T174 (full; after T163)
 
 ## M1 Foundation and first challenge end to end
 
@@ -1930,3 +1931,12 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
   - [ ] `@playwright/test` 1.65.1, `jsdom` 31.0.1 and `@testing-library/user-event` 14.6.12 in `package.json` and the lockfile; no major bumps.
   - [ ] `npm run verify` and `npm run test:e2e` pass; no behavior change.
 - Notes: From the maintainer check after T151 (`npm outdated`).
+
+### T174 Drop the old single-game columns from game_days (split from T161)
+- Type: maintenance
+- Status: todo
+- Depends on: T163
+- Acceptance criteria:
+  - [ ] Nothing reads or writes `game_days.challenge_type` or `game_days.pass_target` (the local tools' "set a day's challenge", `tests/e2e/global-setup.ts`, `tests/e2e/after/` and `today.ts` move to `game_day_games`); a grep in the PR description shows no readers.
+  - [ ] A migration drops both columns, the `mirror_first_game` trigger and the `game_days_change_challenge` trigger; pgTAP and `npm run db:types` updated; `npm run verify` and e2e pass.
+- Notes: Full review (migration). T161 stopped the admin editor writing these columns, but the local tools and e2e setup still pin today through them until T163 rewrites the tools.

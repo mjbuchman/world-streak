@@ -1,5 +1,5 @@
 // The admin settings editor (T42): reads the one game_settings row as form values and saves an
-// admin's edit. The table's checks and the rotation trigger refuse bad values too; this gives
+// admin's edit. The table's checks and the pool trigger refuse bad values too; this gives
 // clear messages first. Server only: the zod schemas must not ship to the browser.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
@@ -82,15 +82,22 @@ function targetSchema(type: (typeof CHALLENGE_TYPES)[number]) {
   return number(label).refine(inTowerRange, towerRowMessage(label));
 }
 
-const rotationSchema = z
+/** The pool a day's three games are drawn from (T150): at least three different known games. */
+const poolSchema = z
   .string()
   .transform((text) => text.split(",").map((entry) => entry.trim()).filter(Boolean))
-  .pipe(z.array(z.string()).min(1, "The rotation needs at least one challenge."))
   .superRefine((entries, ctx) => {
     const unknown = entries.find((entry) => !(CHALLENGE_TYPES as readonly string[]).includes(entry));
-    if (unknown !== undefined) {
-      ctx.addIssue({ code: "custom", message: `The rotation can only name ${CHALLENGE_TYPES.join(", ")}; "${unknown}" is not one.` });
-    }
+    const repeated = entries.find((entry, i) => entries.indexOf(entry) !== i);
+    const message =
+      unknown !== undefined
+        ? `The pool can only name ${CHALLENGE_TYPES.join(", ")}; "${unknown}" is not one.`
+        : repeated !== undefined
+          ? `The pool names "${repeated}" more than once.`
+          : entries.length < 3
+            ? "The pool needs at least three different games."
+            : null;
+    if (message !== null) ctx.addIssue({ code: "custom", message });
   });
 
 /** The first problem with a value, or its parsed value. */
@@ -116,9 +123,9 @@ export async function saveGameSettings(db: Pick<SupabaseClient, "from" | "rpc">,
     targets[type] = result.value;
   }
   update.default_pass_targets = targets;
-  const rotation = check(rotationSchema, form.get("rotation"));
-  if ("error" in rotation) return refuse(rotation.error);
-  update.rotation = rotation.value;
+  const pool = check(poolSchema, form.get("pool"));
+  if ("error" in pool) return refuse(pool.error);
+  update.pool = pool.value;
 
   const saved = await db.from("game_settings").update(update).eq("id", true).select("id");
   if (saved.error) throw new Error(`Saving the settings failed: ${saved.error.message}`);
@@ -131,7 +138,6 @@ export async function readSettingsForm(db: Pick<SupabaseClient<Database>, "from"
   const { data, error } = await db.from("game_settings").select("*").single();
   if (error) throw new Error(`game_settings lookup failed: ${error.message}`);
   const settings = parseGameSettings(data);
-  const rotation = z.array(z.string()).parse(data.rotation);
   const values: SettingsForm = {
     default_survival_threshold: String(settings.defaultSurvivalThreshold),
     pass_target_percentile: String(settings.passTargetPercentile),
@@ -143,6 +149,6 @@ export async function readSettingsForm(db: Pick<SupabaseClient<Database>, "from"
     full_weight_after_days: String(settings.fullWeightAfterDays),
   };
   for (const type of CHALLENGE_TYPES) values[targetField(type)] = String(settings.defaultPassTargets[type] ?? "");
-  values.rotation = rotation.join(", ");
+  values.pool = settings.pool.join(", ");
   return values;
 }

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeSupabase, type FakeResult as Result } from "@/lib/testing/fakeSupabase";
-import { DEFAULT_ROTATION, localToolsEnabled, MAX_SEED_PLAYERS, runLocalTool, type DevData } from "./localTools";
+import { DEFAULT_POOL, localToolsEnabled, MAX_SEED_PLAYERS, runLocalTool, type DevData } from "./localTools";
 
 /** A client whose calls answer `results` in order, recording each call and its builder steps. */
 function fakeDb(results: Result[]) {
@@ -48,7 +48,7 @@ describe("every tool shows a failed step as a refusal (T120)", () => {
   it.each([
     ["clear-my-attempt", {}, "Attempt lookup failed: boom"],
     ["reset-day", { gameDate: "2026-11-12" }, "Game day lookup failed: boom"],
-    ["restore-rotation", {}, "Saving the rotation failed: boom"],
+    ["restore-pool", {}, "Saving the pool failed: boom"],
   ])("%s", async (tool, fields, message) => {
     const { db } = fakeDb([boom, boom]);
     expect(await runLocalTool(caller(), db, form({ tool, ...fields }), NOW, fakeData())).toEqual({ ok: false, message });
@@ -84,7 +84,7 @@ describe("runLocalTool guards", () => {
   it("refuses with a real project, before checking anything else or touching data", async () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://abc.supabase.co");
     const { db, calls } = fakeDb([]);
-    expect(await runLocalTool(caller(), db, form({ tool: "restore-rotation" }), NOW, fakeData())).toEqual({
+    expect(await runLocalTool(caller(), db, form({ tool: "restore-pool" }), NOW, fakeData())).toEqual({
       ok: false,
       message: "Local tools work only with the local Supabase.",
     });
@@ -93,7 +93,7 @@ describe("runLocalTool guards", () => {
 
   it("refuses a caller who is not an admin", async () => {
     const { db, calls } = fakeDb([]);
-    expect(await runLocalTool(caller(false), db, form({ tool: "restore-rotation" }), NOW, fakeData())).toEqual({
+    expect(await runLocalTool(caller(false), db, form({ tool: "restore-pool" }), NOW, fakeData())).toEqual({
       ok: false,
       message: "Only admins can use local tools.",
     });
@@ -199,11 +199,11 @@ describe("clear-my-attempt", () => {
 describe("reset-day", () => {
   const reset = form({ tool: "reset-day", gameDate: "2026-11-12" });
 
-  it("deletes the day's attempts, zeroes its counters and puts it back on the rotation", async () => {
+  it("deletes the day's attempts, zeroes its counters and puts it back on the lineup rule", async () => {
     const { db, calls } = fakeDb([OPEN, ok({ attempts: 7 }), ok(), ok(), ok(), ok()]);
     expect(await runLocalTool(caller(), db, reset, NOW, fakeData())).toEqual({
       ok: true,
-      message: "Nov 12, 2026 is reset: no attempts, and it follows the rotation again.",
+      message: "Nov 12, 2026 is reset: no attempts, and it follows the lineup rule again.",
     });
     expect(calls.slice(2)).toEqual([
       [["from", "attempts"], ["delete"], ["eq", "game_date", "2026-11-12"]],
@@ -223,15 +223,15 @@ describe("reset-day", () => {
   });
 });
 
-describe("restore-rotation", () => {
-  it("puts every challenge back in turn", async () => {
+describe("restore-pool", () => {
+  it("puts every game back in the pool", async () => {
     const { db, calls } = fakeDb([ok()]);
-    expect(await runLocalTool(caller(), db, form({ tool: "restore-rotation" }), NOW, fakeData())).toEqual({
+    expect(await runLocalTool(caller(), db, form({ tool: "restore-pool" }), NOW, fakeData())).toEqual({
       ok: true,
-      message: "The rotation is back to Teetering Tower, Second Sense, Swift Sum.",
+      message: "The pool is back to Teetering Tower, Second Sense, Swift Sum, Echo Path, Fair Split.",
     });
-    expect(calls[0]).toEqual([["from", "game_settings"], ["update", { rotation: DEFAULT_ROTATION }], ["eq", "id", true]]);
-    expect(DEFAULT_ROTATION).toEqual(["stacking", "inner-clock", "flash-count"]);
+    expect(calls[0]).toEqual([["from", "game_settings"], ["update", { pool: [...DEFAULT_POOL] }], ["eq", "id", true]]);
+    expect(DEFAULT_POOL).toEqual(["stacking", "inner-clock", "flash-count", "echo-path", "fair-split"]);
   });
 });
 

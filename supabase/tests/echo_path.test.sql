@@ -14,9 +14,9 @@ select col_default_is(
   'public', 'game_settings', 'default_pass_targets', '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 6, "fair-split": 5}',
   'a fresh settings row has its placeholder (and those added since)'
 );
-select is(
-  (select rotation from public.game_settings), '{stacking,inner-clock,flash-count}'::text[],
-  'it is not in the daily rotation yet (T150)'
+select ok(
+  (select 'echo-path' = any(pool) from public.game_settings),
+  'it is in the daily pool (T150)'
 );
 
 update public.game_settings set percentile_min_sample = 2147483647, pass_target_streak_step = 0;

@@ -23,6 +23,13 @@ vi.mock("@/lib/localTools", () => ({ localToolsEnabled, MAX_SEED_PLAYERS: 500 })
 
 import AdminPage from "./page";
 
+/** A lineup whose first game has `target` and, when `firstStarted`, an attempt. */
+const lineup = (target: number, firstStarted: boolean): AdminDay["games"] => [
+  { position: 1, challengeType: "stacking", passTarget: target, started: firstStarted },
+  { position: 2, challengeType: "inner-clock", passTarget: 4, started: false },
+  { position: 3, challengeType: "flash-count", passTarget: 5, started: false },
+];
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -40,26 +47,27 @@ describe("/admin", () => {
   it("lists the coming days for an admin, read with the service role: open ones editable, closed ones not", { timeout: 10_000 }, async () => {
     isAdmin.mockResolvedValue(true);
     readAdminDays.mockResolvedValue([
-      { gameDate: "2026-11-11", challengeType: "stacking", passTarget: 3.5, threshold: 0.55, closed: true, started: true },
-      { gameDate: "2026-11-12", challengeType: "stacking", passTarget: 10, threshold: 0.6, closed: false, started: false },
-      { gameDate: "2026-11-13", challengeType: "stacking", passTarget: 8, threshold: 0.6, closed: false, started: true },
+      { gameDate: "2026-11-11", games: lineup(3.5, true), threshold: 0.55, closed: true, started: true },
+      { gameDate: "2026-11-12", games: lineup(10, false), threshold: 0.6, closed: false, started: false },
+      { gameDate: "2026-11-13", games: lineup(8, true), threshold: 0.6, closed: false, started: true },
     ]);
     render(await AdminPage());
     expect(readAdminDays).toHaveBeenCalledWith(serviceClient, expect.any(Date));
     const [closed, open, started] = within(screen.getByRole("region", { name: "Coming game days" })).getAllByRole("row").slice(1);
     expect(within(started).getAllByRole("spinbutton").map((input) => input.getAttribute("aria-label"))).toEqual([
+      "Pass target for game 2 on Nov 13, 2026",
+      "Pass target for game 3 on Nov 13, 2026",
       "Survival threshold in percent for Nov 13, 2026",
     ]);
-    expect(within(started).getByText("Locked: players have started this day.")).toBeTruthy();
+    expect(within(started).getByText("Locked: players have started this game.")).toBeTruthy();
     expect([...(closed as HTMLTableRowElement).cells].map((cell) => cell.textContent)).toEqual([
       "Nov 11, 2026",
-      "Teetering Tower",
-      "3.5",
+      "Teetering Tower, target 3.5Second Sense, target 4Swift Sum, target 5",
       "55%",
       "Closed",
     ]);
     expect(within(closed).queryByRole("spinbutton")).toBeNull();
-    expect(within(open).getByRole<HTMLInputElement>("spinbutton", { name: "Pass target for Nov 12, 2026" }).value).toBe("10");
+    expect(within(open).getByRole<HTMLInputElement>("spinbutton", { name: "Pass target for game 1 on Nov 12, 2026" }).value).toBe("10");
     expect(within(open).getByRole<HTMLInputElement>("spinbutton", { name: "Survival threshold in percent for Nov 12, 2026" }).value).toBe("60");
   });
 
@@ -74,8 +82,8 @@ describe("/admin", () => {
     isAdmin.mockResolvedValue(true);
     localToolsEnabled.mockReturnValue(true);
     readAdminDays.mockResolvedValue([
-      { gameDate: "2026-11-11", challengeType: "stacking", passTarget: 3, threshold: 0.6, closed: true, started: true },
-      { gameDate: "2026-11-12", challengeType: "inner-clock", passTarget: 0.5, threshold: 0.6, closed: false, started: true },
+      { gameDate: "2026-11-11", games: lineup(3, true), threshold: 0.6, closed: true, started: true },
+      { gameDate: "2026-11-12", games: lineup(0.5, true), threshold: 0.6, closed: false, started: true },
     ]);
     render(await AdminPage());
     const tools = screen.getByRole("region", { name: "Local tools" });
@@ -90,7 +98,7 @@ describe("/admin", () => {
       ["echo-path", "Echo Path"],
       ["fair-split", "Fair Split"],
     ]);
-    for (const name of ["Clear my attempt today", "Reset day", "Restore the rotation", "Seed players", "Close day", "Remove fake players"]) {
+    for (const name of ["Clear my attempt today", "Reset day", "Restore the pool", "Seed players", "Close day", "Remove fake players"]) {
       expect(within(tools).getByRole("button", { name })).toBeTruthy();
     }
     const seed = within(tools).getByRole("form", { name: "Seed fake players" });

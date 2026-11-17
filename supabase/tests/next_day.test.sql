@@ -59,6 +59,7 @@ insert into public.challenge_types values ('testLower', 'lower-better');
 update public.game_settings set default_pass_targets = '{"stacking": 10, "testLower": 50}', pass_target_streak_step = 0.5;
 -- The day has scores, so its challenge is locked (T111); lifted here to relabel the fixture.
 alter table public.game_days disable trigger game_days_change_challenge;
+alter table public.game_day_games disable trigger game_day_games_edit;
 update public.game_days set challenge_type = 'testLower' where game_date = '2000-02-09';
 update public.attempts set challenge_type = 'testLower' where game_date = '2000-02-09';
 select is(public.pass_target_for('testLower', '2000-02-10', 4), 6::numeric, 'lower is better: the 8th smallest of 1 to 10 is 8, less 0.5 × 4');

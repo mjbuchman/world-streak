@@ -24,7 +24,7 @@ const VALID: Record<string, string> = {
   "target-flash-count": "15",
   "target-echo-path": "6",
   "target-fair-split": "5",
-  rotation: "stacking, inner-clock, flash-count",
+  pool: "stacking, inner-clock, flash-count",
 };
 
 const form = (over: Record<string, string> = {}) => {
@@ -34,7 +34,7 @@ const form = (over: Record<string, string> = {}) => {
 };
 
 describe("saveGameSettings", () => {
-  it("saves every field, with the pass targets as one object and the rotation as a list", async () => {
+  it("saves every field, with the pass targets as one object and the pool as a list", async () => {
     const { db, calls } = fakeDb([ADMIN, { data: [{ id: true }], error: null }]);
     expect(await saveGameSettings(db, form())).toEqual({ ok: true, message: "Settings saved." });
     expect(calls[1]).toEqual([
@@ -51,7 +51,7 @@ describe("saveGameSettings", () => {
           new_account_weight: 1,
           full_weight_after_days: 0,
           default_pass_targets: { stacking: 10, "inner-clock": 0.5, "flash-count": 15, "echo-path": 6, "fair-split": 5 },
-          rotation: ["stacking", "inner-clock", "flash-count"],
+          pool: ["stacking", "inner-clock", "flash-count"],
         },
       ],
       ["eq", "id", true],
@@ -84,8 +84,10 @@ describe("saveGameSettings", () => {
     ["a missing field", { percentile_min_sample: "" }, "Minimum sample is required."],
     ["a negative pass target", { "target-flash-count": "-1" }, "Swift Sum's default pass target must be 0 or more."],
     ["a Tower target off the board", { "target-stacking": "16" }, "Teetering Tower's default pass target must be a row from 1 to 15."],
-    ["an unknown challenge in the rotation", { rotation: "stacking, chess" }, 'The rotation can only name stacking, inner-clock, flash-count, echo-path, fair-split; "chess" is not one.'],
-    ["an empty rotation", { rotation: " , " }, "The rotation needs at least one challenge."],
+    ["an unknown game in the pool", { pool: "stacking, inner-clock, chess" }, 'The pool can only name stacking, inner-clock, flash-count, echo-path, fair-split; "chess" is not one.'],
+    ["a pool of two", { pool: "stacking, inner-clock" }, "The pool needs at least three different games."],
+    ["an empty pool", { pool: " , " }, "The pool needs at least three different games."],
+    ["a pool naming a game twice", { pool: "stacking, inner-clock, stacking" }, 'The pool names "stacking" more than once.'],
   ])("refuses %s, writing nothing", async (_name, over, message) => {
     const { db, calls } = fakeDb([ADMIN]);
     expect(await saveGameSettings(db, form(over))).toEqual({ ok: false, message });
@@ -104,7 +106,7 @@ describe("saveGameSettings", () => {
       percentile_min_sample: "1",
       new_account_weight: "0",
       "target-stacking": "1",
-      rotation: "flash-count",
+      pool: "flash-count, echo-path, fair-split, stacking, inner-clock",
     };
     expect(await saveGameSettings(db, form(edges))).toEqual({ ok: true, message: "Settings saved." });
   });
@@ -132,7 +134,7 @@ describe("readSettingsForm", () => {
       default_pass_targets: { stacking: 10, "inner-clock": 0.5, "flash-count": 15, "echo-path": 6, "fair-split": 5 },
       new_account_weight: 1,
       full_weight_after_days: 0,
-      rotation: ["stacking", "inner-clock", "flash-count"],
+      pool: ["stacking", "inner-clock", "flash-count"],
     };
     const { db, calls } = fakeDb([{ data: row, error: null }]);
     expect(await readSettingsForm(db)).toEqual(VALID);
@@ -150,9 +152,12 @@ describe("readSettingsForm", () => {
       default_pass_targets: { stacking: 10 },
       new_account_weight: 1,
       full_weight_after_days: 0,
-      rotation: ["stacking"],
+      pool: ["fair-split", "stacking", "echo-path"],
     };
-    expect(await readSettingsForm(fakeDb([{ data: row, error: null }]).db)).toMatchObject({ "target-flash-count": "", rotation: "stacking" });
+    expect(await readSettingsForm(fakeDb([{ data: row, error: null }]).db)).toMatchObject({
+      "target-flash-count": "",
+      pool: "fair-split, stacking, echo-path",
+    });
     await expect(readSettingsForm(fakeDb([{ data: null, error: { message: "down" } }]).db)).rejects.toThrow("game_settings lookup failed: down");
   });
 

@@ -128,14 +128,27 @@ begin
   { "column": "new_account_weight", "value": 1, "accepted": true },
   { "column": "new_account_weight", "value": 1.01, "accepted": false },
   { "column": "full_weight_after_days", "value": 0, "accepted": true },
-  { "column": "full_weight_after_days", "value": -1, "accepted": false }
+  { "column": "full_weight_after_days", "value": -1, "accepted": false },
+  { "column": "pool", "value": ["stacking", "inner-clock", "flash-count"], "accepted": true },
+  { "column": "pool", "value": ["stacking", "inner-clock"], "accepted": false },
+  { "column": "pool", "value": ["stacking", "stacking", "inner-clock"], "accepted": false },
+  { "column": "pool", "value": ["stacking", "inner-clock", "chess"], "accepted": false },
+  { "column": "default_pass_targets", "value": { "stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 6, "fair-split": 5 }, "accepted": true },
+  { "column": "default_pass_targets", "value": { "inner-clock": 4 }, "accepted": false },
+  { "column": "default_pass_targets", "value": { "stacking": 10, "fair-split": -1 }, "accepted": false }
 ]$fixture$::jsonb) loop
     begin
-      execute format('update public.game_settings set %I = %L', b ->> 'column', b ->> 'value');
+      -- A JSON array is a Postgres array literal here (the pool); anything else goes in as text.
+      execute format('update public.game_settings set %I = %L', b ->> 'column',
+        case jsonb_typeof(b -> 'value')
+          when 'array' then (select array_agg(x) from jsonb_array_elements_text(b -> 'value') as x)::text
+          else b ->> 'value'
+        end);
       raise exception using errcode = 'WS999'; -- accepted: undo it
     exception
       when sqlstate 'WS999' then accepted := true;
-      when check_violation then accepted := false;
+      -- raise_exception: the pool's trigger refuses unknown and repeated games.
+      when check_violation or raise_exception then accepted := false;
     end;
     if accepted is distinct from (b ->> 'accepted')::boolean then
       insert into settings_boundary_misses values (format('%s = %s', b ->> 'column', b ->> 'value'));

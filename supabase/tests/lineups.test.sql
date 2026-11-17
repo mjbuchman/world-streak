@@ -72,7 +72,8 @@ reset role;
 
 -- Game-day lineups (T151).
 select ok((select relrowsecurity from pg_class where oid = 'public.game_day_games'::regclass), 'RLS is enabled on game_day_games');
-select policies_are('public', 'game_day_games', array['game_day_games_select_all'], 'lineups have only the read policy');
+select policies_are('public', 'game_day_games', array['game_day_games_select_all', 'game_day_games_update_admin_open'],
+  'lineups have the read policy and the admin edit policy (T161)');
 
 \ir fixtures/fixtures.psql
 delete from public.streak_runs;

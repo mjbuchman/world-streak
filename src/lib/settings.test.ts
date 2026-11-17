@@ -8,7 +8,7 @@ import { loadGameSettings, parseGameSettings, type GameSettings } from "./settin
 // Named, not "*": a new column must be added here (and to the parser) on purpose (T89).
 const SETTINGS_COLUMNS =
   "default_survival_threshold, pass_target_percentile, pass_target_streak_step, threshold_streak_step, " +
-  "percentile_lookback_days, percentile_min_sample, default_pass_targets, new_account_weight, full_weight_after_days";
+  "percentile_lookback_days, percentile_min_sample, default_pass_targets, new_account_weight, full_weight_after_days, pool";
 
 /** The launch row as PostgREST returns it. */
 const launchRow = {
@@ -22,6 +22,7 @@ const launchRow = {
   default_pass_targets: { stacking: 10 },
   new_account_weight: 1,
   full_weight_after_days: 0,
+  pool: ["stacking", "inner-clock", "flash-count", "echo-path", "fair-split"],
 };
 
 const launchSettings: GameSettings = {
@@ -34,6 +35,7 @@ const launchSettings: GameSettings = {
   defaultPassTargets: { stacking: 10 },
   newAccountWeight: 1,
   fullWeightAfterDays: 0,
+  pool: ["stacking", "inner-clock", "flash-count", "echo-path", "fair-split"],
 };
 
 // The same boundary rows are checked against the table's constraints in game_settings.test.sql,
