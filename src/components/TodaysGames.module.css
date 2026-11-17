@@ -1,0 +1,55 @@
+.eyebrow {
+  font-size: var(--fs-text-label);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fs-color-text-muted);
+}
+
+.title {
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-title);
+  line-height: 1.05;
+}
+
+/* One compact line per game, so Play stays on a phone's first screen (T160). */
+.games {
+  list-style: decimal inside;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.game {
+  font-weight: 700;
+}
+
+.status {
+  float: right;
+  font-weight: 400;
+  color: var(--fs-color-text-muted);
+}
+
+.game[data-status="won"] .status {
+  color: var(--fs-color-mint);
+}
+
+.practice {
+  align-self: center;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+}
+
+/* Quieter than "Practice first": for when you want a different game. */
+.practiceAll {
+  align-self: center;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--fs-text-small);
+  color: var(--fs-color-text-muted);
+}

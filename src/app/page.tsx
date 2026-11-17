@@ -1,29 +1,51 @@
-import Link from "next/link";
+import { isChallengeType } from "@/challenges/registry";
 import { AdSlot } from "@/components/AdSlot";
 import { Countdown } from "@/components/Countdown";
 import { Meter } from "@/components/Meter";
 import { PrizeCycle } from "@/components/PrizeCycle";
+import { TodaysGames, type HomeGame } from "@/components/TodaysGames";
 import { WorldStreak } from "@/components/WorldStreak";
-import { LinkButton } from "@/components/ui/LinkButton";
 import { PageShell } from "@/components/ui/PageShell";
-import { Surface } from "@/components/ui/Surface";
-import { CHALLENGE_NAMES, CHALLENGE_TAGLINES, practicePath } from "@/config/challenges";
 import { GAME_NAME } from "@/config/game";
-import { DEFAULT_CHALLENGE, todaysChallenge } from "@/lib/attempts/today";
+import { DEFAULT_CHALLENGE, todaysDay, todaysLineup, type GameStatus } from "@/lib/attempts/today";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import styles from "./page.module.css";
 
+type Db = Awaited<ReturnType<typeof createSupabaseServerClient>>;
+
+// A game started and left counts as lost (T153), as on /play.
+const HOME_STATUS: Record<GameStatus["status"], HomeGame["status"]> = {
+  won: "won",
+  lost: "lost",
+  "in-progress": "lost",
+  "not-started": "to-play",
+};
+
+/** Today's games with the signed-in player's progress; all to play before their day exists. */
+async function homeGames(db: Db, userId: string | undefined, now: Date): Promise<HomeGame[]> {
+  if (userId) {
+    const day = await todaysDay(db, userId, now);
+    // A game this build cannot name (a stale lineup) is left out rather than breaking the page.
+    const games = day.games.flatMap(({ challengeType, status }): HomeGame[] =>
+      isChallengeType(challengeType) ? [{ challengeType, status: HOME_STATUS[status] }] : [],
+    );
+    if (games.length > 0) return games;
+  }
+  return (await todaysLineup(db, now)).map((challengeType) => ({ challengeType, status: "to-play" }));
+}
+
 /**
- * Home: the live meter is the star (T104), then today's challenge, then the world streak. The
+ * Home: the live meter is the star (T104), then today's games, then the world streak. The
  * header bar above already shows the wordmark, so the page's h1 is for screen readers only.
  */
 export default async function Home() {
   // Outside the try: reading the request cookies is how Next.js learns the page is dynamic.
   const db = await createSupabaseServerClient();
-  // A failed read shows the default challenge rather than an error page; /play reads it again.
-  let challenge = DEFAULT_CHALLENGE;
+  const { data } = await db.auth.getClaims();
+  // A failed read shows the default game rather than an error page; /play reads it again.
+  let games: HomeGame[] = [{ challengeType: DEFAULT_CHALLENGE, status: "to-play" }];
   try {
-    challenge = await todaysChallenge(db, new Date());
+    games = await homeGames(db, data?.claims.sub, new Date());
   } catch (error) {
     console.error(error);
   }
@@ -34,20 +56,7 @@ export default async function Home() {
         <Countdown />
       </header>
       <Meter />
-      <Surface as="section" aria-labelledby="todays-challenge">
-        <p className={styles.eyebrow}>Your part today</p>
-        <h2 id="todays-challenge" className={styles.challenge}>
-          {CHALLENGE_NAMES[challenge]}
-        </h2>
-        <p className={styles.challengeText}>{`${CHALLENGE_TAGLINES[challenge]} One scored try a day.`}</p>
-        <LinkButton href="/play">Play today&apos;s challenge</LinkButton>
-        <Link href={practicePath(challenge)} className={styles.practice}>
-          Practice first
-        </Link>
-        <Link href="/practice" className={styles.practiceAll}>
-          Practice any challenge
-        </Link>
-      </Surface>
+      <TodaysGames games={games} />
       <PrizeCycle />
       <WorldStreak />
       <AdSlot name="home" />

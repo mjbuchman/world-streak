@@ -74,7 +74,8 @@ export function rulesSections(c: RulesConfig): RulesSection[] {
     {
       heading: "How a game day works",
       paragraphs: [
-        "Each game day has one short skill challenge, and every account gets one scored attempt per game day. Your attempt passes if your score reaches the day's pass target, shown before you play.",
+        "Each game day has three short skill games, played in order, and every account gets one scored attempt at each game per game day. Each game has its own pass target for the day, shown before you play, and you win a game if your score reaches its target.",
+        "You pass the day by winning two of the three games. Once two games are won or two are lost, the day's result is final; the remaining game can still be played but does not change it.",
         `Each game day ends at ${deadlineLabel(c.deadlineUtcHour)}.`,
       ],
     },
@@ -100,7 +101,7 @@ export function rulesSections(c: RulesConfig): RulesSection[] {
     {
       heading: "Entries and the draw",
       paragraphs: [
-        "Each game day within a cycle on which your attempt passes earns one entry.",
+        "Each game day within a cycle that you pass earns one entry, however many of its games you win.",
         "When a cycle in which the goal was reached ends, one winner is drawn at random from all of that cycle's entries, so more entries mean better odds.",
         "Accounts flagged for cheating, such as scripted play or more than one account per person, lose their entries.",
       ],

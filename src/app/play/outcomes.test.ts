@@ -5,6 +5,7 @@ import {
   START_DAY_CLOSED,
   START_FAILED,
   startOutcome,
+  shareGame,
   statusLabel,
   SUBMIT_FAILED,
   submitOutcome,
@@ -83,6 +84,15 @@ describe("the day's wording", () => {
     ["not-started", "Not played"],
   ] as const)("a %s game reads %s", (status, label) => {
     expect(statusLabel(status)).toBe(label);
+  });
+
+  it.each([
+    ["won", "won"],
+    ["lost", "lost"],
+    ["in-progress", "lost"],
+    ["not-started", "not-played"],
+  ] as const)("a %s game shares as %s", (status, game) => {
+    expect(shareGame(status)).toBe(game);
   });
 
   it("words a game started and left as the approved unfinished note, for that game", () => {

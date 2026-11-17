@@ -6,10 +6,15 @@ import { reachedRow, targetRow } from "../../src/components/stacking/rows";
 import { playTaps, skipCountdown, tapsForAMiss } from "./support/tower";
 import { adminClient, findUserByEmail } from "./support/supabase";
 
-test("the home page offers today's challenge and practice", async ({ page }) => {
+test("the home page lists today's three games and offers Play", async ({ page }) => {
   await gotoReady(page, "/");
-  await expect(page.getByRole("region", { name: "Teetering Tower" }).getByText("Your part today")).toBeVisible();
-  await page.getByRole("link", { name: "Play today's challenge" }).click();
+  const card = page.getByRole("region", { name: "Today's three games" });
+  await expect(card.getByText("Your part today")).toBeVisible();
+  const games = card.getByRole("listitem");
+  await expect(games).toHaveCount(3);
+  for (const game of await games.all()) await expect(game).toHaveText(/^.+To play$/);
+  await expect(games.first()).toHaveText("Teetering TowerTo play");
+  await card.getByRole("link", { name: "Play", exact: true }).click();
   await expect(page).toHaveURL("/play");
 });
 
@@ -190,8 +195,8 @@ test("a decided day's results: the verdict, three rows and the share card, also 
   await expect(share).toHaveText("Share");
   await share.getByRole("button", { name: "Share" }).click();
   const sharedText = () => page.evaluate(() => (window as unknown as { sharedText?: string }).sharedText ?? "");
-  await expect.poll(sharedText).toContain("I didn't make it today.");
-  expect(await sharedText()).not.toMatch(/row|score|target/i);
+  await expect.poll(sharedText).toContain("I didn't make it today.\n❌❌⬜");
+  expect(await sharedText()).not.toMatch(/row|score|target|Perfect|Teetering Tower/i);
 
   // A reload shows the same page.
   await page.reload();

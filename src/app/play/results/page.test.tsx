@@ -14,7 +14,9 @@ vi.mock("@/lib/attempts/today", () => ({ todaysDay: m.todaysDay }));
 vi.mock("next/navigation", () => ({ redirect: m.redirect }));
 // Stand-ins that show what they were given; the meter and share card fetch on their own.
 vi.mock("@/components/Meter", () => ({ Meter: () => <section data-meter /> }));
-vi.mock("@/components/ShareCard", () => ({ ShareCard: ({ passed }: { passed: boolean }) => <section data-share={String(passed)} /> }));
+vi.mock("@/components/ShareCard", () => ({
+  ShareCard: ({ passed, games }: { passed: boolean; games: string[] }) => <section data-share={String(passed)} data-games={games.join(",")} />,
+}));
 vi.mock("@/components/AdSlot", () => ({ AdSlot: ({ name }: { name: string }) => <div data-ad-slot={name} /> }));
 
 import ResultsPage from "./page";
@@ -104,13 +106,26 @@ describe("ResultsPage", () => {
     expect(html).not.toContain('href="/play"');
   });
 
+  it("calls a day with all three games won a perfect day, and shares it", async () => {
+    const games = passedDay.games.map((game) => ({ ...game, status: "won", score: 9 }));
+    m.todaysDay.mockResolvedValueOnce({ ...passedDay, games, wins: 3, nextPosition: null });
+    const html = await render();
+    expect(html).toContain("Perfect day: all three games won");
+    expect(html).toContain('data-games="won,won,won"');
+  });
+
+  it.each([passedDay, failedDay])("does not call a day perfect without three wins", async (day) => {
+    m.todaysDay.mockResolvedValueOnce(day);
+    expect(await render()).not.toContain("Perfect day");
+  });
+
   it.each([
-    [passedDay, "true"],
-    [failedDay, "false"],
-  ])("offers the share card for the day's outcome, then the meter, then the ad slot below everything", async (day, passed) => {
+    [passedDay, "true", "won,won,not-played"],
+    [failedDay, "false", "lost,lost,won"],
+  ])("offers the share card for the day's outcome, then the meter, then the ad slot below everything", async (day, passed, games) => {
     m.todaysDay.mockResolvedValueOnce(day);
     const html = await render();
-    expect(html).toContain(`data-share="${passed}"`);
+    expect(html).toContain(`data-share="${passed}" data-games="${games}"`);
     const [verdict, share, meter, ad] = ["<h2", "data-share", "data-meter", 'data-ad-slot="play-result"'].map((mark) => html.indexOf(mark));
     expect(verdict).toBeGreaterThanOrEqual(0);
     expect(verdict < share && share < meter && meter < ad).toBe(true);

@@ -406,3 +406,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: the acceptance criteria; the lineup is created by the first start, so there is nothing else to list.
 - How to change it later: `src/app/play/results/page.tsx`, `src/app/play/PlayToday.tsx`, wording in `src/app/play/outcomes.ts`.
 - Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls, items 7 and 13)
+
+### 2026-11-17 — Perfect day and the home lineup (T158, T159, T160)
+- Choice: the incentive to play the remaining game is the design's example: three wins show "Perfect day: all three games won" on the results page and add "⭐ Perfect day" to the share text, derived from the day's games and never stored or counted. The share text's outcome line is plain ("I passed today." / "I didn't make it today."), with the squares on the next line. Before the first start creates today's lineup, the home card lists the three games the lineup rule gives today (as /play's game 1 does), all "To play".
+- Reason: the Open item's suggestion; the rule's lineup is the one the first start will create unless the settings change first.
+- How to change it later: `isPerfectDay` and `buildShareText` in `src/lib/share.ts`, `src/app/play/results/page.tsx`, `todaysLineup` in `src/lib/attempts/today.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls, item 14)

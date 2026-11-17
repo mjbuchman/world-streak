@@ -7,20 +7,23 @@ import { HistoryTable } from "./HistoryTable";
 afterEach(cleanup);
 
 const days: HistoryDay[] = [
-  { gameDate: "2026-11-10", challengeType: "stacking", finalPassRate: 0.52, threshold: 0.6, outcome: "broken" },
-  { gameDate: "2026-11-09", challengeType: "stacking", finalPassRate: null, threshold: 0.6, outcome: "broken" },
-  { gameDate: "2026-11-08", challengeType: "stacking", finalPassRate: 0.81, threshold: 0.6, outcome: "survived" },
+  { gameDate: "2026-11-10", games: ["flash-count", "stacking", "inner-clock"], finalPassRate: 0.52, threshold: 0.6, outcome: "broken" },
+  { gameDate: "2026-11-09", games: ["stacking", "future-game", "echo-path"], finalPassRate: null, threshold: 0.6, outcome: "broken" },
+  // A backfilled day from before the Daily Three: one game.
+  { gameDate: "2026-11-08", games: ["stacking"], finalPassRate: 0.81, threshold: 0.6, outcome: "survived" },
 ];
 
 const cells = (row: HTMLElement) => [...(row as HTMLTableRowElement).cells].map((cell) => cell.textContent);
 
 describe("HistoryTable", () => {
-  it("lists each closed day with its challenge, pass rate, threshold and result, in the order given", () => {
+  it("lists each closed day with its lineup, pass rate, threshold and result, in the order given", () => {
     render(<HistoryTable history={{ days, page: 1, pageCount: 1 }} />);
+    expect(cells(screen.getAllByRole("row")[0])).toEqual(["Day", "Games", "Passing", "Needed", "Result"]);
     const rows = screen.getAllByRole("row").slice(1);
     expect(rows.map(cells)).toEqual([
-      ["Nov 10, 2026", "Teetering Tower", "52%", "60%", "Broke"],
-      ["Nov 9, 2026", "Teetering Tower", "no attempts", "60%", "Broke"],
+      ["Nov 10, 2026", "Swift Sum, Teetering Tower, Second Sense", "52%", "60%", "Broke"],
+      // A game this build does not know shows as itself.
+      ["Nov 9, 2026", "Teetering Tower, future-game, Echo Path", "no attempts", "60%", "Broke"],
       ["Nov 8, 2026", "Teetering Tower", "81%", "60%", "Survived"],
     ]);
     expect(screen.queryByRole("navigation")).toBeNull();

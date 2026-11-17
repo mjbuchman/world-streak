@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
-import { DEFAULT_CHALLENGE, todaysChallenge, todaysDay } from "./today";
+import { DEFAULT_CHALLENGE, todaysChallenge, todaysDay, todaysLineup } from "./today";
 
 type Result = { data: unknown; error: { message: string } | null };
 
@@ -212,5 +212,67 @@ describe("todaysChallenge", () => {
 
   it("keeps a default for the home page when nothing can be read", () => {
     expect(DEFAULT_CHALLENGE).toBe("stacking");
+  });
+});
+
+describe("todaysLineup", () => {
+  /** A client whose lineup read answers `games` and whose database functions answer `rpcs`. */
+  function fakeLineupDb(games: Result, rpcs: Record<string, Result> = {}) {
+    const table = fakeDb(games);
+    const rpcCalls: unknown[][] = [];
+    const db = {
+      from: table.db.from,
+      rpc: (name: string, args: unknown) => {
+        rpcCalls.push([name, args]);
+        return Promise.resolve(rpcs[name]);
+      },
+    } as unknown as SupabaseClient;
+    return { db, calls: table.calls, rpcCalls };
+  }
+  const ok = (data: unknown): Result => ({ data, error: null });
+  const games = ["stacking", "flash-count", "inner-clock"];
+
+  it("reads today's games in order from the public lineup, without asking the rule", async () => {
+    const { db, calls, rpcCalls } = fakeLineupDb(ok(games.map((challenge_type) => ({ challenge_type }))));
+    expect(await todaysLineup(db, now)).toEqual(games);
+    expect(calls).toEqual([
+      ["from", "game_day_games"],
+      ["select", "challenge_type"],
+      ["eq", "game_date", "2026-11-08"],
+      ["order", "position"],
+    ]);
+    expect(rpcCalls).toEqual([]);
+  });
+
+  it("asks the lineup rule, given yesterday's lineup, before the day exists", async () => {
+    const yesterday = ["echo-path", "fair-split", "stacking"];
+    const { db, rpcCalls } = fakeLineupDb(ok([]), { lineup_of: ok(yesterday), lineup_for: ok(games) });
+    expect(await todaysLineup(db, now)).toEqual(games);
+    expect(rpcCalls).toEqual([
+      ["lineup_of", { d: "2026-11-07" }],
+      ["lineup_for", { d: "2026-11-08", previous: yesterday }],
+    ]);
+  });
+
+  it("passes no previous lineup when yesterday had none", async () => {
+    const { db, rpcCalls } = fakeLineupDb(ok([]), { lineup_of: ok(null), lineup_for: ok(games) });
+    await todaysLineup(db, now);
+    expect(rpcCalls[1]).toEqual(["lineup_for", { d: "2026-11-08", previous: null }]);
+  });
+
+  it("throws on a database error or a game this build does not know", async () => {
+    const down = { data: null, error: { message: "down" } };
+    await expect(todaysLineup(fakeLineupDb(down).db, now)).rejects.toThrow("Game day lookup failed: down");
+    await expect(todaysLineup(fakeLineupDb(ok([]), { lineup_of: down }).db, now)).rejects.toThrow("Lineup lookup failed: down");
+    await expect(todaysLineup(fakeLineupDb(ok([]), { lineup_of: ok(null), lineup_for: down }).db, now)).rejects.toThrow(
+      "Lineup lookup failed: down",
+    );
+    await expect(todaysLineup(fakeLineupDb(ok([{ challenge_type: "chess" }])).db, now)).rejects.toThrow(
+      'Game day 2026-11-08 has unknown challenge type "chess"',
+    );
+  });
+
+  it("returns no games when the rule gives none", async () => {
+    expect(await todaysLineup(fakeLineupDb(ok([]), { lineup_of: ok(null), lineup_for: ok(null) }).db, now)).toEqual([]);
   });
 });

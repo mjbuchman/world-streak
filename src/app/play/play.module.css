@@ -30,6 +30,11 @@
   font-weight: 700;
 }
 
+.perfect {
+  font-weight: 700;
+  color: var(--fs-color-mint);
+}
+
 /* Today's games, one row each: name and status on a line, the detail under them. */
 .games {
   list-style: none;
