@@ -72,8 +72,10 @@ select throws_ok(
   $$select public.save_game_day('2000-06-10', '{stacking,inner-clock}', '{10,0.5}', 0.5)$$,
   '22023', 'a lineup has three games, each with a target', 'a lineup has exactly three games'
 );
+-- Past the save, straight at the table: the policy alone must keep the closed day as it was.
+update public.game_day_games set challenge_type = 'fair-split', pass_target = 1 where game_date = '2000-06-09' and position = 3;
 reset role;
-select is(tests.lineup('2000-06-09'), 'stacking 10, inner-clock 0.5, flash-count 20', 'the closed day kept its lineup');
+select is(tests.lineup('2000-06-09'), 'stacking 10, inner-clock 0.5, flash-count 20', 'the closed day kept its lineup, even against a direct update');
 
 -- As a player: neither the save nor a direct update changes anything.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000b0","role":"authenticated"}', true);
