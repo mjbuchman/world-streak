@@ -1228,7 +1228,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T161 Admin lineup editor and per-game targets
 - Type: feature
-- Status: in-progress
+- Status: done (column drop split into T174)
 - Depends on: T151, T152, T111
 - Acceptance criteria:
   - [ ] On `/admin`, each open day shows its three games; for a day nobody has started, an admin can set the three games and their order (three different games from `challenge_types`), and the day is marked edited so the lineup rule leaves it alone.
@@ -1239,7 +1239,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T162 Admin settings: the pool and default targets for five games
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T150, T149
 - Acceptance criteria:
   - [ ] `/admin/settings` edits the pool (at least 3 distinct games from `challenge_types`) and a default pass target for each of the five games; the rotation field is removed and a migration drops `game_settings.rotation`.
@@ -1248,7 +1248,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T163 Local tools and scripts for the Daily Three
 - Type: infra
-- Status: todo
+- Status: in-progress
 - Depends on: T153, T161
 - Acceptance criteria:
   - [ ] `npm run seed:dev -- --players N --pass-rate R` gives each fake player a decided day (three games recorded so that R of them pass the day) and the completed-day counters update; `simulate:days` and `close-day` work with lineups and print the day's lineup with the outcome.
@@ -1258,7 +1258,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T164 Cheat checks for the multi-round games
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T140, T142, T145, T149, T154
 - Acceptance criteria:
   - [ ] `detectFlags` gains rules with thresholds in `src/config/cheat.ts`: `time-bank-implausible` (errors under 10 ms on 5 or more rounds of one run), `echo-path-robotic` (10 or more taps with an interval standard deviation under 5 ms, or any tap under 80 ms after the previous one), `fair-split-implausible` (6 or more cuts within 0.05 points of 50% in one run) and `fair-split-instant` (a counted cut under 300 ms after its shape appeared); `timing-mismatch` covers every game with the countdown allowance (T138).
