@@ -6,6 +6,7 @@ import type { ChallengeType } from "@/challenges/shared/types";
 import type { StartResult } from "@/lib/attempts/start";
 import type { DayProgress, SubmitResult } from "@/lib/attempts/submit";
 import type { GameStatus, TodaysDay } from "@/lib/attempts/today";
+import type { ShareGame } from "@/lib/share";
 // Type-only imports: no server code reaches the browser bundle.
 
 type Submitted = Extract<SubmitResult, { status: 200 }>["body"];
@@ -91,6 +92,13 @@ export function dayVerdict(outcome: TodaysDay["outcome"]): string | null {
 /** A game's status in the day's list. A game started and left is a loss (T153). */
 export function statusLabel(status: GameStatus["status"]): string {
   return { won: "Won", lost: "Lost", "in-progress": "Lost", "not-started": "Not played" }[status];
+}
+
+/** A game as the share text shows it: one started and left counts as lost, like its label. */
+const SHARE_GAMES: Record<GameStatus["status"], ShareGame> = { won: "won", lost: "lost", "in-progress": "lost", "not-started": "not-played" };
+
+export function shareGame(status: GameStatus["status"]): ShareGame {
+  return SHARE_GAMES[status];
 }
 
 // The human-approved wording for a started, unsubmitted run (T74, T91), for one game of three:

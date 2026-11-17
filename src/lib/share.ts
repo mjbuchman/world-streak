@@ -1,11 +1,17 @@
 // The spoiler-free share text (T32). Client-safe: the result screen builds it in the browser.
+import { GAMES_PER_DAY } from "@/config/attempts";
 import { GAME_NAME } from "@/config/game";
 import { NEAR_THRESHOLD_MARGIN } from "@/config/share";
 import { dayLabel as dateLabel } from "@/lib/dates";
 import type { MeterBody } from "@/lib/meter";
 
+/** How one of the day's games went, as the share text shows it. */
+export type ShareGame = "won" | "lost" | "not-played";
+
 export type ShareInput = {
   passed: boolean;
+  /** The day's games in lineup order. */
+  games: ShareGame[];
   gameDate: string;
   /** The world streak (current run), or null if it could not be read. */
   streak: number | null;
@@ -28,7 +34,6 @@ export function meterBar(passRate: number, threshold: number): string {
   return fill.repeat(filled) + "⬜".repeat(BAR_SQUARES - filled);
 }
 
-
 /** How the world is doing, plus a call for help when it is near (or under) the line; none if unknown. */
 function worldLines(meter: MeterBody | null): string[] {
   if (!meter) return [];
@@ -42,15 +47,24 @@ function worldLines(meter: MeterBody | null): string[] {
   return [status];
 }
 
+const SQUARES: Record<ShareGame, string> = { won: "✅", lost: "❌", "not-played": "⬜" };
+
+/** Every game of the day won (T159): derived from the games, never stored or counted. */
+export function isPerfectDay(games: ShareGame[]): boolean {
+  return games.length === GAMES_PER_DAY && games.every((game) => game === "won");
+}
+
 /**
- * What a player shares after today's attempt: the outcome, never the score, the target or the
- * challenge, so nobody is spoiled (it is not given them). A pass and a fail differ only in the
- * outcome line (design principle 3).
+ * What a player shares after their decided day: the outcome and a square per game, never a
+ * score, a target or a game's name, so nobody is spoiled (it is not given them). A pass and a
+ * fail differ only in the outcome line and the squares (design principle 3).
  */
-export function buildShareText({ passed, gameDate, streak, meter, siteUrl }: ShareInput): string {
+export function buildShareText({ passed, games, gameDate, streak, meter, siteUrl }: ShareInput): string {
   const lines = [
     `${GAME_NAME} · ${dateLabel(gameDate)}`,
-    passed ? "✅ I passed today's challenge." : "❌ I didn't make it today.",
+    passed ? "I passed today." : "I didn't make it today.",
+    games.map((game) => SQUARES[game]).join(""),
+    isPerfectDay(games) ? "⭐ Perfect day" : null,
     streak === null ? null : `🔥 World streak: ${streak} ${streak === 1 ? "day" : "days"}`,
     ...worldLines(meter),
     siteUrl,

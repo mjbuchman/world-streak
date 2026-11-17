@@ -21,7 +21,7 @@ const fakeDb = (results: Result[]) => fakeSupabase(results);
 
 const day = (over: Record<string, unknown> = {}) => ({
   game_date: "2026-11-10",
-  challenge_type: "stacking",
+  game_day_games: [{ position: 1, challenge_type: "stacking" }],
   final_pass_rate: "0.74",
   survival_threshold: "0.60",
   outcome: "survived",
@@ -251,18 +251,26 @@ describe("readStreakSummary", () => {
 
 describe("readHistory", () => {
   it("reads one page of closed days, newest first, with the total for paging", async () => {
-    const { db, queries } = fakeDb([{ data: [day(), day({ game_date: "2026-11-09", outcome: "broken", final_pass_rate: null })], error: null, count: 31 }]);
+    // The embedded lineup arrives in any order; the day lists it by position.
+    const lineup = [
+      { position: 3, challenge_type: "inner-clock" },
+      { position: 1, challenge_type: "flash-count" },
+      { position: 2, challenge_type: "stacking" },
+    ];
+    const { db, queries } = fakeDb([
+      { data: [day({ game_day_games: lineup }), day({ game_date: "2026-11-09", outcome: "broken", final_pass_rate: null })], error: null, count: 31 },
+    ]);
     expect(await readHistory(db, 2)).toEqual({
       days: [
-        { gameDate: "2026-11-10", challengeType: "stacking", finalPassRate: 0.74, threshold: 0.6, outcome: "survived" },
-        { gameDate: "2026-11-09", challengeType: "stacking", finalPassRate: null, threshold: 0.6, outcome: "broken" },
+        { gameDate: "2026-11-10", games: ["flash-count", "stacking", "inner-clock"], finalPassRate: 0.74, threshold: 0.6, outcome: "survived" },
+        { gameDate: "2026-11-09", games: ["stacking"], finalPassRate: null, threshold: 0.6, outcome: "broken" },
       ],
       page: 2,
       pageCount: 2,
     });
     expect(queries[0]).toEqual([
       ["from", "game_days"],
-      ["select", "game_date, challenge_type, final_pass_rate, survival_threshold, outcome", { count: "exact" }],
+      ["select", "game_date, final_pass_rate, survival_threshold, outcome, game_day_games(position, challenge_type)", { count: "exact" }],
       ["not", "closed_at", "is", null],
       ["order", "game_date", { ascending: false }],
       ["range", HISTORY_PAGE_SIZE, 2 * HISTORY_PAGE_SIZE - 1],

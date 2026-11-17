@@ -25,7 +25,7 @@ afterEach(() => {
 });
 
 const oneDay: History = {
-  days: [{ gameDate: "2026-11-10", challengeType: "stacking", finalPassRate: 0.52, threshold: 0.6, outcome: "broken" }],
+  days: [{ gameDate: "2026-11-10", games: ["stacking"], finalPassRate: 0.52, threshold: 0.6, outcome: "broken" }],
   page: 1,
   pageCount: 1,
 };

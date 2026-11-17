@@ -49,9 +49,10 @@ test.describe("on a 390 x 844 phone", () => {
     await page.goto("/");
     // Wait for the reading, so the check runs against the meter's full height.
     await expect(page.getByRole("meter", { name: "Today's pass rate" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Play today's challenge" })).toBeInViewport({ ratio: 1 });
+    const card = page.getByRole("region", { name: "Today's three games" });
+    await expect(card.getByRole("link", { name: "Play", exact: true })).toBeInViewport({ ratio: 1 });
     const meterBox = await page.getByRole("region", { name: "Today's meter" }).boundingBox();
-    const cardBox = await page.getByRole("region", { name: "Teetering Tower" }).boundingBox();
+    const cardBox = await card.boundingBox();
     expect(meterBox!.y).toBeLessThan(cardBox!.y);
   });
 });

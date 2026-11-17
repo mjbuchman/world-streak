@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isChallengeType } from "@/challenges/registry";
 import type { ChallengeType } from "@/challenges/shared/types";
-import { gameDateAt } from "@/lib/gameDay";
+import { addDays, gameDateAt } from "@/lib/gameDay";
 import type { Database } from "@/lib/supabase/database.types";
 import { supabaseAttemptStore } from "./store";
 import { nextPosition, type DayResult, type GameAttempt, type LineupGame } from "./types";
@@ -37,6 +37,28 @@ export async function todaysChallenge(supabase: Db, now: Date): Promise<Challeng
   const rotation = await supabase.rpc("challenge_for", { d: gameDate });
   if (rotation.error) throw new Error(`Rotation lookup failed: ${rotation.error.message}`);
   return knownType(gameDate, rotation.data);
+}
+
+/**
+ * Today's games in order (T160): the public lineup, or, before the first start creates it, the
+ * one the lineup rule gives today (as `challenge_for` does for the first game).
+ */
+export async function todaysLineup(supabase: Db, now: Date): Promise<ChallengeType[]> {
+  const gameDate = gameDateAt(now);
+  const lineup = (types: unknown[]) => types.map((type) => knownType(gameDate, type));
+  const { data, error } = await supabase
+    .from("game_day_games")
+    .select("challenge_type")
+    .eq("game_date", gameDate)
+    .order("position");
+  if (error) throw new Error(`Game day lookup failed: ${error.message}`);
+  if (data.length > 0) return lineup(data.map((game) => game.challenge_type));
+  const previous = await supabase.rpc("lineup_of", { d: addDays(gameDate, -1) });
+  if (previous.error) throw new Error(`Lineup lookup failed: ${previous.error.message}`);
+  // Null when yesterday had no lineup; the rule then only avoids nothing.
+  const rule = await supabase.rpc("lineup_for", { d: gameDate, previous: previous.data });
+  if (rule.error) throw new Error(`Lineup lookup failed: ${rule.error.message}`);
+  return lineup(rule.data ?? []);
 }
 
 /** One game of today's lineup as the player stands with it. */

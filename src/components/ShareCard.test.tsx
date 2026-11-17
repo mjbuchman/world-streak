@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { MeterBody } from "@/lib/meter";
-import { buildShareText } from "@/lib/share";
+import { buildShareText, type ShareGame } from "@/lib/share";
 import { ShareCard } from "./ShareCard";
 
 const meter = {
@@ -41,8 +41,10 @@ afterEach(() => {
 
 // The wording is share.test.ts's job (emojis may appear only under src/lib/share); this checks
 // that the card builds it from the right inputs.
+const games: ShareGame[] = ["won", "lost", "won"];
 const expectedText = buildShareText({
   passed: true,
+  games,
   gameDate: "2026-11-12",
   streak: 3,
   meter: meter as MeterBody,
@@ -52,14 +54,14 @@ const expectedText = buildShareText({
 /** The text the card hands to the share sheet. */
 async function sharedText(props: { passed: boolean; siteUrl?: string; now?: Date }) {
   const user = setUpUser();
-  render(<ShareCard {...props} />);
+  render(<ShareCard games={games} {...props} />);
   await user.click(await screen.findByRole("button", { name: "Share" }));
   return (share!.mock.calls[0][0] as { text: string }).text;
 }
 
 describe("ShareCard", () => {
   it("is just a Share button: the text is not shown on the page", async () => {
-    render(<ShareCard passed siteUrl="http://localhost:3000" />);
+    render(<ShareCard passed games={games} siteUrl="http://localhost:3000" />);
     const card = await screen.findByRole("region", { name: "Share your day" });
     expect(card.querySelector("pre")).toBeNull();
     expect(card.textContent).toBe("Share");
@@ -68,7 +70,7 @@ describe("ShareCard", () => {
 
   it("shares with the device's share sheet when there is one", async () => {
     const user = setUpUser();
-    render(<ShareCard passed siteUrl="http://localhost:3000" />);
+    render(<ShareCard passed games={games} siteUrl="http://localhost:3000" />);
     await user.click(await screen.findByRole("button", { name: "Share" }));
     expect(share).toHaveBeenCalledExactlyOnceWith({ text: expectedText });
     expect(writeText).not.toHaveBeenCalled();
@@ -77,7 +79,7 @@ describe("ShareCard", () => {
   it("copies the text and says so when the device cannot share", async () => {
     share = undefined;
     const user = setUpUser();
-    render(<ShareCard passed={false} siteUrl="http://localhost:3000" />);
+    render(<ShareCard passed={false} games={["lost", "lost", "not-played"]} siteUrl="http://localhost:3000" />);
     await user.click(await screen.findByRole("button", { name: "Share" }));
     expect(writeText).toHaveBeenCalledExactlyOnceWith(expect.stringContaining("I didn't make it today."));
     expect(await screen.findByRole("status")).toHaveProperty("textContent", "Copied");
@@ -88,7 +90,7 @@ describe("ShareCard", () => {
     share = undefined;
     writeText.mockRejectedValue(new Error("denied"));
     const user = setUpUser();
-    render(<ShareCard passed siteUrl="http://localhost:3000" />);
+    render(<ShareCard passed games={games} siteUrl="http://localhost:3000" />);
     await user.click(await screen.findByRole("button", { name: "Share" }));
     expect(await screen.findByRole("status")).toHaveProperty("textContent", "Could not copy. Select the text below and copy it.");
     expect(document.querySelector("pre")?.textContent).toBe(expectedText);
@@ -97,7 +99,7 @@ describe("ShareCard", () => {
   it("copies instead when the share sheet fails for another reason", async () => {
     share = vi.fn(async () => Promise.reject(new DOMException("blocked", "NotAllowedError")));
     const user = setUpUser();
-    render(<ShareCard passed siteUrl="http://localhost:3000" />);
+    render(<ShareCard passed games={games} siteUrl="http://localhost:3000" />);
     await user.click(await screen.findByRole("button", { name: "Share" }));
     expect(writeText).toHaveBeenCalledExactlyOnceWith(expectedText);
     expect(await screen.findByRole("status")).toHaveProperty("textContent", "Copied");
@@ -106,7 +108,7 @@ describe("ShareCard", () => {
   it("stays quiet when the player closes the share sheet", async () => {
     share = vi.fn(async () => Promise.reject(new DOMException("cancelled", "AbortError")));
     const user = setUpUser();
-    render(<ShareCard passed siteUrl="http://localhost:3000" />);
+    render(<ShareCard passed games={games} siteUrl="http://localhost:3000" />);
     await user.click(await screen.findByRole("button", { name: "Share" }));
     expect(screen.queryByRole("status")).toBeNull();
     expect(writeText).not.toHaveBeenCalled();
@@ -119,7 +121,7 @@ describe("ShareCard", () => {
   it("still offers a card for today when the meter cannot be read, without the world's lines", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => json({ error: "down" }, 500)));
     expect(await sharedText({ passed: true, siteUrl: "http://localhost:3000", now: new Date("2026-11-12T10:00:00Z") })).toBe(
-      buildShareText({ passed: true, gameDate: "2026-11-12", streak: null, meter: null, siteUrl: "http://localhost:3000" }),
+      buildShareText({ passed: true, games, gameDate: "2026-11-12", streak: null, meter: null, siteUrl: "http://localhost:3000" }),
     );
   });
 });

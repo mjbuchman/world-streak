@@ -7,9 +7,10 @@ import { LinkButton } from "@/components/ui/LinkButton";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
 import { todaysDay } from "@/lib/attempts/today";
+import { isPerfectDay } from "@/lib/share";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { DayGames } from "../DayGames";
-import { daySoFar, dayVerdict } from "../outcomes";
+import { daySoFar, dayVerdict, shareGame } from "../outcomes";
 import styles from "../play.module.css";
 
 const TITLE = "Today's results";
@@ -41,11 +42,14 @@ export default async function ResultsPage() {
   const day = await todaysDay(supabase, userId, new Date());
   const verdict = dayVerdict(day.outcome);
   if (!verdict) redirect("/play");
+  const games = day.games.map((game) => shareGame(game.status));
 
   return (
     <PageShell title={TITLE} backHref="/">
       <Surface>
         <h2 className={styles.verdict}>{verdict}</h2>
+        {/* A reason to play the last game (DECISIONS, T159); it changes nothing that is counted. */}
+        {isPerfectDay(games) && <p className={styles.perfect}>Perfect day: all three games won</p>}
         <p>{daySoFar(day)}.</p>
         <DayGames games={day.games} withScores />
         <div className={styles.actions}>
@@ -61,7 +65,7 @@ export default async function ResultsPage() {
         </div>
       </Surface>
       {/* Spoiler-free, so sharing it gives nothing away (T32). */}
-      <ShareCard passed={day.outcome === "passed"} />
+      <ShareCard passed={day.outcome === "passed"} games={games} />
       <Meter />
       <AdSlot name="play-result" />
     </PageShell>

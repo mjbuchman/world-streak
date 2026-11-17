@@ -29,7 +29,8 @@ export type RecentDay = {
   outcome: Outcome | null;
 };
 export type StreakSummary = { current: number; best: number; yesterday: DayResult | null; recent: RecentDay[] };
-export type HistoryDay = DayResult & { gameDate: string; challengeType: string; threshold: number };
+/** `games`: the day's lineup in order (three games; one for days before the Daily Three). */
+export type HistoryDay = DayResult & { gameDate: string; games: string[]; threshold: number };
 export type HistoryPage = { days: HistoryDay[]; page: number; pageCount: number };
 
 const percent = (fraction: number) => `${Math.round(fraction * 100)}%`;
@@ -152,7 +153,7 @@ export async function readHistory(db: Pick<SupabaseClient<Database>, "from">, pa
   const from = (page - 1) * HISTORY_PAGE_SIZE;
   const { data, error, count } = await db
     .from("game_days")
-    .select("game_date, challenge_type, final_pass_rate, survival_threshold, outcome", { count: "exact" })
+    .select("game_date, final_pass_rate, survival_threshold, outcome, game_day_games(position, challenge_type)", { count: "exact" })
     .not("closed_at", "is", null)
     .order("game_date", { ascending: false })
     .range(from, from + HISTORY_PAGE_SIZE - 1);
@@ -163,7 +164,8 @@ export async function readHistory(db: Pick<SupabaseClient<Database>, "from">, pa
   return {
     days: data.map((row) => ({
       gameDate: row.game_date,
-      challengeType: row.challenge_type,
+      // Embedded rows come in no promised order.
+      games: [...row.game_day_games].sort((a, b) => a.position - b.position).map((game) => game.challenge_type),
       finalPassRate: dbRate(row.final_pass_rate, "final_pass_rate"),
       threshold: dbNumber(row.survival_threshold, "survival_threshold"),
       outcome: dbOutcome(row.outcome),

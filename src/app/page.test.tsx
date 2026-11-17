@@ -1,20 +1,36 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ChallengeType } from "@/challenges/shared/types";
 
 // The meter, the prize and the streak panel have their own tests; here they are stand-ins.
 vi.mock("@/components/WorldStreak", () => ({ WorldStreak: () => <section aria-label="World streak" /> }));
 vi.mock("@/components/PrizeCycle", () => ({ PrizeCycle: () => <section aria-label="Prize" /> }));
 vi.mock("@/components/Meter", () => ({ Meter: () => <section aria-label="Today's meter" /> }));
-vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: vi.fn(async () => ({})) }));
-const todaysChallenge = vi.hoisted(() => vi.fn<() => Promise<ChallengeType>>());
-vi.mock("@/lib/attempts/today", () => ({ todaysChallenge, DEFAULT_CHALLENGE: "stacking" }));
+const m = vi.hoisted(() => ({ getClaims: vi.fn(), todaysLineup: vi.fn(), todaysDay: vi.fn() }));
+vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: vi.fn(async () => ({ auth: { getClaims: m.getClaims } })) }));
+vi.mock("@/lib/attempts/today", () => ({ todaysLineup: m.todaysLineup, todaysDay: m.todaysDay, DEFAULT_CHALLENGE: "stacking" }));
 
 import Home from "./page";
 
+const lineup = ["stacking", "flash-count", "inner-clock"];
+const game = (position: number, status: string, score?: number) => ({
+  position,
+  challengeType: lineup[position - 1],
+  passTarget: 5,
+  status,
+  ...(score === undefined ? {} : { score }),
+});
+
+/** Each listed game's name and status, in order. */
+const listed = () =>
+  within(screen.getByRole("region", { name: "Today's three games" }))
+    .getAllByRole("listitem")
+    .map((item) => item.textContent);
+
 beforeEach(() => {
-  todaysChallenge.mockResolvedValue("stacking");
+  vi.clearAllMocks();
+  m.getClaims.mockResolvedValue({ data: null });
+  m.todaysLineup.mockResolvedValue(lineup);
 });
 
 afterEach(() => {
@@ -31,26 +47,39 @@ describe("Home", () => {
     expect(header?.nextElementSibling?.getAttribute("aria-label")).toBe("Today's meter");
   });
 
-  it("puts the meter first, then today's challenge, the prize and the world streak", async () => {
+  it("puts the meter first, then today's games, the prize and the world streak", async () => {
     render(await Home());
     const order = screen.getAllByRole("region").map((region) => region.getAttribute("aria-label") ?? region.textContent);
-    expect(order).toEqual(["Today's meter", expect.stringContaining("Teetering Tower"), "Prize", "World streak"]);
+    expect(order).toEqual(["Today's meter", expect.stringContaining("Today's three games"), "Prize", "World streak"]);
   });
 
-  it("shows today's challenge as a card with Play and Practice first", async () => {
+  it("lists today's three games in order, all to play, for a visitor", async () => {
     render(await Home());
-    const card = screen.getByRole("region", { name: "Teetering Tower" });
-    expect(within(card).getByText("Your part today")).toBeTruthy();
-    expect(within(card).getByText("Stack the sliding rows as high as you can. One scored try a day.")).toBeTruthy();
-    expect(within(card).getByRole("link", { name: "Play today's challenge" }).getAttribute("href")).toBe("/play");
-    expect(within(card).getByRole("link", { name: "Practice first" }).getAttribute("href")).toBe("/practice/stacking");
+    expect(listed()).toEqual(["Teetering TowerTo play", "Swift SumTo play", "Second SenseTo play"]);
+    expect(m.todaysDay).not.toHaveBeenCalled();
   });
 
-  it("shows the default challenge, not an error page, when today's cannot be read", async () => {
-    todaysChallenge.mockRejectedValue(new Error("down"));
+  it("shows the signed-in player's progress, a game left unfinished as lost", async () => {
+    m.getClaims.mockResolvedValue({ data: { claims: { sub: "u1" } } });
+    m.todaysDay.mockResolvedValue({ games: [game(1, "won", 12), game(2, "in-progress"), game(3, "not-started")] });
+    render(await Home());
+    expect(listed()).toEqual(["Teetering TowerWon", "Swift SumLost", "Second SenseTo play"]);
+    expect(m.todaysDay).toHaveBeenCalledWith(expect.anything(), "u1", expect.any(Date));
+    expect(m.todaysLineup).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the lineup rule when the signed-in player's day does not exist yet", async () => {
+    m.getClaims.mockResolvedValue({ data: { claims: { sub: "u1" } } });
+    m.todaysDay.mockResolvedValue({ games: [] });
+    render(await Home());
+    expect(listed()).toEqual(["Teetering TowerTo play", "Swift SumTo play", "Second SenseTo play"]);
+  });
+
+  it("shows the default game, not an error page, when today's cannot be read", async () => {
+    m.todaysLineup.mockRejectedValue(new Error("down"));
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
     render(await Home());
-    expect(screen.getByRole("region", { name: "Teetering Tower" })).toBeTruthy();
+    expect(listed()).toEqual(["Teetering TowerTo play"]);
     expect(logged).toHaveBeenCalledWith(new Error("down"));
     logged.mockRestore();
   });
@@ -60,14 +89,5 @@ describe("Home", () => {
     vi.stubEnv("NODE_ENV", "development");
     const { container } = render(await Home());
     expect(container.querySelector("main")?.lastElementChild?.getAttribute("data-ad-slot")).toBe("home");
-  });
-
-  it("follows today's challenge, and links to every practice game (T108)", async () => {
-    todaysChallenge.mockResolvedValue("inner-clock");
-    render(await Home());
-    const card = screen.getByRole("region", { name: "Second Sense" });
-    expect(within(card).getByText(/^Tap when each target time has passed/)).toBeTruthy();
-    expect(within(card).getByRole("link", { name: "Practice first" }).getAttribute("href")).toBe("/practice/inner-clock");
-    expect(within(card).getByRole("link", { name: "Practice any challenge" }).getAttribute("href")).toBe("/practice");
   });
 });

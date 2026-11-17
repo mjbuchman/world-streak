@@ -16,7 +16,7 @@ export function HistoryTable({ history }: { history: HistoryPage }) {
           <thead>
             <tr>
               <th scope="col">Day</th>
-              <th scope="col">Challenge</th>
+              <th scope="col">Games</th>
               <th scope="col">Passing</th>
               <th scope="col">Needed</th>
               <th scope="col">Result</th>
@@ -26,7 +26,7 @@ export function HistoryTable({ history }: { history: HistoryPage }) {
             {days.map((day) => (
               <tr key={day.gameDate}>
                 <th scope="row">{dayLabel(day.gameDate)}</th>
-                <td>{challengeName(day.challengeType)}</td>
+                <td>{day.games.map(challengeName).join(", ")}</td>
                 <td>{passRateLabel(day.finalPassRate)}</td>
                 <td>{passRateLabel(day.threshold)}</td>
                 <td className={styles[day.outcome]}>{OUTCOME_LABELS[day.outcome]}</td>

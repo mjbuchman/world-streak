@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/Button";
 import { Surface } from "@/components/ui/Surface";
 import { gameDateAt } from "@/lib/gameDay";
 import { isMeterBody, type MeterBody } from "@/lib/meter";
-import { buildShareText } from "@/lib/share";
+import { buildShareText, type ShareGame } from "@/lib/share";
 import styles from "./ShareCard.module.css";
 
 type ShareCardProps = {
   passed: boolean;
+  games: ShareGame[];
   /** The link in the text; by default NEXT_PUBLIC_SITE_URL, else this page's origin. */
   siteUrl?: string;
   /** For tests: the time the card falls back to for today's date when the meter cannot be read. */
@@ -42,7 +43,7 @@ function useMeterOnce(): { meter: MeterBody | null; loaded: boolean } {
  * world is doing, never the score. Share uses the device's share sheet, else copies the text; the
  * page shows only the button (M3 play-test), and the text only when copying failed.
  */
-export function ShareCard({ passed, siteUrl, now }: ShareCardProps) {
+export function ShareCard({ passed, games, siteUrl, now }: ShareCardProps) {
   const { meter, loaded } = useMeterOnce();
   const [status, setStatus] = useState<string | null>(null);
   // The text stays off the page (the share sheet shows it) unless it has to be copied by hand.
@@ -52,6 +53,7 @@ export function ShareCard({ passed, siteUrl, now }: ShareCardProps) {
 
   const text = buildShareText({
     passed,
+    games,
     gameDate: meter?.gameDate ?? gameDateAt(now ?? new Date()),
     streak: meter?.streak.current ?? null,
     meter,
