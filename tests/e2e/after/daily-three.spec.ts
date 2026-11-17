@@ -181,6 +181,7 @@ test("two losses: the day fails after game 2, and the third game is still offere
 });
 
 test("one attempt per game: a reload resumes the day, and a start after all three is refused", async ({ page, accounts }) => {
+  await saveDay(LINEUP, [LOSE, LOSE, WIN]);
   await signUpViaForm(page, { email: accounts.uniqueEmail() });
   await expect(page).toHaveURL("/");
   // Game 1 started and left.
