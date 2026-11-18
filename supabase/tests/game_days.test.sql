@@ -1,5 +1,5 @@
 begin;
-select plan(61);
+select plan(62);
 
 -- game_days: structure.
 select has_table('public', 'game_days', 'game_days table exists');
@@ -12,6 +12,11 @@ select is(
   (select count(*)::int from pg_trigger where tgrelid = 'public.game_days'::regclass and tgname in
     ('game_days_mirror_first_game', 'game_days_change_challenge', 'game_days_lock_started_pass_target', 'game_days_add_first_game')),
   0, 'the triggers for the old columns are gone'
+);
+select is(
+  (select count(*)::int from pg_proc where pronamespace = 'public'::regnamespace and proname in
+    ('mirror_first_game', 'change_day_challenge', 'lock_started_pass_target', 'add_first_game')),
+  0, 'and so are their functions'
 );
 select col_type_is('public', 'game_days', 'survival_threshold', 'numeric', 'survival_threshold is numeric');
 select col_not_null('public', 'game_days', 'survival_threshold', 'survival_threshold is required');
