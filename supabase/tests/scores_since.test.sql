@@ -1,6 +1,6 @@
 begin;
 \ir fixtures/fixtures.psql
-select plan(17);
+select plan(18);
 
 -- T183: a challenge's pass-target percentile reads only scores from its scores_since date on.
 select has_column('public', 'challenge_types', 'scores_since', 'challenge types have a scores_since date');
@@ -25,6 +25,11 @@ select ok(
   (select scores_since from public.challenge_types where type = 'inner-clock')
     >= (select scores_since from public.challenge_types where type = 'fair-split'),
   'Second Sense''s 2 s bank starts its scale again (T204)'
+);
+select ok(
+  (select scores_since from public.challenge_types where type = 'flash-count')
+    >= (select scores_since from public.challenge_types where type = 'fair-split'),
+  'Swift Sum''s 10 to 30 dots start its scale again (T206)'
 );
 select is(
   (select count(*)::integer from public.challenge_types where type not in ('inner-clock', 'flash-count', 'echo-path', 'fair-split') and scores_since is not null), 0,

@@ -348,6 +348,13 @@ describe("flash-count-instant", () => {
     expect(detectFlags(sum([800, 800]))).toEqual([]);
   });
 
+  it("leaves an honest 30-dot round answered 2 s after it cleared alone (T206)", () => {
+    const answerAt = RUN_COUNTDOWN_MS + 1_800 + 2_000;
+    const params = { layoutSeed: 1, bank: 10, levels: [{ dotCount: 30, flashMs: 1_800 }] };
+    const run = sum(undefined, { inputs: { answers: [{ count: 27, atMs: answerAt }] }, params, serverElapsedMs: answerAt + 1_000 });
+    expect(detectFlags(run)).toEqual([]);
+  });
+
   /**
    * Rounds of 10 dots (a 1 s flash), 14 (2.5 s) and 18 (2 s): right, off by 2, then right, each
    * answer `gapsMs` after its flash cleared. A miss the bank covers moves on like a right answer.

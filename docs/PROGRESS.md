@@ -4,13 +4,15 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M6 Gameplay tweaks (T177–T198, approved Nov 18). Batches 14–18 run in order without play-test stops; one M6 play-test at the end. T45, T52 and T128 still wait on the owner.
-- Active task: none; M6 is complete and waits for the owner's play-test.
+- Milestone: M7 play-test tweaks (T201–T214, approved Nov 18). Batches M7-a to M7-e run without play-test stops; one play-test at the end. T45, T52 and T128 still wait on the owner.
+- Active task: batch M7-b (T205, T206).
 - Blocked tasks: none
 - Waiting on the human: the M6 play-test and M6 please-confirms; updating DESIGN.md for M6; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M7 play-test tweaks (T201–T214, approved Nov 18), batches M7-a to M7-e, then batch 19 (T199, T200).
 
 ## Log
+
+- 2026-11-18 T201–T204 done, PR #179: Echo Path and Fair Split shown as Trail Trace and Clean Cut; Second Sense targets of 10 to 20 s against a 2 s bank (simulated spread 600 ms), a centred 3-2-1, and its scale reset.
 
 - 2026-11-18 T197–T198 done, PR #176: e2e and phone checks for the four reworked games (round-2 3-2-1s, Echo Path growth, two line moves, per-player params, bank height) and the M6 decisions and DESIGN.md conflicts recorded. Maintainer pass added T199, T200.
 

@@ -3,7 +3,8 @@ import { createRng } from "../shared/prng";
 import { MIN_SPACING } from "./dots";
 import {
   BANK,
-  DOT_COUNT_RANGES,
+  DOT_COUNT_MAX,
+  DOT_COUNT_MIN,
   FLASH_MS_RANGE,
   ROUNDS,
   flashLadder,
@@ -21,30 +22,31 @@ const five: FlashLadderParams = { layoutSeed: 7, bank: 10, levels: [10, 14, 18, 
 const answers = (...counts: number[]) => ({ answers: counts.map((count, i) => ({ count, atMs: 1000 * (i + 1) })) });
 
 describe("Swift Sum params", () => {
-  it("documents the placeholders: 5 rounds, a bank of 10 dots, counts from 6 to 11 rising by 3 a round", () => {
+  it("documents the values: 5 rounds, a fresh count of 10 to 30 dots every round (owner, T205)", () => {
     expect(ROUNDS).toBe(5);
-    expect(BANK).toBe(10);
-    expect(DOT_COUNT_RANGES).toEqual([
-      { min: 6, max: 11 },
-      { min: 9, max: 14 },
-      { min: 12, max: 17 },
-      { min: 15, max: 20 },
-      { min: 18, max: 23 },
-    ]);
+    expect(DOT_COUNT_MIN).toBe(10);
+    expect(DOT_COUNT_MAX).toBe(30);
     expect(FLASH_MS_RANGE).toEqual({ min: 1400, max: 1800 });
   });
 
-  it("give every seed 0 to 999 counts in their ranges, a flash 100 ms shorter each round, and the bank", () => {
+  it("give every seed 0 to 999 counts of 10 to 30, a flash 100 ms shorter each round, and the bank", () => {
     for (let seed = 0; seed < 1000; seed++) {
       const { levels, bank } = paramsFromSeed(seed);
       expect(bank).toBe(BANK);
       expect(levels).toHaveLength(ROUNDS);
       levels.forEach((level, i) => {
-        expect(level.dotCount).toBeGreaterThanOrEqual(DOT_COUNT_RANGES[i].min);
-        expect(level.dotCount).toBeLessThanOrEqual(DOT_COUNT_RANGES[i].max);
+        expect(level.dotCount).toBeGreaterThanOrEqual(10);
+        expect(level.dotCount).toBeLessThanOrEqual(30);
         expect(level.flashMs).toBe(1800 - 100 * i);
       });
     }
+  });
+
+  it("draw every count from 10 to 30 in every round, with no rise from round 1 to round 5", () => {
+    const runs = Array.from({ length: 1000 }, (_, seed) => paramsFromSeed(seed).levels.map((level) => level.dotCount));
+    for (let i = 0; i < ROUNDS; i++) expect(new Set(runs.map((counts) => counts[i])).size).toBe(21);
+    const mean = (i: number) => runs.reduce((sum, counts) => sum + counts[i], 0) / runs.length;
+    expect(Math.abs(mean(ROUNDS - 1) - mean(0))).toBeLessThan(1.5);
   });
 
   it("are the same for the same seed", () => {
@@ -61,10 +63,10 @@ describe("Swift Sum params", () => {
   });
 
   it.each([
-    [0, [7, 9, 13, 15, 20]],
-    [1, [9, 9, 15, 20, 23]],
-    [4_294_967_295, [11, 10, 16, 20, 23]],
-  ])("golden: seed %i gives the dot counts %j (changing the PRNG or the ranges changes these)", (seed, counts) => {
+    [0, [15, 10, 14, 13, 19]],
+    [1, [23, 10, 21, 30, 30]],
+    [4_294_967_295, [28, 13, 25, 29, 27]],
+  ])("golden: seed %i gives the dot counts %j (changing the PRNG or the range changes these)", (seed, counts) => {
     expect(paramsFromSeed(seed).levels.map((level) => level.dotCount)).toEqual(counts);
   });
 });
@@ -116,17 +118,23 @@ describe("Swift Sum score", () => {
     expect(flashLadder.score(five, answers(...counts))).toBe(score);
   });
 
+  it("scores counts that jump up and down the same way (T205: 12, 25, 18, 30, 21)", () => {
+    const jumps = { ...five, levels: [12, 25, 18, 30, 21].map((dotCount) => ({ dotCount, flashMs: 1500 })) };
+    expect(flashLadder.score(jumps, answers(12, 25, 18, 30, 21))).toBe(6);
+    expect(flashLadder.score(jumps, answers(12, 24, 18, 29, 21))).toBe(5.8);
+  });
+
   it("ignores answers after the run has ended", () => {
     expect(flashLadder.score(five, answers(30, 14, 18))).toBe(0);
     expect(flashLadder.score(five, answers(10, 14, 18, 22, 26, 99))).toBe(6);
   });
 
   it.each([
-    [0, 5.4],
-    [1, 5.2],
-    [4_294_967_295, 5],
+    [0, 5.8],
+    [1, 2],
+    [4_294_967_295, 0],
   ])("golden: seed %i with fixed answers scores %d", (seed, score) => {
-    expect(flashLadder.score(paramsFromSeed(seed), answers(9, 10, 14, 17, 20))).toBe(score);
+    expect(flashLadder.score(paramsFromSeed(seed), answers(15, 10, 15, 13, 20))).toBe(score);
   });
 
   it("gives the same score for the same answers, between 0 and the rounds plus one (property)", () => {
@@ -146,7 +154,7 @@ describe("Swift Sum score", () => {
 });
 
 describe("Swift Sum balance", () => {
-  it("lets an estimator with a normal 15% error survive all five rounds 40% to 80% of the time", () => {
+  it("lets an estimator with a normal 15% error survive all five rounds 25% to 60% of the time", () => {
     let survivedAll = 0;
     for (let seed = 0; seed < 1000; seed++) {
       const params = paramsFromSeed(seed);
@@ -156,8 +164,9 @@ describe("Swift Sum balance", () => {
       const run = answers(...params.levels.map(({ dotCount }) => Math.max(0, Math.round(dotCount * (1 + 0.15 * normal())))));
       if (play(params, run).survived === ROUNDS) survivedAll++;
     }
-    expect(survivedAll / 1000).toBeGreaterThanOrEqual(0.4);
-    expect(survivedAll / 1000).toBeLessThanOrEqual(0.8);
+    // Measured with 10 to 30 dots a round and a 10 dot bank (T205): 41%, so the bank stays at 10.
+    expect(survivedAll / 1000).toBeGreaterThanOrEqual(0.25);
+    expect(survivedAll / 1000).toBeLessThanOrEqual(0.6);
   });
 });
 

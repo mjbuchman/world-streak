@@ -65,7 +65,7 @@ describe("challengeUi", () => {
   });
 
   it("explains Swift Sum's five rounds and its dot bank (T186)", () => {
-    expect(challengeUi("flash-count").howTo).toMatch(/five rounds.*10-dot bank.*Survive all five/);
+    expect(challengeUi("flash-count").howTo).toMatch(/five rounds.*a new count of 10 to 30 dots.*10-dot bank.*Survive all five/);
   });
 
   it("explains Echo Path's climbing path and its arrow keys, and states its target as a path length (T190, T191)", () => {
