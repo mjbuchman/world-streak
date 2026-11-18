@@ -35,6 +35,8 @@
 .gauge {
   position: relative;
   width: min(300px, 100%);
+  /* The three-digit reading is sized from the gauge's width (T177). */
+  container-type: inline-size;
 }
 
 .arc {
@@ -80,7 +82,8 @@
 
 .reading {
   position: absolute;
-  inset: 38% 0 auto;
+  /* Low enough in the bowl that the reading's top corners clear the arc (T177). */
+  inset: 47% 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -94,6 +97,11 @@
   line-height: 1;
   color: var(--fs-color-text);
   font-variant-numeric: tabular-nums;
+}
+
+/* "100%" at the display size reaches the arc; this keeps it inside the inner circle (T177). */
+.rate[data-digits="3"] {
+  font-size: min(calc(var(--fs-text-display) * 0.7), 15cqi);
 }
 
 .meter[data-state="above"] .rate {

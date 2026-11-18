@@ -191,7 +191,10 @@ export function Meter() {
             <p className={styles.empty}>{NO_ONE_FINISHED}</p>
           ) : (
             <>
-              <p className={styles.rate}>{rate}%</p>
+              {/* "100%" gets smaller type so it stays inside the arc (T177). */}
+              <p className={styles.rate} data-digits={String(rate).length}>
+                {rate}%
+              </p>
               <p className={styles.caption}>passing right now</p>
             </>
           )}
