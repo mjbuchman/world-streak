@@ -16,8 +16,12 @@ export const ECHO_PATH_COLOR_TOKENS: Record<keyof EchoPathColors, string> = {
   board: "--fs-color-meter-surface",
   tile: "--fs-color-surface-strong",
   lit: "--fs-color-mint",
+  trail: "--fs-color-mint",
   pressed: "--fs-color-mint-light",
   miss: "--fs-color-tangerine",
+  start: "--fs-color-mint-dark",
+  finish: "--fs-color-tangerine",
+  focus: "--fs-color-text",
 };
 
 export const FAIR_SPLIT_COLOR_TOKENS: Record<keyof FairSplitColors, string> = {

@@ -1,4 +1,4 @@
-/* Echo Path: the length and lives above a square grid (T171). */
+/* Echo Path: the lives and the path bar above a tall 5 x 10 board (T171, T190). */
 .game {
   display: flex;
   flex-direction: column;
@@ -12,9 +12,29 @@
   gap: var(--space-4);
 }
 
-.length {
-  margin: 0;
-  font-weight: 700;
+/* One cell a tile of the path, filled as far as it is cleared; the last cell is the top. */
+.pathBar {
+  display: flex;
+  flex: 1;
+  gap: 2px;
+  max-width: 220px;
+}
+
+.cell {
+  flex: 1;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--fs-color-surface-strong);
+}
+
+.cell:last-child {
+  background: var(--fs-color-tangerine);
+  opacity: 0.4;
+}
+
+.cell[data-cleared] {
+  background: var(--fs-color-mint);
+  opacity: 1;
 }
 
 .lives {
@@ -36,17 +56,18 @@
   border-color: var(--fs-color-surface-border);
 }
 
-/* The grid, as wide as the page allows up to 420 px, with the countdown over its middle. */
+/* The board, 250 px wide at most so its 10 rows fit a phone screen, with the countdown over its middle. */
 .stage {
   position: relative;
-  width: min(100%, 420px);
+  width: min(100%, 250px);
   margin: 0 auto;
 }
 
 .board {
   display: block;
   width: 100%;
-  aspect-ratio: 1;
+  /* Five tiles and six gaps of a tenth of a tile across, ten tiles and eleven gaps up. */
+  aspect-ratio: 5.6 / 11.1;
   /* Quick taps on a phone never zoom the page, by double tap or pinch (T166). */
   touch-action: none;
   border-radius: var(--fs-radius-surface);

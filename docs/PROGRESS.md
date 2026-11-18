@@ -5,13 +5,14 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M6 Gameplay tweaks (T177–T198, approved Nov 18). Batches 14–18 run in order without play-test stops; one M6 play-test at the end. T45, T52 and T128 still wait on the owner.
-- Active task: batch 15, T184–T186 Swift Sum rounds.
+- Active task: batch 16, T187–T191 Echo Path as one growing path.
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: batches 16–18.
+- Next: batches 17–18.
 
 ## Log
 
+- 2026-11-18 T184–T186 done, PR #173: Swift Sum as five rounds against a 10-dot bank; results read in rounds. One CI rerun for a runner fault.
 - 2026-11-18 T180–T183 done, PR #171: Second Sense as four rounds against a 10 s bank (shared `playBank`, `scores_since` scale reset). Blocked after 3 CI failures on a phone ghost click, unblocked by the owner; fixed by showing the last error for ROUND_GAP_MS before the result.
 - 2026-11-18 T177–T179 done, PR #170: shared round progress bar, round countdown and bank gauge; the meter's 100% fits the gauge.
 

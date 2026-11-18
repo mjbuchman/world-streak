@@ -179,15 +179,13 @@ test("Echo Path practice: watch, then wrong tiles use up the lives and end the r
   const board = page.getByRole("img", { name: /Get ready|Watch the tiles|Tap the tiles/ });
   const lives = page.getByRole("img", { name: /lives left$/ });
   await expect(lives).toHaveAccessibleName("3 of 3 lives left");
-  // Key 1 is tile 1. Pressed twice in a row it is always wrong by the second time (a path never
-  // repeats a tile), so each life goes within two presses, and the path is never repeated.
+  // The first arrow shows the ring on the bottom row; nine more take it to the top row, where a
+  // path never starts. Each Enter there is a wrong first tile and costs a life (T190).
+  for (let i = 0; i < 10; i++) await board.press("ArrowUp");
   for (const left of [2, 1, 0]) {
     await expect(board).toHaveAttribute("data-phase", "repeat", { timeout: 15_000 });
-    await board.press("1");
-    // A right first tile leaves the lives as they were; the second press of tile 1 is then wrong.
+    await board.press("Enter");
     // (After the last life the game, and its lives, give way to the result.)
-    const still = await lives.getAttribute("aria-label", { timeout: 1_000 }).catch(() => null);
-    if (still === `${left + 1} of 3 lives left`) await board.press("1");
     if (left > 0) await expect(lives).toHaveAccessibleName(`${left} of 3 lives left`);
   }
   await expect(page.getByRole("heading", { level: 2 })).toHaveText("No path repeated");

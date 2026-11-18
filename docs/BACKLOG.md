@@ -2067,7 +2067,7 @@ Planning notes for M6:
 
 ### T184 Swift Sum engine: five rounds against a bank of missed dots
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T180
 - Acceptance criteria:
   - [ ] `src/challenges/flash-count/flashLadder.ts` (file and `flashLadder` export names kept so imports stay; header comment rewritten) plays `ROUNDS = 5` rounds in place of lives and retries. `paramsFromSeed(seed)` returns `{ layoutSeed, bank, levels: { dotCount, flashMs }[] }` with `bank = 10` dots (2 per round; proposed, owner to confirm).
@@ -2079,7 +2079,7 @@ Planning notes for M6:
 
 ### T185 Swift Sum screen: progress bar, bank gauge, countdown between rounds
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T178, T179, T184
 - Acceptance criteria:
   - [ ] `FlashLadderGame` (`src/components/flash-count/FlashLadderGame.tsx`; `FlashCountGame` stays the single flash) drops the life pips and the level text and shows `RoundProgress` (5 steps) and `BankGauge` ("Dot bank", format "3 dots"), with each round's miss as a segment and the reveal "Right on" or "Off by 3" from the answer against that round's count.
@@ -2091,7 +2091,7 @@ Planning notes for M6:
 
 ### T186 Swift Sum: scale reset, cheat rule and wording
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T183, T184
 - Acceptance criteria:
   - [ ] A migration sets `challenge_types.scores_since` for `flash-count` to the day after it runs (T183) and sets its `default_pass_targets` entry to 5 (survive all five rounds; proposed, owner to confirm), in `game_settings` and the column default; unedited, unstarted open `flash-count` days are recomputed. pgTAP as in T183 for this type.
@@ -2102,7 +2102,7 @@ Planning notes for M6:
 
 ### T187 Echo Path: path generator (pure)
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/echo-path/path.ts` exports `COLS = 5`, `ROWS = 10`, `MAX_PATH_LENGTH = 18` and `MIN_PATH_LENGTH = 12` (a tall narrow board like Teetering Tower; the length cap is the owner's "height 10, max 18"; 5 columns and the minimum are proposed, owner to confirm), and `pathFor(seed: number): number[]`, a deterministic list of tile indices (row by row from the bottom: index = `row * COLS + col`, row 0 the bottom row) from the bottom row to the top row.
@@ -2112,7 +2112,7 @@ Planning notes for M6:
 
 ### T188 Echo Path engine: one growing path
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T187
 - Acceptance criteria:
   - [ ] `src/challenges/echo-path/engine.ts` uses the path of T187: `paramsFromSeed(seed)` returns `{ cols, rows, path, startLength, stepMs }` with `startLength = 4` (the owner's start) and `stepMs` drawn from 300 to 400 in 50 ms steps (proposed, owner to confirm); `sequenceFor(params, length)` is the first `length` tiles of the path (the tries no longer differ: the path is fixed for the attempt). `COLS`, `ROWS`, `MAX_LENGTH` and the 3 x 3 grid constants are replaced.
@@ -2123,7 +2123,7 @@ Planning notes for M6:
 
 ### T189 Echo Path renderer: tall board and path playback
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T188
 - Acceptance criteria:
   - [ ] `src/challenges/echo-path/render.ts`: `boardLayout(width, height, cols, rows)` fits the 5 x 10 board into the canvas (portrait), with tiles of at least 44 x 44 CSS px at 390 px width (so the board is up to about 480 px tall, scrolled into view by the page, not clipped); `hitTile` and `litTileAt` keep their contracts.
@@ -2133,7 +2133,7 @@ Planning notes for M6:
 
 ### T190 Echo Path screen, practice page and wording
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T189
 - Acceptance criteria:
   - [ ] `EchoPathGame` (`src/components/echo-path/EchoPathGame.tsx`) plays the new engine: a 3-2-1, then the playback of the first 4 tiles, the player's taps, a short pause, one more tile each round; taps during playback are ignored; the status row shows life pips and a path-length bar (T178's `RoundProgress` is not used, because the round count varies per player: a bar of `pathLength` cells whose cleared part fills, with the board's top as the goal) and the text "Tile 7 of 14" only as the accessible label.
@@ -2144,7 +2144,7 @@ Planning notes for M6:
 
 ### T191 Echo Path: scale reset, cheat checks and wording
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T183, T188
 - Acceptance criteria:
   - [ ] A migration sets `challenge_types.scores_since` for `echo-path` (T183) and its `default_pass_targets` entry to 10 (clear a path of 10 tiles, the board's height; proposed, owner to confirm), in `game_settings` and the column default; unedited, unstarted open `echo-path` days are recomputed. pgTAP as in T183 for this type.

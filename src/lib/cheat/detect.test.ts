@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { play as playFairSplit, type FairSplitCut, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
+import { echoPath, paramsFromSeed as echoParamsFromSeed, sequenceFor } from "@/challenges/echo-path/engine";
+import { playbackMs } from "@/challenges/echo-path/render";
 import { REVEAL_MS } from "@/challenges/flash-count/flashLadder";
 import { ROUND_COUNTDOWN_MS, ROUND_GAP_MS } from "@/challenges/inner-clock/timeBank";
 import { COLUMNS, columnAt, simulate, type StackingParams } from "@/challenges/stacking/engine";
@@ -90,16 +92,42 @@ const bank = (errorsMs: (number | null)[], over: Partial<DetectArgs> = {}): Dete
   return clock(errorsMs.length, { inputs: { tapsMs }, params: { budgetMs: 10_000, rounds }, serverElapsedMs: lastMs + 4_000, ...over });
 };
 
+/** A real Echo Path board: its path is 17 tiles long, played back at 300 ms a tile. */
+const ECHO_PARAMS = echoParamsFromSeed(0);
+/** The game's pause before each playback (EchoPathGame's BETWEEN_MS). */
+const ECHO_PAUSE_MS = 700;
+
 /** An Echo Path run tapped at these times (the tiles do not matter to its rule). */
 const echo = (tapsMs: number[], over: Partial<DetectArgs> = {}): DetectArgs => ({
   challengeType: "echo-path",
-  inputs: { taps: tapsMs.map((atMs, i) => ({ tile: i % 9, atMs })) },
+  inputs: { taps: tapsMs.map((atMs, i) => ({ tile: i % 50, atMs })) },
   score: 3,
-  params: { cols: 3, rows: 3, startLength: 3, maxLength: 12, stepMs: 500, sequenceSeed: 1 },
+  params: ECHO_PARAMS,
   serverElapsedMs: (tapsMs.at(-1) ?? 0) + 4_000,
   history: [],
   ...over,
 });
+
+/**
+ * An Echo Path run that clears every length from 4 up to `length` with no miss, as the game
+ * paces it: each echo's first tap comes 600 ms after the pause and its playback, and the taps
+ * after it follow at `gapMs(j)`, j counting those in-echo gaps over the whole run. It stops after
+ * `maxTaps` taps.
+ */
+function echoRun(length: number, gapMs: (j: number) => number, maxTaps = Infinity): DetectArgs {
+  const taps: { tile: number; atMs: number }[] = [];
+  let at = RUN_COUNTDOWN_MS;
+  let j = 0;
+  for (let len = ECHO_PARAMS.startLength; len <= length; len++) {
+    at += ECHO_PAUSE_MS + playbackMs(len, ECHO_PARAMS.stepMs);
+    sequenceFor(ECHO_PARAMS, len).forEach((tile, i) => {
+      at += i === 0 ? 600 : gapMs(j++);
+      if (taps.length < maxTaps) taps.push({ tile, atMs: at });
+    });
+  }
+  const inputs = { taps };
+  return { ...echo([]), inputs, score: echoPath.score(ECHO_PARAMS, inputs), serverElapsedMs: at + 4_000 };
+}
 
 const SQUARE = [
   { x: 0, y: 0 },
@@ -232,21 +260,34 @@ describe("echo-path-robotic", () => {
     expect(detectFlags(echo([...taps, taps[5] + 80]))).toEqual([]);
   });
 
-  // An even number of intervals alternating 400 ± d has a standard deviation of exactly d.
-  const alternating = (count: number, d: number) => {
-    const taps = [1_000];
-    while (taps.length < count) taps.push(taps.at(-1)! + 400 + (taps.length % 2 === 0 ? d : -d));
-    return taps;
-  };
+  // An even number of gaps alternating 400 ± d has a standard deviation of exactly d. Echoes of
+  // 4, 5 and 6 tiles have 3 + 4 + 5 = 12 gaps between their own taps.
+  const alternating = (d: number) => (j: number) => 400 + (j % 2 === 0 ? d : -d);
 
-  it("flags 10 or more taps whose intervals vary under 5 ms, and allows exactly 5", () => {
-    expect(detectFlags(echo(alternating(10, 0)))).toEqual(["echo-path-robotic"]);
-    expect(detectFlags(echo(alternating(11, ECHO_PATH_RHYTHM_MAX_SD_MS - 0.01)))).toEqual(["echo-path-robotic"]);
-    expect(detectFlags(echo(alternating(11, ECHO_PATH_RHYTHM_MAX_SD_MS)))).toEqual([]);
+  it("flags in-echo gaps that vary under 5 ms, and allows exactly 5", () => {
+    expect(detectFlags(echoRun(6, alternating(0)))).toEqual(["echo-path-robotic"]);
+    expect(detectFlags(echoRun(6, alternating(ECHO_PATH_RHYTHM_MAX_SD_MS - 0.01)))).toEqual(["echo-path-robotic"]);
+    expect(detectFlags(echoRun(6, alternating(ECHO_PATH_RHYTHM_MAX_SD_MS)))).toEqual([]);
   });
 
-  it("ignores 9 such taps", () => {
-    expect(detectFlags(echo(alternating(9, 0)))).toEqual([]);
+  it("needs 9 in-echo gaps, as many as 10 taps have", () => {
+    // 4 + 5 taps, then 3 of the 6-tile echo: 7 + 2 = 9 gaps; one tap fewer leaves 8.
+    expect(detectFlags(echoRun(6, alternating(0), 12))).toEqual(["echo-path-robotic"]);
+    expect(detectFlags(echoRun(6, alternating(0), 11))).toEqual([]);
+  });
+
+  // Runs of the growing path (T191): 4 up to 14 tiles is 99 taps over about a minute and a half.
+  it("flags nothing for an honest 14-tile run, even a quick one", () => {
+    const rng = createRng(3);
+    const run = echoRun(14, () => rng.int(180, 520));
+    expect(run.score).toBe(15);
+    expect(detectFlags(run)).toEqual([]);
+  });
+
+  it("flags only the rhythm for a scripted 14-tile run tapped at an even 100 ms, whatever its pauses", () => {
+    // The gaps before each echo (the pause, the playback and 600 ms) vary from 1.9 to 5.2 s: on
+    // their own they would make the run look uneven.
+    expect(detectFlags(echoRun(14, () => 100))).toEqual(["echo-path-robotic"]);
   });
 });
 
@@ -396,7 +437,7 @@ describe("each challenge's rules stay with that challenge", () => {
   // the Tower and Echo Path, but mean nothing to Second Sense, whose rounds count from their own start.
   it("a rule never fires for another game's attempt", () => {
     const fast = Array.from({ length: 12 }, (_, i) => 1_000 + i * 100);
-    expect(detectFlags(echo(fast))).toEqual(["echo-path-robotic"]);
+    expect(detectFlags(echoRun(6, () => 100))).toEqual(["echo-path-robotic"]);
     expect(detectFlags(bank([0, 0, 0, 0, 0], { challengeType: "echo-path", inputs: { taps: [] } }))).toEqual([]);
     expect(detectFlags({ ...split([50, 50, 50, 50, 50, 50]), challengeType: "flash-count", inputs: { answers: [] } })).toEqual([]);
     expect(detectFlags({ ...echo(fast), challengeType: "fair-split", inputs: { cuts: [], endMs: 1_000 }, params: squares })).toEqual([]);

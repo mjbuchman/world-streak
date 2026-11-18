@@ -1,7 +1,7 @@
 // Cheat checks (T40): pure rules over one scored attempt and the player's recent ones. They
 // protect prize entries only. A flag never changes a pass, a fail or the meter: cheating to pass
 // only helps the streak, and sabotage must look the same as an honest fail (DESIGN.md).
-import type { EchoPathInputs } from "@/challenges/echo-path/engine";
+import { play as playEchoPath, type EchoPathInputs, type EchoPathParams } from "@/challenges/echo-path/engine";
 import { isFair, play as playFairSplit, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
 import { splitShare } from "@/challenges/fair-split/geometry";
 import { play, REVEAL_MS, type FlashLadderInputs, type FlashLadderParams } from "@/challenges/flash-count/flashLadder";
@@ -83,10 +83,21 @@ function stackingFlags(params: StackingParams, taps: readonly number[]): FlagRea
   return flags;
 }
 
-/** Taps faster than a hand moves, or evenly spaced like a script. */
-function robotic(tapsMs: readonly number[], minIntervalMs: number, minTaps: number, maxSdMs: number): boolean {
-  const gaps = intervals(tapsMs);
-  return gaps.some((gap) => gap < minIntervalMs) || (tapsMs.length >= minTaps && standardDeviation(gaps) < maxSdMs);
+/**
+ * The gaps between Echo Path taps inside each echo of the path. The gap before an echo's first
+ * tap holds the pause and the playback, which the game sets, not the player; across a long run
+ * those gaps alone would hide a script's even rhythm (T191).
+ */
+function echoGapsMs(params: EchoPathParams, { taps }: EchoPathInputs): number[] {
+  return taps.slice(1).flatMap((tap, i) => (playEchoPath(params, { taps: taps.slice(0, i + 1) }).position > 0 ? [tap.atMs - taps[i].atMs] : []));
+}
+
+/** Taps faster than a hand moves, or, within each echo, evenly spaced like a script. */
+function echoPathRobotic(params: EchoPathParams, inputs: EchoPathInputs): boolean {
+  const tooQuick = intervals(inputs.taps.map((tap) => tap.atMs)).some((gap) => gap < ECHO_PATH_MIN_TAP_INTERVAL_MS);
+  // As many gaps as a run of ECHO_PATH_RHYTHM_MIN_TAPS taps has.
+  const rhythm = echoGapsMs(params, inputs);
+  return tooQuick || (rhythm.length >= ECHO_PATH_RHYTHM_MIN_TAPS - 1 && standardDeviation(rhythm) < ECHO_PATH_RHYTHM_MAX_SD_MS);
 }
 
 /** Many Time Bank rounds of one run tapped almost exactly on target. */
@@ -159,10 +170,8 @@ function gameFlags({ challengeType, inputs, params }: DetectArgs): FlagReason[] 
       const gaps = flashLadderAnswerGapsMs(params as FlashLadderParams, inputs as FlashLadderInputs);
       return gaps.some((gap) => gap < FLASH_COUNT_MIN_ANSWER_MS) ? ["flash-count-instant"] : [];
     }
-    case "echo-path": {
-      const tapsMs = (inputs as EchoPathInputs).taps.map((tap) => tap.atMs);
-      return robotic(tapsMs, ECHO_PATH_MIN_TAP_INTERVAL_MS, ECHO_PATH_RHYTHM_MIN_TAPS, ECHO_PATH_RHYTHM_MAX_SD_MS) ? ["echo-path-robotic"] : [];
-    }
+    case "echo-path":
+      return echoPathRobotic(params as EchoPathParams, inputs as EchoPathInputs) ? ["echo-path-robotic"] : [];
     case "fair-split":
       return fairSplitFlags(params as FairSplitParams, inputs as FairSplitInputs);
     default:
