@@ -63,6 +63,18 @@ export default defineConfig({
         "src/lib/profiles.ts": { lines: 90, branches: 90 },
         "src/lib/profileCompletion.ts": { lines: 90, branches: 90 },
         "src/lib/dates.ts": { lines: 90, branches: 90 },
+        // What players are shown and share: the rules page, the share text, form and password checks.
+        "src/lib/share.ts": { lines: 90, branches: 90 },
+        "src/lib/rules.ts": { lines: 90, branches: 90 },
+        "src/lib/random.ts": { lines: 90, branches: 90 },
+        "src/lib/forms.ts": { lines: 90, branches: 90 },
+        "src/lib/passwords.ts": { lines: 90, branches: 90 },
+        "src/lib/health.ts": { lines: 90, branches: 90 },
+        // The admin page's helpers and the local-only dev tools (T163, T164).
+        "src/lib/adminPage.ts": { lines: 80, branches: 80 },
+        "src/lib/adminForm.ts": { lines: 80, branches: 80 },
+        "src/lib/devData.ts": { lines: 80, branches: 80 },
+        "src/lib/localTools.ts": { lines: 80, branches: 80 },
         // Client components get component tests (Testing Library, jsdom per file).
         "src/app/signup/SignUpForm.tsx": { lines: 80, branches: 80 },
         "src/app/signin/SignInForm.tsx": { lines: 80, branches: 80 },
