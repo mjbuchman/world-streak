@@ -213,6 +213,7 @@ test("ten players' starts: Swift Sum counts of 10 to 30 that vary, and Trail Tra
   expect(new Set(counts.map((run) => run.join())).size).toBeGreaterThan(1);
   expect(new Set(counts[0]).size).toBeGreaterThan(1);
   expect(paths).toHaveLength(10);
+  expect(new Set(paths.map((path) => path.join())).size).toBeGreaterThan(1);
   for (const path of paths) {
     expect(path.length).toBeLessThanOrEqual(MAX_PATH_LENGTH);
     expect(path.every((tile) => tile >= 0 && tile < COLS * ROWS)).toBe(true);
