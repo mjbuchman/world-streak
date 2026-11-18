@@ -8,7 +8,7 @@ import { RUN_COUNTDOWN_MS } from "../../src/config/countdown";
 import { FALL_MS } from "../../src/challenges/stacking/render";
 import { reachedRow } from "../../src/components/stacking/rows";
 import { expect, test } from "./support/fixtures";
-import { gotoReady } from "./support/pages";
+import { countdownOffsets, gotoReady } from "./support/pages";
 import { pinSeed, playTaps, skipCountdown, tapsForAMiss } from "./support/tower";
 
 test("practice tower works signed out, ends with a score and offers another go", async ({ page }) => {
@@ -187,24 +187,9 @@ for (const size of [
       await page.emulateMedia({ reducedMotion: "reduce" });
       await gotoReady(page, path);
       await page.getByRole("button", { name: "Start" }).click();
-      const number = page.locator("[data-countdown]");
-      await expect(number).toBeVisible();
-      // The span fills its stage whatever happens to the glyph, so measure the text itself.
-      const boxes = await number.evaluate((el) => {
-        const range = document.createRange();
-        range.selectNodeContents(el);
-        const centre = (r: DOMRect) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
-        const stage = el.parentElement!;
-        const board = stage.parentElement!.parentElement!;
-        return {
-          glyph: centre(range.getBoundingClientRect()),
-          stage: centre(stage.getBoundingClientRect()),
-          board: centre(board.getBoundingClientRect()),
-        };
-      });
-      expect(Math.abs(boxes.glyph.x - boxes.stage.x)).toBeLessThanOrEqual(2);
-      expect(Math.abs(boxes.glyph.y - boxes.stage.y)).toBeLessThanOrEqual(2);
-      expect(Math.abs(boxes.glyph.x - boxes.board.x)).toBeLessThanOrEqual(2);
+      await expect(page.locator("[data-countdown]")).toBeVisible();
+      const off = await countdownOffsets(page);
+      expect(Math.max(off.slotX, off.slotY, off.boardX)).toBeLessThanOrEqual(2);
     });
   }
 }
@@ -251,7 +236,7 @@ test("Swift Sum practice: five steps, and a close count survives round 1 into ro
   await expect(page.locator("[data-countdown]")).toBeVisible();
 });
 
-/** The middle of an Echo Path tile on the page (tiles count row by row from the bottom). */
+/** The middle of a Trail Trace tile on the page (tiles count row by row from the bottom). */
 function tileCentre(box: { x: number; y: number; width: number; height: number }, tile: number) {
   const layout = boardLayout(box.width, box.height, COLS, ROWS);
   const pitch = layout.tileSize + layout.gap;
@@ -263,7 +248,7 @@ function tileCentre(box: { x: number; y: number; width: number; height: number }
   };
 }
 
-test("Echo Path practice: a 4-tile first playback on the 5 x 8 board, and a fifth tile after a clear (T197, T208)", async ({ page }) => {
+test("Trail Trace practice: a 4-tile first playback on the 5 x 8 board, and a fifth tile after a clear (T197, T208)", async ({ page }) => {
   const seed = 2024;
   await pinSeed(page, seed);
   const params = echoPathParams(seed);
@@ -284,7 +269,7 @@ test("Echo Path practice: a 4-tile first playback on the 5 x 8 board, and a fift
   await expect(page.getByRole("img", { name: /lives left$/ })).toHaveAccessibleName("3 of 3 lives left");
 });
 
-test("Echo Path practice: watch, then wrong tiles use up the lives and end the run", async ({ page }) => {
+test("Trail Trace practice: watch, then wrong tiles use up the lives and end the run", async ({ page }) => {
   const scored = attemptRequests(page);
   await gotoReady(page, "/practice/echo-path");
   await page.getByRole("button", { name: "Start" }).click();
@@ -305,10 +290,12 @@ test("Echo Path practice: watch, then wrong tiles use up the lives and end the r
   expect(scored).toEqual([]);
 });
 
-test("Fair Split practice: the line moves twice without cutting; Cut shows the pieces and both sides' percentages", async ({ page }) => {
+test("Clean Cut practice: an 8 point bank; the line moves twice without cutting; Cut shows the pieces and both sides' percentages (T213)", async ({ page }) => {
   const scored = attemptRequests(page);
   await gotoReady(page, "/practice/fair-split");
+  await expect(page.getByRole("heading", { level: 1, name: "Practice: Clean Cut" })).toBeVisible();
   await page.getByRole("button", { name: "Start" }).click();
+  await expect(page.getByRole("meter", { name: "Split bank" })).toHaveAttribute("aria-valuetext", "8 points left of 8 points");
   const board = page.locator("canvas[data-phase]");
   await expect(board).toHaveAttribute("data-phase", "cut", { timeout: 10_000 });
   const box = (await board.boundingBox())!;

@@ -2367,7 +2367,7 @@ Planning notes for M7:
 
 ### T210 Clean Cut shapes: asymmetrical only
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T201
 - Acceptance criteria:
   - [ ] Every shape kind in `src/challenges/fair-split/shapes.ts` is asymmetrical after its seeded rotation, mirror and scale: it has no mirror symmetry (about any axis) and no rotational symmetry. Symmetrical kinds are made lopsided (for example the heart, flower, star, plus, cross, cloud, teardrop, crescent and zig-zag band get seeded per-lobe or per-arm size and position differences that exceed a documented minimum), or are removed if they cannot be made so. The kind library stays at least 10 kinds and at least 70% of drawn shapes stay curved.
@@ -2377,7 +2377,7 @@ Planning notes for M7:
 
 ### T211 Clean Cut engine and screen: an 8 point bank
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T210
 - Acceptance criteria:
   - [ ] In `src/challenges/fair-split/engine.ts`, `bank` becomes 8 percentage points (owner; about 1.6 per round). Everything else (5 shapes, `LIMIT_MS`, cost rule, schema) is unchanged. Tests updated: with explicit square params (bank 8): cuts at x = 50, 50.5, 49, 50, 51.5 score 5 + (8 - 3) ÷ 8 = 5.625; a cut at x = 40 (cost 10) scores 0; cuts at 54, 54 (costs 4 and 4, exactly the bank) then a third at 50 score 3; five perfect cuts score 6; golden scores for 3 seeds re-pinned. The simulated cutter (0.6 point aim error) is re-run and its survival band re-set from the simulation and documented.
@@ -2386,7 +2386,7 @@ Planning notes for M7:
 
 ### T212 Clean Cut: scale reset and cheat checks
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T204, T211
 - Acceptance criteria:
   - [ ] A new migration sets `scores_since` for `fair-split` to the day after it runs, keeps `default_pass_targets` for `fair-split` at 5 (survive all five shapes) and recomputes unedited, unstarted open days. pgTAP as in T204 for this type.
@@ -2396,7 +2396,7 @@ Planning notes for M7:
 
 ### T213 End-to-end and phone checks for the M7 changes
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T203, T206, T209, T212
 - Acceptance criteria:
   - [ ] Existing e2e specs (`practice.spec.ts`, `attempts.spec.ts`, `play.spec.ts`, `look.spec.ts`, the Daily Three and mobile specs, and `global-setup.ts` fixtures) are updated for the new values without weakening: a win is a perfect run built from the params (Second Sense 2 s bank, Swift Sum counts 10 to 30, Trail Trace path of up to 12 tiles on the 5 x 8 board, Clean Cut 8 point bank), a loss is a deliberately bust bank; and a grep of `tests/e2e` and `scripts/` for `Echo Path`, `Fair Split`, `BUDGET_MS`, `MAX_PATH_LENGTH` and the old range literals finds no stale reader.
@@ -2407,7 +2407,7 @@ Planning notes for M7:
 
 ### T214 Record the M7 decisions and the DESIGN.md conflicts
 - Type: docs
-- Status: todo
+- Status: in-progress
 - Depends on: T213
 - Acceptance criteria:
   - [ ] `docs/DECISIONS.md` gets one entry per M7 judgment call, with date, item, choice and reason: the Second Sense ranges (10 to 20 s, rising by round) and 2 s bank; no stopwatch rule (owner decision, existing cheat check only); Swift Sum uniform 10 to 30 draw per round and whatever bank T205 settled on; Trail Trace 5 x 8 board (or 10 rows if kept), minimum length, the "touch" definition (eight neighbours) and the 90% distinctness bound; Clean Cut `MIN_ASYMMETRY`, the shapes removed or reshaped, the 8 point bank; the new pass targets (4, 5, 8, 5); cheat threshold changes; display names only with keys kept; `scores_since` reset again for each game.

@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { COLS, MAX_PATH_LENGTH, ROWS } from "../../../src/challenges/echo-path/path";
 import { METER_CACHE_SECONDS } from "../../../src/config/meter";
 import { check } from "../../../src/lib/devData";
 import { gameDateAt } from "../../../src/lib/gameDay";
@@ -7,7 +8,7 @@ import { gotoReady, signUpViaForm } from "../support/pages";
 import { adminClient } from "../support/supabase";
 
 /**
- * The Daily Three end to end (T165) on a lineup set here: Swift Sum, Second Sense, then Echo Path.
+ * The Daily Three end to end (T165) on a lineup set here: Swift Sum, Second Sense, then Trail Trace.
  * A target of 0 makes any run a win and 1000 makes it a loss, so each test decides its games. This
  * changes today's games for everyone, so it runs in its own project after the rest of the suite
  * (playwright.config.ts), one test at a time, and puts the day back afterwards. Each test's
@@ -66,7 +67,7 @@ async function rushSecondSense(page: Page) {
   await tapArea.click();
 }
 
-/** Echo Path: three taps on the top row, where a path never starts, each a wrong first tile (score 0). */
+/** Trail Trace: three taps on the top row, where a path never starts, each a wrong first tile (score 0). */
 async function missEchoPath(page: Page) {
   const board = page.getByRole("img", { name: /Get ready|Watch the tiles|Tap the tiles/ });
   const lives = page.getByRole("img", { name: /lives left$/ });
@@ -173,6 +174,50 @@ test("two losses: the day fails after game 2, and the third game is still offere
   await expect(heading(page, "Not today: two losses")).toBeVisible();
   await expect(heading(page, "Game 3 of 3: Trail Trace")).toBeVisible();
   await expect(page.getByRole("button", { name: "Play it anyway" })).toBeVisible();
+});
+
+/** Pairs of tiles in the path, not next to each other in it, that share an edge (row by row from the bottom). */
+function selfContacts(path: number[]): string[] {
+  const contacts: string[] = [];
+  for (let i = 0; i < path.length; i++) {
+    for (let j = i + 2; j < path.length; j++) {
+      const [a, b] = [path[i], path[j]];
+      const rows = Math.abs(Math.floor(a / COLS) - Math.floor(b / COLS));
+      const cols = Math.abs((a % COLS) - (b % COLS));
+      if (rows + cols === 1) contacts.push(`${a}-${b}`);
+    }
+  }
+  return contacts;
+}
+
+test("ten players' starts: Swift Sum counts of 10 to 30 that vary, and Trail Trace paths that never touch themselves (T213)", async ({ page, accounts }) => {
+  test.setTimeout(240_000);
+  await saveDay(LINEUP, [LOSE, LOSE, LOSE]);
+  const counts: number[][] = [];
+  const paths: number[][] = [];
+  for (let player = 0; player < 10; player++) {
+    await signUpViaForm(page, { email: accounts.uniqueEmail() });
+    await expect(page).toHaveURL("/");
+    for (let game = 0; game < 3; game++) {
+      const response = await page.request.post("/api/attempts/start");
+      expect(response.status()).toBe(200);
+      const { challengeType, params } = await response.json();
+      if (challengeType === "flash-count") counts.push(params.levels.map((level: { dotCount: number }) => level.dotCount));
+      if (challengeType === "echo-path") paths.push(params.path);
+    }
+    // The next player signs up in the same browser.
+    await page.context().clearCookies();
+  }
+  expect(counts).toHaveLength(10);
+  expect(counts.flat().every((count) => count >= 10 && count <= 30)).toBe(true);
+  expect(new Set(counts.map((run) => run.join())).size).toBeGreaterThan(1);
+  expect(new Set(counts[0]).size).toBeGreaterThan(1);
+  expect(paths).toHaveLength(10);
+  for (const path of paths) {
+    expect(path.length).toBeLessThanOrEqual(MAX_PATH_LENGTH);
+    expect(path.every((tile) => tile >= 0 && tile < COLS * ROWS)).toBe(true);
+    expect(selfContacts(path), String(path)).toEqual([]);
+  }
 });
 
 test("one attempt per game: a reload resumes the day, and a start after all three is refused", async ({ page, accounts }) => {
