@@ -44,7 +44,7 @@ const failedDay = {
   games: [
     { ...lineup[0], status: "lost", score: 3 },
     { ...lineup[1], status: "in-progress" },
-    { ...lineup[2], status: "won", score: 7 },
+    { ...lineup[2], status: "won", score: 4.7 },
   ],
   wins: 1,
   losses: 2,
@@ -87,7 +87,7 @@ describe("ResultsPage", () => {
     expect(rows(html)).toEqual([
       { status: "won", text: "Game 1: Teetering Tower Won You reached row 12. Today's target was row 10." },
       { status: "won", text: "Game 2: Swift Sum Won You scored 6 levels. Today's target was 5 levels." },
-      { status: "not-started", text: "Game 3: Second Sense Not played Today's target was 4 rounds." },
+      { status: "not-started", text: "Game 3: Second Sense Not played Today's target was 4 rounds: survive all four." },
     ]);
     // The remaining game is still offered.
     expect(html).toContain('href="/play"');
@@ -101,7 +101,7 @@ describe("ResultsPage", () => {
     expect(rows(html).map((row) => row.text)).toEqual([
       "Game 1: Teetering Tower Lost You reached row 3. Today's target was row 10.",
       "Game 2: Swift Sum Lost Left before finishing. Today's target was 5 levels.",
-      "Game 3: Second Sense Won You scored 7 rounds. Today's target was 4 rounds.",
+      "Game 3: Second Sense Won You scored 4.7 rounds. Today's target was 4 rounds: survive all four.",
     ]);
     expect(html).not.toContain('href="/play"');
   });

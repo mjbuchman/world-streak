@@ -8,7 +8,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Active task: none. M5 complete. The owner (Nov 17) will play-test later, all at once: do not stop for it; finish every remaining batch first, stopping only for things that need the owner. M6 Gameplay tweaks (T177–T198) planned from the owner's play-test feedback and approved Nov 18. Next: batch 13 (T177–T179), then batches 14–18 in order without play-test stops; one M6 play-test at the end. T45, T52 and T128 still wait on the owner.
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: M6 batch 13 (T177–T179).
+- Next: M6 batch 14 (T180–T183, in progress).
 
 ## Log
 
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-18 — T177, T178, T179 Meter 100% fit and shared round UI (PR #170)
+- Meter reading sits lower and "100%" is smaller (e2e checks 0 to 100% inside the arc); new `src/components/rounds/` RoundProgress, RoundCountdown, BankGauge (not wired in yet).
+- Review rounds: quality 1 (light). CI: 1 failure (60% touched the arc), fixed.
+- Notes: merges since the last maintainer check: 1. Local e2e setup fails while today's local lineup is locked; CI runs e2e.
 
 ### 2026-11-17 — T175, T176 Per-file coverage for small lib modules and Daily Three README (PR #167)
 - 90% thresholds for share, rules, random, forms, passwords, health; 80% for adminPage, adminForm, devData, localTools; README covers the five games, lineup rule and lineup editor.

@@ -1987,7 +1987,7 @@ Planning notes for M6:
 
 ### T177 Meter: the percentage fits inside the gauge at 100%
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] In `src/components/Meter.tsx` and `Meter.module.css`, the big percentage (`styles.rate`, 0 to 100, so up to three digits plus "%") stays inside the arc's inner circle and does not touch or cross the arc at 0%, 9%, 60%, 99% and 100%, on a 390 px wide phone and on desktop. Fix by sizing the text from the gauge (for example a `clamp` or container-relative size, or fewer pixels for three digits), not by clipping.
@@ -1997,7 +1997,7 @@ Planning notes for M6:
 
 ### T178 Shared round progress bar and between-round countdown
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T138
 - Acceptance criteria:
   - [ ] `src/components/rounds/RoundProgress.tsx` renders N numbered steps (1, 2, 3, ...) as a bar, not text: finished rounds are filled mint, a round the player failed is filled light tangerine, the current round is highlighted (tangerine ring), later rounds are outlined. Props: `total`, `current` (0-based), and `failedRound?` (0-based). It has `role="img"` and an `aria-label` such as "Round 2 of 4"; the step highlight moves with a short transition, and with reduced motion it changes instantly.
@@ -2008,7 +2008,7 @@ Planning notes for M6:
 
 ### T179 Shared bank gauge
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T178
 - Acceptance criteria:
   - [ ] `src/components/rounds/BankGauge.tsx` shows a bank as a horizontal bar. Props: `total`, `spent: number[]` (the cost of each round played so far), `format: (value: number) => string` (for example "2.4 s", "3 dots", "0.8 points"), `label` (for example "Time bank"). The filled part is what is left; each round's cost is drawn as its own tangerine segment at the right end of the fill, with a "-2.4 s" caption on the latest one, so the player sees every round subtract from the bank. A line under the bar reads "6.1 s left of 10 s".
@@ -2019,7 +2019,7 @@ Planning notes for M6:
 
 ### T180 Shared bank rule (pure) and its tests
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T139
 - Acceptance criteria:
   - [ ] `src/challenges/shared/bank.ts` exports `playBank(total: number, costs: readonly number[])` returning `{ survived, left, failed }`: a cost at most `left` survives and reduces it; the first cost above `left` ends the run with `failed: true`, `left: 0` and `survived` set to the rounds before it; no costs gives `survived: 0, left: total, failed: false`. It also exports `bankScore(survived, left, total)` = `Math.round((survived + left / total) * 1000) / 1000`.
@@ -2029,7 +2029,7 @@ Planning notes for M6:
 
 ### T181 Second Sense engine: four rounds, 15 to 25 seconds, a 10 second bank
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T180
 - Acceptance criteria:
   - [ ] `src/challenges/inner-clock/timeBank.ts` plays `ROUNDS = 4` rounds (replacing `MAX_ROUNDS = 8`). `paramsFromSeed(seed)` returns `{ budgetMs, rounds: { targetMs, revealMs, timeoutMs }[] }` with `budgetMs = BUDGET_MS = 10_000` (2.5 s per round; proposed, owner to confirm). Round targets are multiples of 100 ms drawn from `TARGET_RANGES_MS` = `ladderRanges(4, 15_000, 2_500, 2_400)`: 15.0 to 17.4 s, 17.5 to 19.9 s, 20.0 to 22.4 s, 22.5 to 24.9 s, so a run covers 15 to 25 s and later rounds are longer (proposed, owner to confirm).
@@ -2042,7 +2042,7 @@ Planning notes for M6:
 
 ### T182 Second Sense screen: progress bar, bank gauge, countdown every round, clear target
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T178, T179, T181
 - Acceptance criteria:
   - [ ] `TimeBankGame` (`src/components/inner-clock/TimeBankGame.tsx`) shows `RoundProgress` (1-2-3-4, the current round highlighted, a failed round tangerine) in place of the "Round N of 4" text, and `BankGauge` ("Time bank", format "2.4 s") with each finished round's error as a segment and a "-1.2 s late" style caption; the error reveal still shows for `ROUND_GAP_MS`.
@@ -2054,7 +2054,7 @@ Planning notes for M6:
 
 ### T183 Second Sense: pass target scale, `scores_since`, cheat thresholds and wording
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T181
 - Acceptance criteria:
   - [ ] A migration adds `challenge_types.scores_since date` (null means all) and changes `pass_target_for` (last defined in `supabase/migrations/20261117020000_daily_three_attempts.sql`) to take the percentile only over attempts with `game_date >= scores_since` for that type, with the rest of the function unchanged. It sets `scores_since` for `inner-clock` to the day after the migration runs (UTC), and recomputes the targets of unedited, unstarted open `game_day_games` rows of `inner-clock` (the T140 pattern).

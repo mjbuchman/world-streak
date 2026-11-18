@@ -418,3 +418,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: Open item (thresholds), no recommendation in the design; these are the backlog's numbers.
 - How to change it later: `src/config/cheat.ts`.
 - Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
+### 2026-11-18 — Second Sense rounds (T180-T183)
+- Choice: (1) The default pass target stays 4, which now means "survive all four rounds"; admins can set fractions such as 4.5. (2) The balance test models a player's error as 15% of the target (sd), not a flat 1000 ms, and expects 30 to 70% of runs to survive. (3) The cheat check flags 3 or more rounds of one run under 25 ms off target. (4) Old-scale scores are left out of the percentile through a new `challenge_types.scores_since` date, set to the day after the migration runs (UTC). (5) The bank shows seconds to one decimal ("8.8 s").
+- Reason: Open items (targets, thresholds); the backlog proposes these, and a flat 1 s error would make 15 to 25 s targets too easy compared with real counting.
+- How to change it later: `game_settings.default_pass_targets` or /admin; `src/challenges/inner-clock/timeBank.test.ts`; `src/config/cheat.ts`; `challenge_types.scores_since`.
+- Confirmed by human: pending (NEEDS_HUMAN, M6 calls)

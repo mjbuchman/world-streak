@@ -18,6 +18,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: the design leaves these open or unclear. The tasks are T139–T166 in the backlog.
 - Agent's recommendation: build as listed. Check them at the M5 play-test.
 
+### Please confirm: M6 gameplay calls (blocks nothing)
+- What is needed: say if any of these should change. (1) Second Sense: target 4 means "survive all four", the cheat check flags 3+ rounds under 25 ms off, and only scores from the day after the T183 migration count toward its pass target (DECISIONS.md, T180-T183).
+- Where to put it: reply in chat.
+- Why: the design leaves these open.
+- Agent's recommendation: keep them; check them at the M6 play-test.
+
 ### Asymmetric JWT keys at deployment (T58; blocks nothing)
 - What is needed: locally, sign in again; if `npm run dev` then reports a bad key, replace the three lines in `.env.local` with what `npm run env:local` prints (local Supabase now signs its keys with the new ES256 key). At deployment, switch the project to an ECC (P-256) signing key (`docs/DEPLOYMENT.md` §4.4).
 - Where to put it: the Supabase dashboard.

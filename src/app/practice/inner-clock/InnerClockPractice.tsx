@@ -16,9 +16,9 @@ const seconds = (ms: number) => `${ms / 1000} s`;
 
 /** The result: rounds survived and the time bank left, as the engine counts them. */
 function result(params: TimeBankParams, inputs: TimeBankInputs) {
-  const { survived, leftMs } = play(params, inputs);
+  const { survived, left } = play(params, inputs);
   const heading = survived === params.rounds.length ? "Every round survived" : `${ui.scoreLabel(survived)} survived`;
-  const detail = `${seconds(leftMs)} of your ${seconds(params.budgetMs)} time bank left. Score: ${timeBank.score(params, inputs)}.`;
+  const detail = `${seconds(left)} of your ${seconds(params.budgetMs)} time bank left. Score: ${timeBank.score(params, inputs)}.`;
   return { heading, detail };
 }
 

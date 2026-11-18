@@ -14,6 +14,11 @@ export function targetLabel(targetMs: number): string {
   return `${seconds} ${seconds === 1 ? "second" : "seconds"}`;
 }
 
+/** The round's target as the player reads it, above the clock and the 3-2-1 (T182). */
+export function targetPrompt(targetMs: number): string {
+  return `Tap when you think ${targetLabel(targetMs)} have passed`;
+}
+
 /** "0.5": whole tenths of a second, rounded down, as a stopwatch shows them. */
 const clockLabel = (ms: number) => (Math.floor(ms / 100) / 10).toFixed(1);
 
@@ -136,6 +141,8 @@ export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_M
       onPointerDown={(event) => event.button === 0 && tap()}
       onKeyDown={onKeyDown}
     >
+      {/* The target first, on its own row, so the clock and the 3-2-1 never cover it (T182). */}
+      <span className={styles.prompt}>{targetPrompt(params.targetMs)}</span>
       {/* Hidden from screen readers: read every frame it would drown out the prompt. */}
       <span className={styles.clock} data-clock={clockState.phase} aria-hidden="true">
         {clockState.phase === "countdown" ? (
@@ -148,7 +155,6 @@ export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_M
           ""
         )}
       </span>
-      <span className={styles.prompt}>Tap when you think {targetLabel(params.targetMs)} have passed</span>
       <span className={styles.hint}>Tap, click or press Space</span>
     </button>
   );

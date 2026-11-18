@@ -19,9 +19,12 @@ export const STACKING_PERFECT_RUN_ROWS = 12;
 /** Swift Sum: an answer this soon after the dots cleared is faster than typing, when reported. */
 export const FLASH_COUNT_MIN_ANSWER_MS = 800;
 
-/** Second Sense: this many rounds of one run each tapped under this error (ms) look scripted (T164). */
-export const TIME_BANK_PRECISE_ROUNDS = 5;
-export const TIME_BANK_PRECISE_ERROR_MS = 10;
+/**
+ * Second Sense: this many of the four rounds of one run each tapped under this error (ms) look
+ * scripted on 15 to 25 s intervals (T164, T183).
+ */
+export const TIME_BANK_PRECISE_ROUNDS = 3;
+export const TIME_BANK_PRECISE_ERROR_MS = 25;
 
 /** Echo Path: two taps closer than this are faster than a person can move to the next tile (T164). */
 export const ECHO_PATH_MIN_TAP_INTERVAL_MS = 80;

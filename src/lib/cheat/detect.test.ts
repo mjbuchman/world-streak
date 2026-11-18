@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { play as playFairSplit, type FairSplitCut, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
 import { REVEAL_MS } from "@/challenges/flash-count/flashLadder";
-import { ROUND_GAP_MS } from "@/challenges/inner-clock/timeBank";
+import { ROUND_COUNTDOWN_MS, ROUND_GAP_MS } from "@/challenges/inner-clock/timeBank";
 import { COLUMNS, columnAt, simulate, type StackingParams } from "@/challenges/stacking/engine";
 import { createRng } from "@/challenges/shared/prng";
 import { ECHO_PATH_RHYTHM_MAX_SD_MS, STACKING_RHYTHM_MAX_SD_MS } from "@/config/cheat";
@@ -82,12 +82,12 @@ const sum = (gapsMs = [2_000, 2_000], over: Partial<DetectArgs> = {}): DetectArg
   };
 };
 
-/** A Time Bank run of 3 s rounds, each tapped `errorsMs[i]` late (null: no tap). */
+/** A Time Bank run of four 20 s rounds, each tapped `errorsMs[i]` late (null: no tap). */
 const bank = (errorsMs: (number | null)[], over: Partial<DetectArgs> = {}): DetectArgs => {
-  const rounds = Array.from({ length: 8 }, () => ({ targetMs: 3_000, revealMs: 1_000, timeoutMs: 9_000 }));
-  const tapsMs = errorsMs.map((error) => (error === null ? null : 3_000 + error));
-  const lastMs = tapsMs.reduce<number>((sum, tap, i) => sum + (i > 0 ? ROUND_GAP_MS : 0) + (tap ?? 9_000), 0);
-  return clock(errorsMs.length, { inputs: { tapsMs }, params: { budgetMs: 3_000, rounds }, serverElapsedMs: lastMs + 4_000, ...over });
+  const rounds = Array.from({ length: 4 }, () => ({ targetMs: 20_000, revealMs: 2_000, timeoutMs: 30_000 }));
+  const tapsMs = errorsMs.map((error) => (error === null ? null : 20_000 + error));
+  const lastMs = tapsMs.reduce<number>((sum, tap, i) => sum + (i > 0 ? ROUND_GAP_MS + ROUND_COUNTDOWN_MS : 0) + (tap ?? 30_000), 0);
+  return clock(errorsMs.length, { inputs: { tapsMs }, params: { budgetMs: 10_000, rounds }, serverElapsedMs: lastMs + 4_000, ...over });
 };
 
 /** An Echo Path run tapped at these times (the tiles do not matter to its rule). */
@@ -202,21 +202,25 @@ describe("stacking-perfect-run", () => {
 });
 
 describe("time-bank-implausible", () => {
-  it("flags 5 rounds of one run tapped under 10 ms off, either side", () => {
-    expect(detectFlags(bank([9, -3, 120, 0, -9, 5]))).toEqual(["time-bank-implausible"]);
+  it("leaves an honest run alone", () => {
+    expect(detectFlags(bank([400, -900, 250, 1_100]))).toEqual([]);
   });
 
-  it("allows 4 such rounds, and 10 ms exactly", () => {
-    expect(detectFlags(bank([9, -3, 120, 0, -9, 150]))).toEqual([]);
-    expect(detectFlags(bank([10, -10, 10, -10, 10]))).toEqual([]);
+  it("flags 3 of the 4 rounds tapped under 25 ms off, either side", () => {
+    expect(detectFlags(bank([24, -3, 400, 0]))).toEqual(["time-bank-implausible"]);
+  });
+
+  it("allows 2 such rounds, and 25 ms exactly", () => {
+    expect(detectFlags(bank([24, -3, 400, 900]))).toEqual([]);
+    expect(detectFlags(bank([25, -25, 25, -25]))).toEqual([]);
   });
 
   it("does not count a round with no tap", () => {
-    expect(detectFlags(bank([2, 2, 2, 2, null]))).toEqual([]);
+    expect(detectFlags(bank([2, 2, null]))).toEqual([]);
   });
 
   it("looks at this run only, not earlier ones", () => {
-    const perfect = Array.from({ length: 5 }, () => ({ challengeType: "inner-clock", score: 8 }));
+    const perfect = Array.from({ length: 5 }, () => ({ challengeType: "inner-clock", score: 5 }));
     expect(detectFlags(bank([40, -120, 15], { history: perfect }))).toEqual([]);
   });
 });
@@ -347,7 +351,8 @@ describe("timing-mismatch", () => {
       inputs: { tapsMs: [3_000, 4_000] },
       params: { budgetMs: 3_000, rounds: [3_000, 4_000].map((targetMs) => ({ targetMs, revealMs: 1_000, timeoutMs: 3 * targetMs })) },
     };
-    const lastMs = 3_000 + ROUND_GAP_MS + 4_000;
+    // Round 2 starts after the reveal gap and its own 3-2-1.
+    const lastMs = 3_000 + ROUND_GAP_MS + ROUND_COUNTDOWN_MS + 4_000;
     expect(detectFlags(clock(2, { ...twoRounds, serverElapsedMs: lastMs + allowed }))).toEqual([]);
     expect(detectFlags(clock(2, { ...twoRounds, serverElapsedMs: lastMs + allowed + 1 }))).toEqual(["timing-mismatch"]);
   });
