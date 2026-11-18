@@ -18,7 +18,7 @@ describe("/practice", () => {
       ["Teetering Tower", "/practice/stacking", "Stack the sliding rows as high as you can."],
       ["Second Sense", "/practice/inner-clock", "Four rounds: tap when each target time has passed. Every miss drains your 10-second time bank."],
       ["Swift Sum", "/practice/flash-count", "Five rounds: dots flash, say how many. Every dot you miss drains your 10-dot bank."],
-      ["Echo Path", "/practice/echo-path", "Tiles light up in a path. Tap it back, one step longer each time."],
+      ["Echo Path", "/practice/echo-path", "A path of tiles climbs the board. Tap it back, one tile longer each time, all the way to the top."],
       ["Fair Split", "/practice/fair-split", "Cut each odd shape in half with one straight line, before time runs out."],
     ]);
   });

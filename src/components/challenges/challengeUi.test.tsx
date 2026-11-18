@@ -68,6 +68,11 @@ describe("challengeUi", () => {
     expect(challengeUi("flash-count").howTo).toMatch(/five rounds.*10-dot bank.*Survive all five/);
   });
 
+  it("explains Echo Path's climbing path and its arrow keys, and states its target as a path length (T190, T191)", () => {
+    expect(challengeUi("echo-path").howTo).toMatch(/path of 4 tiles.*arrow keys.*Space or Enter.*reaches the top.*3 lives/);
+    expect(challengeUi("echo-path").target(10)).toBe("a path of 10 tiles");
+  });
+
   it.each([
     ["stacking", "Tower", { tapsMs: [900, 1800] }],
     ["inner-clock", "Clock", { tapsMs: [3200, 4100] }],
@@ -87,8 +92,8 @@ describe("challengeUi", () => {
     ["inner-clock", 1, 4.5, "You scored 1 round. Today's target was 4.5 rounds."],
     ["flash-count", 5.4, 5, "You scored 5.4 rounds. Today's target was 5 rounds: survive all five."],
     ["flash-count", 1, 4, "You scored 1 round. Today's target was 4 rounds."],
-    ["echo-path", 5.667, 6, "You scored 5.667 steps. Today's target was 6 steps."],
-    ["echo-path", 1, 6, "You scored 1 step. Today's target was 6 steps."],
+    ["echo-path", 7.667, 10, "You scored 7.667 tiles. Today's target was a path of 10 tiles."],
+    ["echo-path", 1, 10, "You scored 1 tile. Today's target was a path of 10 tiles."],
     ["fair-split", 6.333, 5, "You scored 6.333 shapes. Today's target was 5 shapes."],
     ["fair-split", 1, 5, "You scored 1 shape. Today's target was 5 shapes."],
   ] as const)("sums up a %s result against today's target", (type, score, target, line) => {

@@ -145,16 +145,12 @@ test("Echo Path can be played to the end with taps, on tiles big enough to tap",
   const box = (await board.boundingBox())!;
   const layout = boardLayout(box.width, box.height, COLS, ROWS);
   expect(layout.tileSize).toBeGreaterThanOrEqual(44);
-  const firstTile = { x: box.x + layout.left + layout.gap + layout.tileSize / 2, y: box.y + layout.top + layout.gap + layout.tileSize / 2 };
-
-  // The first tile tapped twice in a row is wrong by the second tap at the latest (a path never
-  // repeats a tile), so each life goes within two taps.
+  // The top left tile: on the top row, where a path never starts, so each tap there costs a life.
+  const topLeft = { x: box.x + layout.left + layout.gap + layout.tileSize / 2, y: box.y + layout.top + layout.gap + layout.tileSize / 2 };
   const lives = page.getByRole("img", { name: /lives left$/ });
   for (const left of [2, 1, 0]) {
     await expect(board).toHaveAttribute("data-phase", "repeat", { timeout: 15_000 });
-    await page.touchscreen.tap(firstTile.x, firstTile.y);
-    const still = await lives.getAttribute("aria-label", { timeout: 1_000 }).catch(() => null);
-    if (still === `${left + 1} of 3 lives left`) await page.touchscreen.tap(firstTile.x, firstTile.y);
+    await page.touchscreen.tap(topLeft.x, topLeft.y);
     if (left > 0) await expect(lives).toHaveAccessibleName(`${left} of 3 lives left`);
   }
   await expect(page.getByRole("heading", { level: 2 })).toHaveText("No path repeated");

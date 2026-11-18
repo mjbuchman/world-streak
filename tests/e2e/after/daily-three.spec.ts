@@ -66,15 +66,15 @@ async function rushSecondSense(page: Page) {
   await tapArea.click();
 }
 
-/** Echo Path: tile 1 pressed twice in a row is wrong by the second press at the latest (score 0). */
+/** Echo Path: three taps on the top row, where a path never starts, each a wrong first tile (score 0). */
 async function missEchoPath(page: Page) {
   const board = page.getByRole("img", { name: /Get ready|Watch the tiles|Tap the tiles/ });
   const lives = page.getByRole("img", { name: /lives left$/ });
+  // The first arrow shows the ring on the bottom row; nine more take it to the top.
+  for (let i = 0; i < 10; i++) await board.press("ArrowUp");
   for (const left of [2, 1, 0]) {
     await expect(board).toHaveAttribute("data-phase", "repeat", { timeout: 15_000 });
-    await board.press("1");
-    const still = await lives.getAttribute("aria-label", { timeout: 1_000 }).catch(() => null);
-    if (still === `${left + 1} of 3 lives left`) await board.press("1");
+    await board.press("Enter");
     if (left > 0) await expect(lives).toHaveAccessibleName(`${left} of 3 lives left`);
   }
 }

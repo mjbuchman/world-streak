@@ -70,16 +70,17 @@ const flashCount: ChallengeUi<FlashLadderParams, FlashLadderInputs> = {
   target: flashLadderTarget,
 };
 
-/** Echo Path: the longest path repeated plus the lives left as a fraction ("5.667 steps"). */
-const steps = (score: number) => `${score} ${score === 1 ? "step" : "steps"}`;
+/** Echo Path: the longest path repeated plus the lives left as a fraction ("7.667 tiles"). */
+const tiles = (score: number) => `${score} ${score === 1 ? "tile" : "tiles"}`;
+const pathOf = (target: number) => `a path of ${tiles(target)}`;
 
 const echoPath: ChallengeUi<EchoPathParams, EchoPathInputs> = {
   howTo: ECHO_PATH_HOW_TO,
   practicePath: practicePath("echo-path"),
   play: ({ params, onFinish }) => <EchoPathGame params={params} onFinish={onFinish} />,
-  scoreLabel: steps,
-  summary: (score, passTarget) => `You scored ${steps(score)}. Today's target was ${steps(passTarget)}.`,
-  target: steps,
+  scoreLabel: tiles,
+  summary: (score, passTarget) => `You scored ${tiles(score)}. Today's target was ${pathOf(passTarget)}.`,
+  target: pathOf,
 };
 
 /** Fair Split: shapes cut plus the lives left as a fraction ("6.333 shapes"). */

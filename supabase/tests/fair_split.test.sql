@@ -11,13 +11,13 @@ select is(
   'its placeholder pass target is 5 shapes'
 );
 select col_default_is(
-  'public', 'game_settings', 'default_pass_targets', '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 6, "fair-split": 5}',
+  'public', 'game_settings', 'default_pass_targets', '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 10, "fair-split": 5}',
   'a fresh settings row has all five placeholders'
 );
 -- The placeholder was merged in, not swapped for the whole object.
 select is(
   (select default_pass_targets from public.game_settings) - 'fair-split',
-  '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 6}'::jsonb,
+  '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 10}'::jsonb,
   'the other challenges keep their placeholders'
 );
 select ok(

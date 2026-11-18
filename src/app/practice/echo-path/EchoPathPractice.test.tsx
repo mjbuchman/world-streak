@@ -4,8 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { sequenceFor, type EchoPathInputs, type EchoPathParams } from "@/challenges/echo-path/engine";
 
-// Every run: lengths 3 to 4 on a fixed seed.
-const params: EchoPathParams = { cols: 3, rows: 3, startLength: 3, maxLength: 4, stepMs: 400, sequenceSeed: 21 };
+// Every run: a 6-tile path (shorter than any real one, so a test can clear it all), from a start of 4.
+const params: EchoPathParams = { cols: 5, rows: 10, path: [2, 7, 12, 17, 22, 27], startLength: 4, stepMs: 350 };
 vi.mock("@/challenges/echo-path/engine", async (importOriginal) => {
   const real = await importOriginal<typeof import("@/challenges/echo-path/engine")>();
   return { ...real, paramsFromSeed: () => params };
@@ -33,27 +33,28 @@ async function playWith(tiles: number[]) {
   return user;
 }
 
-const wrong = (length: number, tryIndex: number) => (sequenceFor(params, length, tryIndex)[0] + 1) % 9;
+/** A first tap that is wrong: the path's first tile is never its second. */
+const WRONG = 7;
 
 describe("EchoPathPractice", () => {
-  it("explains the paths and lives before the start", () => {
+  it("explains the path, the keys and the lives before the start", () => {
     render(<EchoPathPractice />);
-    expect(screen.getByText(/tiles on the grid light up/)).toBeTruthy();
+    expect(screen.getByText(/a path of 4 tiles lights up from the bottom of the board.*arrow keys.*until it reaches the top.*3 lives/)).toBeTruthy();
   });
 
-  it("shows the longest path and the lives left, and focuses the result", async () => {
-    await playWith([...sequenceFor(params, 3, 0), wrong(4, 0), wrong(4, 1), wrong(4, 2)]);
-    const heading = screen.getByRole("heading", { name: "Longest path: 3 tiles" });
+  it("shows the longest path against the whole and the lives left, and focuses the result", async () => {
+    await playWith([...sequenceFor(params, 4), WRONG, WRONG, WRONG]);
+    const heading = screen.getByRole("heading", { name: "Longest path: 4 of 6 tiles" });
     expect(document.activeElement).toBe(heading);
-    expect(screen.getByText("0 of 3 lives left. Score: 3.")).toBeTruthy();
+    expect(screen.getByText("0 of 3 lives left. Score: 4.")).toBeTruthy();
   });
 
-  it("says so when every path is repeated, and when none is", async () => {
-    await playWith([...sequenceFor(params, 3, 0), ...sequenceFor(params, 4, 0)]);
-    expect(screen.getByRole("heading", { name: "Every path repeated" })).toBeTruthy();
-    expect(screen.getByText("3 of 3 lives left. Score: 5.")).toBeTruthy();
+  it("says so when the path reaches the top, and when no path is repeated", async () => {
+    await playWith([...sequenceFor(params, 4), WRONG, ...sequenceFor(params, 5), ...sequenceFor(params, 6)]);
+    expect(screen.getByRole("heading", { name: "You reached the top: 6 tiles" })).toBeTruthy();
+    expect(screen.getByText("2 of 3 lives left. Score: 6.667.")).toBeTruthy();
     cleanup();
-    const user = await playWith([wrong(3, 0), wrong(3, 1), wrong(3, 2)]);
+    const user = await playWith([WRONG, WRONG, WRONG]);
     expect(screen.getByRole("heading", { name: "No path repeated" })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Play again" }));
     expect(screen.getByRole("button", { name: "Fake run" })).toBeTruthy();

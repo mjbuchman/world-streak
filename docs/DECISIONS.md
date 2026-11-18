@@ -430,3 +430,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: Open items (targets, numbers); the backlog proposes (1), (2) and (5).
 - How to change it later: `src/challenges/flash-count/flashLadder.ts` constants; `game_settings.default_pass_targets` or /admin.
 - Confirmed by human: pending (NEEDS_HUMAN, M6 calls)
+
+### 2026-11-18 — Echo Path as one growing path (T187-T191)
+- Choice: (1) A 5 x 10 board; one path per attempt, 12 to 18 tiles from the bottom row to the top, never revisiting a tile, at most 8 sideways steps; a seed with no such walk in 20 tries falls back to a fixed zigzag. (2) Start at 4 tiles, one more per clear; 3 lives; a miss replays the same length; playback 300 to 400 ms a tile. (3) Score = longest path repeated + lives left / 3. (4) Default pass target 10, "a path of 10 tiles" (the board's height). (5) Keyboard: arrows move a ring (the first key only shows it), Space or Enter taps. (6) The `echo-path-robotic` rhythm check now reads only the gaps inside each echo: across a long run, the pause and playback before each echo hid a script's even taps. Thresholds unchanged. (7) Old-scale scores are left out through `scores_since` (as T183).
+- Reason: Open items (board width, minimum length, timing, target); the backlog proposes (1), (2) and (4). (6) came from T191's scripted-run test failing.
+- How to change it later: `src/challenges/echo-path/path.ts` and `engine.ts` constants; `game_settings.default_pass_targets` or /admin; `src/config/cheat.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, M6 calls)
