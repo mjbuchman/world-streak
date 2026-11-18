@@ -1917,7 +1917,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T172 Normalize line endings with .gitattributes
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] A root `.gitattributes` sets `* text=auto eol=lf` and marks binary assets (png, ico, woff2) as `binary`.
@@ -1926,7 +1926,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T173 Patch-level dependency bumps
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] `@playwright/test` 1.65.1, `jsdom` 31.0.1 and `@testing-library/user-event` 14.6.12 in `package.json` and the lockfile; no major bumps.
