@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { play as playFairSplit, type FairSplitCut, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
+import {
+  play as playFairSplit,
+  ROUND_COUNTDOWN_MS as FAIR_SPLIT_COUNTDOWN_MS,
+  SHOW_MS,
+  type FairSplitCut,
+  type FairSplitInputs,
+  type FairSplitParams,
+} from "@/challenges/fair-split/engine";
 import { echoPath, paramsFromSeed as echoParamsFromSeed, sequenceFor } from "@/challenges/echo-path/engine";
 import { playbackMs } from "@/challenges/echo-path/render";
 import { REVEAL_MS } from "@/challenges/flash-count/flashLadder";
@@ -135,24 +142,25 @@ const SQUARE = [
   { x: 100, y: 100 },
   { x: 0, y: 100 },
 ];
-const squares: FairSplitParams = { shapes: Array.from({ length: 12 }, () => ({ polygon: SQUARE, limitMs: 5_000 })) };
+const squares: FairSplitParams = { bank: 6, shapes: Array.from({ length: 5 }, () => ({ polygon: SQUARE, limitMs: 25_000 })) };
 
 /**
  * A Fair Split run on squares: vertical cuts at `xs` (50 is exactly half; each unit off is one
- * point), each `afterMs[i]` (default 1.5 s) after its shape appeared.
+ * point), each `afterMs[i]` (default 6 s) after its shape appeared. Cut times count from the
+ * game's start, so they hold every 3-2-1 (T196).
  */
 function split(xs: number[], afterMs: number[] = [], over: Partial<DetectArgs> = {}): DetectArgs {
   const cuts: FairSplitCut[] = [];
   xs.forEach((x, i) => {
     const { appearsAt } = playFairSplit(squares, { cuts, endMs: cuts.at(-1)?.atMs ?? 0 });
-    cuts.push({ atMs: appearsAt + (afterMs[i] ?? 1_500), ax: x, ay: 0, bx: x, by: 100 });
+    cuts.push({ atMs: appearsAt + (afterMs[i] ?? 6_000), ax: x, ay: 0, bx: x, by: 100 });
   });
   const endMs = cuts.at(-1)?.atMs ?? 0;
   return { challengeType: "fair-split", inputs: { cuts, endMs }, score: 3, params: squares, serverElapsedMs: endMs + 4_000, history: [], ...over };
 }
 
-/** Human-like cuts: 0.2 to 0.9 points off half, either side. */
-const HUMAN_XS = [50.4, 49.3, 50.8, 49.8, 50.2, 49.1, 50.6, 49.5];
+/** Human-like cuts: 0.2 to 1.1 points off half, either side, 3.3 points in all (the bank holds 6). */
+const HUMAN_XS = [50.4, 48.9, 50.7, 49.8, 50.9];
 
 describe("detectFlags on honest-looking runs", () => {
   it.each([1, 2, 3, 4, 5])("flags nothing for human-like Tower taps (seed %i)", (seed) => {
@@ -166,7 +174,7 @@ describe("detectFlags on honest-looking runs", () => {
   it("flags nothing for a good, ordinary run of each other game", () => {
     expect(detectFlags(bank([40, -120, 15, 230, -60, 90, -25, 150]))).toEqual([]);
     expect(detectFlags(sum())).toEqual([]);
-    expect(detectFlags(split(HUMAN_XS, [1_400, 900, 2_100, 1_200, 700, 1_800, 1_000, 2_500]))).toEqual([]);
+    expect(detectFlags(split(HUMAN_XS, [6_000, 9_400, 7_100, 12_200, 6_500]))).toEqual([]);
   });
 });
 
@@ -292,34 +300,39 @@ describe("echo-path-robotic", () => {
 });
 
 describe("fair-split-implausible", () => {
-  it("flags 6 cuts of one run within 0.05 points of half", () => {
-    expect(detectFlags(split([50, 50.04, 49.96, 50.6, 50, 50.03, 49.97]))).toEqual(["fair-split-implausible"]);
+  it("flags 3 cuts of one run within 0.05 points of half", () => {
+    expect(detectFlags(split([50, 50.6, 50.04, 49.2, 49.96]))).toEqual(["fair-split-implausible"]);
   });
 
-  it("allows 5 such cuts, and cuts 0.06 points off", () => {
-    expect(detectFlags(split([50, 50.04, 49.96, 50.6, 50, 50.03, 49.2]))).toEqual([]);
-    expect(detectFlags(split([50.06, 49.94, 50.06, 49.94, 50.06, 49.94]))).toEqual([]);
+  it("allows 2 such cuts, and cuts 0.06 points off", () => {
+    expect(detectFlags(split([50, 50.6, 50.04, 49.2, 50.8]))).toEqual([]);
+    expect(detectFlags(split([50.06, 49.94, 50.06, 49.94, 50.06]))).toEqual([]);
   });
 
-  it("ignores cuts in the pause before a shape, which the game never judged", () => {
-    const run = split(HUMAN_XS.slice(0, 2));
-    const { cuts, endMs } = run.inputs as FairSplitInputs;
-    // Each exact cut lands 100 ms after the previous one, inside its 1.2 s pause.
-    const paused = cuts.flatMap((cut) => [cut, ...[1, 2, 3].map((k) => ({ ...cut, atMs: cut.atMs + k * 100, ax: 50, bx: 50 }))]);
-    expect(detectFlags({ ...run, inputs: { cuts: paused, endMs: Math.max(endMs, paused.at(-1)!.atMs) } })).toEqual([]);
+  it("ignores cuts in the pieces and the 3-2-1 before a shape, which the game never judged", () => {
+    // Only the first cut is played: the rest, exact, land through the pieces and the 3-2-1 after it.
+    const [first] = (split(HUMAN_XS.slice(0, 1)).inputs as FairSplitInputs).cuts;
+    const gapMs = SHOW_MS + FAIR_SPLIT_COUNTDOWN_MS;
+    const paused = [first, ...[1, 2, 3, 4].map((k) => ({ ...first, atMs: first.atMs + (k * gapMs) / 5, ax: 50, bx: 50 }))];
+    const run = split([], [], { inputs: { cuts: paused, endMs: paused.at(-1)!.atMs } });
+    expect(detectFlags({ ...run, serverElapsedMs: paused.at(-1)!.atMs + 4_000 })).toEqual([]);
   });
 });
 
 describe("fair-split-instant", () => {
-  it("flags a counted cut under 300 ms after its shape appeared, and allows exactly 300", () => {
-    expect(detectFlags(split(HUMAN_XS.slice(0, 3), [1_500, 299, 1_500]))).toEqual(["fair-split-instant"]);
-    expect(detectFlags(split(HUMAN_XS.slice(0, 3), [1_500, 300, 1_500]))).toEqual([]);
+  it("flags a cut the bank survived under 1.5 s after its shape appeared, and allows exactly 1.5 s", () => {
+    expect(detectFlags(split(HUMAN_XS.slice(0, 3), [6_000, 1_499, 6_000]))).toEqual(["fair-split-instant"]);
+    expect(detectFlags(split(HUMAN_XS.slice(0, 3), [6_000, 1_500, 6_000]))).toEqual([]);
   });
 
-  it("ignores a quick cut that missed, and one after the run ended", () => {
-    expect(detectFlags(split([50.4, 60, 49.5], [1_500, 100, 1_500]))).toEqual([]);
-    // Three misses end the run; a fast fair cut after that was never judged.
-    expect(detectFlags(split([60, 60, 60, 50.4], [1_500, 1_500, 1_500, 100]))).toEqual([]);
+  it("ignores a quick cut that busted the bank, and one after the run ended", () => {
+    expect(detectFlags(split([50.4, 60], [6_000, 100]))).toEqual([]);
+    // A 7-point miss ends the run; a fast fair cut after that was never judged.
+    expect(detectFlags(split([57, 50.4], [6_000, 100]))).toEqual([]);
+  });
+
+  it("never flags the screen's own cut at the time limit", () => {
+    expect(detectFlags(split(HUMAN_XS, [25_000, 25_000, 25_000, 25_000, 25_000]))).toEqual([]);
   });
 });
 
@@ -412,6 +425,8 @@ describe("timing-mismatch", () => {
     expect(detectFlags(echo(taps, { serverElapsedMs: taps.at(-1)! + allowed + 1 }))).toEqual(["timing-mismatch"]);
     const run = split(HUMAN_XS.slice(0, 2));
     const endMs = (run.inputs as FairSplitInputs).endMs;
+    // The end holds both shapes' 3-2-1s and the pieces between them: no allowance on top for those.
+    expect(endMs).toBe(2 * FAIR_SPLIT_COUNTDOWN_MS + 6_000 + SHOW_MS + 6_000);
     expect(detectFlags({ ...run, serverElapsedMs: endMs + allowed })).toEqual([]);
     expect(detectFlags({ ...run, serverElapsedMs: endMs + allowed + 1 })).toEqual(["timing-mismatch"]);
   });
@@ -439,7 +454,7 @@ describe("each challenge's rules stay with that challenge", () => {
     const fast = Array.from({ length: 12 }, (_, i) => 1_000 + i * 100);
     expect(detectFlags(echoRun(6, () => 100))).toEqual(["echo-path-robotic"]);
     expect(detectFlags(bank([0, 0, 0, 0, 0], { challengeType: "echo-path", inputs: { taps: [] } }))).toEqual([]);
-    expect(detectFlags({ ...split([50, 50, 50, 50, 50, 50]), challengeType: "flash-count", inputs: { answers: [] } })).toEqual([]);
+    expect(detectFlags({ ...split([50, 50, 50, 50, 50]), challengeType: "flash-count", inputs: { answers: [] } })).toEqual([]);
     expect(detectFlags({ ...echo(fast), challengeType: "fair-split", inputs: { cuts: [], endMs: 1_000 }, params: squares })).toEqual([]);
   });
 });

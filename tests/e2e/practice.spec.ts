@@ -193,18 +193,21 @@ test("Echo Path practice: watch, then wrong tiles use up the lives and end the r
   expect(scored).toEqual([]);
 });
 
-test("Fair Split practice: a dragged cut shows both sides' percentages", async ({ page }) => {
+test("Fair Split practice: dragging the line never cuts; Cut shows both sides' percentages", async ({ page }) => {
   const scored = attemptRequests(page);
   await gotoReady(page, "/practice/fair-split");
   await page.getByRole("button", { name: "Start" }).click();
   const board = page.locator("canvas[data-phase]");
   await expect(board).toHaveAttribute("data-phase", "cut", { timeout: 10_000 });
   const box = (await board.boundingBox())!;
-  const middle = box.x + box.width / 2;
-  await page.mouse.move(middle, box.y + 4);
+  // The line starts down the middle: drag it by its middle a little to the right and let go.
+  const middle = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  await page.mouse.move(middle.x, middle.y);
   await page.mouse.down();
-  await page.mouse.move(middle, box.y + box.height - 4, { steps: 8 });
+  await page.mouse.move(middle.x + 20, middle.y, { steps: 8 });
   await page.mouse.up();
+  await expect(board).toHaveAttribute("data-phase", "cut");
+  await page.getByRole("button", { name: "Cut" }).click();
   await expect(page.getByText(/^\d+\.\d% and \d+\.\d%\./)).toBeVisible();
   expect(scored).toEqual([]);
 });

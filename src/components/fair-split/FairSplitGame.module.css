@@ -1,42 +1,11 @@
-/* Fair Split: the shape count and lives above a square board (T149). */
+/* Fair Split: the round steps and the bank above a square board, the Cut button below (T195). */
 .game {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-.status {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.count {
-  margin: 0;
-  font-weight: 700;
-}
-
-.lives {
-  display: flex;
-  gap: var(--space-2);
-}
-
-/* A life: filled while it lasts, an outline once lost. */
-.pip {
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--fs-color-mint);
-  border-radius: 50%;
-  background: var(--fs-color-mint);
-}
-
-.pip[data-lost] {
-  background: transparent;
-  border-color: var(--fs-color-surface-border);
-}
-
-/* The board, as wide as the page allows up to 420 px, with the countdown over its middle. */
+/* The board, as wide as the page allows up to 420 px, with the 3-2-1 over its middle. */
 .stage {
   position: relative;
   width: min(100%, 420px);
@@ -47,10 +16,36 @@
   display: block;
   width: 100%;
   aspect-ratio: 1;
-  /* A drag is a cut: no scrolling or zooming the page from the board. */
+  /* Dragging the line must not scroll or zoom the page. */
   touch-action: none;
   border-radius: var(--fs-radius-surface);
-  cursor: crosshair;
+  cursor: grab;
+}
+
+.board:focus-visible {
+  outline: 3px solid var(--fs-color-mint);
+  outline-offset: 2px;
+}
+
+/* "Round N" above the 3-2-1 numbers. */
+.caption {
+  position: absolute;
+  top: var(--space-4);
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-text-label);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fs-color-text-muted);
+}
+
+/* The Cut button (the shared pill, at least 44 px tall), centred under the board. */
+.actions {
+  display: flex;
+  justify-content: center;
 }
 
 .hint {

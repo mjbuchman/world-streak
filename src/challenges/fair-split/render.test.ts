@@ -1,17 +1,30 @@
 import { describe, expect, it } from "vitest";
 import {
   BOARD_MARGIN,
+  GRIP_RADIUS_PX,
+  HANDLE_HIT_PX,
+  HANDLE_RADIUS_PX,
+  LINE_HIT_PX,
+  NUDGE_UNITS,
+  ROTATE_STEP,
   SEPARATE_MS,
   SEPARATE_UNITS,
   boardLayout,
   drawFairSplit,
+  hitLine,
+  initialLine,
   lineThroughBox,
+  moveHandle,
+  nudge,
   percentLabel,
+  rotate,
   separation,
   timerFraction,
   toCanvas,
   toShape,
+  translateLine,
   type FairSplitFrame,
+  type Line,
 } from "./render";
 
 /** Records every call as [name, ...args], and every fill or stroke with the colour it used. */
@@ -43,7 +56,7 @@ const frame = (over: Partial<FairSplitFrame> = {}): FairSplitFrame => ({
   height: 400,
   devicePixelRatio: 2,
   polygon: SQUARE,
-  drag: null,
+  line: null,
   split: null,
   timer: null,
   miss: 0,
@@ -109,6 +122,110 @@ describe("Fair Split coordinates", () => {
   });
 });
 
+/** Both ends of a line rounded to 1e-6, so float noise does not fail an exact match. */
+const rounded = (line: Line) => line.map(({ x, y }) => ({ x: Math.round(x * 1e6) / 1e6 + 0, y: Math.round(y * 1e6) / 1e6 + 0 }));
+const onEdge = ({ x, y }: { x: number; y: number }) => [x, y].some((v) => Math.abs(v) < 1e-9 || Math.abs(v - 100) < 1e-9);
+
+describe("Fair Split line (T194)", () => {
+  it("starts straight down through the centre", () => {
+    expect(initialLine()).toEqual([
+      { x: 50, y: 0 },
+      { x: 50, y: 100 },
+    ]);
+  });
+
+  it("moves a handle and pivots on the other end, edge to edge, kept in the box", () => {
+    expect(rounded(moveHandle(initialLine(), "a", { x: 100, y: 0 }))).toEqual([
+      { x: 100, y: 0 },
+      { x: 50, y: 100 },
+    ]);
+    // A handle dragged outside the box stops at its corner.
+    expect(rounded(moveHandle(initialLine(), "b", { x: -40, y: 140 }))).toEqual([
+      { x: 50, y: 0 },
+      { x: 0, y: 100 },
+    ]);
+    // Inside the box, the end runs on to the edge along the new line.
+    expect(rounded(moveHandle(initialLine(), "b", { x: 75, y: 50 }))).toEqual([
+      { x: 50, y: 0 },
+      { x: 100, y: 100 },
+    ]);
+  });
+
+  it("repairs a degenerate line (both ends equal) to the previous one", () => {
+    const line = initialLine();
+    expect(moveHandle(line, "a", { x: 50, y: 100 })).toBe(line);
+    expect(moveHandle(line, "b", { x: 50, y: 0 })).toBe(line);
+  });
+
+  it("slides the line, its middle kept in the box at the edges", () => {
+    expect(rounded(translateLine(initialLine(), { x: 10, y: 0 }))).toEqual([
+      { x: 60, y: 0 },
+      { x: 60, y: 100 },
+    ]);
+    expect(rounded(translateLine(initialLine(), { x: 500, y: 0 }))).toEqual([
+      { x: 100, y: 0 },
+      { x: 100, y: 100 },
+    ]);
+    // A diagonal slid into the corner would only touch the box there: the line stays where it was.
+    const antiDiagonal: Line = [
+      { x: 0, y: 100 },
+      { x: 100, y: 0 },
+    ];
+    expect(translateLine(antiDiagonal, { x: 500, y: 500 })).toBe(antiDiagonal);
+  });
+
+  it("turns about its middle, and the keys slide and turn it", () => {
+    const quarter = rotate(initialLine(), Math.PI / 2);
+    expect(rounded(quarter)).toEqual([
+      { x: 100, y: 50 },
+      { x: 0, y: 50 },
+    ]);
+    expect(rounded(nudge(initialLine(), "ArrowRight")!)).toEqual(rounded(translateLine(initialLine(), { x: NUDGE_UNITS, y: 0 })));
+    expect(rounded(nudge(initialLine(), "ArrowLeft")!)[0].x).toBe(50 - NUDGE_UNITS);
+    expect(rounded(nudge(quarter, "ArrowUp")!)[0].y).toBe(50 - NUDGE_UNITS);
+    expect(rounded(nudge(quarter, "ArrowDown")!)[0].y).toBe(50 + NUDGE_UNITS);
+    expect(rounded(nudge(initialLine(), "]")!)).toEqual(rounded(rotate(initialLine(), ROTATE_STEP)));
+    expect(rounded(nudge(initialLine(), "[")!)).toEqual(rounded(rotate(initialLine(), -ROTATE_STEP)));
+    expect(nudge(initialLine(), "x")).toBeNull();
+  });
+
+  it("keeps both ends on the box's edge after any move", () => {
+    let line = initialLine();
+    const moves = [
+      (l: Line) => rotate(l, 0.7),
+      (l: Line) => translateLine(l, { x: -30, y: 12 }),
+      (l: Line) => moveHandle(l, "a", { x: 3, y: 97 }),
+      (l: Line) => rotate(l, -2.1),
+      (l: Line) => translateLine(l, { x: 80, y: -80 }),
+    ];
+    for (const move of moves) {
+      line = move(line);
+      expect(line.every(onEdge)).toBe(true);
+    }
+  });
+
+  it("takes a handle within 22 px first (the nearer one), then the line's body, else nothing", () => {
+    const layout = boardLayout(400, 400);
+    const line = initialLine();
+    const [top, bottom] = line.map((p) => toCanvas(layout, p));
+    const middle = toCanvas(layout, { x: 50, y: 50 });
+    expect(hitLine(layout, line, top.x + HANDLE_HIT_PX, top.y)).toBe("a");
+    expect(hitLine(layout, line, bottom.x, bottom.y - 10)).toBe("b");
+    // Just beside the top handle's reach, along the line: the body.
+    expect(hitLine(layout, line, top.x, top.y + HANDLE_HIT_PX + 1)).toBe("body");
+    expect(hitLine(layout, line, middle.x + LINE_HIT_PX, middle.y)).toBe("body");
+    expect(hitLine(layout, line, middle.x + LINE_HIT_PX + 1, middle.y)).toBeNull();
+    // A short line: both handles in reach, the nearer one wins over the body.
+    const short: Line = [
+      { x: 50, y: 0 },
+      { x: 52, y: 0 },
+    ];
+    const [s0, s1] = short.map((p) => toCanvas(layout, p));
+    expect(hitLine(layout, short, s0.x + 1, s0.y)).toBe("a");
+    expect(hitLine(layout, short, s1.x - 1, s1.y)).toBe("b");
+  });
+});
+
 describe("Fair Split timer and motion", () => {
   it("drains the ring from full to empty over the limit", () => {
     expect(timerFraction(0, 4000)).toBe(1);
@@ -146,11 +263,19 @@ describe("drawFairSplit", () => {
     expect(named(calls, "fill")).toEqual([]);
   });
 
-  it("draws the dragged line and the time ring", () => {
-    const calls = draw({ drag: [{ x: 50, y: 0 }, { x: 50, y: 100 }], timer: 0.25 });
-    expect(named(calls, "stroke").map((call) => call[1])).toEqual(["line", "track", "ring"]);
+  it("draws the line with a handle at each end and a grip in the middle, then the time ring, and no share", () => {
+    const calls = draw({ line: initialLine(), timer: 0.25 });
+    const layout = boardLayout(400, 400);
+    expect(named(calls, "stroke").map((call) => call[1])).toEqual(["line", "line", "track", "ring"]);
+    expect(named(calls, "fill").map((call) => call[1])).toEqual(["shape", "line", "line", "board"]);
     const arcs = named(calls, "arc");
-    expect(arcs[1].slice(4)).toEqual([-Math.PI / 2, -Math.PI / 2 + Math.PI / 2]);
+    expect(arcs.slice(0, 3)).toEqual([
+      ["arc", ...Object.values(toCanvas(layout, { x: 50, y: 0 })), HANDLE_RADIUS_PX, 0, 2 * Math.PI],
+      ["arc", ...Object.values(toCanvas(layout, { x: 50, y: 100 })), HANDLE_RADIUS_PX, 0, 2 * Math.PI],
+      ["arc", ...Object.values(toCanvas(layout, { x: 50, y: 50 })), GRIP_RADIUS_PX, 0, 2 * Math.PI],
+    ]);
+    expect(arcs[4].slice(4)).toEqual([-Math.PI / 2, -Math.PI / 2 + Math.PI / 2]);
+    expect(named(calls, "fillText")).toEqual([]);
   });
 
   it("draws the two sides of a cut with their percentages, moved apart", () => {

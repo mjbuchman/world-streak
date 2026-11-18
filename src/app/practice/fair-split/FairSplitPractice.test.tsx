@@ -2,23 +2,24 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GAP_MS, type FairSplitCut, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
+import { GAP_MS, ROUND_COUNTDOWN_MS, type FairSplitCut, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
 
-// Every run: two squares, 3 s each.
+// Every run: two squares, 3 s each, against a 6-point bank.
 const SQUARE = [
   { x: 0, y: 0 },
   { x: 100, y: 0 },
   { x: 100, y: 100 },
   { x: 0, y: 100 },
 ];
-const params: FairSplitParams = { shapes: [0, 1].map(() => ({ polygon: SQUARE, limitMs: 3000 })) };
+const params: FairSplitParams = { bank: 6, shapes: [0, 1].map(() => ({ polygon: SQUARE, limitMs: 3000 })) };
 vi.mock("@/challenges/fair-split/engine", async (importOriginal) => {
   const real = await importOriginal<typeof import("@/challenges/fair-split/engine")>();
   return { ...real, paramsFromSeed: () => params };
 });
 // The game has its own tests; here a stand-in finishes with whatever run the test asks.
 const game = vi.hoisted(() => ({ inputs: { cuts: [], endMs: 0 } as FairSplitInputs }));
-vi.mock("@/components/fair-split/FairSplitGame", () => ({
+vi.mock("@/components/fair-split/FairSplitGame", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/components/fair-split/FairSplitGame")>()),
   FairSplitGame: ({ onFinish }: { onFinish: (inputs: FairSplitInputs) => void }) => (
     <button type="button" onClick={() => onFinish(game.inputs)}>
       Fake run
@@ -39,29 +40,31 @@ async function playWith(inputs: FairSplitInputs) {
   return user;
 }
 
-const half = (atMs: number): FairSplitCut => ({ atMs, ax: 50, ay: 0, bx: 50, by: 100 });
+/** A vertical cut at x, `atMs` from the start: x = 51 is 1 point off half. */
+const cutAt = (atMs: number, x = 50): FairSplitCut => ({ atMs, ax: x, ay: 0, bx: x, by: 100 });
+const FIRST = ROUND_COUNTDOWN_MS + 1000;
 
 describe("FairSplitPractice", () => {
-  it("explains the cut and the lives before the start", () => {
+  it("explains the line, the Cut button and the bank before the start", () => {
     render(<FairSplitPractice />);
-    expect(screen.getByText(/Drag one straight line across it/)).toBeTruthy();
+    expect(screen.getByText(/then press Cut or Enter.*one 6-point bank/)).toBeTruthy();
   });
 
-  it("shows the shapes cut and the lives left, and focuses the result", async () => {
-    // One fair cut, then the second square times out three times.
-    await playWith({ cuts: [half(1000)], endMs: 60_000 });
-    const heading = screen.getByRole("heading", { name: "Shapes cut: 1" });
+  it("shows the shapes survived and the bank left, and focuses the result", async () => {
+    // A cut 1.2 points off, then one 7 points off: more than the 4.8 left, so the bank is gone.
+    await playWith({ cuts: [cutAt(FIRST, 51.2), cutAt(FIRST + GAP_MS + 500, 57)], endMs: FIRST + GAP_MS + 500 });
+    const heading = screen.getByRole("heading", { name: "1 shape survived" });
     expect(document.activeElement).toBe(heading);
-    expect(screen.getByText("0 of 3 lives left. Score: 1.")).toBeTruthy();
+    expect(screen.getByText("0 points of your 6-point bank left. Score: 1.")).toBeTruthy();
   });
 
-  it("says so when every shape is cut, and when none is", async () => {
-    await playWith({ cuts: [half(1000), half(1000 + GAP_MS + 500)], endMs: 1000 + GAP_MS + 500 });
-    expect(screen.getByRole("heading", { name: "Every shape cut" })).toBeTruthy();
-    expect(screen.getByText("3 of 3 lives left. Score: 3.")).toBeTruthy();
+  it("says so when every shape survives, and when none does", async () => {
+    await playWith({ cuts: [cutAt(FIRST), cutAt(FIRST + GAP_MS + 500, 51)], endMs: FIRST + GAP_MS + 500 });
+    expect(screen.getByRole("heading", { name: "Every shape survived" })).toBeTruthy();
+    expect(screen.getByText("5 points of your 6-point bank left. Score: 2.833.")).toBeTruthy();
     cleanup();
     const user = await playWith({ cuts: [], endMs: 60_000 });
-    expect(screen.getByRole("heading", { name: "No shape cut" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "0 shapes survived" })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Play again" }));
     expect(screen.getByRole("button", { name: "Fake run" })).toBeTruthy();
   });

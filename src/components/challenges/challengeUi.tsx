@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import type { EchoPathInputs, EchoPathParams } from "@/challenges/echo-path/engine";
-import type { FairSplitInputs, FairSplitParams } from "@/challenges/fair-split/engine";
+import { ROUNDS as FAIR_SPLIT_ROUNDS, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
 import { ROUNDS as FLASH_LADDER_ROUNDS, type FlashLadderInputs, type FlashLadderParams } from "@/challenges/flash-count/flashLadder";
 import { ROUNDS as TIME_BANK_ROUNDS, type TimeBankInputs, type TimeBankParams } from "@/challenges/inner-clock/timeBank";
 import type { ChallengeType } from "@/challenges/shared/types";
@@ -83,16 +83,17 @@ const echoPath: ChallengeUi<EchoPathParams, EchoPathInputs> = {
   target: pathOf,
 };
 
-/** Fair Split: shapes cut plus the lives left as a fraction ("6.333 shapes"). */
+/** Fair Split: shapes survived plus the bank left as a fraction ("4.5 shapes", T195). */
 const shapes = (score: number) => `${score} ${score === 1 ? "shape" : "shapes"}`;
+const shapesTarget = (target: number) => (target === FAIR_SPLIT_ROUNDS ? `${shapes(target)}: survive all five` : shapes(target));
 
 const fairSplit: ChallengeUi<FairSplitParams, FairSplitInputs> = {
   howTo: FAIR_SPLIT_HOW_TO,
   practicePath: practicePath("fair-split"),
   play: ({ params, onFinish }) => <FairSplitGame params={params} onFinish={onFinish} />,
   scoreLabel: shapes,
-  summary: (score, passTarget) => `You scored ${shapes(score)}. Today's target was ${shapes(passTarget)}.`,
-  target: shapes,
+  summary: (score, passTarget) => `You scored ${shapes(score)}. Today's target was ${shapesTarget(passTarget)}.`,
+  target: shapesTarget,
 };
 
 const CHALLENGE_UI = {

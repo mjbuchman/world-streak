@@ -1,10 +1,17 @@
-/** Fair Split's canvas: the shape, the cut being dragged, the two sides after a cut, the time ring and a miss. */
+/**
+ * Fair Split's canvas: the shape, the cut line being placed (with a handle at each end and a grip
+ * in the middle), the two sides after a cut, the time ring and a miss. No share is shown while the
+ * line is placed, or the game would be reading a number (DECISIONS, T194).
+ */
 import { BOX, clipLeft, type Point, type Polygon } from "./geometry";
 
 export type FairSplitColors = { board: string; shape: string; left: string; right: string; line: string; ring: string; track: string; miss: string; text: string };
 
 /** A cut drawn after it was made: the line (in shape units), the share on its left, and how far apart the sides have moved (shape units). */
 export type DrawnSplit = { a: Point; b: Point; share: number; apart: number };
+
+/** The line being placed: its two ends, both on the box's edge, in shape units. */
+export type Line = readonly [Point, Point];
 
 export type FairSplitFrame = {
   /** Canvas size in CSS pixels; the board is a square of the smaller side. */
@@ -13,8 +20,8 @@ export type FairSplitFrame = {
   devicePixelRatio: number;
   /** The shape on screen, or null in the pause between shapes. */
   polygon: Polygon | null;
-  /** The cut being dragged, across the box, or null. */
-  drag: readonly [Point, Point] | null;
+  /** The line being placed, or null. */
+  line: Line | null;
   /** The last cut, shown in place of the whole shape, or null. */
   split: DrawnSplit | null;
   /** The share of the time limit left (1 to 0), or null for no ring. */
@@ -68,6 +75,85 @@ export function lineThroughBox(a: Point, b: Point): [Point, Point] | null {
   if (low >= high) return null;
   const at = (t: number) => ({ x: Math.min(BOX, Math.max(0, a.x + t * dx)), y: Math.min(BOX, Math.max(0, a.y + t * dy)) });
   return [at(low), at(high)];
+}
+
+/** How far from a handle's centre a touch still takes it (CSS px): a 44 px target. */
+export const HANDLE_HIT_PX = 22;
+/** How far from the line a touch still takes the whole line (CSS px). */
+export const LINE_HIT_PX = 22;
+/** The handles' and the grip's drawn radius (CSS px). */
+export const HANDLE_RADIUS_PX = 11;
+export const GRIP_RADIUS_PX = 8;
+/** An arrow key's slide (shape units) and a [ or ]'s turn (radians: one degree). */
+export const NUDGE_UNITS = 0.25;
+export const ROTATE_STEP = Math.PI / 180;
+
+/** Where each shape's line starts: straight down through the centre (proposed, DECISIONS T194). */
+export const initialLine = (): Line => [
+  { x: BOX / 2, y: 0 },
+  { x: BOX / 2, y: BOX },
+];
+
+const clampToBox = (p: Point): Point => ({ x: Math.min(BOX, Math.max(0, p.x)), y: Math.min(BOX, Math.max(0, p.y)) });
+const midpoint = ([a, b]: Line): Point => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+/** The line through `through` in `direction`, across the box; the previous line when that is no line. */
+function across(previous: Line, through: Point, direction: Point): Line {
+  return lineThroughBox(through, { x: through.x + direction.x, y: through.y + direction.y }) ?? previous;
+}
+
+/** Moves one end to `point` (kept in the box); the line pivots on the other end and runs edge to edge again. */
+export function moveHandle(line: Line, which: "a" | "b", point: Point): Line {
+  const to = clampToBox(point);
+  const [a, b] = which === "a" ? [to, line[1]] : [line[0], to];
+  return lineThroughBox(a, b) ?? line;
+}
+
+/** Slides the line by `delta`; its middle stays in the box, so it always crosses it. */
+export function translateLine(line: Line, delta: Point): Line {
+  const mid = midpoint(line);
+  const [a, b] = line;
+  return across(line, clampToBox({ x: mid.x + delta.x, y: mid.y + delta.y }), { x: b.x - a.x, y: b.y - a.y });
+}
+
+/** Turns the line about its middle by `step` radians. */
+export function rotate(line: Line, step: number): Line {
+  const [a, b] = line;
+  const [cos, sin] = [Math.cos(step), Math.sin(step)];
+  const d = { x: b.x - a.x, y: b.y - a.y };
+  return across(line, midpoint(line), { x: d.x * cos - d.y * sin, y: d.x * sin + d.y * cos });
+}
+
+const NUDGES: Record<string, Point> = {
+  ArrowLeft: { x: -NUDGE_UNITS, y: 0 },
+  ArrowRight: { x: NUDGE_UNITS, y: 0 },
+  ArrowUp: { x: 0, y: -NUDGE_UNITS },
+  ArrowDown: { x: 0, y: NUDGE_UNITS },
+};
+
+/** The line after a key: an arrow slides it, [ and ] turn it; null for any other key. */
+export function nudge(line: Line, key: string): Line | null {
+  if (key in NUDGES) return translateLine(line, NUDGES[key]);
+  if (key === "[") return rotate(line, -ROTATE_STEP);
+  if (key === "]") return rotate(line, ROTATE_STEP);
+  return null;
+}
+
+/** The distance from p to the segment from a to b. */
+function distanceToSegment(p: Point, a: Point, b: Point): number {
+  const d = { x: b.x - a.x, y: b.y - a.y };
+  const length2 = d.x * d.x + d.y * d.y;
+  const t = length2 === 0 ? 0 : Math.min(1, Math.max(0, ((p.x - a.x) * d.x + (p.y - a.y) * d.y) / length2));
+  return Math.hypot(p.x - (a.x + t * d.x), p.y - (a.y + t * d.y));
+}
+
+/** What a touch at canvas point (x, y) takes: a handle (the nearer, first), the whole line, or nothing. */
+export function hitLine(layout: BoardLayout, line: Line, x: number, y: number): "a" | "b" | "body" | null {
+  const p = { x, y };
+  const [a, b] = line.map((end) => toCanvas(layout, end));
+  const [toA, toB] = [Math.hypot(x - a.x, y - a.y), Math.hypot(x - b.x, y - b.y)];
+  if (Math.min(toA, toB) <= HANDLE_HIT_PX) return toA <= toB ? "a" : "b";
+  return distanceToSegment(p, a, b) <= LINE_HIT_PX ? "body" : null;
 }
 
 /** The share of the time limit left `msSinceAppear` after the shape appeared. */
@@ -154,14 +240,31 @@ export function drawFairSplit(ctx: CanvasRenderingContext2D, frame: FairSplitFra
   const layout = boardLayout(width, height);
   if (frame.polygon && frame.split) drawSplit(ctx, layout, frame.polygon, frame.split, colors);
   else if (frame.polygon) fillPolygon(ctx, layout, frame.polygon, colors.shape);
-  if (frame.drag) {
-    const [a, b] = frame.drag.map((p) => toCanvas(layout, p));
-    ctx.lineWidth = Math.max(2, layout.scale * 0.6);
-    ctx.strokeStyle = colors.line;
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.stroke();
-  }
+  if (frame.line) drawLine(ctx, layout, frame.line, colors);
   if (frame.timer !== null) drawRing(ctx, layout, frame.timer, colors);
+}
+
+function dot(ctx: CanvasRenderingContext2D, at: Point, radius: number) {
+  ctx.beginPath();
+  ctx.arc(at.x, at.y, radius, 0, 2 * Math.PI);
+}
+
+/** The line across the box, a round handle at each end and a ringed grip in the middle. */
+function drawLine(ctx: CanvasRenderingContext2D, layout: BoardLayout, line: Line, colors: FairSplitColors) {
+  const [a, b] = line.map((p) => toCanvas(layout, p));
+  ctx.lineWidth = Math.max(2, layout.scale * 0.6);
+  ctx.strokeStyle = colors.line;
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.stroke();
+  ctx.fillStyle = colors.line;
+  for (const end of [a, b]) {
+    dot(ctx, end, HANDLE_RADIUS_PX);
+    ctx.fill();
+  }
+  dot(ctx, toCanvas(layout, midpoint(line)), GRIP_RADIUS_PX);
+  ctx.fillStyle = colors.board;
+  ctx.fill();
+  ctx.stroke();
 }
