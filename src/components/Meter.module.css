@@ -82,7 +82,8 @@
 
 .reading {
   position: absolute;
-  inset: 38% 0 auto;
+  /* Low enough in the bowl that the reading's top corners clear the arc (T177). */
+  inset: 47% 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -100,7 +101,7 @@
 
 /* "100%" at the display size reaches the arc; this keeps it inside the inner circle (T177). */
 .rate[data-digits="3"] {
-  font-size: min(calc(var(--fs-text-display) * 0.75), 16cqi);
+  font-size: min(calc(var(--fs-text-display) * 0.7), 15cqi);
 }
 
 .meter[data-state="above"] .rate {
