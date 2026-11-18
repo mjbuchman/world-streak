@@ -8,7 +8,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Active task: none; M6 is complete and waits for the owner's play-test.
 - Blocked tasks: none
 - Waiting on the human: the M6 play-test and M6 please-confirms; updating DESIGN.md for M6; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: the owner's gameplay tweak list after the play-test, then batch 19 (T199, T200 from the M6 maintainer pass).
+- Next: M7 play-test tweaks (T201–T214, approved Nov 18), batches M7-a to M7-e, then batch 19 (T199, T200).
 
 ## Log
 
