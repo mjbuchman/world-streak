@@ -4,7 +4,7 @@ Status: Approved (2026-11-07)
 
 Note (Nov 18, 2026): **M6 Gameplay tweaks (T177 to T198, batches 13 to 18) approved by the owner on Nov 18, 2026, with the proposed values as written.** Values tagged "(proposed, owner to confirm)" stand as the defaults; the owner may still adjust them at the M6 play-test.
 
-Note (Nov 18, 2026): **M7 M6 play-test tweaks (T201 to T214, batches M7-a to M7-e) is awaiting the owner's approval.** Do not start it until the owner replies "approved" and this note is updated.
+Note (Nov 18, 2026): **M7 M6 play-test tweaks (T201 to T214, batches M7-a to M7-e) approved by the owner on Nov 18, 2026** (5x8 board; "touch" means sharing an edge only).
 
 Planning notes for the builder:
 
@@ -44,7 +44,7 @@ M6 Gameplay tweaks (Nov 18, 2026; approved Nov 18):
 16. Echo Path as one growing path: T187, T188, T189, T190, T191 (full: scoring, migration)
 17. Fair Split as five rounds: T192, T193, T194, T195, T196 (full: scoring, migration; if over about 1500 lines, split T196 into its own PR, still full)
 18. M6 end-to-end checks and docs: T197, T198 (light; T198 is docs only)
-M7 M6 play-test tweaks (Nov 18, 2026; awaiting approval; runs before batch 19):
+M7 M6 play-test tweaks (Nov 18, 2026; approved; runs before batch 19):
 
 - M7-a. Names and Second Sense: T201, T202, T203, T204 (full: scoring, migration)
 - M7-b. Swift Sum random counts: T205, T206 (full: scoring, migration)
@@ -2261,7 +2261,7 @@ Planning notes for M6:
 
 ## M7 M6 play-test tweaks
 
-Awaiting the owner's approval (planned Nov 18, 2026 from the owner's M6 play-test feedback; this overrides the M6 values below and `docs/DESIGN.md` where they conflict. DESIGN.md is not edited: T214 records each conflict and adds a "please update DESIGN.md" item to `docs/NEEDS_HUMAN.md`).
+Approved by the owner on Nov 18, 2026 (5x8 board confirmed; "touch" means sharing an edge only; other proposed values accepted) (planned Nov 18, 2026 from the owner's M6 play-test feedback; this overrides the M6 values below and `docs/DESIGN.md` where they conflict. DESIGN.md is not edited: T214 records each conflict and adds a "please update DESIGN.md" item to `docs/NEEDS_HUMAN.md`).
 
 Goal: play-test the tuned games. Second Sense targets run 10 to 20 s against a 2 s bank and its 3-2-1 sits centred. Swift Sum draws a random 10 to 30 dots every round. Trail Trace (was Echo Path) has paths of at most 12 tiles on a shorter board, with no three path tiles touching. Clean Cut (was Fair Split) uses only asymmetrical shapes and an 8 point bank.
 
@@ -2340,9 +2340,9 @@ Planning notes for M7:
 - Depends on: T201
 - Acceptance criteria:
   - [ ] In `src/challenges/echo-path/path.ts`, `MAX_PATH_LENGTH` becomes 12 (owner). The board is shortened so a path can still be built: `ROWS = 8`, `COLS = 5`, `MIN_PATH_LENGTH = 8` (a straight climb), so lengths run 8 to 12 (the shorter board, 8 rows and the minimum are proposed, owner to confirm; keep 10 rows if the generator can meet every rule with a maximum of 12, since 10 rows leaves only two sideways steps, and record the choice). The constants are exported and everything that read the old size follows them (`engine.ts`, `render.ts`, `EchoPathGame`).
-  - [ ] New rule: no three tiles of the path may touch each other. "Touch" means sharing an edge or a corner (the eight neighbours of a tile), so any three tiles that are pairwise touching (an L-shaped corner cut, such as a step forward, a step sideways and a step back to the first row, or a diagonal cutback) make the path invalid. All the old rules stay (bottom to top, start in row 0, five moves, never leaves the board, no revisit, no more than 2 of the same move in a row).
+  - [ ] New rule: no three tiles of the path may touch each other. "Touch" means sharing an edge only, not a corner (owner, Nov 18). Three grid tiles can never all share edges pairwise, so the rule is read as: a path tile may share an edge only with the tiles just before and just after it in the path; any other edge contact (a cutback running alongside an earlier tile, such as a step sideways then a diagonal step back over the start) makes the path invalid (this reading is proposed, owner to confirm). All the old rules stay (bottom to top, start in row 0, five moves, never leaves the board, no revisit, no more than 2 of the same move in a row).
   - [ ] `isValidPath` enforces the new rule. `pathFor(seed)` obeys it, with bounded seeded retries and a deterministic fallback that still obeys every rule (a straight column climb is valid; a hand-checked fallback test covers every start column).
-  - [ ] Tests over seeds 0 to 9 999: every path passes `isValidPath`; no three path tiles are pairwise touching (an independent brute-force check in the test, not the same code as the rule); lengths cover 8 to 12 (every value appears); same seed gives the same path; at least 90% of 1 000 seeds give distinct paths (lower than M6's 95% because the rules shrink the space; the measured share is recorded in a comment); hand-built invalid paths are rejected: a corner cut (forward, sideways, forward-back), a 3-in-a-row, a revisit, and a path of 13 tiles. At least 90% lines and branches.
+  - [ ] Tests over seeds 0 to 9 999: every path passes `isValidPath`; no two non-consecutive path tiles share an edge (an independent brute-force check in the test, not the same code as the rule); lengths cover 8 to 12 (every value appears); same seed gives the same path; at least 90% of 1 000 seeds give distinct paths (lower than M6's 95% because the rules shrink the space; the measured share is recorded in a comment); hand-built invalid paths are rejected: a corner cut (forward, sideways, forward-back), a 3-in-a-row, a revisit, and a path of 13 tiles. At least 90% lines and branches.
 - Notes: Owner: "maximum path is 12 tiles; shorten the board if needed. No three tiles of the path may touch each other (avoids diagonal cutbacks). Otherwise unchanged." Pure module; the engine still imports the old constants until T208, so keep the batch's branch green by doing T207 and T208 in order within the PR. Full review (scoring).
 
 ### T208 Trail Trace engine and screen on the shorter board
