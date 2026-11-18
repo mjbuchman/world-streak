@@ -263,7 +263,7 @@ function tileCentre(box: { x: number; y: number; width: number; height: number }
   };
 }
 
-test("Echo Path practice: a 4-tile first playback on the 5 x 10 board, and a fifth tile after a clear (T197)", async ({ page }) => {
+test("Echo Path practice: a 4-tile first playback on the 5 x 8 board, and a fifth tile after a clear (T197, T208)", async ({ page }) => {
   const seed = 2024;
   await pinSeed(page, seed);
   const params = echoPathParams(seed);
@@ -273,7 +273,7 @@ test("Echo Path practice: a 4-tile first playback on the 5 x 10 board, and a fif
   const length = page.getByRole("img", { name: /^Tile \d+ of \d+$/ });
   await expect(length).toHaveAccessibleName(`Tile 4 of ${params.path.length}`);
   await expect(board).toHaveAttribute("data-phase", "repeat", { timeout: 15_000 });
-  // Tapping the path's first four tiles, placed on a 5 x 10 grid, clears the round.
+  // Tapping the path's first four tiles, placed on a 5 x 8 grid, clears the round.
   const box = (await board.boundingBox())!;
   for (const tile of params.path.slice(0, 4)) {
     const { x, y } = tileCentre(box, tile);

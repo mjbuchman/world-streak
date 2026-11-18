@@ -2315,7 +2315,7 @@ Planning notes for M7:
 
 ### T205 Swift Sum engine: a random 10 to 30 dots every round
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T201
 - Acceptance criteria:
   - [ ] In `src/challenges/flash-count/flashLadder.ts`, each round's `dotCount` is drawn from the seeded RNG uniformly from 10 to 30 inclusive (`DOT_COUNT_MIN = 10`, `DOT_COUNT_MAX = 30`), independently per round, with no growth by round and no per-round range, so a player cannot work out a round's range. The old `[6 + 3i, 11 + 3i]` rule is removed. Bank (10 dots), `ROUNDS = 5`, flash times and the input schema are unchanged.
@@ -2325,7 +2325,7 @@ Planning notes for M7:
 
 ### T206 Swift Sum: scale reset, cheat rule and wording
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T204, T205
 - Acceptance criteria:
   - [ ] A new migration sets `scores_since` for `flash-count` to the day after it runs, restates `default_pass_targets` for `flash-count` as 5 (or the value that matches the bank if T205 changed the score scale; it stays "survive all five rounds"), and recomputes unedited, unstarted open days. pgTAP as in T204 for this type.
@@ -2336,7 +2336,7 @@ Planning notes for M7:
 
 ### T207 Trail Trace path generator: 12 tiles at most, no three tiles touching
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T201
 - Acceptance criteria:
   - [ ] In `src/challenges/echo-path/path.ts`, `MAX_PATH_LENGTH` becomes 12 (owner). The board is shortened so a path can still be built: `ROWS = 8`, `COLS = 5`, `MIN_PATH_LENGTH = 8` (a straight climb), so lengths run 8 to 12 (the shorter board, 8 rows and the minimum are proposed, owner to confirm; keep 10 rows if the generator can meet every rule with a maximum of 12, since 10 rows leaves only two sideways steps, and record the choice). The constants are exported and everything that read the old size follows them (`engine.ts`, `render.ts`, `EchoPathGame`).
@@ -2347,7 +2347,7 @@ Planning notes for M7:
 
 ### T208 Trail Trace engine and screen on the shorter board
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T207
 - Acceptance criteria:
   - [ ] `engine.ts` follows T207: `startLength = 4`, so a full run is 4 to 12 tiles (up to 9 rounds); `MAX_TAPS` is recomputed for the longest path (12) plus two missed attempts at the last length. Scoring is unchanged (longest length cleared + lives left ÷ 3, rounded to 3 decimals). With an explicit 10-tile path: all 10 tapped correctly scores 10 + 1 = 11; clearing 4 to 6 then missing three times scores 6; clearing everything with one miss scores 10 + 2/3. Golden scores for 3 seeds are re-pinned; `engine.test.ts` stays rewritten, not weakened; over 1 000 seeds at least 90% of paths are distinct.
@@ -2357,7 +2357,7 @@ Planning notes for M7:
 
 ### T209 Trail Trace: scale reset and cheat checks
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T204, T208
 - Acceptance criteria:
   - [ ] A new migration sets `scores_since` for `echo-path` to the day after it runs, sets `default_pass_targets` for `echo-path` to 8 (clear a path of 8 tiles, the board's height; proposed, owner to confirm) in `game_settings` and the column default, and recomputes unedited, unstarted open days. pgTAP as in T204 for this type. The admin target check allows a target up to 13 for this game.

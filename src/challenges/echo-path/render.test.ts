@@ -23,12 +23,12 @@ function fakeContext() {
 }
 
 const colors = { board: "board", tile: "tile", lit: "lit", trail: "trail", pressed: "pressed", miss: "miss", start: "start", finish: "finish", focus: "focus" };
-// 5.6 x 11.1 tiles' worth (tiles plus gaps): a 56 x 111 canvas has tiles of exactly 10 px and gaps of 1 px.
+// 5.6 x 8.9 tiles' worth (tiles plus gaps): a 56 x 89 canvas has tiles of exactly 10 px and gaps of 1 px.
 const frame = (over: Partial<EchoPathFrame> = {}): EchoPathFrame => ({
   cols: 5,
-  rows: 10,
+  rows: 8,
   width: 56,
-  height: 111,
+  height: 89,
   devicePixelRatio: 2,
   lit: null,
   trail: [],
@@ -61,12 +61,12 @@ function tileRects(layout: BoardLayout) {
 
 describe("boardLayout", () => {
   it.each([
-    [390, 560],
+    [390, 480],
     [1280, 720],
-  ])("fits the 5 x 10 board into %i x %i, centred, with tiles that do not overlap", (width, height) => {
-    const layout = boardLayout(width, height, 5, 10);
+  ])("fits the 5 x 8 board into %i x %i, centred, with tiles that do not overlap (T208)", (width, height) => {
+    const layout = boardLayout(width, height, 5, 8);
     expect(layout.gap).toBeCloseTo(layout.tileSize * TILE_GAP);
-    const boardHeight = 10 * layout.tileSize + 11 * layout.gap;
+    const boardHeight = 8 * layout.tileSize + 9 * layout.gap;
     const boardWidth = 5 * layout.tileSize + 6 * layout.gap;
     // The height limits a tall board in both: it fills it top to bottom.
     expect(boardHeight).toBeCloseTo(height);
@@ -81,44 +81,44 @@ describe("boardLayout", () => {
     }
   });
 
-  it("gives tiles of 50 px at 390 x 560 and 65 px at 1 280 x 720", () => {
-    expect(boardLayout(390, 560, 5, 10).tileSize).toBeCloseTo(560 / 11.1);
-    expect(boardLayout(1280, 720, 5, 10).tileSize).toBeCloseTo(720 / 11.1);
+  it("gives tiles of 54 px at 390 x 480 and 81 px at 1 280 x 720", () => {
+    expect(boardLayout(390, 480, 5, 8).tileSize).toBeCloseTo(480 / 8.9);
+    expect(boardLayout(1280, 720, 5, 8).tileSize).toBeCloseTo(720 / 8.9);
   });
 
   it("gives tiles of at least 44 x 44 CSS px on a 390 px phone, where the board is 250 px wide", () => {
     // The stage is at most 250 px wide (less on narrower pages), and the canvas keeps the board's shape.
-    expect(boardLayout(250, 250 * (11.1 / 5.6), 5, 10).tileSize).toBeGreaterThanOrEqual(44);
+    expect(boardLayout(250, 250 * (8.9 / 5.6), 5, 8).tileSize).toBeGreaterThanOrEqual(44);
   });
 
   it("is limited by the width on a wide, short board", () => {
-    const layout = boardLayout(56, 500, 5, 10);
+    const layout = boardLayout(56, 500, 5, 8);
     expect(layout.tileSize).toBeCloseTo(10);
     expect(layout.left).toBeCloseTo(0);
   });
 });
 
 describe("hitTile", () => {
-  const layout = boardLayout(56, 111, 5, 10);
+  const layout = boardLayout(56, 89, 5, 8);
 
   it("numbers tiles from the bottom row up, edges included", () => {
     expect([layout.left, layout.top, layout.tileSize]).toEqual([expect.closeTo(0, 9), expect.closeTo(0, 9), expect.closeTo(10, 9)]);
     // The bottom-left tile (0) starts 1 px in from the left and the bottom.
-    expect(hitTile(layout, 1, 100)).toBe(0);
-    expect(hitTile(layout, 10.9, 109.9)).toBe(0);
-    expect(hitTile(layout, 12, 100)).toBe(1);
+    expect(hitTile(layout, 1, 78)).toBe(0);
+    expect(hitTile(layout, 10.9, 87.9)).toBe(0);
+    expect(hitTile(layout, 12, 78)).toBe(1);
     // The top-right tile is the last one.
-    expect(hitTile(layout, 45, 1)).toBe(49);
-    expect(hitTile(layout, 54.9, 10.9)).toBe(49);
+    expect(hitTile(layout, 45, 1)).toBe(39);
+    expect(hitTile(layout, 54.9, 10.9)).toBe(39);
   });
 
   it("gives null in the gaps and off the board", () => {
-    expect(hitTile(layout, 11.5, 100)).toBeNull();
-    expect(hitTile(layout, 5, 99.5)).toBeNull();
-    expect(hitTile(layout, 0.5, 100)).toBeNull();
+    expect(hitTile(layout, 11.5, 78)).toBeNull();
+    expect(hitTile(layout, 5, 77.5)).toBeNull();
+    expect(hitTile(layout, 0.5, 78)).toBeNull();
     expect(hitTile(layout, -1, 50)).toBeNull();
     expect(hitTile(layout, 55.5, 50)).toBeNull();
-    expect(hitTile(layout, 30, 110.5)).toBeNull();
+    expect(hitTile(layout, 30, 88.5)).toBeNull();
     expect(hitTile(layout, 30, 200)).toBeNull();
   });
 });
@@ -199,16 +199,16 @@ describe("drawEchoPath", () => {
   it("draws the board, the goal and start marks, then every tile, for the device's pixel ratio", () => {
     const ctx = draw();
     expect(ctx.setTransform).toHaveBeenCalledWith(2, 0, 0, 2, 0, 0);
-    expect(ctx.clearRect).toHaveBeenCalledWith(0, 0, 56, 111);
-    expect(ctx.styles).toEqual(["board", "finish", "start", ...Array<string>(50).fill("tile")]);
+    expect(ctx.clearRect).toHaveBeenCalledWith(0, 0, 56, 89);
+    expect(ctx.styles).toEqual(["board", "finish", "start", ...Array<string>(40).fill("tile")]);
     const [board, finish, start, bottomLeft] = ctx.fillRect.mock.calls;
-    expect(board.map((n) => Number(n.toFixed(6)))).toEqual([0, 0, 56, 111]);
+    expect(board.map((n) => Number(n.toFixed(6)))).toEqual([0, 0, 56, 89]);
     // The goal mark sits in the gap above the top row, the start mark in the gap below the bottom row.
     expect(finish[1]).toBeGreaterThan(0);
     expect(finish[1] + finish[3]).toBeLessThan(1);
-    expect(start[1]).toBeGreaterThan(110);
-    expect(start[1] + start[3]).toBeLessThan(111);
-    expect(bottomLeft.map((n) => Number(n.toFixed(6)))).toEqual([1, 100, 10, 10]);
+    expect(start[1]).toBeGreaterThan(88);
+    expect(start[1] + start[3]).toBeLessThan(89);
+    expect(bottomLeft.map((n) => Number(n.toFixed(6)))).toEqual([1, 78, 10, 10]);
   });
 
   it("shows the lit tile and the pressed tile in their colours, the lit one first", () => {
@@ -229,7 +229,7 @@ describe("drawEchoPath", () => {
   it("rings the keyboard's tile in the gap around it, under the tile", () => {
     const ctx = draw({ focus: 1 });
     expect(ctx.styles.slice(3, 6)).toEqual(["tile", "focus", "tile"]);
-    expect(ctx.fillRect.mock.calls[4].map((n) => Number(n.toFixed(6)))).toEqual([11.5, 99.5, 11, 11]);
+    expect(ctx.fillRect.mock.calls[4].map((n) => Number(n.toFixed(6)))).toEqual([11.5, 77.5, 11, 11]);
     expect(draw().styles).not.toContain("focus");
   });
 

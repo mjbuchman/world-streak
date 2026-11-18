@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { COLS, LIVES, MAX_TAPS, ROWS, START_LENGTH, STEP_MS_RANGE, echoPath, paramsFromSeed, play, sequenceFor, type EchoPathParams } from "./engine";
 import { isValidPath, MAX_PATH_LENGTH } from "./path";
 
-/** The worked examples' path: 12 tiles from row 0 to row 9 (row * 5 + col). */
-const TWELVE = [0, 1, 2, 7, 13, 18, 22, 27, 33, 38, 42, 47];
-const params: EchoPathParams = { cols: COLS, rows: ROWS, path: TWELVE, startLength: START_LENGTH, stepMs: 350 };
+/** The worked examples' path: 10 tiles from row 0 to row 7 (row * 5 + col), with two sideways steps. */
+const TEN = [0, 1, 6, 12, 17, 18, 23, 27, 32, 38];
+const params: EchoPathParams = { cols: COLS, rows: ROWS, path: TEN, startLength: START_LENGTH, stepMs: 350 };
 
 /** Taps one second apart from tile lists. */
 const run = (...tiles: number[][]) => ({ taps: tiles.flat().map((tile, i) => ({ tile, atMs: 1000 * (i + 1) })) });
@@ -15,15 +15,16 @@ const clear = (p: EchoPathParams, ...ls: number[]) => ls.map((length) => sequenc
 const wrongFirst = (p: EchoPathParams) => [p.path[1]];
 
 describe("Echo Path params", () => {
-  it("documents the numbers: a 5 x 10 board, a start of 4, 3 lives", () => {
-    expect([COLS, ROWS, START_LENGTH, LIVES]).toEqual([5, 10, 4, 3]);
+  it("documents the numbers: a 5 x 8 board, a start of 4, 3 lives (T208)", () => {
+    expect([COLS, ROWS, START_LENGTH, LIVES]).toEqual([5, 8, 4, 3]);
     expect(STEP_MS_RANGE).toEqual({ min: 300, max: 400 });
+    expect(isValidPath(TEN)).toBe(true);
   });
 
   it("give every seed 0 to 999 a valid path and a step speed inside its range", () => {
     for (let seed = 0; seed < 1000; seed++) {
       const p = paramsFromSeed(seed);
-      expect(p).toMatchObject({ cols: 5, rows: 10, startLength: 4 });
+      expect(p).toMatchObject({ cols: 5, rows: 8, startLength: 4 });
       expect(isValidPath(p.path)).toBe(true);
       expect(p.stepMs % 50).toBe(0);
       expect(p.stepMs).toBeGreaterThanOrEqual(STEP_MS_RANGE.min);
@@ -32,9 +33,9 @@ describe("Echo Path params", () => {
     }
   });
 
-  it("give players different paths: at least 95% distinct over 1 000 seeds", () => {
+  it("give players different paths: at least 90% distinct over 1 000 seeds", () => {
     const distinct = new Set(Array.from({ length: 1000 }, (_, seed) => paramsFromSeed(seed).path.join(",")));
-    expect(distinct.size).toBeGreaterThanOrEqual(950);
+    expect(distinct.size).toBeGreaterThanOrEqual(900);
   });
 
   it.each([0, 1, 4_294_967_295])("golden: seed %i (changing the PRNG, the path rules or the ranges changes these)", (seed) => {
@@ -47,8 +48,8 @@ describe("Echo Path params", () => {
 
 describe("Echo Path rounds", () => {
   it("play the path's first tiles, the same on every try", () => {
-    expect(sequenceFor(params, 4)).toEqual([0, 1, 2, 7]);
-    expect(sequenceFor(params, 5)).toEqual([0, 1, 2, 7, 13]);
+    expect(sequenceFor(params, 4)).toEqual([0, 1, 6, 12]);
+    expect(sequenceFor(params, 5)).toEqual([0, 1, 6, 12, 17]);
   });
 
   it("add the path's next tile after a clear, and replay the same length after a miss", () => {
@@ -61,17 +62,17 @@ describe("Echo Path rounds", () => {
 });
 
 describe("Echo Path score", () => {
-  it("tapping all 12 tiles of a 12-tile path correctly scores 12 + 1 = 13", () => {
-    expect(echoPath.score(params, run(...clear(params, ...lengths(4, 12))))).toBe(13);
+  it("tapping all 10 tiles of a 10-tile path correctly scores 10 + 1 = 11", () => {
+    expect(echoPath.score(params, run(...clear(params, ...lengths(4, 10))))).toBe(11);
   });
 
-  it("clearing 4 to 7, then missing three times, scores 7", () => {
-    expect(echoPath.score(params, run(...clear(params, ...lengths(4, 7)), wrongFirst(params), wrongFirst(params), wrongFirst(params)))).toBe(7);
+  it("clearing 4 to 6, then missing three times, scores 6", () => {
+    expect(echoPath.score(params, run(...clear(params, ...lengths(4, 6)), wrongFirst(params), wrongFirst(params), wrongFirst(params)))).toBe(6);
   });
 
-  it("clearing everything with two misses on the way scores 12 + 1/3", () => {
-    const taps = run(...clear(params, 4, 5), wrongFirst(params), ...clear(params, 6, 7, 8), [0, 1, 2, 7, 13, 18, 22, 27, 0], ...clear(params, ...lengths(9, 12)));
-    expect(echoPath.score(params, taps)).toBe(12.333);
+  it("clearing everything with one miss on the way scores 10 + 2/3", () => {
+    const taps = run(...clear(params, 4, 5, 6, 7), [0, 1, 6, 12, 17, 18, 0], ...clear(params, ...lengths(8, 10)));
+    expect(echoPath.score(params, taps)).toBe(10.667);
   });
 
   it("three wrong first taps score 0", () => {
@@ -80,7 +81,7 @@ describe("Echo Path score", () => {
 
   it("ignores taps after the run has ended", () => {
     expect(echoPath.score(params, run(wrongFirst(params), wrongFirst(params), wrongFirst(params), ...clear(params, 4)))).toBe(0);
-    expect(echoPath.score(params, run(...clear(params, ...lengths(4, 12)), [5, 5, 5]))).toBe(13);
+    expect(echoPath.score(params, run(...clear(params, ...lengths(4, 10)), [5, 5, 5]))).toBe(11);
   });
 
   it("is higher-better and the same every time for the same taps (property)", () => {
@@ -98,13 +99,13 @@ describe("Echo Path score", () => {
 
 describe("Echo Path inputs", () => {
   it("accept tiles on the board at rising times, up to MAX_TAPS", () => {
-    expect(echoPath.inputsSchema.safeParse(run([0, 49])).success).toBe(true);
+    expect(echoPath.inputsSchema.safeParse(run([0, 39])).success).toBe(true);
     expect(echoPath.inputsSchema.safeParse({ taps: [] }).success).toBe(true);
     expect(echoPath.inputsSchema.safeParse(run(Array<number>(MAX_TAPS).fill(1))).success).toBe(true);
   });
 
   it.each([
-    ["a tile off the board", run([50])],
+    ["a tile off the board", run([40])],
     ["a negative tile", run([-1])],
     ["a fractional tile", run([1.5])],
     ["a negative time", { taps: [{ tile: 1, atMs: -1 }] }],
@@ -115,18 +116,18 @@ describe("Echo Path inputs", () => {
     expect(echoPath.inputsSchema.safeParse(inputs).success).toBe(false);
   });
 
-  it("bound the taps by the longest run: every length of an 18-tile path cleared, with two full misses at the end", () => {
+  it("bound the taps by the longest run: every length of a 12-tile path cleared, with two full misses at the end", () => {
     const total = lengths(START_LENGTH, MAX_PATH_LENGTH).reduce((sum, length) => sum + length, 0);
     expect(MAX_TAPS).toBe(total + (LIVES - 1) * MAX_PATH_LENGTH);
-    expect(MAX_TAPS).toBe(201);
+    expect(MAX_TAPS).toBe(96);
   });
 
   it("are finished once the lives run out or the whole path is cleared", () => {
     expect(echoPath.finished(params, run())).toBe(false);
     expect(echoPath.finished(params, run(...clear(params, 4), wrongFirst(params)))).toBe(false);
     expect(echoPath.finished(params, run(wrongFirst(params), wrongFirst(params), wrongFirst(params)))).toBe(true);
-    expect(echoPath.finished(params, run(...clear(params, ...lengths(4, 11))))).toBe(false);
-    expect(echoPath.finished(params, run(...clear(params, ...lengths(4, 12))))).toBe(true);
+    expect(echoPath.finished(params, run(...clear(params, ...lengths(4, 9))))).toBe(false);
+    expect(echoPath.finished(params, run(...clear(params, ...lengths(4, 10))))).toBe(true);
   });
 
   it("time the latest input at the last tap", () => {

@@ -1,6 +1,6 @@
 begin;
 \ir fixtures/fixtures.psql
-select plan(18);
+select plan(20);
 
 -- T183: a challenge's pass-target percentile reads only scores from its scores_since date on.
 select has_column('public', 'challenge_types', 'scores_since', 'challenge types have a scores_since date');
@@ -31,6 +31,11 @@ select ok(
     >= (select scores_since from public.challenge_types where type = 'fair-split'),
   'Swift Sum''s 10 to 30 dots start its scale again (T206)'
 );
+select ok(
+  (select scores_since from public.challenge_types where type = 'echo-path')
+    >= (select scores_since from public.challenge_types where type = 'fair-split'),
+  'Trail Trace''s 5 x 8 board starts its scale again (T209)'
+);
 select is(
   (select count(*)::integer from public.challenge_types where type not in ('inner-clock', 'flash-count', 'echo-path', 'fair-split') and scores_since is not null), 0,
   'every other challenge still counts all its scores'
@@ -38,10 +43,11 @@ select is(
 select is((select (default_pass_targets ->> 'inner-clock')::numeric from public.game_settings), 4::numeric, 'the placeholder stays 4: survive all four');
 select is((select (default_pass_targets ->> 'flash-count')::numeric from public.game_settings), 5::numeric, 'Swift Sum''s is 5: survive all five');
 select is((select (default_pass_targets ->> 'fair-split')::numeric from public.game_settings), 5::numeric, 'Fair Split''s is 5: survive all five (T196)');
+select is((select (default_pass_targets ->> 'echo-path')::numeric from public.game_settings), 8::numeric, 'Trail Trace''s is 8: a path the board''s height (T209)');
 select ok(
   (select column_default from information_schema.columns
     where table_schema = 'public' and table_name = 'game_settings' and column_name = 'default_pass_targets')
-    like all (array['%"inner-clock": 4%', '%"flash-count": 5%', '%"echo-path": 10%', '%"fair-split": 5%']),
+    like all (array['%"inner-clock": 4%', '%"flash-count": 5%', '%"echo-path": 8%', '%"fair-split": 5%']),
   'and a fresh settings row has all four'
 );
 
@@ -78,7 +84,7 @@ select is(public.pass_target_for('flash-count', '2033-01-12', 0), 5::numeric, 'S
 update public.challenge_types set scores_since = '2033-01-10' where type = 'echo-path';
 select tests.scored(n, '2033-01-05', 'echo-path', n - 7) from generate_series(13, 15) n;
 select tests.scored(2, '2033-01-11', 'echo-path', 12.333);
-select is(public.pass_target_for('echo-path', '2033-01-12', 0), 10::numeric, 'Echo Path''s old scores do not make up the sample either');
+select is(public.pass_target_for('echo-path', '2033-01-12', 0), 8::numeric, 'Echo Path''s old scores do not make up the sample either');
 
 -- And Fair Split: three old-scale runs before its date, one new one after it.
 update public.challenge_types set scores_since = '2033-01-10' where type = 'fair-split';

@@ -1,19 +1,22 @@
 import { createRng, type Rng } from "../shared/prng";
 
 /**
- * Echo Path's path (T187): one contiguous line of tiles from the bottom row of a tall, narrow
+ * Trail Trace's path (T187, T207): one contiguous line of tiles from the bottom row of a narrow
  * board to its top row. Tiles are numbered row by row from the bottom: index = row * COLS + col.
  * The owner's rules: each step goes to an adjacent tile, straight forward, diagonally forward or
- * sideways (never back), with no move more than twice in a row, and a fixed maximum length. Never
- * visiting a tile twice is the reading of "contiguous" (M6 notes). 5 columns and the minimum are
- * proposed, owner to confirm (DECISIONS).
+ * sideways (never back), with no move more than twice in a row, at most 12 tiles, and no three
+ * tiles touching, where touching is sharing an edge (Nov 18). Three tiles can never all share
+ * edges with each other, so that reads as: a tile shares an edge only with the tiles just before
+ * and after it, which rules out a cutback alongside an earlier tile. Never visiting a tile twice
+ * is the reading of "contiguous" (M6 notes). 5 x 8 is the owner's board (Nov 18); the minimum
+ * is a straight-up climb's length.
  */
 
 export const COLS = 5;
-export const ROWS = 10;
-export const MAX_PATH_LENGTH = 18;
-export const MIN_PATH_LENGTH = 12;
-/** Seeded walks tried for one that reaches the minimum, before the fixed fallback. */
+export const ROWS = 8;
+export const MAX_PATH_LENGTH = 12;
+export const MIN_PATH_LENGTH = ROWS;
+/** Seeded walks tried for a valid one, before the fixed fallback. */
 export const PATH_TRIES = 20;
 
 /** Rows and columns each move adds. Forward is up the board (row + 1). */
@@ -34,6 +37,7 @@ const tileAt = (row: number, col: number) => row * COLS + col;
 const rowOf = (tile: number) => Math.floor(tile / COLS);
 const colOf = (tile: number) => tile % COLS;
 const isSideways = (move: Move) => MOVES[move][0] === 0;
+const sharesEdge = (a: number, b: number) => Math.abs(rowOf(a) - rowOf(b)) + Math.abs(colOf(a) - colOf(b)) === 1;
 
 /** The move from one tile to the next, or null if no single move gets there. */
 function moveBetween(from: number, to: number): Move | null {
@@ -42,7 +46,7 @@ function moveBetween(from: number, to: number): Move | null {
   return MOVE_NAMES.find((move) => MOVES[move][0] === rows && MOVES[move][1] === cols) ?? null;
 }
 
-/** One seeded walk from a bottom-row column to the first top-row tile, obeying every rule but the minimum. */
+/** One seeded walk from a bottom-row column to the first top-row tile. */
 function walk(rng: Rng, startCol: number): number[] {
   const path = [tileAt(0, startCol)];
   const moves: Move[] = [];
@@ -50,14 +54,16 @@ function walk(rng: Rng, startCol: number): number[] {
   while (rowOf(path.at(-1)!) < ROWS - 1) {
     const here = path.at(-1)!;
     const repeated = moves.length >= MAX_SAME_MOVE && moves.slice(-MAX_SAME_MOVE).every((move) => move === moves.at(-1));
-    // Never stuck: forward or one of the diagonals is always on the board and above every visited row.
+    // Never stuck: the row above holds no path tile yet, so forward, or a diagonal when forward
+    // has been used twice, is always on the board and touches nothing but `here`.
     const allowed = MOVE_NAMES.filter((move) => {
       const [dRow, dCol] = MOVES[move];
       const col = colOf(here) + dCol;
       if (col < 0 || col >= COLS) return false;
       if (repeated && move === moves.at(-1)) return false;
       if (isSideways(move) && sideways >= MAX_SIDEWAYS) return false;
-      return !path.includes(tileAt(rowOf(here) + dRow, col));
+      const next = tileAt(rowOf(here) + dRow, col);
+      return !path.some((tile) => tile === next || (tile !== here && sharesEdge(tile, next)));
     });
     const move = rng.pick(allowed);
     const [dRow, dCol] = MOVES[move];
@@ -69,16 +75,14 @@ function walk(rng: Rng, startCol: number): number[] {
 }
 
 /**
- * A fixed path of 13 tiles that keeps every rule, for the rare seed whose walks all stay short:
- * a zigzag in the first three rows, then forward and diagonal steps in turn within two columns.
+ * A fixed path of 8 tiles that keeps every rule. A straight column would be three forward moves
+ * in a row, so it climbs two rows, steps diagonally, climbs two more and steps back.
  */
 export function fallbackPath(startCol: number): number[] {
   const toward = startCol < COLS - 1 ? 1 : -1;
-  const side: Move = toward === 1 ? "right" : "left";
-  const back: Move = toward === 1 ? "left" : "right";
-  const diagonalBack: Move = toward === 1 ? "forwardLeft" : "forwardRight";
   const diagonalOn: Move = toward === 1 ? "forwardRight" : "forwardLeft";
-  const moves: Move[] = [side, "forward", back, "forward", side, "forward", diagonalBack, "forward", diagonalOn, "forward", diagonalBack, "forward"];
+  const diagonalBack: Move = toward === 1 ? "forwardLeft" : "forwardRight";
+  const moves: Move[] = ["forward", "forward", diagonalOn, "forward", "forward", diagonalBack, "forward"];
   const path = [tileAt(0, startCol)];
   for (const move of moves) {
     const here = path.at(-1)!;
@@ -93,7 +97,7 @@ export function pathFor(seed: number, tries = PATH_TRIES): number[] {
   const startCol = rng.int(0, COLS - 1);
   for (let i = 0; i < tries; i++) {
     const path = walk(rng, startCol);
-    if (path.length >= MIN_PATH_LENGTH) return path;
+    if (isValidPath(path)) return path;
   }
   return fallbackPath(startCol);
 }
@@ -108,5 +112,6 @@ export function isValidPath(path: readonly number[]): boolean {
   if (path.findIndex((tile) => rowOf(tile) === ROWS - 1) !== path.length - 1) return false;
   const moves = path.slice(1).map((tile, i) => moveBetween(path[i], tile));
   if (moves.some((move) => move === null)) return false;
+  if (path.some((tile, i) => path.slice(i + 2).some((later) => sharesEdge(tile, later)))) return false;
   return moves.every((move, i) => i < MAX_SAME_MOVE || moves.slice(i - MAX_SAME_MOVE, i).some((earlier) => earlier !== move));
 }

@@ -100,7 +100,7 @@ const bank = (errorsMs: (number | null)[], over: Partial<DetectArgs> = {}): Dete
   return clock(errorsMs.length, { inputs: { tapsMs }, params: { budgetMs: 2_000, rounds }, serverElapsedMs: lastMs + 4_000, ...over });
 };
 
-/** A real Echo Path board: its path is 17 tiles long, played back at 300 ms a tile. */
+/** A real Echo Path board: its path is 10 tiles long, played back at 300 ms a tile. */
 const ECHO_PARAMS = echoParamsFromSeed(0);
 /** The game's pause before each playback (EchoPathGame's BETWEEN_MS). */
 const ECHO_PAUSE_MS = 700;
@@ -289,18 +289,18 @@ describe("echo-path-robotic", () => {
     expect(detectFlags(echoRun(6, alternating(0), 11))).toEqual([]);
   });
 
-  // Runs of the growing path (T191): 4 up to 14 tiles is 99 taps over about a minute and a half.
-  it("flags nothing for an honest 14-tile run, even a quick one", () => {
+  // Runs of the growing path (T191, T208): 4 up to 10 tiles, the whole path, is 49 taps.
+  it("flags nothing for an honest run of the whole 10-tile path, even a quick one", () => {
     const rng = createRng(3);
-    const run = echoRun(14, () => rng.int(180, 520));
-    expect(run.score).toBe(15);
+    const run = echoRun(10, () => rng.int(180, 520));
+    expect(run.score).toBe(11);
     expect(detectFlags(run)).toEqual([]);
   });
 
-  it("flags only the rhythm for a scripted 14-tile run tapped at an even 100 ms, whatever its pauses", () => {
-    // The gaps before each echo (the pause, the playback and 600 ms) vary from 1.9 to 5.2 s: on
-    // their own they would make the run look uneven.
-    expect(detectFlags(echoRun(14, () => 100))).toEqual(["echo-path-robotic"]);
+  it("flags only the rhythm for a scripted 10-tile run tapped at an even 100 ms, whatever its pauses", () => {
+    // The gaps before each echo (the pause, the playback and 600 ms) grow by seconds over the
+    // run: on their own they would make it look uneven.
+    expect(detectFlags(echoRun(10, () => 100))).toEqual(["echo-path-robotic"]);
   });
 });
 

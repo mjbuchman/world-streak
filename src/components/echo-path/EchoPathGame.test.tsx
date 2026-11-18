@@ -7,7 +7,7 @@ import { BETWEEN_MS, EchoPathGame } from "./EchoPathGame";
 
 // A 6-tile path straight up the middle column, from a start of 4: playbacks of 1200, 1500 and 1800 ms.
 const PATH = [2, 7, 12, 17, 22, 27];
-const params: EchoPathParams = { cols: 5, rows: 10, path: PATH, startLength: 4, stepMs: 300 };
+const params: EchoPathParams = { cols: 5, rows: 8, path: PATH, startLength: 4, stepMs: 300 };
 /** Never on the path. */
 const WRONG = 0;
 
@@ -19,8 +19,8 @@ beforeEach(() => {
   vi.stubGlobal("cancelAnimationFrame", vi.fn());
   const ctx = { setTransform: vi.fn(), clearRect: vi.fn(), fillRect: vi.fn(), fillStyle: "", globalAlpha: 1 };
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(ctx as unknown as CanvasRenderingContext2D);
-  // A 280 x 555 px board at the page's top left: tiles of 50 px, 5 px apart.
-  vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({ left: 0, top: 0, width: 280, height: 555 } as DOMRect);
+  // A 280 x 445 px 5 x 8 board at the page's top left: tiles of 50 px, 5 px apart.
+  vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({ left: 0, top: 0, width: 280, height: 445 } as DOMRect);
 });
 
 afterEach(() => {
@@ -40,7 +40,7 @@ function frameAt(now: number) {
 }
 
 /** A tile's centre on the board, where row 0 is at the bottom. */
-const centre = (tile: number) => ({ clientX: 30 + (tile % 5) * 55, clientY: 30 + (9 - Math.floor(tile / 5)) * 55 });
+const centre = (tile: number) => ({ clientX: 30 + (tile % 5) * 55, clientY: 30 + (7 - Math.floor(tile / 5)) * 55 });
 
 /** Taps a tile's centre at the current clock. */
 function tapTile(tile: number) {
@@ -168,11 +168,17 @@ describe("EchoPathGame", () => {
     frameAt(0);
     frameAt(1200);
     key("ArrowUp");
-    for (let i = 0; i < 12; i++) key("ArrowUp");
+    for (let i = 0; i < 10; i++) key("ArrowUp");
     for (let i = 0; i < 4; i++) key("ArrowRight");
     key("Enter");
-    // Tile 49, the top right corner: wrong, so a life goes.
+    // Tile 39, the top right corner of the 5 x 8 board: wrong, so a life goes.
     expect(lives()).toBe("2 of 3 lives left");
+  });
+
+  it("gives an 11-tile path a bar of 11 cells, labelled with the tile reached (T208)", () => {
+    const eleven = { ...params, path: [0, 1, 6, 12, 17, 18, 23, 27, 32, 33, 38], startLength: 7 };
+    render(<EchoPathGame countdownMs={0} params={eleven} onFinish={vi.fn()} />);
+    expect(screen.getByRole("img", { name: "Tile 7 of 11" }).children).toHaveLength(11);
   });
 
   it("reports every tap, timed from the first frame, when the run ends", () => {

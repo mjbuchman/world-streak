@@ -7,12 +7,20 @@ const row = (tile: number) => Math.floor(tile / COLS);
 const col = (tile: number) => tile % COLS;
 /** Builds a path from (row, col) pairs, so the hand-built cases read as moves on the board. */
 const at = (...cells: [number, number][]) => cells.map(([r, c]) => r * COLS + c);
-/** Straight up one column from row 0 to the top: 10 tiles. */
-const column = (c: number, from = 0) => Array.from({ length: ROWS - from }, (_, r) => (r + from) * COLS + c);
+/** Pairs of path tiles that are not next to each other in the path but share an edge, found by brute force. */
+const cutbacks = (path: number[]) => {
+  const found: [number, number][] = [];
+  for (let i = 0; i < path.length; i++) {
+    for (let j = i + 2; j < path.length; j++) {
+      if (Math.abs(row(path[i]) - row(path[j])) + Math.abs(col(path[i]) - col(path[j])) === 1) found.push([i, j]);
+    }
+  }
+  return found;
+};
 
 describe("the board", () => {
-  it("is 5 columns by 10 rows, with paths of 12 to 18 tiles", () => {
-    expect({ COLS, ROWS, MIN_PATH_LENGTH, MAX_PATH_LENGTH }).toEqual({ COLS: 5, ROWS: 10, MIN_PATH_LENGTH: 12, MAX_PATH_LENGTH: 18 });
+  it("is 5 columns by 8 rows, with paths of 8 to 12 tiles (T207)", () => {
+    expect({ COLS, ROWS, MIN_PATH_LENGTH, MAX_PATH_LENGTH }).toEqual({ COLS: 5, ROWS: 8, MIN_PATH_LENGTH: 8, MAX_PATH_LENGTH: 12 });
   });
 });
 
@@ -20,6 +28,10 @@ describe("pathFor", () => {
   it("keeps every rule for seeds 0 to 9 999", () => {
     const broken = SEEDS.filter((seed) => !isValidPath(paths[seed]));
     expect(broken).toEqual([]);
+  });
+
+  it("never lets a tile share an edge with any but the tiles just before and after it, for seeds 0 to 9 999", () => {
+    expect(SEEDS.filter((seed) => cutbacks(paths[seed]).length > 0)).toEqual([]);
   });
 
   it("checks the rules itself too: bottom start, top end, adjacent steps, no revisits", () => {
@@ -35,7 +47,7 @@ describe("pathFor", () => {
         expect(Math.abs(dCol)).toBeLessThanOrEqual(1);
         expect(dRow + Math.abs(dCol)).toBeGreaterThan(0);
       }
-      // Length = 10 rows + sideways steps.
+      // Length = 8 rows + sideways steps.
       expect(path.length - ROWS).toBe(path.slice(1).filter((tile, i) => row(tile) === row(path[i])).length);
     }
   });
@@ -46,9 +58,9 @@ describe("pathFor", () => {
     expect(edge.every(isValidPath)).toBe(true);
   });
 
-  it("covers every length from 12 to 18", () => {
+  it("covers every length from 8 to 12", () => {
     const lengths = new Set(paths.map((path) => path.length));
-    expect([...lengths].sort((a, b) => a - b)).toEqual([12, 13, 14, 15, 16, 17, 18]);
+    expect([...lengths].sort((a, b) => a - b)).toEqual([8, 9, 10, 11, 12]);
   });
 
   it("starts in every column", () => {
@@ -60,12 +72,13 @@ describe("pathFor", () => {
     expect(pathFor(0xffff_ffff)).toEqual(pathFor(0xffff_ffff));
   });
 
-  it("gives at least 95% distinct paths over 1 000 seeds", () => {
+  it("gives at least 90% distinct paths over 1 000 seeds", () => {
     const distinct = new Set(paths.slice(0, 1000).map((path) => path.join(",")));
-    expect(distinct.size).toBeGreaterThanOrEqual(950);
+    // Measured on the 5 x 8 board with the touch rule (T207): 988.
+    expect(distinct.size).toBeGreaterThanOrEqual(900);
   });
 
-  it("falls back to a fixed path that keeps every rule when no walk reaches the minimum", () => {
+  it("falls back to a fixed path that keeps every rule when no walk is tried", () => {
     const path = pathFor(7, 0);
     expect(path).toEqual(fallbackPath(col(pathFor(7)[0])));
     expect(isValidPath(path)).toBe(true);
@@ -73,50 +86,67 @@ describe("pathFor", () => {
 });
 
 describe("fallbackPath", () => {
-  it("keeps every rule from each start column", () => {
+  it("is this hand-checked climb from each start column, keeping every rule", () => {
+    expect(fallbackPath(0)).toEqual(at([0, 0], [1, 0], [2, 0], [3, 1], [4, 1], [5, 1], [6, 0], [7, 0]));
+    expect(fallbackPath(4)).toEqual(at([0, 4], [1, 4], [2, 4], [3, 3], [4, 3], [5, 3], [6, 4], [7, 4]));
     for (let c = 0; c < COLS; c++) {
       const path = fallbackPath(c);
       expect(path[0]).toBe(c);
-      expect(path).toHaveLength(13);
+      expect(path).toHaveLength(8);
+      expect(cutbacks(path)).toEqual([]);
       expect(isValidPath(path)).toBe(true);
     }
   });
 });
 
 describe("isValidPath", () => {
-  // A valid 12-tile base: right, then up column 1 alternating straight and diagonal steps.
-  const valid = at([0, 0], [0, 1], [1, 1], [2, 2], [3, 2], [4, 1], [5, 1], [6, 2], [7, 2], [8, 1], [9, 1]);
-  const twelve = at([0, 0], [0, 1], [0, 2], [1, 2], [2, 3], [3, 3], [4, 2], [5, 2], [6, 3], [7, 3], [8, 2], [9, 2]);
+  // Up the board, alternating straight and diagonal steps: the shortest kind of path.
+  const eight = at([0, 0], [1, 0], [2, 1], [3, 1], [4, 2], [5, 2], [6, 3], [7, 3]);
+  // A staircase of four sideways steps, then back left: the longest kind.
+  const twelve = at([0, 0], [0, 1], [1, 1], [1, 2], [2, 2], [2, 3], [3, 3], [3, 4], [4, 4], [5, 3], [6, 3], [7, 4]);
 
-  it("accepts a hand-built path that keeps the rules", () => {
+  it("accepts hand-built paths of 8 and 12 tiles that keep the rules", () => {
+    expect(isValidPath(eight)).toBe(true);
     expect(isValidPath(twelve)).toBe(true);
   });
 
+  it("rejects a corner cut: forward, sideways, then diagonally back beside the first tile (T207)", () => {
+    const cut = at([0, 1], [1, 1], [1, 2], [2, 1], [3, 1], [4, 2], [5, 2], [6, 3], [7, 3]);
+    expect(cutbacks(cut)).toEqual([[1, 3]]);
+    expect(isValidPath(cut)).toBe(false);
+  });
+
+  it("rejects a row that doubles back alongside the one below it (T207)", () => {
+    const alongside = at([0, 0], [0, 1], [0, 2], [1, 2], [1, 1], [2, 1], [3, 2], [4, 2], [5, 3], [6, 3], [7, 4]);
+    expect(cutbacks(alongside)).toEqual([[1, 4]]);
+    expect(isValidPath(alongside)).toBe(false);
+  });
+
   it("rejects three of the same move in a row", () => {
-    // Up column 0 three times running, padded with sideways steps to reach 12 tiles.
-    expect(isValidPath(at([0, 0], [0, 1], [1, 1], [1, 2], [2, 2], [3, 2], [4, 2], [5, 3], [6, 3], [7, 2], [8, 2], [9, 3]))).toBe(false);
+    expect(isValidPath(at([0, 0], [1, 0], [2, 0], [3, 0], [4, 1], [5, 1], [6, 2], [7, 2]))).toBe(false);
   });
 
   it("rejects a revisit", () => {
-    expect(isValidPath(at([0, 0], [0, 1], [0, 0], [1, 0], [2, 1], [3, 1], [4, 0], [5, 0], [6, 1], [7, 1], [8, 0], [9, 0]))).toBe(false);
+    expect(isValidPath(at([0, 0], [0, 1], [0, 0], [1, 0], [2, 1], [3, 1], [4, 2], [5, 2], [6, 3], [7, 3]))).toBe(false);
   });
 
-  it("rejects a diagonal step sideways or back, and a jump", () => {
-    // (0,1) to (1,2) is fine; (1,2) back down to (0,3) is a diagonal backward step.
-    expect(isValidPath(at([0, 0], [0, 1], [1, 2], [0, 3], [1, 3], [2, 4], [3, 4], [4, 3], [5, 3], [6, 4], [7, 4], [8, 3], [9, 3]))).toBe(false);
-    // From the right edge of row 0 to the left edge of row 1: next index, but not adjacent.
-    expect(isValidPath(at([0, 4], [1, 0], [1, 1], [1, 2], [2, 2], [3, 3], [4, 3], [5, 2], [6, 2], [7, 3], [8, 3], [9, 2]))).toBe(false);
+  it("rejects a jump that is the next index but not an adjacent tile", () => {
+    // From the right edge of row 0 to the left edge of row 1.
+    expect(isValidPath(at([0, 4], [1, 0], [2, 0], [3, 1], [4, 1], [5, 2], [6, 2], [7, 3]))).toBe(false);
   });
 
-  it("rejects paths too short or too long, off the board, not from the bottom, or past the top", () => {
-    expect(isValidPath(valid)).toBe(false);
-    expect(isValidPath(column(0))).toBe(false);
-    expect(isValidPath([...twelve.slice(0, -1), 50])).toBe(false);
-    expect(isValidPath([5, ...twelve.slice(1)])).toBe(false);
-    expect(isValidPath([...twelve, 48])).toBe(false);
-    expect(isValidPath([0.5, ...twelve.slice(1)])).toBe(false);
-    const long = at([0, 0], [0, 1], [1, 1], [1, 0], [2, 0], [2, 1], [3, 1], [3, 2], [4, 2], [4, 3], [5, 3], [5, 4], [6, 4], [6, 3], [7, 3], [7, 2], [8, 2], [8, 1], [9, 1]);
-    expect(long).toHaveLength(19);
-    expect(isValidPath(long)).toBe(false);
+  it("rejects a path of 13 tiles that otherwise keeps every rule", () => {
+    const thirteen = at([0, 0], [0, 1], [0, 2], [1, 2], [1, 3], [1, 4], [2, 4], [3, 3], [3, 2], [4, 2], [5, 2], [6, 3], [7, 3]);
+    expect(thirteen).toHaveLength(13);
+    expect(cutbacks(thirteen)).toEqual([]);
+    expect(isValidPath(thirteen)).toBe(false);
+  });
+
+  it("rejects paths too short, off the board, not from the bottom, past the top, or not whole tiles", () => {
+    expect(isValidPath(eight.slice(0, -1))).toBe(false);
+    expect(isValidPath([...eight.slice(0, -1), COLS * ROWS])).toBe(false);
+    expect(isValidPath([6, ...eight.slice(1)])).toBe(false);
+    expect(isValidPath([...eight, eight.at(-1)! + 1])).toBe(false);
+    expect(isValidPath([0.5, ...eight.slice(1)])).toBe(false);
   });
 });

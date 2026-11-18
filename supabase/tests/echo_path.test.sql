@@ -8,11 +8,11 @@ select results_eq(
   'Echo Path is a higher-better challenge (T145)'
 );
 select is(
-  (select (default_pass_targets ->> 'echo-path')::numeric from public.game_settings), 10::numeric,
-  'its placeholder pass target is a path of 10 tiles, the board''s height (T191)'
+  (select (default_pass_targets ->> 'echo-path')::numeric from public.game_settings), 8::numeric,
+  'its placeholder pass target is a path of 8 tiles, the 5 x 8 board''s height (T191, T209)'
 );
 select col_default_is(
-  'public', 'game_settings', 'default_pass_targets', '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 10, "fair-split": 5}',
+  'public', 'game_settings', 'default_pass_targets', '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 8, "fair-split": 5}',
   'a fresh settings row has its placeholder (and those added since)'
 );
 select ok(
@@ -21,9 +21,9 @@ select ok(
 );
 
 update public.game_settings set percentile_min_sample = 2147483647, pass_target_streak_step = 0;
-select is(public.pass_target_for('echo-path', '2000-06-01', 0), 10::numeric, 'with too few scores, the target is the placeholder');
+select is(public.pass_target_for('echo-path', '2000-06-01', 0), 8::numeric, 'with too few scores, the target is the placeholder');
 
--- The migration's re-target (T191), run again on days still holding an old-scale target: only the
+-- The migrations' re-target (T191, T209), run again on days still holding an old-scale target: only the
 -- untouched one (not edited, started or closed) gets the new placeholder.
 insert into public.game_days (game_date, survival_threshold, edited, closed_at, outcome)
 values ('2000-06-02', 0.6, false, null, null),
@@ -40,8 +40,8 @@ update public.game_day_games g
    and not exists (select 1 from public.attempts a where a.game_date = g.game_date);
 select results_eq(
   $$select game_date, pass_target from public.game_day_games where game_date between '2000-06-02' and '2000-06-05' order by game_date$$,
-  $$values ('2000-06-02'::date, 10::numeric), ('2000-06-03'::date, 6::numeric), ('2000-06-04'::date, 6::numeric), ('2000-06-05'::date, 6::numeric)$$,
-  'an untouched day gets a path of 10; edited, started and closed days keep their targets'
+  $$values ('2000-06-02'::date, 8::numeric), ('2000-06-03'::date, 6::numeric), ('2000-06-04'::date, 6::numeric), ('2000-06-05'::date, 6::numeric)$$,
+  'an untouched day gets a path of 8; edited, started and closed days keep their targets'
 );
 -- The placeholder was merged in, not swapped for the whole object.
 select is(
