@@ -2019,7 +2019,7 @@ Planning notes for M6:
 
 ### T180 Shared bank rule (pure) and its tests
 - Type: feature
-- Status: blocked
+- Status: in-progress
 - Depends on: T139
 - Acceptance criteria:
   - [ ] `src/challenges/shared/bank.ts` exports `playBank(total: number, costs: readonly number[])` returning `{ survived, left, failed }`: a cost at most `left` survives and reduces it; the first cost above `left` ends the run with `failed: true`, `left: 0` and `survived` set to the rounds before it; no costs gives `survived: 0, left: total, failed: false`. It also exports `bankScore(survived, left, total)` = `Math.round((survived + left / total) * 1000) / 1000`.
@@ -2029,7 +2029,7 @@ Planning notes for M6:
 
 ### T181 Second Sense engine: four rounds, 15 to 25 seconds, a 10 second bank
 - Type: feature
-- Status: blocked
+- Status: in-progress
 - Depends on: T180
 - Acceptance criteria:
   - [ ] `src/challenges/inner-clock/timeBank.ts` plays `ROUNDS = 4` rounds (replacing `MAX_ROUNDS = 8`). `paramsFromSeed(seed)` returns `{ budgetMs, rounds: { targetMs, revealMs, timeoutMs }[] }` with `budgetMs = BUDGET_MS = 10_000` (2.5 s per round; proposed, owner to confirm). Round targets are multiples of 100 ms drawn from `TARGET_RANGES_MS` = `ladderRanges(4, 15_000, 2_500, 2_400)`: 15.0 to 17.4 s, 17.5 to 19.9 s, 20.0 to 22.4 s, 22.5 to 24.9 s, so a run covers 15 to 25 s and later rounds are longer (proposed, owner to confirm).
@@ -2042,7 +2042,7 @@ Planning notes for M6:
 
 ### T182 Second Sense screen: progress bar, bank gauge, countdown every round, clear target
 - Type: feature
-- Status: blocked
+- Status: in-progress
 - Depends on: T178, T179, T181
 - Acceptance criteria:
   - [ ] `TimeBankGame` (`src/components/inner-clock/TimeBankGame.tsx`) shows `RoundProgress` (1-2-3-4, the current round highlighted, a failed round tangerine) in place of the "Round N of 4" text, and `BankGauge` ("Time bank", format "2.4 s") with each finished round's error as a segment and a "-1.2 s late" style caption; the error reveal still shows for `ROUND_GAP_MS`.
@@ -2054,7 +2054,7 @@ Planning notes for M6:
 
 ### T183 Second Sense: pass target scale, `scores_since`, cheat thresholds and wording
 - Type: feature
-- Status: blocked
+- Status: in-progress
 - Depends on: T181
 - Acceptance criteria:
   - [ ] A migration adds `challenge_types.scores_since date` (null means all) and changes `pass_target_for` (last defined in `supabase/migrations/20261117020000_daily_three_attempts.sql`) to take the percentile only over attempts with `game_date >= scores_since` for that type, with the rest of the function unchanged. It sets `scores_since` for `inner-clock` to the day after the migration runs (UTC), and recomputes the targets of unedited, unstarted open `game_day_games` rows of `inner-clock` (the T140 pattern).

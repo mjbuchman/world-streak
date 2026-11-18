@@ -16,7 +16,7 @@ describe("/practice", () => {
     });
     expect(entries).toEqual([
       ["Teetering Tower", "/practice/stacking", "Stack the sliding rows as high as you can."],
-      ["Second Sense", "/practice/inner-clock", "Tap when each target time has passed. Every miss drains your time bank."],
+      ["Second Sense", "/practice/inner-clock", "Four rounds: tap when each target time has passed. Every miss drains your 10-second time bank."],
       ["Swift Sum", "/practice/flash-count", "Dots flash for a moment. Say how many there were."],
       ["Echo Path", "/practice/echo-path", "Tiles light up in a path. Tap it back, one step longer each time."],
       ["Fair Split", "/practice/fair-split", "Cut each odd shape in half with one straight line, before time runs out."],

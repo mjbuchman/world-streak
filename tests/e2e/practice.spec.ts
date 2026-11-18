@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { paramsFromSeed, simulate } from "../../src/challenges/stacking/engine";
 import { FALL_MS } from "../../src/challenges/stacking/render";
 import { reachedRow } from "../../src/components/stacking/rows";
@@ -92,40 +92,62 @@ function attemptRequests(page: Page): string[] {
   return seen;
 }
 
-test("Second Sense practice: rounds drain the time bank until a miss empties it", async ({ page }) => {
+/** Fails when the two elements' boxes overlap at all. */
+async function expectApart(a: Locator, b: Locator) {
+  const [boxA, boxB] = [await a.boundingBox(), await b.boundingBox()];
+  expect(boxA && boxB).toBeTruthy();
+  const overlaps =
+    boxA!.x < boxB!.x + boxB!.width && boxB!.x < boxA!.x + boxA!.width && boxA!.y < boxB!.y + boxB!.height && boxB!.y < boxA!.y + boxA!.height;
+  expect(overlaps).toBe(false);
+}
+
+test("Second Sense practice: a 3-2-1 under the target, a 2 s clock, and a miss bigger than the bank ends the run", async ({ page }) => {
   const scored = attemptRequests(page);
   await gotoReady(page, "/practice/inner-clock");
   await expect(page.getByText(/^First target: \d+(\.\d)? seconds$/)).toBeVisible();
   await page.getByRole("button", { name: "Start" }).click();
 
+  // The 3-2-1 under round 1's target (T182), with the four steps and the full bank above.
+  await expect(page.getByRole("img", { name: "Round 1 of 4" })).toBeVisible();
+  const bank = page.getByRole("meter", { name: "Time bank" });
+  await expect(bank).toHaveAttribute("aria-valuenow", "10000");
+  await expect(page.locator("[data-countdown]")).toBeVisible();
+  await expect(page.getByText(/^Tap when you think [\d.]+ seconds have passed$/)).toBeVisible();
+
+  // Then the round: a clock for 2 s as a starting point, then hidden.
   const tapArea = page.getByRole("button", { name: /Tap when you think [\d.]+ seconds have passed/ });
   await expect(tapArea).toBeFocused();
-  // A 3-2-1 first (T138), then a clock runs for a moment as a starting point, then hides.
   const shownClock = page.locator("[data-clock]");
-  await expect(shownClock).toHaveAttribute("data-clock", "countdown");
-  await expect(page.locator("[data-countdown]")).toBeVisible();
   await expect(shownClock).toHaveAttribute("data-clock", "shown");
-  await expect(shownClock).toHaveText(/^0\.\d$/);
+  await expect(shownClock).toHaveText(/^[01]\.\d$/);
   await expect(shownClock).toHaveAttribute("data-clock", "hidden");
-  await expect(shownClock).toHaveText("");
   await expect(page.getByRole("timer")).toHaveCount(0);
-  const bank = page.getByRole("meter", { name: "Error budget left" });
-  await expect(bank).toHaveAttribute("aria-valuenow", "3000");
+  // Round 1's target is at least 15 s, so a tap now misses by more than the 10 s bank.
   await tapArea.click();
 
-  // Round 1's target is 3 to 3.5 s, so a tap after about 1.5 s is early, and the bank drains by it.
-  await expect(page.getByRole("status")).toHaveText(/^(\d+(\.\d+)? s (early|late)|Spot on)$/);
-  await expect(bank).not.toHaveAttribute("aria-valuenow", "3000");
-  // Round 2 (a 4 s target or more) starts without a 3-2-1; a tap at once misses by more than is left.
-  await expect(page.getByText("Round 2 of 8")).toBeVisible();
-  await expect(shownClock).toHaveAttribute("data-clock", "shown");
-  await page.getByRole("button", { name: /Tap when you think [\d.]+ seconds have passed/ }).click();
-
-  await expect(page.getByRole("heading", { level: 2 })).toHaveText("1 round survived");
-  await expect(page.getByText(/^0 s of your 3 s time bank left\. Score: 1\.$/)).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2 })).toHaveText("0 rounds survived");
+  await expect(page.getByText(/^0 s of your 10 s time bank left\. Score: 0\.$/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
   expect(scored).toEqual([]);
 });
+
+for (const size of [
+  { width: 390, height: 844 },
+  { width: 1280, height: 720 },
+]) {
+  test(`Second Sense keeps the target clear of the 3-2-1 and the clock at ${size.width} x ${size.height}`, async ({ page }) => {
+    await page.setViewportSize(size);
+    await gotoReady(page, "/practice/inner-clock");
+    await page.getByRole("button", { name: "Start" }).click();
+    const target = page.getByText(/^Tap when you think [\d.]+ seconds have passed$/);
+    const number = page.locator("[data-countdown]");
+    await expect(number).toBeVisible();
+    await expectApart(target, number);
+    const shownClock = page.locator('[data-clock="shown"]');
+    await expect(shownClock).toBeVisible();
+    await expectApart(target, shownClock);
+  });
+}
 
 test("Swift Sum practice: three wrong counts on level 1 use up the lives and end the run", async ({ page }) => {
   const scored = attemptRequests(page);

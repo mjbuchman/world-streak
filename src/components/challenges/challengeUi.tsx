@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import type { EchoPathInputs, EchoPathParams } from "@/challenges/echo-path/engine";
 import type { FairSplitInputs, FairSplitParams } from "@/challenges/fair-split/engine";
 import type { FlashLadderInputs, FlashLadderParams } from "@/challenges/flash-count/flashLadder";
-import type { TimeBankInputs, TimeBankParams } from "@/challenges/inner-clock/timeBank";
+import { ROUNDS as TIME_BANK_ROUNDS, type TimeBankInputs, type TimeBankParams } from "@/challenges/inner-clock/timeBank";
 import type { ChallengeType } from "@/challenges/shared/types";
 import type { StackingInputs, StackingParams } from "@/challenges/stacking/engine";
 import { EchoPathGame } from "@/components/echo-path/EchoPathGame";
@@ -36,6 +36,8 @@ type ChallengeUi<Params, Inputs> = {
 
 /** Time Bank: rounds survived plus the budget left as a fraction ("3.9 rounds"). */
 const rounds = (score: number) => `${score} ${score === 1 ? "round" : "rounds"}`;
+/** Second Sense's target: a score of 4 is surviving all four rounds of the 10 s bank (T183). */
+const roundsTarget = (target: number) => (target === TIME_BANK_ROUNDS ? `${rounds(target)}: survive all four` : rounds(target));
 /** Flash Ladder: levels cleared plus the lives left as a fraction ("4.667 levels"). */
 const levels = (score: number) => `${score} ${score === 1 ? "level" : "levels"}`;
 
@@ -55,8 +57,8 @@ const innerClock: ChallengeUi<TimeBankParams, TimeBankInputs> = {
   practicePath: practicePath("inner-clock"),
   play: ({ params, onFinish }) => <TimeBankGame params={params} onFinish={onFinish} />,
   scoreLabel: rounds,
-  summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${rounds(passTarget)}.`,
-  target: rounds,
+  summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${roundsTarget(passTarget)}.`,
+  target: roundsTarget,
 };
 
 const flashCount: ChallengeUi<FlashLadderParams, FlashLadderInputs> = {

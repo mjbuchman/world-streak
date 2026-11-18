@@ -55,8 +55,13 @@ describe("challengeUi", () => {
     }
   });
 
-  it("explains Second Sense's rounds and time bank (T140)", () => {
-    expect(challengeUi("inner-clock").howTo).toMatch(/round.*3-second time bank.*Survive as many rounds/);
+  it("explains Second Sense's four rounds and 10-second time bank (T183)", () => {
+    expect(challengeUi("inner-clock").howTo).toMatch(/four rounds.*10-second time bank.*Survive all four/);
+  });
+
+  it("calls a Second Sense target of 4 surviving all four rounds, and any other target plain rounds", () => {
+    expect(challengeUi("inner-clock").target(4)).toBe("4 rounds: survive all four");
+    expect(challengeUi("inner-clock").target(4.5)).toBe("4.5 rounds");
   });
 
   it("explains Swift Sum's levels and lives (T142)", () => {
@@ -78,8 +83,8 @@ describe("challengeUi", () => {
 
   it.each([
     ["stacking", 7, 10, "You reached row 7. Today's target was row 10."],
-    ["inner-clock", 3.9, 4, "You scored 3.9 rounds. Today's target was 4 rounds."],
-    ["inner-clock", 1, 4, "You scored 1 round. Today's target was 4 rounds."],
+    ["inner-clock", 3.9, 4, "You scored 3.9 rounds. Today's target was 4 rounds: survive all four."],
+    ["inner-clock", 1, 4.5, "You scored 1 round. Today's target was 4.5 rounds."],
     ["flash-count", 4.667, 5, "You scored 4.667 levels. Today's target was 5 levels."],
     ["flash-count", 1, 5, "You scored 1 level. Today's target was 5 levels."],
     ["echo-path", 5.667, 6, "You scored 5.667 steps. Today's target was 6 steps."],

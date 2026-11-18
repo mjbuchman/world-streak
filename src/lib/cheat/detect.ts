@@ -93,7 +93,7 @@ function robotic(tapsMs: readonly number[], minIntervalMs: number, minTaps: numb
 function timeBankImplausible(params: TimeBankParams, { tapsMs }: TimeBankInputs): boolean {
   const precise = params.rounds
     .slice(0, tapsMs.length)
-    .filter((round, i) => tapsMs[i] !== null && roundErrorMs(round, tapsMs[i]) < TIME_BANK_PRECISE_ERROR_MS);
+    .filter((round, i) => tapsMs[i] !== null && roundErrorMs(round, tapsMs[i], params.budgetMs) < TIME_BANK_PRECISE_ERROR_MS);
   return precise.length >= TIME_BANK_PRECISE_ROUNDS;
 }
 

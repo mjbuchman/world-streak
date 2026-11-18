@@ -33,6 +33,13 @@ const tapArea = () => screen.getByRole("button", { name: /Tap when you think 5 s
 const showStart = () => act(() => frame!(0));
 
 describe("InnerClockGame", () => {
+  it("puts the target above the clock's slot, so the clock and the 3-2-1 never cover it (T182)", () => {
+    render(<InnerClockGame countdownMs={0} params={params} onFinish={vi.fn()} />);
+    const prompt = screen.getByText("Tap when you think 5 seconds have passed");
+    const slot = document.querySelector("[data-clock]")!;
+    expect(prompt.compareDocumentPosition(slot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("counts 3-2-1 first, ignores taps during it, and starts the clock and the timeout right after it (T138)", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     const onFinish = vi.fn();
@@ -154,9 +161,12 @@ describe("InnerClockGame", () => {
     const shownClock = () => document.querySelector("[data-clock]");
     // Before the start frame, the clock waits at zero.
     expect(shownClock()?.textContent).toBe("0.0");
+    // Not "shown" until the start frame: before it, a tap does not count (e2e waits on this).
+    expect(shownClock()?.getAttribute("data-clock")).toBe("ready");
     clock().mockReturnValue(1000);
     showStart();
     expect(shownClock()?.textContent).toBe("0.0");
+    expect(shownClock()?.getAttribute("data-clock")).toBe("shown");
     clock().mockReturnValue(1540);
     act(() => frame!(0));
     expect(shownClock()?.textContent).toBe("0.5");

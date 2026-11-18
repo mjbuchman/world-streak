@@ -60,14 +60,11 @@ async function missSwiftSum(page: Page) {
   }
 }
 
-/** Second Sense: an early tap in round 1, then one at once in round 2, which empties the time bank. */
+/** Second Sense: a tap as round 1 starts misses its 15 s or longer target by more than the 10 s bank. */
 async function rushSecondSense(page: Page) {
   const clock = page.locator("[data-clock]");
   const tapArea = page.getByRole("button", { name: /Tap when you think [\d.]+ seconds have passed/ });
-  await expect(clock).toHaveAttribute("data-clock", "hidden", { timeout: 10_000 });
-  await tapArea.click();
-  await expect(page.getByText("Round 2 of 8")).toBeVisible();
-  await expect(clock).toHaveAttribute("data-clock", "shown");
+  await expect(clock).toHaveAttribute("data-clock", "shown", { timeout: 10_000 });
   await tapArea.click();
 }
 

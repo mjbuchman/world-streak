@@ -57,14 +57,14 @@ isOneToOne: false
                   ]
                 },"challenge_types": {
                   Row: {
-                    "direction": string,"type": string
+                    "direction": string,"scores_since": string | null,"type": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "direction": string,"type": string
+                    "direction": string,"scores_since"?: string | null,"type": string
                   }
                   Update: {
-                    "direction"?: string,"type"?: string
+                    "direction"?: string,"scores_since"?: string | null,"type"?: string
                   }
                   Relationships: [
                     

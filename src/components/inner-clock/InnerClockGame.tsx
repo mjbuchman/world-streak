@@ -14,13 +14,24 @@ export function targetLabel(targetMs: number): string {
   return `${seconds} ${seconds === 1 ? "second" : "seconds"}`;
 }
 
+/** The round's target as the player reads it, above the clock and the 3-2-1 (T182). */
+export function targetPrompt(targetMs: number): string {
+  return `Tap when you think ${targetLabel(targetMs)} have passed`;
+}
+
 /** "0.5": whole tenths of a second, rounded down, as a stopwatch shows them. */
 const clockLabel = (ms: number) => (Math.floor(ms / 100) / 10).toFixed(1);
 
 /** After its reveal the clock stops and fades out over this long (T118), or just goes with reduced motion. */
 export const CLOCK_FADE_MS = 400;
 
-type ClockState = { phase: "countdown"; number: number } | { phase: "shown"; ms: number } | { phase: "fading" } | { phase: "hidden" };
+// "ready" is the clock at zero before the start frame, when a tap does not count yet.
+type ClockState =
+  | { phase: "countdown"; number: number }
+  | { phase: "ready" }
+  | { phase: "shown"; ms: number }
+  | { phase: "fading" }
+  | { phase: "hidden" };
 
 /** One round's tap in ms from its start, or null when it timed out. */
 type RoundTap = { tapMs: number | null };
@@ -53,7 +64,7 @@ export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_M
   // The clock: the countdown in its place, then running for revealMs, then stopped at
   // the reveal and fading, then gone.
   const [clockState, setClockState] = useState<ClockState>(() =>
-    countdownMs > 0 ? { phase: "countdown", number: COUNTDOWN_FROM } : { phase: "shown", ms: 0 },
+    countdownMs > 0 ? { phase: "countdown", number: COUNTDOWN_FROM } : { phase: "ready" },
   );
   // Read in the frame loop, which must not restart when the preference arrives after hydration.
   const reducedMotion = usePrefersReducedMotion();
@@ -136,10 +147,14 @@ export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_M
       onPointerDown={(event) => event.button === 0 && tap()}
       onKeyDown={onKeyDown}
     >
+      {/* The target first, on its own row, so the clock and the 3-2-1 never cover it (T182). */}
+      <span className={styles.prompt}>{targetPrompt(params.targetMs)}</span>
       {/* Hidden from screen readers: read every frame it would drown out the prompt. */}
       <span className={styles.clock} data-clock={clockState.phase} aria-hidden="true">
         {clockState.phase === "countdown" ? (
           <CountdownNumber key={clockState.number} value={clockState.number} />
+        ) : clockState.phase === "ready" ? (
+          clockLabel(0)
         ) : clockState.phase === "shown" ? (
           clockLabel(clockState.ms)
         ) : clockState.phase === "fading" ? (
@@ -148,7 +163,6 @@ export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_M
           ""
         )}
       </span>
-      <span className={styles.prompt}>Tap when you think {targetLabel(params.targetMs)} have passed</span>
       <span className={styles.hint}>Tap, click or press Space</span>
     </button>
   );

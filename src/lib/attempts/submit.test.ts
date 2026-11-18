@@ -87,15 +87,15 @@ describe("submitAttempt", () => {
   describe("every challenge type, with no type-specific branches (T30)", () => {
     const dayOf = (challengeType: string, passTarget: number) => fakeStore({ gameDay: lineupOf(challengeType, passTarget) });
 
-    it("Second Sense with a target of 4 rounds: four on target then a miss passes, three fails", async () => {
+    it("Second Sense with a target of 4: surviving all four with an empty bank passes, busting in round 4 fails", async () => {
       const targets = timeBank.paramsFromSeed(seed).rounds.map((round) => round.targetMs);
-      // n rounds exactly on target, then a tap 3.001 s late, more than the whole bank.
-      const run = (n: number) => ({ tapsMs: [...targets.slice(0, n), targets[n] + 3001] });
-      // A minute after the start: later than any of these runs could end.
-      const later = new Date(startedAt.getTime() + 60_000);
-      const pass = await submit({ attemptId, inputs: run(4) }, dayOf("inner-clock", 4), later);
+      // Three rounds exactly on target, then a fourth off by `lastErrorMs`.
+      const run = (lastErrorMs: number) => ({ tapsMs: [...targets.slice(0, 3), targets[3] + lastErrorMs] });
+      // Later than any of these runs could end.
+      const later = new Date(startedAt.getTime() + 150_000);
+      const pass = await submit({ attemptId, inputs: run(10_000) }, dayOf("inner-clock", 4), later);
       expect(pass.body).toMatchObject({ score: 4, passed: true, passTarget: 4 });
-      const fail = await submit({ attemptId, inputs: run(3) }, dayOf("inner-clock", 4), later);
+      const fail = await submit({ attemptId, inputs: run(10_001) }, dayOf("inner-clock", 4), later);
       expect(fail.body).toMatchObject({ score: 3, passed: false, passTarget: 4 });
     });
 
@@ -230,10 +230,11 @@ describe("submitAttempt", () => {
       const first = timeBank.paramsFromSeed(seed).rounds[0];
       const store = fakeStore({
         gameDay: lineupOf("inner-clock", 0),
-        recentScores: vi.fn(async () => [{ challengeType: "inner-clock", score: 9 }]),
+        recentScores: vi.fn(async () => [{ challengeType: "inner-clock", score: 5 }]),
       });
-      const inputs = { tapsMs: [first.targetMs + 3001] };
-      const at = new Date(startedAt.getTime() + first.targetMs + 3001 + 1_000);
+      // A first tap later than the whole bank.
+      const inputs = { tapsMs: [first.targetMs + 10_001] };
+      const at = new Date(startedAt.getTime() + first.targetMs + 10_001 + 1_000);
       expect(await submit({ attemptId, inputs }, store, at)).toMatchObject({ status: 200, body: { score: 0, passed: true } });
       expect(store.recentScores).toHaveBeenCalledWith(userId, "2026-11-08");
       expect(store.recordFlags).not.toHaveBeenCalled();

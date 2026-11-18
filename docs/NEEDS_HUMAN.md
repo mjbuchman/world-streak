@@ -12,17 +12,17 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
-### Blocked: Second Sense rounds, PR #171 failed CI 3 times (blocks T180–T183, so all of M6 batches 15–18)
-- What is blocking: one phone e2e test, `tests/e2e/mobile/mobile.spec.ts:104` on phone-390. After the tap that ends the run, "0 rounds survived" never shows. The CI trace shows the touch's follow-up click landing on the practice result's "Play again", which restarts the run. Players on phones can hit this bug too. Everything else passes (105 tests, verify green).
-- What was tried: (1) a "ready" clock phase before the start frame; (2) cancelling `touchend` on the tap area (commit ed1e5b8). Neither fixed it. Likely reason for (2): the round unmounts as soon as the tap ends the run, which removes the listener before the touch ends.
-- What is needed: say "unblock T180" (allows 3 more CI attempts). The e2e tests cannot run on this machine because the local Supabase keys are not exported, so CI is the only check.
-- Agent's recommendation: hold the final error on screen for `ROUND_GAP_MS` before `onFinish` (as between rounds), so nothing clickable is under the finger when the click arrives. Remove the touchend listener. Branch `task/180-183-second-sense-rounds`, reviewers already approved.
-
 ### Please confirm: Daily Three planning calls (M5; blocks nothing)
 - What is needed: say if any of these readings of DESIGN.md should change. (1) Second Sense keeps its tap, not a hold. (2) The fraction of lives or budget left is measured when the run ends. (3) A wrong Flash Ladder count retries the same level with a new layout. (4) Fair Split has concave shapes but no holes, and each side of a cut is measured by total area. (5) The pass rate counts only decided days, unlike T17, which counts started attempts. (6) The game played after the day is decided is left out of the pass-target percentile. (7) The results page shows the verdict, each game's score and target, the meter and share; it has no percentiles. (8) The lineup comes from a hash of the date and never repeats the previous day's. (9) Echo Path has no per-tap time limit. (10) A Fair Split miss or timeout brings the same shape back, and a drag that is too short or misses the board is ignored (placeholders in DECISIONS.md, 2026-11-16). (11) A day nobody has touched rebuilds its lineup from the current pool, as coming days followed the settings before (DECISIONS.md, T150). (12) A player who loses game 1 and never returns is not counted in the pass rate (DECISIONS.md, T153; confirmed by the owner 2026-11-16). (13) Before anyone starts a day whose lineup the nightly job has not made yet, /play shows only game 1, with no list (DECISIONS.md, T156). (14) Three wins make a "Perfect day" on the results page and the share text, and nothing else (DECISIONS.md, T159). (15) The placeholder cheat-check thresholds for Second Sense, Echo Path and Fair Split (DECISIONS.md, T164).
 - Where to put it: reply in chat.
 - Why: the design leaves these open or unclear. The tasks are T139–T166 in the backlog.
 - Agent's recommendation: build as listed. Check them at the M5 play-test.
+
+### Please confirm: M6 gameplay calls (blocks nothing)
+- What is needed: say if any of these should change. (1) Second Sense: target 4 means "survive all four", the cheat check flags 3+ rounds under 25 ms off, and only scores from the day after the T183 migration count toward its pass target (DECISIONS.md, T180-T183).
+- Where to put it: reply in chat.
+- Why: the design leaves these open.
+- Agent's recommendation: keep them; check them at the M6 play-test.
 
 ### Asymmetric JWT keys at deployment (T58; blocks nothing)
 - What is needed: locally, sign in again; if `npm run dev` then reports a bad key, replace the three lines in `.env.local` with what `npm run env:local` prints (local Supabase now signs its keys with the new ES256 key). At deployment, switch the project to an ECC (P-256) signing key (`docs/DEPLOYMENT.md` §4.4).
@@ -99,6 +99,7 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 
 ## Resolved
 
+- **T180–T183 blocked** (Nov 18, 2026): PR #171 failed CI 3 times on a phone ghost click; the owner unblocked it with 3 more attempts.
 - **M4 play-test** (Nov 12, 2026): Second Sense fade and targets good; Swift Sum countdown perfect, so every game gets it (T138). No sponsor yet: T39 dropped. `record_attempt_result_unchecked` stays (checked: only the service role can run it, pgTAP-tested). Turnstile's free plan has no usage charge.
 
 - **Decisions after M4** (Nov 12, 2026): all eight please-confirms accepted as built (T44 ads off, T43 draw, T40 cheat thresholds, T34 streak and cycle, T110 hidden tab, T32 share margin, T31 rotation, T104 gauge); T37 goes ahead with option A; the meter's local p95 is accepted, to be rechecked on the preview; Second Sense keeps the 0.5 s pass target.

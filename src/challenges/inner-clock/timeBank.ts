@@ -1,36 +1,36 @@
 import { z } from "zod";
+import { RUN_COUNTDOWN_MS } from "@/config/countdown";
+import { bankScore, playBank, type BankResult } from "../shared/bank";
 import { ladderRanges } from "../shared/ladder";
 import { createRng } from "../shared/prng";
 import type { ChallengeModule } from "../shared/types";
 
 /**
- * Second Sense: Time Bank. Rounds of the Second Sense tap (tap when the round's target time has
- * passed, with the clock visible only at first). Each round's error comes out of one error
- * budget; a round survives if its error fits in what is left, and the run ends on the first round
- * that does not, or after the last round. Score = rounds survived + budget left as a fraction.
+ * Second Sense: Time Bank (M6, T181). Four rounds of the Second Sense tap: tap when the round's
+ * hidden interval (15 to 25 s) has passed, with the clock visible for its first 2 s. Each round's
+ * error comes out of one 10 s bank by the shared bank rule (T180). Score = rounds survived + bank
+ * left as a fraction. All numbers below are placeholders (DECISIONS, T198).
  *
- * The design calls it a "hold"; the current game is a tap and the design allows no new round
- * types, so the tap stays (DECISIONS, T139). All numbers below are placeholders tuned at the M5
- * play-test.
+ * The design calls it a "hold"; the game is a tap and the design allows no new round types, so the
+ * tap stays (DECISIONS, T139).
  */
 
-export const BUDGET_MS = 3000;
-export const MAX_ROUNDS = 8;
+export const BUDGET_MS = 10_000;
+export const ROUNDS = 4;
 
-/** A round ends this many targets after its start. */
-export const TIMEOUT_FACTOR = 3;
+/** The clock shows for this long at the start of every round, then fades. */
+export const REVEAL_MS = 2000;
 
-/** The pause between rounds, for the error reveal; the next round's clock starts after it. */
+/** The pause between rounds, for the error reveal; the next round's 3-2-1 starts after it. */
 export const ROUND_GAP_MS = 1500;
+
+/** The 3-2-1 before every round's clock. */
+export const ROUND_COUNTDOWN_MS = RUN_COUNTDOWN_MS;
 
 const TARGET_STEP_MS = 100;
 
-/** Round i's target range: one second longer per round, so the targets always rise. */
-export const TARGET_RANGES_MS = ladderRanges(MAX_ROUNDS, 3000, 1000, 500);
-
-/** The visible clock shrinks by REVEAL_STEP_MS a round, from the max down to the min. */
-const REVEAL_STEP_MS = 150;
-export const REVEAL_RANGE_MS = { min: 1500 - REVEAL_STEP_MS * (MAX_ROUNDS - 1), max: 1500 } as const;
+/** Round i's hidden interval: 15.0 to 17.4 s, then 2.5 s later per round, so a run covers 15 to 25 s. */
+export const TARGET_RANGES_MS = ladderRanges(ROUNDS, 15_000, 2_500, 2_400);
 
 export type TimeBankRound = {
   /** When the player should tap, in ms from the round's start. */
@@ -48,46 +48,42 @@ export type TimeBankInputs = { tapsMs: (number | null)[] };
 
 export function paramsFromSeed(seed: number): TimeBankParams {
   const rng = createRng(seed);
-  const rounds = TARGET_RANGES_MS.map(({ min, max }, i) => {
+  const rounds = TARGET_RANGES_MS.map(({ min, max }) => {
     const targetMs = rng.int(min / TARGET_STEP_MS, max / TARGET_STEP_MS) * TARGET_STEP_MS;
-    return { targetMs, revealMs: REVEAL_RANGE_MS.max - REVEAL_STEP_MS * i, timeoutMs: TIMEOUT_FACTOR * targetMs };
+    // A tap later than this costs more than the whole bank anyway, so the round can end there.
+    return { targetMs, revealMs: REVEAL_MS, timeoutMs: targetMs + BUDGET_MS };
   });
   return { budgetMs: BUDGET_MS, rounds };
 }
 
-/** The round's error in ms, rounded to the ms; a missing or late tap costs the worst error. */
-export function roundErrorMs(round: TimeBankRound, tapMs: number | null): number {
-  if (tapMs === null || tapMs > round.timeoutMs) return (TIMEOUT_FACTOR - 1) * round.targetMs;
+/** The round's error in ms, rounded to the ms; a missing or late tap costs more than the bank. */
+export function roundErrorMs(round: TimeBankRound, tapMs: number | null, budgetMs: number): number {
+  if (tapMs === null || tapMs > round.timeoutMs) return budgetMs + 1;
   return Math.round(Math.abs(tapMs - round.targetMs));
 }
 
-/** Plays the taps against the budget: how many rounds survived, what is left, and whether a round failed. */
-export function play(params: TimeBankParams, inputs: TimeBankInputs): { survived: number; leftMs: number; failed: boolean } {
-  let leftMs = params.budgetMs;
-  const played = Math.min(inputs.tapsMs.length, params.rounds.length);
-  for (let i = 0; i < played; i++) {
-    const errorMs = roundErrorMs(params.rounds[i], inputs.tapsMs[i]);
-    if (errorMs > leftMs) return { survived: i, leftMs: 0, failed: true };
-    leftMs -= errorMs;
-  }
-  return { survived: played, leftMs, failed: false };
+/** Plays the taps against the bank: how many rounds survived, what is left, and whether a round failed. */
+export function play(params: TimeBankParams, inputs: TimeBankInputs): BankResult {
+  const costs = inputs.tapsMs.slice(0, params.rounds.length).map((tapMs, i) => roundErrorMs(params.rounds[i], tapMs, params.budgetMs));
+  return playBank(params.budgetMs, costs);
 }
 
 const inputsSchema: z.ZodType<TimeBankInputs> = z.object({
   // zod 4 numbers already reject NaN and Infinity.
-  tapsMs: z.array(z.number().nonnegative().nullable()).max(MAX_ROUNDS),
+  tapsMs: z.array(z.number().nonnegative().nullable()).max(ROUNDS),
 });
 
 export const timeBank: ChallengeModule<TimeBankParams, TimeBankInputs> = {
   paramsFromSeed,
   score: (params, inputs) => {
-    const { survived, leftMs } = play(params, inputs);
-    return Math.round((survived + leftMs / params.budgetMs) * 1000) / 1000;
+    const { survived, left } = play(params, inputs);
+    return bankScore(survived, left, params.budgetMs);
   },
   finished: (params, inputs) => play(params, inputs).failed || inputs.tapsMs.length >= params.rounds.length,
   inputsSchema,
   direction: "higher-better",
-  // A round with no tap lasted until its timeout.
+  // Each later round adds the reveal gap and its 3-2-1; the first round's 3-2-1 is in the cheat
+  // check's load allowance. A round with no tap lasted until its timeout.
   lastInputMs: ({ tapsMs }, params) =>
-    tapsMs.reduce<number>((sum, tapMs, i) => sum + (i > 0 ? ROUND_GAP_MS : 0) + (tapMs ?? params.rounds[i].timeoutMs), 0),
+    tapsMs.reduce<number>((sum, tapMs, i) => sum + (i > 0 ? ROUND_GAP_MS + ROUND_COUNTDOWN_MS : 0) + (tapMs ?? params.rounds[i].timeoutMs), 0),
 };
