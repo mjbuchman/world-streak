@@ -148,16 +148,29 @@ describe("Fair Split shapes (T192)", () => {
     ];
     const circle = polar(() => 30);
     const star = polar((angle) => (Math.round((angle * 10) / (2 * Math.PI)) % 2 === 0 ? 35 : 15), 10);
-    // A heart mirrored about the vertical axis, turned 17 degrees so the axis is off the grid of rays.
-    const heart = polar((angle) => 20 + 12 * Math.abs(Math.sin((angle - 0.3) / 2)) + 6 * Math.cos(angle - 0.3 - Math.PI / 2));
+    // A heart (its cleft at angle 0.3 rad), its radius even about that angle: mirrored about it.
+    const heart = polar((angle) => 20 + 12 * Math.abs(Math.sin((angle - 0.3) / 2)));
+    const turned = (polygon: Point[], degrees: number) => {
+      const [c, s] = [Math.cos((degrees * Math.PI) / 180), Math.sin((degrees * Math.PI) / 180)];
+      return polygon.map(({ x, y }) => ({ x: 50 + (x - 50) * c - (y - 50) * s, y: 50 + (x - 50) * s + (y - 50) * c }));
+    };
+    // Three skewed lobes: the same after a third of a turn, but with no mirror axis.
+    const pinwheel = (lean = 0) => polar((angle) => 25 + 6 * Math.cos(3 * angle) + 4 * Math.sin(6 * angle) + lean * Math.cos(angle));
 
     it.each([
       ["a square", square],
+      ["a square turned 17.5 degrees, its axes off the 1-degree grid", turned(square, 17.5)],
       ["a circle", circle],
       ["a regular five-point star", star],
+      ["a regular five-point star turned 17.5 degrees", turned(star, 17.5)],
       ["a symmetric heart", heart],
+      ["a three-fold pinwheel, by its turns alone", pinwheel()],
     ])("measures %s as symmetric", (_name, polygon) => {
       expect(asymmetry(polygon)).toBeLessThan(MIN_ASYMMETRY);
+    });
+
+    it("finds the pinwheel lopsided once a lean breaks its turn: no mirror made it pass", () => {
+      expect(asymmetry(pinwheel(5))).toBeGreaterThanOrEqual(MIN_ASYMMETRY);
     });
 
     it("measures a lopsided blob as lopsided, wherever it sits", () => {
