@@ -1,6 +1,6 @@
 begin;
 \ir fixtures/fixtures.psql
-select plan(20);
+select plan(21);
 
 -- T183: a challenge's pass-target percentile reads only scores from its scores_since date on.
 select has_column('public', 'challenge_types', 'scores_since', 'challenge types have a scores_since date');
@@ -36,13 +36,19 @@ select ok(
     >= (select scores_since from public.challenge_types where type = 'fair-split'),
   'Trail Trace''s 5 x 8 board starts its scale again (T209)'
 );
+-- Clean Cut's own M7 migration ran last of the four, after Second Sense's (T204).
+select ok(
+  (select scores_since from public.challenge_types where type = 'fair-split')
+    >= (select scores_since from public.challenge_types where type = 'inner-clock'),
+  'Clean Cut''s lopsided shapes and 8 point bank start its scale again (T212)'
+);
 select is(
   (select count(*)::integer from public.challenge_types where type not in ('inner-clock', 'flash-count', 'echo-path', 'fair-split') and scores_since is not null), 0,
   'every other challenge still counts all its scores'
 );
 select is((select (default_pass_targets ->> 'inner-clock')::numeric from public.game_settings), 4::numeric, 'the placeholder stays 4: survive all four');
 select is((select (default_pass_targets ->> 'flash-count')::numeric from public.game_settings), 5::numeric, 'Swift Sum''s is 5: survive all five');
-select is((select (default_pass_targets ->> 'fair-split')::numeric from public.game_settings), 5::numeric, 'Fair Split''s is 5: survive all five (T196)');
+select is((select (default_pass_targets ->> 'fair-split')::numeric from public.game_settings), 5::numeric, 'Clean Cut''s stays 5: survive all five (T196, T212)');
 select is((select (default_pass_targets ->> 'echo-path')::numeric from public.game_settings), 8::numeric, 'Trail Trace''s is 8: a path the board''s height (T209)');
 select ok(
   (select column_default from information_schema.columns

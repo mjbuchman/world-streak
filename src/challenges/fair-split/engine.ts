@@ -18,8 +18,8 @@ import { shapeFor } from "./shapes";
  */
 
 export const ROUNDS = 5;
-/** The bank, in percentage points (about 1.2 a shape). */
-export const BANK_POINTS = 6;
+/** The bank, in percentage points (about 1.6 a shape; T211, the owner's 8). */
+export const BANK_POINTS = 8;
 /** Each shape's time limit. The screen cuts the current line when it runs out. */
 export const LIMIT_MS = 25_000;
 /** How long the two pieces and their shares stay on screen after a cut. */
