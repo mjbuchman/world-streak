@@ -1,5 +1,9 @@
 import type { Locator, Page } from "@playwright/test";
+import { COLS, paramsFromSeed as echoPathParams, ROWS } from "../../src/challenges/echo-path/engine";
+import { boardLayout } from "../../src/challenges/echo-path/render";
+import { ROUND_GAP_MS } from "../../src/challenges/inner-clock/timeBank";
 import { paramsFromSeed, simulate } from "../../src/challenges/stacking/engine";
+import { RUN_COUNTDOWN_MS } from "../../src/config/countdown";
 import { FALL_MS } from "../../src/challenges/stacking/render";
 import { reachedRow } from "../../src/components/stacking/rows";
 import { expect, test } from "./support/fixtures";
@@ -131,6 +135,30 @@ test("Second Sense practice: a 3-2-1 under the target, a 2 s clock, and a miss b
   expect(scored).toEqual([]);
 });
 
+test("Second Sense practice: a tap near the target survives round 1, and round 2 has its own 3-2-1 (T197)", async ({ page }) => {
+  await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+  await gotoReady(page, "/practice/inner-clock");
+  await page.clock.pauseAt(new Date("2026-01-01T00:00:30Z"));
+  await page.getByRole("button", { name: "Start" }).click();
+  await expect(page.getByRole("img", { name: "Round 1 of 4" })).toBeVisible();
+  const prompt = page.getByText(/^Tap when you think [\d.]+ seconds have passed$/);
+  const targetMs = Number(/([\d.]+) seconds/.exec((await prompt.textContent())!)![1]) * 1000;
+
+  // The 3-2-1, then the round's clock starts; a tap at the target costs next to nothing.
+  await page.clock.runFor(RUN_COUNTDOWN_MS + 100);
+  const tapArea = page.getByRole("button", { name: /Tap when you think [\d.]+ seconds have passed/ });
+  await expect(tapArea).toBeVisible();
+  await page.clock.runFor(targetMs);
+  await tapArea.press("Space");
+  await expect(page.getByRole("meter", { name: "Time bank" })).toHaveAttribute("aria-valuetext", /^\d+\.\d s left of 10\.0 s$/);
+
+  // After the error shows, round 2 starts with its own 3-2-1.
+  await page.clock.runFor(ROUND_GAP_MS + 100);
+  await expect(page.getByRole("img", { name: "Round 2 of 4" })).toBeVisible();
+  await expect(page.getByText("Round 2", { exact: true })).toBeVisible();
+  await expect(page.locator("[data-countdown]")).toBeVisible();
+});
+
 for (const size of [
   { width: 390, height: 844 },
   { width: 1280, height: 720 },
@@ -172,6 +200,55 @@ test("Swift Sum practice: a count far off in round 1 busts the dot bank and ends
   expect(scored).toEqual([]);
 });
 
+test("Swift Sum practice: five steps, and a close count survives round 1 into round 2's 3-2-1 (T197)", async ({ page }) => {
+  await gotoReady(page, "/practice/flash-count");
+  await page.getByRole("button", { name: "Start" }).click();
+  await expect(page.getByRole("img", { name: "Round 1 of 5" })).toBeVisible();
+  const board = page.locator("canvas");
+  await expect(board).toHaveAttribute("data-showing", "dots", { timeout: 10_000 });
+  await expect(board).toHaveAttribute("data-showing", "clear");
+  // Round 1 has 6 to 11 dots, so 8 is off by at most 3 of the 10-dot bank.
+  await page.getByRole("textbox", { name: "How many dots were there?" }).fill("8");
+  await page.getByRole("button", { name: "Submit" }).click();
+  await expect(page.getByRole("meter", { name: "Dot bank" })).toHaveAttribute("aria-valuetext", /^\d+ dots left of 10 dots$/);
+  await expect(page.getByRole("img", { name: "Round 2 of 5" })).toBeVisible();
+  await expect(page.getByText("Round 2", { exact: true })).toBeVisible({ timeout: 5_000 });
+  await expect(page.locator("[data-countdown]")).toBeVisible();
+});
+
+/** The middle of an Echo Path tile on the page (tiles count row by row from the bottom). */
+function tileCentre(box: { x: number; y: number; width: number; height: number }, tile: number) {
+  const layout = boardLayout(box.width, box.height, COLS, ROWS);
+  const pitch = layout.tileSize + layout.gap;
+  const col = tile % COLS;
+  const fromTop = ROWS - 1 - Math.floor(tile / COLS);
+  return {
+    x: box.x + layout.left + layout.gap + col * pitch + layout.tileSize / 2,
+    y: box.y + layout.top + layout.gap + fromTop * pitch + layout.tileSize / 2,
+  };
+}
+
+test("Echo Path practice: a 4-tile first playback on the 5 x 10 board, and a fifth tile after a clear (T197)", async ({ page }) => {
+  const seed = 2024;
+  await pinSeed(page, seed);
+  const params = echoPathParams(seed);
+  await gotoReady(page, "/practice/echo-path");
+  await page.getByRole("button", { name: "Start" }).click();
+  const board = page.locator("canvas[data-phase]");
+  const length = page.getByRole("img", { name: /^Tile \d+ of \d+$/ });
+  await expect(length).toHaveAccessibleName(`Tile 4 of ${params.path.length}`);
+  await expect(board).toHaveAttribute("data-phase", "repeat", { timeout: 15_000 });
+  // Tapping the path's first four tiles, placed on a 5 x 10 grid, clears the round.
+  const box = (await board.boundingBox())!;
+  for (const tile of params.path.slice(0, 4)) {
+    const { x, y } = tileCentre(box, tile);
+    await page.mouse.click(x, y);
+  }
+  await expect(length).toHaveAccessibleName(`Tile 5 of ${params.path.length}`);
+  await expect(page.locator("[data-cleared]")).toHaveCount(4);
+  await expect(page.getByRole("img", { name: /lives left$/ })).toHaveAccessibleName("3 of 3 lives left");
+});
+
 test("Echo Path practice: watch, then wrong tiles use up the lives and end the run", async ({ page }) => {
   const scored = attemptRequests(page);
   await gotoReady(page, "/practice/echo-path");
@@ -193,7 +270,7 @@ test("Echo Path practice: watch, then wrong tiles use up the lives and end the r
   expect(scored).toEqual([]);
 });
 
-test("Fair Split practice: dragging the line never cuts; Cut shows both sides' percentages", async ({ page }) => {
+test("Fair Split practice: the line moves twice without cutting; Cut shows the pieces and both sides' percentages", async ({ page }) => {
   const scored = attemptRequests(page);
   await gotoReady(page, "/practice/fair-split");
   await page.getByRole("button", { name: "Start" }).click();
@@ -207,7 +284,14 @@ test("Fair Split practice: dragging the line never cuts; Cut shows both sides' p
   await page.mouse.move(middle.x + 20, middle.y, { steps: 8 });
   await page.mouse.up();
   await expect(board).toHaveAttribute("data-phase", "cut");
+  // And again, from where it now is, back a little to the left.
+  await page.mouse.move(middle.x + 20, middle.y);
+  await page.mouse.down();
+  await page.mouse.move(middle.x + 8, middle.y, { steps: 8 });
+  await page.mouse.up();
+  await expect(board).toHaveAttribute("data-phase", "cut");
   await page.getByRole("button", { name: "Cut" }).click();
+  await expect(board).toHaveAttribute("data-phase", "result");
   await expect(page.getByText(/^\d+\.\d% and \d+\.\d%\./)).toBeVisible();
   expect(scored).toEqual([]);
 });

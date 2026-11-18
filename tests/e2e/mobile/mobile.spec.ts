@@ -38,6 +38,15 @@ async function expectBoardFits(page: Page, board: Locator) {
   expect(["manipulation", "none"]).toContain(await board.evaluate((element) => getComputedStyle(element).touchAction));
 }
 
+/** The bank gauge's bar is at least 16 px tall and inside the screen, with its reading shown (T197). */
+async function expectReadableBank(page: Page, name: string) {
+  const bar = page.getByRole("meter", { name });
+  const box = (await bar.boundingBox())!;
+  expect(box.height).toBeGreaterThanOrEqual(16);
+  expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  await expect(page.getByText(/ left of /)).toBeVisible();
+}
+
 async function tap(page: Page, target: Locator) {
   const box = (await target.boundingBox())!;
   await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
@@ -106,11 +115,22 @@ test("Second Sense can be played with a tap, on an area that fits", async ({ pag
   await tap(page, page.getByRole("button", { name: "Start" }));
   const area = page.getByRole("button", { name: /Tap when you think [\d.]+ seconds have passed/ });
   await expectBoardFits(page, area);
+  await expectReadableBank(page, "Time bank");
   await expect(page.locator("[data-clock]")).toHaveAttribute("data-clock", "shown");
   await tap(page, area);
   // A tap at once misses round 1's 15 s or longer target by more than the 10 s bank.
   await expect(page.getByRole("heading", { level: 2, name: "0 rounds survived" })).toBeVisible();
   await expectPhoneFriendly(page);
+});
+
+test("Second Sense keeps its target text clear of the 3-2-1 on the phone (T197)", async ({ page }) => {
+  await gotoReady(page, "/practice/inner-clock");
+  await tap(page, page.getByRole("button", { name: "Start" }));
+  await expect(page.locator("[data-countdown]")).toBeVisible();
+  const target = (await page.getByText(/^Tap when you think [\d.]+ seconds have passed$/).boundingBox())!;
+  const number = (await page.locator("[data-countdown]").boundingBox())!;
+  const overlaps = target.x < number.x + number.width && number.x < target.x + target.width && target.y < number.y + number.height && number.y < target.y + target.height;
+  expect(overlaps).toBe(false);
 });
 
 test("Swift Sum can be answered with taps, on a board that fits", async ({ page }) => {
@@ -120,6 +140,7 @@ test("Swift Sum can be answered with taps, on a board that fits", async ({ page 
   // The board appears after round 1's 3-2-1.
   await expect(board).toHaveAttribute("data-showing", "dots", { timeout: 10_000 });
   await expectBoardFits(page, board);
+  await expectReadableBank(page, "Dot bank");
   await expect(board).toHaveAttribute("data-showing", "clear", { timeout: 10_000 });
   const answer = page.getByRole("textbox", { name: "How many dots were there?" });
   await tap(page, answer);

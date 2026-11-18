@@ -60,6 +60,28 @@ test("an eligible player starts today's games in lineup order, each once, then n
   expect(await done.json()).toEqual({ error: "day-complete" });
 });
 
+test("two players starting today's three games get different params for each game (T197)", async ({ page, accounts }) => {
+  const startAll = async () => {
+    await signUpViaForm(page, { email: accounts.uniqueEmail() });
+    await expect(page).toHaveURL("/");
+    const games: { challengeType: string; params: unknown }[] = [];
+    for (let i = 0; i < 3; i++) {
+      const response = await page.request.post("/api/attempts/start");
+      expect(response.status()).toBe(200);
+      const { challengeType, params } = await response.json();
+      games.push({ challengeType, params });
+    }
+    // The next player signs up in the same browser.
+    await page.context().clearCookies();
+    return games;
+  };
+  const first = await startAll();
+  const second = await startAll();
+  // The same lineup, each game from its own per-attempt seed.
+  expect(second.map((game) => game.challengeType)).toEqual(first.map((game) => game.challengeType));
+  for (const [i, game] of second.entries()) expect(game.params).not.toEqual(first[i].params);
+});
+
 test("the server scores a submission itself and accepts it only once", async ({ page, accounts }) => {
   const email = accounts.uniqueEmail();
   await signUpViaForm(page, { email });
