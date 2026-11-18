@@ -20,7 +20,7 @@ const SQUARE = [
   { x: 0, y: 100 },
 ];
 const LIMIT = 5000;
-const params: FairSplitParams = { bank: 6, shapes: [0, 1].map(() => ({ polygon: SQUARE, limitMs: LIMIT })) };
+const params: FairSplitParams = { bank: 8, shapes: [0, 1].map(() => ({ polygon: SQUARE, limitMs: LIMIT })) };
 /** The game's first frame is at START; the first shape is up from APPEARS, its limit at DEADLINE. */
 const START = 1000;
 const APPEARS = START + ROUND_COUNTDOWN_MS;
@@ -128,7 +128,7 @@ describe("FairSplitGame", () => {
     fireEvent.click(cutButton());
     expect(phase()).toBe("result");
     expect(screen.getByText("55.0% and 45.0%. 5 points off half.")).toBeTruthy();
-    expect(screen.getByText("1 point left of 6 points")).toBeTruthy();
+    expect(screen.getByText("3 points left of 8 points")).toBeTruthy();
     frameAt(APPEARS + 2000 + SHOW_MS - 1);
     expect(lastFrame().split!.share).toBeCloseTo(0.55, 9);
     expect(lastFrame().split!.apart).toBeGreaterThan(0);
@@ -165,11 +165,11 @@ describe("FairSplitGame", () => {
     expect(phase()).toBe("done");
   });
 
-  it("ends the run when a cut is off by more than the bank holds, after its pieces show", () => {
+  it("ends the run when a cut is off by more than the 8 point bank holds, after its pieces show (T211)", () => {
     const onFinish = startGame();
-    slide(6.5);
+    slide(8.5);
     fireEvent.click(cutButton());
-    expect(screen.getByText("56.5% and 43.5%. 6.5 points off half. More than the bank had left.")).toBeTruthy();
+    expect(screen.getByText("58.5% and 41.5%. 8.5 points off half. More than the bank had left.")).toBeTruthy();
     expect(screen.getByText("Bank used up")).toBeTruthy();
     expect(lastFrame().miss).toBe(0);
     frameAt(APPEARS + 100);

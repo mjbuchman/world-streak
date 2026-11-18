@@ -2336,7 +2336,7 @@ Planning notes for M7:
 
 ### T207 Trail Trace path generator: 12 tiles at most, no three tiles touching
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T201
 - Acceptance criteria:
   - [ ] In `src/challenges/echo-path/path.ts`, `MAX_PATH_LENGTH` becomes 12 (owner). The board is shortened so a path can still be built: `ROWS = 8`, `COLS = 5`, `MIN_PATH_LENGTH = 8` (a straight climb), so lengths run 8 to 12 (the shorter board, 8 rows and the minimum are proposed, owner to confirm; keep 10 rows if the generator can meet every rule with a maximum of 12, since 10 rows leaves only two sideways steps, and record the choice). The constants are exported and everything that read the old size follows them (`engine.ts`, `render.ts`, `EchoPathGame`).
@@ -2347,7 +2347,7 @@ Planning notes for M7:
 
 ### T208 Trail Trace engine and screen on the shorter board
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T207
 - Acceptance criteria:
   - [ ] `engine.ts` follows T207: `startLength = 4`, so a full run is 4 to 12 tiles (up to 9 rounds); `MAX_TAPS` is recomputed for the longest path (12) plus two missed attempts at the last length. Scoring is unchanged (longest length cleared + lives left ÷ 3, rounded to 3 decimals). With an explicit 10-tile path: all 10 tapped correctly scores 10 + 1 = 11; clearing 4 to 6 then missing three times scores 6; clearing everything with one miss scores 10 + 2/3. Golden scores for 3 seeds are re-pinned; `engine.test.ts` stays rewritten, not weakened; over 1 000 seeds at least 90% of paths are distinct.
@@ -2357,7 +2357,7 @@ Planning notes for M7:
 
 ### T209 Trail Trace: scale reset and cheat checks
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T204, T208
 - Acceptance criteria:
   - [ ] A new migration sets `scores_since` for `echo-path` to the day after it runs, sets `default_pass_targets` for `echo-path` to 8 (clear a path of 8 tiles, the board's height; proposed, owner to confirm) in `game_settings` and the column default, and recomputes unedited, unstarted open days. pgTAP as in T204 for this type. The admin target check allows a target up to 13 for this game.
@@ -2367,7 +2367,7 @@ Planning notes for M7:
 
 ### T210 Clean Cut shapes: asymmetrical only
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T201
 - Acceptance criteria:
   - [ ] Every shape kind in `src/challenges/fair-split/shapes.ts` is asymmetrical after its seeded rotation, mirror and scale: it has no mirror symmetry (about any axis) and no rotational symmetry. Symmetrical kinds are made lopsided (for example the heart, flower, star, plus, cross, cloud, teardrop, crescent and zig-zag band get seeded per-lobe or per-arm size and position differences that exceed a documented minimum), or are removed if they cannot be made so. The kind library stays at least 10 kinds and at least 70% of drawn shapes stay curved.
@@ -2377,7 +2377,7 @@ Planning notes for M7:
 
 ### T211 Clean Cut engine and screen: an 8 point bank
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T210
 - Acceptance criteria:
   - [ ] In `src/challenges/fair-split/engine.ts`, `bank` becomes 8 percentage points (owner; about 1.6 per round). Everything else (5 shapes, `LIMIT_MS`, cost rule, schema) is unchanged. Tests updated: with explicit square params (bank 8): cuts at x = 50, 50.5, 49, 50, 51.5 score 5 + (8 - 3) ÷ 8 = 5.625; a cut at x = 40 (cost 10) scores 0; cuts at 54, 54 (costs 4 and 4, exactly the bank) then a third at 50 score 3; five perfect cuts score 6; golden scores for 3 seeds re-pinned. The simulated cutter (0.6 point aim error) is re-run and its survival band re-set from the simulation and documented.
@@ -2386,7 +2386,7 @@ Planning notes for M7:
 
 ### T212 Clean Cut: scale reset and cheat checks
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T204, T211
 - Acceptance criteria:
   - [ ] A new migration sets `scores_since` for `fair-split` to the day after it runs, keeps `default_pass_targets` for `fair-split` at 5 (survive all five shapes) and recomputes unedited, unstarted open days. pgTAP as in T204 for this type.

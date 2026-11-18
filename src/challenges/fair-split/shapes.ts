@@ -252,9 +252,138 @@ function place(outline: Point[], rng: Rng): Point[] {
   return best!;
 }
 
-/** Shape `index` (0-based) of the run with this seed: its kind, then a seeded outline of that kind. */
+/**
+ * A finished shape must be at least this far from every mirror image and every 2 to 5-fold turn of
+ * itself, as a share of its area (T210; proposed, owner to confirm). Over seeds 0 to 999 the least
+ * lopsided drawn shape measures 0.040; before warping, the plain kinds measured as low as 0.031.
+ */
+export const MIN_ASYMMETRY = 0.04;
+/**
+ * One ray every 2 degrees from the centroid. Mirror axes 1 degree apart still map ray onto ray (an
+ * axis on a ray or halfway between two), and the 2 to 5-fold turns are whole numbers of rays.
+ */
+const RAYS = 180;
+
+/** The polygon's centroid (the outline is simple, so its signed area is not zero). */
+function centroid(polygon: Point[]): Point {
+  let [area2, x, y] = [0, 0, 0];
+  polygon.forEach((p, i) => {
+    const q = polygon[(i + 1) % polygon.length];
+    const cross = p.x * q.y - q.x * p.y;
+    area2 += cross;
+    x += (p.x + q.x) * cross;
+    y += (p.y + q.y) * cross;
+  });
+  return { x: x / (3 * area2), y: y / (3 * area2) };
+}
+
+/**
+ * The shape's area in each 2-degree sector round its centroid: along each ray, the stretches inside
+ * the outline (between its crossings with the edges) give 1/2 (out^2 - in^2) of the sector's angle.
+ */
+function sectorAreas(polygon: Point[]): Float64Array {
+  const c = centroid(polygon);
+  const n = polygon.length;
+  // Each edge as its direction (e) and its start relative to the centroid (w), worked out once:
+  // this runs 360 rays over up to 160 edges for every shape drawn.
+  const [ex, ey, wx, wy] = [new Float64Array(n), new Float64Array(n), new Float64Array(n), new Float64Array(n)];
+  for (let j = 0; j < n; j++) {
+    const [p, q] = [polygon[j], polygon[(j + 1) % n]];
+    [ex[j], ey[j], wx[j], wy[j]] = [q.x - p.x, q.y - p.y, p.x - c.x, p.y - c.y];
+  }
+  const sectors = new Float64Array(RAYS);
+  const hits: number[] = [];
+  for (let i = 0; i < RAYS; i++) {
+    const angle = (TAU * (i + 0.5)) / RAYS;
+    const [dx, dy] = [Math.cos(angle), Math.sin(angle)];
+    hits.length = 0;
+    for (let j = 0; j < n; j++) {
+      const denominator = dx * ey[j] - dy * ex[j];
+      if (denominator === 0) continue;
+      const along = (wx[j] * ey[j] - wy[j] * ex[j]) / denominator;
+      const onEdge = (wx[j] * dy - wy[j] * dx) / denominator;
+      if (along > 0 && onEdge >= 0 && onEdge < 1) hits.push(along);
+    }
+    hits.sort((a, b) => a - b);
+    // An odd count means the ray starts inside: the centroid lies in the shape.
+    if (hits.length % 2 === 1) hits.unshift(0);
+    for (let k = 0; k + 1 < hits.length; k += 2) sectors[i] += (hits[k + 1] ** 2 - hits[k] ** 2) / 2;
+  }
+  return sectors;
+}
+
+/**
+ * How far the outline is from symmetric: the smaller of its best mirror match (over 180 axes through
+ * the centroid, 1 degree apart) and its best 2, 3, 4 or 5-fold turn, as the area that differs, a
+ * share of the whole. Sector by sector the difference never exceeds the true one, so a symmetric
+ * shape always measures near 0 and a shape that measures more really is lopsided.
+ */
+export function asymmetry(polygon: Point[]): number {
+  const sectors = sectorAreas(polygon);
+  const total = sectors.reduce((sum, area) => sum + area, 0);
+  /** The area that differs from the image taking ray i to ray (sign * i + shift), over the total. */
+  const differs = (sign: number, shift: number) => {
+    let sum = 0;
+    for (let i = 0; i < RAYS; i++) sum += Math.abs(sectors[i] - sectors[(((sign * i + shift) % RAYS) + RAYS) % RAYS]);
+    return sum / total;
+  };
+  let least = Infinity;
+  // Mirrored across the axis at `axis` degrees, the ray centred on 2i + 1 degrees lands on
+  // 2 * axis - 2i - 1 degrees: ray axis - i - 1.
+  for (let axis = 0; axis < 180; axis++) least = Math.min(least, differs(-1, axis - 1));
+  for (const fold of [2, 3, 4, 5]) least = Math.min(least, differs(1, RAYS / fold));
+  return least;
+}
+
+/** Straight-edged kinds get points along their edges first, so the warp bends edges and cannot fold them. */
+const DENSE_POINTS = 120;
+
+function densified(outline: Point[]): Point[] {
+  if (outline.length >= DENSE_POINTS) return outline;
+  const edges = outline.map((p, i) => [p, outline[(i + 1) % outline.length]] as const);
+  const perimeter = edges.reduce((sum, [p, q]) => sum + Math.hypot(q.x - p.x, q.y - p.y), 0);
+  return edges.flatMap(([p, q]) => {
+    const pieces = Math.max(1, Math.round((Math.hypot(q.x - p.x, q.y - p.y) / perimeter) * DENSE_POINTS));
+    return Array.from({ length: pieces }, (_, k) => ({ x: p.x + ((q.x - p.x) * k) / pieces, y: p.y + ((q.y - p.y) * k) / pieces }));
+  });
+}
+
+/**
+ * The outline stretched away from the origin by a seeded amount that varies smoothly with direction:
+ * one, two and three waves a turn at random phases, whose mirror axes and turns never line up. The
+ * stretch stays positive, so each ray from the origin is only rescaled and the outline stays simple.
+ */
+function warped(outline: Point[], rng: Rng): Point[] {
+  const waves = [
+    { k: 1, size: between(rng, 0.06, 0.12) },
+    { k: 2, size: between(rng, 0.06, 0.12) },
+    { k: 3, size: between(rng, 0.04, 0.08) },
+  ].map((wave) => ({ ...wave, phase: between(rng, 0, TAU) }));
+  return densified(outline).map(({ x, y }) => {
+    const angle = Math.atan2(y, x);
+    const stretch = 1 + waves.reduce((sum, { k, size, phase }) => sum + size * Math.cos(k * angle + phase), 0);
+    return { x: x * stretch, y: y * stretch };
+  });
+}
+
+/** Warps tried before the last one stands. */
+const WARP_TRIES = 12;
+/** The least share of the box a kept warp may fill (the tests hold every shape to 25%). */
+const MIN_KEPT_SHARE = 0.27;
+
+/**
+ * Shape `index` (0-based) of the run with this seed: its kind, then a seeded outline of that kind,
+ * warped until it is lopsided (T210: the owner asked for no symmetric shapes).
+ */
 export function shapeFor(seed: number, index: number): Point[] {
   const kind = kindsFor(seed)[index];
   const rng = createRng(mix(seed, index));
-  return place(kind.build(rng), rng);
+  const outline = kind.build(rng);
+  // Over seeds 0 to 999 every shape passes within these tries; the last try stands regardless.
+  for (let i = 1; i < WARP_TRIES; i++) {
+    const shape = place(warped(outline, rng), rng);
+    // A warp can stretch a long shape until fitting it in the box leaves it too small.
+    if (asymmetry(shape) >= MIN_ASYMMETRY && polygonArea(shape) >= MIN_KEPT_SHARE * BOX * BOX) return shape;
+  }
+  return place(warped(outline, rng), rng);
 }

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { points } from "@/components/fair-split/FairSplitGame";
 import { BankGauge, bankLayout } from "./BankGauge";
 
 afterEach(cleanup);
@@ -79,6 +80,18 @@ describe("BankGauge", () => {
     expect(screen.getByText("0.4 s left of 2.0 s")).toBeTruthy();
     expect(screen.getByText("Round 2 cost 1.2 s")).toBeTruthy();
     expect((container.querySelector("[data-bank-fill]") as HTMLElement).style.width).toBe("20%");
+  });
+
+  it("stays legible with Clean Cut's 8 point bank (T211)", () => {
+    const { container } = render(<BankGauge total={8} spent={[0.8, 2.4]} format={points} label="Split bank" />);
+    expect(screen.getByText("4.8 points left of 8 points")).toBeTruthy();
+    expect(screen.getByText("-2.4 points")).toBeTruthy();
+    expect(screen.getByText("Round 2 cost 2.4 points")).toBeTruthy();
+    expect((container.querySelector("[data-bank-fill]") as HTMLElement).style.width).toBe("60%");
+    expect((container.querySelector("[data-bank-cost='1']") as HTMLElement).style.width).toBe("10%");
+    cleanup();
+    render(<BankGauge total={8} spent={[0.8]} format={points} label="Split bank" />);
+    expect(screen.getByText("Round 1 cost 0.8 points")).toBeTruthy();
   });
 
   it("has no cost caption before the first round", () => {

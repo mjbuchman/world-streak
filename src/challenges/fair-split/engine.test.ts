@@ -25,7 +25,7 @@ const SQUARE = [
   { x: 100, y: 100 },
   { x: 0, y: 100 },
 ];
-const squares: FairSplitParams = { bank: 6, shapes: Array.from({ length: ROUNDS }, () => ({ polygon: SQUARE, limitMs: LIMIT_MS })) };
+const squares: FairSplitParams = { bank: 8, shapes: Array.from({ length: ROUNDS }, () => ({ polygon: SQUARE, limitMs: LIMIT_MS })) };
 
 /** A vertical cut at x, `afterMs` after the shape on screen appeared (each cut follows the last). */
 function cutsAt(xs: number[], afterMs = 1000, params = squares): FairSplitCut[] {
@@ -40,8 +40,8 @@ const runOf = (cuts: FairSplitCut[], endMs = cuts.at(-1)?.atMs ?? 0) => ({ cuts,
 const score = (cuts: FairSplitCut[], endMs?: number) => fairSplit.score(squares, runOf(cuts, endMs));
 
 describe("Fair Split params (T193)", () => {
-  it("documents the placeholders: 5 shapes, a 6-point bank, 25 s each, the pieces then a 3-2-1 between shapes", () => {
-    expect([ROUNDS, BANK_POINTS, LIMIT_MS, MISSED_COST]).toEqual([5, 6, 25_000, 50]);
+  it("documents the placeholders: 5 shapes, an 8-point bank (T211), 25 s each, the pieces then a 3-2-1 between shapes", () => {
+    expect([ROUNDS, BANK_POINTS, LIMIT_MS, MISSED_COST]).toEqual([5, 8, 25_000, 50]);
     expect(ROUND_COUNTDOWN_MS).toBe(RUN_COUNTDOWN_MS);
     expect(GAP_MS).toBe(SHOW_MS + ROUND_COUNTDOWN_MS);
   });
@@ -54,12 +54,13 @@ describe("Fair Split params (T193)", () => {
       expect(p.shapes.every((s) => s.polygon.every(({ x, y }) => x >= 0 && x <= 100 && y >= 0 && y <= 100))).toBe(true);
       expect(paramsFromSeed(seed)).toEqual(p);
     }
-  });
+    // Each shape is measured for symmetry as it is drawn (T210): slow under coverage.
+  }, 60_000);
 
   it("differ per player: the first shape differs between at least 95% of 1 000 seeds", () => {
     const firsts = new Set(Array.from({ length: 1000 }, (_, seed) => JSON.stringify(paramsFromSeed(seed).shapes[0].polygon)));
     expect(firsts.size).toBeGreaterThanOrEqual(950);
-  });
+  }, 60_000);
 
   it("draw five different kinds in every run", () => {
     for (let seed = 0; seed < 1000; seed++) {
@@ -80,8 +81,8 @@ describe("Fair Split score (T193)", () => {
     expect([cutCost(0.5), cutCost(0.49), cutCost(0.51), cutCost(0.12345), cutCost(1)]).toEqual([0, 1, 1, 37.66, 50]);
   });
 
-  it("cuts at x = 50, 50.5, 49, 50, 51.5 score 5 + (6 - 3) / 6 = 5.5", () => {
-    expect(score(cutsAt([50, 50.5, 49, 50, 51.5]))).toBe(5.5);
+  it("cuts at x = 50, 50.5, 49, 50, 51.5 score 5 + (8 - 3) / 8 = 5.625", () => {
+    expect(score(cutsAt([50, 50.5, 49, 50, 51.5]))).toBe(5.625);
   });
 
   it("a cut at x = 40 (cost 10) scores 0", () => {
@@ -89,8 +90,8 @@ describe("Fair Split score (T193)", () => {
     expect(play(squares, runOf(cutsAt([40])))).toMatchObject({ finished: true, failed: true, survived: 0, costs: [10] });
   });
 
-  it("cuts at 53 and 53 spend exactly the bank and survive; a third perfect cut scores 3", () => {
-    const run = runOf(cutsAt([53, 53, 50]));
+  it("cuts at 54 and 54 spend exactly the bank and survive; a third perfect cut scores 3", () => {
+    const run = runOf(cutsAt([54, 54, 50]));
     expect(play(squares, run)).toMatchObject({ survived: 3, left: 0, failed: false, finished: false, round: 3 });
     expect(fairSplit.score(squares, run)).toBe(3);
   });
@@ -98,7 +99,7 @@ describe("Fair Split score (T193)", () => {
   it("five perfect cuts score 6 and end the run", () => {
     const run = runOf(cutsAt([50, 50, 50, 50, 50]));
     expect(fairSplit.score(squares, run)).toBe(6);
-    expect(play(squares, run)).toMatchObject({ finished: true, deadline: null, survived: 5, left: 6 });
+    expect(play(squares, run)).toMatchObject({ finished: true, deadline: null, survived: 5, left: 8 });
   });
 
   it("endMs alone past the first limit scores 0; right at it the shape is still open", () => {
@@ -138,7 +139,7 @@ describe("Fair Split score (T193)", () => {
 
   it("reports the last cut's share, cost and whether it survived, for the game to show", () => {
     expect(play(squares, runOf(cutsAt([49.5]))).last).toMatchObject({ kind: "cut", shape: 0, share: expect.closeTo(0.495, 9), cost: 0.5, survived: true });
-    expect(play(squares, runOf(cutsAt([50, 43]))).last).toMatchObject({ kind: "cut", shape: 1, cost: 7, survived: false });
+    expect(play(squares, runOf(cutsAt([50, 41]))).last).toMatchObject({ kind: "cut", shape: 1, cost: 9, survived: false });
   });
 
   it("is higher-better, between 0 and 6, and the same every time for the same cuts (property)", () => {
@@ -190,11 +191,13 @@ function simulatedRun(seed: number) {
 }
 
 describe("Fair Split balance (T193)", () => {
-  it("a cutter off by 0.6 shape units (one standard deviation) survives all five shapes 50% to 90% of the time", () => {
+  // T211: the owner's 8 point bank lets this cutter through 98.7% of the time (the 6 point bank: 50%
+  // to 90%); the band is re-set from that run, so any later change to the shapes or bank shows here.
+  it("a cutter off by 0.6 shape units (one standard deviation) survives all five shapes 95% to 99.5% of the time", () => {
     let survivedAll = 0;
     for (let seed = 0; seed < 1000; seed++) if (simulatedRun(seed).survived === ROUNDS) survivedAll++;
-    expect(survivedAll / 1000).toBeGreaterThanOrEqual(0.5);
-    expect(survivedAll / 1000).toBeLessThanOrEqual(0.9);
+    expect(survivedAll / 1000).toBeGreaterThanOrEqual(0.95);
+    expect(survivedAll / 1000).toBeLessThanOrEqual(0.995);
     // A thousand runs take several seconds under coverage.
   }, 60_000);
 });

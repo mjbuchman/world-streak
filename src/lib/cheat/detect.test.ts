@@ -143,7 +143,7 @@ const SQUARE = [
   { x: 100, y: 100 },
   { x: 0, y: 100 },
 ];
-const squares: FairSplitParams = { bank: 6, shapes: Array.from({ length: 5 }, () => ({ polygon: SQUARE, limitMs: 25_000 })) };
+const squares: FairSplitParams = { bank: 8, shapes: Array.from({ length: 5 }, () => ({ polygon: SQUARE, limitMs: 25_000 })) };
 
 /**
  * A Fair Split run on squares: vertical cuts at `xs` (50 is exactly half; each unit off is one
@@ -160,8 +160,11 @@ function split(xs: number[], afterMs: number[] = [], over: Partial<DetectArgs> =
   return { challengeType: "fair-split", inputs: { cuts, endMs }, score: 3, params: squares, serverElapsedMs: endMs + 4_000, history: [], ...over };
 }
 
-/** Human-like cuts: 0.2 to 1.1 points off half, either side, 3.3 points in all (the bank holds 6). */
-const HUMAN_XS = [50.4, 48.9, 50.7, 49.8, 50.9];
+/**
+ * Human-like cuts on lopsided shapes (T212): 0.9, 1.6, 0.4, 2.1 and 1.2 points off half, either
+ * side, 6.2 points in all (the bank holds 8).
+ */
+const HUMAN_XS = [50.9, 48.4, 50.4, 47.9, 51.2];
 
 describe("detectFlags on honest-looking runs", () => {
   it.each([1, 2, 3, 4, 5])("flags nothing for human-like Tower taps (seed %i)", (seed) => {
@@ -305,6 +308,12 @@ describe("echo-path-robotic", () => {
 });
 
 describe("fair-split-implausible", () => {
+  it("flags nothing for the honest run, all five shapes survived, each cut 6 s or more in (T212)", () => {
+    const run = split(HUMAN_XS, [6_000, 6_000, 8_300, 6_900, 11_000]);
+    expect(playFairSplit(squares, run.inputs as FairSplitInputs)).toMatchObject({ survived: 5, failed: false });
+    expect(detectFlags(run)).toEqual([]);
+  });
+
   it("flags 3 cuts of one run within 0.05 points of half", () => {
     expect(detectFlags(split([50, 50.6, 50.04, 49.2, 49.96]))).toEqual(["fair-split-implausible"]);
   });
@@ -332,8 +341,8 @@ describe("fair-split-instant", () => {
 
   it("ignores a quick cut that busted the bank, and one after the run ended", () => {
     expect(detectFlags(split([50.4, 60], [6_000, 100]))).toEqual([]);
-    // A 7-point miss ends the run; a fast fair cut after that was never judged.
-    expect(detectFlags(split([57, 50.4], [6_000, 100]))).toEqual([]);
+    // A 9-point miss ends the run; a fast fair cut after that was never judged.
+    expect(detectFlags(split([59, 50.4], [6_000, 100]))).toEqual([]);
   });
 
   it("never flags the screen's own cut at the time limit", () => {

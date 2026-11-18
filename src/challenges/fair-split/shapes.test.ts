@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createRng } from "../shared/prng";
 import { BOX, polygonArea, splitShare, type Point } from "./geometry";
-import { AREA_SHARE, CURVED_SHARE, KINDS_PER_RUN, kindsFor, MARGIN, SHAPE_KINDS, shapeFor } from "./shapes";
+import { AREA_SHARE, asymmetry, CURVED_SHARE, KINDS_PER_RUN, kindsFor, MARGIN, MIN_ASYMMETRY, SHAPE_KINDS, shapeFor } from "./shapes";
 
 const SEEDS = Array.from({ length: 1000 }, (_, seed) => seed);
 
@@ -69,7 +69,7 @@ describe("Fair Split shapes (T192)", () => {
     }
   });
 
-  it("gives simple outlines inside the margin, of 25% to 70% of the box, over seeds 0 to 999", () => {
+  it("gives simple, lopsided outlines inside the margin, of 25% to 70% of the box, over seeds 0 to 999 (T210)", () => {
     // Collected, not asserted one by one: 5 000 outlines of up to 160 points.
     const broken: string[] = [];
     let smallest = Infinity;
@@ -81,6 +81,8 @@ describe("Fair Split shapes (T192)", () => {
         if (polygon.length > 160) broken.push(`${where}: ${polygon.length} points`);
         if (polygon.some(({ x, y }) => Math.min(x, y) < MARGIN - 1e-9 || Math.max(x, y) > BOX - MARGIN + 1e-9)) broken.push(`${where}: outside the margin`);
         if (!isSimple(polygon)) broken.push(`${where}: edges cross`);
+        const lopsided = asymmetry(polygon);
+        if (lopsided < MIN_ASYMMETRY) broken.push(`${where}: symmetric (${lopsided})`);
         const share = polygonArea(polygon) / (BOX * BOX);
         smallest = Math.min(smallest, share);
         largest = Math.max(largest, share);
@@ -130,6 +132,44 @@ describe("Fair Split shapes (T192)", () => {
     const outlines = new Set(hearts.map((seed) => JSON.stringify(shapeFor(seed, 0))));
     expect(hearts.length).toBeGreaterThan(5);
     expect(outlines.size).toBe(hearts.length);
+  });
+
+  describe("asymmetry (T210)", () => {
+    const polar = (radius: (angle: number) => number, points = 160): Point[] =>
+      Array.from({ length: points }, (_, i) => {
+        const angle = (2 * Math.PI * i) / points;
+        return { x: 50 + radius(angle) * Math.cos(angle), y: 50 + radius(angle) * Math.sin(angle) };
+      });
+    const square = [
+      { x: 20, y: 20 },
+      { x: 80, y: 20 },
+      { x: 80, y: 80 },
+      { x: 20, y: 80 },
+    ];
+    const circle = polar(() => 30);
+    const star = polar((angle) => (Math.round((angle * 10) / (2 * Math.PI)) % 2 === 0 ? 35 : 15), 10);
+    // A heart mirrored about the vertical axis, turned 17 degrees so the axis is off the grid of rays.
+    const heart = polar((angle) => 20 + 12 * Math.abs(Math.sin((angle - 0.3) / 2)) + 6 * Math.cos(angle - 0.3 - Math.PI / 2));
+
+    it.each([
+      ["a square", square],
+      ["a circle", circle],
+      ["a regular five-point star", star],
+      ["a symmetric heart", heart],
+    ])("measures %s as symmetric", (_name, polygon) => {
+      expect(asymmetry(polygon)).toBeLessThan(MIN_ASYMMETRY);
+    });
+
+    it("measures a lopsided blob as lopsided, wherever it sits", () => {
+      const blob = polar((angle) => 25 + 8 * Math.cos(angle) + 5 * Math.cos(2 * angle + 1) + 3 * Math.cos(3 * angle + 2));
+      expect(asymmetry(blob)).toBeGreaterThanOrEqual(MIN_ASYMMETRY);
+      expect(asymmetry(blob.map(({ x, y }) => ({ x: x + 7, y: y - 4 })))).toBeCloseTo(asymmetry(blob), 6);
+    });
+
+    // The 70% curved share of drawn shapes is checked below, over 5 000 draws.
+    it("keeps at least 10 kinds", () => {
+      expect(SHAPE_KINDS.length).toBeGreaterThanOrEqual(10);
+    });
   });
 
   it("rejects an outline with crossing edges in the test's own check", () => {
