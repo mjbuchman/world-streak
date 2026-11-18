@@ -159,9 +159,9 @@ test("two losses: the day fails after game 2, and the third game is still offere
   await gotoReady(page, "/play");
   await page.getByRole("button", { name: "Start" }).click();
   await missSwiftSum(page);
-  // The server scored the answers against the game's own target, in levels.
+  // The server scored the answers against the game's own target, in rounds.
   await expect(heading(page, "Game 1 of 3: lost")).toBeVisible();
-  await expect(page.getByText("You scored 0 levels. Today's target was 1000 levels.")).toBeVisible();
+  await expect(page.getByText("You scored 0 rounds. Today's target was 1000 rounds.")).toBeVisible();
   await page.getByRole("button", { name: "Continue" }).click();
 
   await page.getByRole("button", { name: "Start" }).click();
