@@ -4,6 +4,8 @@ Status: Approved (2026-11-07)
 
 Note (Nov 18, 2026): **M6 Gameplay tweaks (T177 to T198, batches 13 to 18) approved by the owner on Nov 18, 2026, with the proposed values as written.** Values tagged "(proposed, owner to confirm)" stand as the defaults; the owner may still adjust them at the M6 play-test.
 
+Note (Nov 18, 2026): **M7 M6 play-test tweaks (T201 to T214, batches M7-a to M7-e) is awaiting the owner's approval.** Do not start it until the owner replies "approved" and this note is updated.
+
 Planning notes for the builder:
 
 - Requirements come from `docs/DESIGN.md` (Decided items) plus the human owner's answers given at planning time (Nov 7, 2026):
@@ -42,7 +44,15 @@ M6 Gameplay tweaks (Nov 18, 2026; approved Nov 18):
 16. Echo Path as one growing path: T187, T188, T189, T190, T191 (full: scoring, migration)
 17. Fair Split as five rounds: T192, T193, T194, T195, T196 (full: scoring, migration; if over about 1500 lines, split T196 into its own PR, still full)
 18. M6 end-to-end checks and docs: T197, T198 (light; T198 is docs only)
-19. Maintenance after M6: T199, T200 (light; after the M6 play-test)
+M7 M6 play-test tweaks (Nov 18, 2026; awaiting approval; runs before batch 19):
+
+- M7-a. Names and Second Sense: T201, T202, T203, T204 (full: scoring, migration)
+- M7-b. Swift Sum random counts: T205, T206 (full: scoring, migration)
+- M7-c. Trail Trace (Echo Path) 12 tiles and the no-touch rule: T207, T208, T209 (full: scoring, migration)
+- M7-d. Clean Cut (Fair Split) asymmetrical shapes and an 8 point bank: T210, T211, T212 (full: scoring, migration)
+- M7-e. M7 end-to-end checks and docs: T213, T214 (light; T214 is docs only)
+
+19. Maintenance after M6: T199, T200 (light; after the M6 play-test and M7)
 
 ## M1 Foundation and first challenge end to end
 
@@ -2248,3 +2258,158 @@ Planning notes for M6:
   - [ ] Each conflict with `docs/DESIGN.md` (the games table and any scoring text) is recorded in `docs/DECISIONS.md`: Second Sense ("budget placeholder 3.0 s; the run ends when the budget runs out; survive N rounds; target length rises, clock fades sooner" becomes fixed four rounds, 10 s bank, 15 to 25 s targets, 2 s clock every round, 3-2-1 every round); Swift Sum ("wrong count costs one of 3 lives; more dots, shorter flash" becomes five rounds against a dot bank, no lives or tolerance); Echo Path ("grid size, a mistake gives a new sequence of the same length" becomes one tall-board path per player growing a tile a round, a mistake replays the same length); Fair Split ("within plus or minus 1 point counts, a cut outside costs one of 3 lives, a time limit per cut, concave shapes" becomes five rounds against a point bank, curved and abstract shapes, an adjustable line with a Cut button, a 25 s limit).
   - [ ] `docs/NEEDS_HUMAN.md` gets a "please update DESIGN.md" entry listing each conflict and the new rule, and a "please confirm" entry listing the proposed values above with where each one lives (constant or admin-editable target). `docs/DESIGN.md` is not edited.
 - Notes: Docs only; no reviewers needed (CLAUDE.md). Play-test points to list for the owner: Echo Path run length (9 to 15 rounds, 2 to 3 minutes), Second Sense run length (about 95 s), and whether the bank sizes feel fair.
+
+## M7 M6 play-test tweaks
+
+Awaiting the owner's approval (planned Nov 18, 2026 from the owner's M6 play-test feedback; this overrides the M6 values below and `docs/DESIGN.md` where they conflict. DESIGN.md is not edited: T214 records each conflict and adds a "please update DESIGN.md" item to `docs/NEEDS_HUMAN.md`).
+
+Goal: play-test the tuned games. Second Sense targets run 10 to 20 s against a 2 s bank and its 3-2-1 sits centred. Swift Sum draws a random 10 to 30 dots every round. Trail Trace (was Echo Path) has paths of at most 12 tiles on a shorter board, with no three path tiles touching. Clean Cut (was Fair Split) uses only asymmetrical shapes and an 8 point bank.
+
+Planning notes for M7:
+
+- **Values that change from M6:** Second Sense `TARGET_RANGES_MS` and `BUDGET_MS`; Swift Sum `dotCount` rule; Echo Path `MAX_PATH_LENGTH`, `ROWS`, path rules; Fair Split bank and shape set. Each stays in an exported constant. Values marked "(proposed, owner to confirm)" are mine; T214 lists them for confirmation.
+- **Stopwatch cheating on Second Sense:** the owner decided on no game change (rely on the existing cheat check). No task. Noted for T214's decisions entry.
+- **Display names only:** Echo Path becomes **Trail Trace**, Fair Split becomes **Clean Cut** (owner confirmed). Stored keys `echo-path`, `fair-split`, folder names, routes, type ids, `scores_since` rows and the `echo-path-robotic` and `fair-split-*` flag names are unchanged. This extends the Nov 9 challenge-names note above.
+- **Each game re-resets `scores_since`.** Changing difficulty changes the score distribution, so each game's migration (T204, T206, T209, T212) sets `scores_since` again to the day after it runs (T183 pattern) and recomputes unedited, unstarted open days. The migration must be a new file, never an edit of an old one.
+- **Spec drift to flag as needs-human (T214):** DESIGN.md's games table still describes the original rules (and the M6 conflicts T198 recorded). The new Second Sense ranges and bank, Swift Sum random counts, Trail Trace path rules and Clean Cut shapes and bank, and the two new names need a "please update DESIGN.md" entry.
+
+### T201 Display names: Trail Trace and Clean Cut
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] The display name of `echo-path` is "Trail Trace" and of `fair-split` is "Clean Cut" everywhere the player or admin sees it: `src/config/challenges.ts`, `challengeUi.tsx`, the practice hub and pages, how-to text, game screens, results, share text and card, history, admin pages, rules page, `README.md`, and e2e text matchers. The stored type keys, routes (`/practice/echo-path`, `/practice/fair-split`), component and folder names, flag names and database values are unchanged.
+  - [ ] A grep of `src` and `tests/e2e` for the strings "Echo Path" and "Fair Split" in user-facing text (not identifiers, comments about history, or type keys) finds none; tests that quoted the old names are updated, not weakened. A unit test in `challengeUi.test.tsx` or `challenges.test.ts` asserts the two display names and that the keys are unchanged.
+  - [ ] `npm run verify` and `npm run test:e2e` pass. No migration is needed because names are not stored.
+- Notes: Do this first so the later tasks use the new names. Light review.
+
+### T202 Second Sense engine: targets 10 to 20 seconds, a 2 second bank
+- Type: feature
+- Status: todo
+- Depends on: T201
+- Acceptance criteria:
+  - [ ] In `src/challenges/inner-clock/timeBank.ts`, `BUDGET_MS` becomes 2 000 (owner) and `TARGET_RANGES_MS` becomes `ladderRanges(4, 10_000, 2_500, 2_400)`: 10.0 to 12.4 s, 12.5 to 14.9 s, 15.0 to 17.4 s, 17.5 to 19.9 s, so targets run from 10 to 20 s and still rise by round (the 4 rounds and the rising ranges are proposed, owner to confirm). `REVEAL_MS`, `ROUNDS`, `timeoutMs = targetMs + BUDGET_MS` and the input schema are unchanged.
+  - [ ] Tests updated for the new constants: range tests over seeds 0 to 999 (each target in its range, on a 100 ms step, strictly rising); with explicit params (targets 10 000, 13 000, 16 000, 19 000 ms, bank 2 000): taps `[10 500, 13 000, 16 000, 19 000]` score 4 + 1 500 ÷ 2 000 = 4.75; `[11 000, 13 000, 16 000, 19 000]` (error exactly the bank) score 4; `[12 500, ...]` (error above the bank) busts in round 1 and scores 0; `[10 400, 13 800, 16 000, 19 000]` (errors 400, 800) score 4.4; `[null]` scores 0. Golden scores for 3 seeds are re-pinned and `lastInputMs` is re-pinned.
+  - [ ] The simulated-player test is rewritten with a documented spread of 250 ms and asserts survival of all four rounds between 30% and 70% of the time (documents the intended difficulty; adjust the spread, not the bounds, if the simulation says otherwise, and record the chosen spread in a comment). Over 1 000 seeds each round's target still takes at least 20 distinct values. At least 90% lines and branches.
+- Notes: Owner: "targets go from 10 to 20 s" and "time bank is 2 s". Same reading as M6 (the per-round hidden interval). A run is about 4 x (2.4 + 15 + 1.5) = 76 s. Full review (scoring).
+
+### T203 Second Sense screen: centre the 3-2-1 and update the wording
+- Type: feature
+- Status: todo
+- Depends on: T202
+- Acceptance criteria:
+  - [ ] The 3-2-1 number is horizontally and vertically centred in its slot on `/practice/inner-clock` and in the Daily Three flow: fix the cause in `RoundCountdown.module.css` or `CountdownNumber` (the cause may differ per game, so check all users of the shared slot: Second Sense, Swift Sum, Trail Trace, Clean Cut and Teetering Tower, and do not shift the others off centre). A Playwright check at 390 x 844 and 1280 x 720 asserts the number's bounding-box centre is within 2 px of the slot's centre horizontally (and of the board or clock centre where the slot sits above one), for Second Sense and for one other game.
+  - [ ] The target text still does not intersect the countdown or clock (the T182 check keeps passing unchanged).
+  - [ ] `INNER_CLOCK_HOW_TO`, the Second Sense tagline in `src/config/challenges.ts` and `challengeUi.tsx` describe "targets of 10 to 20 seconds" and "a 2 second bank"; tests quoting the old text (practice hub, `TodaysGames.test.tsx`, `TimeBankGame` tests) are updated without weakening. The bank gauge still renders legibly with a 2 s total (format "0.4 s"; unit test with `total=2`).
+- Notes: Owner: "the 3-2-1 countdown number is off centre". Full review (attempts) because it sits in the batch's scoring change; the CSS part is light in itself.
+
+### T204 Second Sense: scale reset and cheat thresholds
+- Type: feature
+- Status: todo
+- Depends on: T202
+- Acceptance criteria:
+  - [ ] A new migration sets `challenge_types.scores_since` for `inner-clock` to the day after it runs (UTC), keeps `default_pass_targets` at 4 (survive all four rounds), and recomputes unedited, unstarted open `inner-clock` days (T183 pattern). pgTAP: attempts before the new `scores_since` are ignored by the percentile, newer ones count, other types are unaffected.
+  - [ ] `TIME_BANK_PRECISE_ROUNDS` and `TIME_BANK_PRECISE_ERROR_MS` in `src/config/cheat.ts` are re-checked against a 2 s bank (honest errors are now small by necessity): `detect.test.ts` asserts the whole flag list for an honest fixture (errors 400, 300, 600, 200 ms: no flags) and for a scripted one (errors 10, 12, 8, 15 ms: `time-bank-implausible`). Change the thresholds only if the honest fixture flags, and record why in a comment. The `timing-mismatch` allowance is unchanged. No new rule for stopwatch use (owner decision: rely on the existing check).
+  - [ ] `npm run db:types`, `npm run verify`, `npm run test:db` and `npm run test:e2e` pass.
+- Notes: Full review (migration, scoring).
+
+### T205 Swift Sum engine: a random 10 to 30 dots every round
+- Type: feature
+- Status: todo
+- Depends on: T201
+- Acceptance criteria:
+  - [ ] In `src/challenges/flash-count/flashLadder.ts`, each round's `dotCount` is drawn from the seeded RNG uniformly from 10 to 30 inclusive (`DOT_COUNT_MIN = 10`, `DOT_COUNT_MAX = 30`), independently per round, with no growth by round and no per-round range, so a player cannot work out a round's range. The old `[6 + 3i, 11 + 3i]` rule is removed. Bank (10 dots), `ROUNDS = 5`, flash times and the input schema are unchanged.
+  - [ ] `dots.ts` still places up to 30 dots with its spacing invariant (test every count from 10 to 30 over several seeds); the dot size and board stay legible at 30 dots on a 390 px canvas (renderer test or documented check).
+  - [ ] Tests: determinism; over seeds 0 to 999 every count is within 10 to 30 and all 21 values appear in every round position; the counts do not rise on average from round 1 to round 5 (the means differ by less than 1.5 over 1 000 seeds); fewer than 0.1% of seed pairs share all five counts. With explicit params (dot counts 12, 25, 18, 30, 21; bank 10): exact answers score 6; answers 12, 24, 18, 29, 21 (costs 0, 1, 0, 1, 0) score 5.8. Golden scores for 3 seeds are re-pinned. The simulated estimator (error about 15%) is re-run: with counts averaging 20 the survival band is re-set from the new simulation and documented (a 10 dot bank is probably too tight; if survival of all five rounds falls under 15%, raise `bank` to a documented value and flag it as proposed, owner to confirm). At least 90% lines and branches.
+- Notes: Owner: "don't grow the count each round. Each round draws a random count from 10 to 30 (seeded)". The bank size was not part of the owner's list; the simulation decides, and T214 flags it. Full review (scoring).
+
+### T206 Swift Sum: scale reset, cheat rule and wording
+- Type: feature
+- Status: todo
+- Depends on: T204, T205
+- Acceptance criteria:
+  - [ ] A new migration sets `scores_since` for `flash-count` to the day after it runs, restates `default_pass_targets` for `flash-count` as 5 (or the value that matches the bank if T205 changed the score scale; it stays "survive all five rounds"), and recomputes unedited, unstarted open days. pgTAP as in T204 for this type.
+  - [ ] `flashLadderAnswerGapsMs` and `FLASH_COUNT_MIN_ANSWER_MS` in `detect.ts` and `cheat.ts` are re-checked with up to 30 dots (more dots take longer to count honestly): `detect.test.ts` keeps the honest fixture (no flags) and the instant-answer flag, and adds an honest 30-dot round answered 2 s after it cleared with no flags.
+  - [ ] `FLASH_COUNT_HOW_TO`, the Swift Sum tagline and the `levels` label describe "10 to 30 dots, a new count every round, five rounds and a dot bank"; tests that quote the old text are updated without weakening. A `FlashLadderGame` unit test with mocked time plays five rounds with counts that jump up and down (for example 28, 11, 24, 15, 30) and shows the right reveals.
+  - [ ] `npm run db:types`, `npm run verify`, `npm run test:db` and `npm run test:e2e` pass.
+- Notes: Full review (migration, scoring).
+
+### T207 Trail Trace path generator: 12 tiles at most, no three tiles touching
+- Type: feature
+- Status: todo
+- Depends on: T201
+- Acceptance criteria:
+  - [ ] In `src/challenges/echo-path/path.ts`, `MAX_PATH_LENGTH` becomes 12 (owner). The board is shortened so a path can still be built: `ROWS = 8`, `COLS = 5`, `MIN_PATH_LENGTH = 8` (a straight climb), so lengths run 8 to 12 (the shorter board, 8 rows and the minimum are proposed, owner to confirm; keep 10 rows if the generator can meet every rule with a maximum of 12, since 10 rows leaves only two sideways steps, and record the choice). The constants are exported and everything that read the old size follows them (`engine.ts`, `render.ts`, `EchoPathGame`).
+  - [ ] New rule: no three tiles of the path may touch each other. "Touch" means sharing an edge or a corner (the eight neighbours of a tile), so any three tiles that are pairwise touching (an L-shaped corner cut, such as a step forward, a step sideways and a step back to the first row, or a diagonal cutback) make the path invalid. All the old rules stay (bottom to top, start in row 0, five moves, never leaves the board, no revisit, no more than 2 of the same move in a row).
+  - [ ] `isValidPath` enforces the new rule. `pathFor(seed)` obeys it, with bounded seeded retries and a deterministic fallback that still obeys every rule (a straight column climb is valid; a hand-checked fallback test covers every start column).
+  - [ ] Tests over seeds 0 to 9 999: every path passes `isValidPath`; no three path tiles are pairwise touching (an independent brute-force check in the test, not the same code as the rule); lengths cover 8 to 12 (every value appears); same seed gives the same path; at least 90% of 1 000 seeds give distinct paths (lower than M6's 95% because the rules shrink the space; the measured share is recorded in a comment); hand-built invalid paths are rejected: a corner cut (forward, sideways, forward-back), a 3-in-a-row, a revisit, and a path of 13 tiles. At least 90% lines and branches.
+- Notes: Owner: "maximum path is 12 tiles; shorten the board if needed. No three tiles of the path may touch each other (avoids diagonal cutbacks). Otherwise unchanged." Pure module; the engine still imports the old constants until T208, so keep the batch's branch green by doing T207 and T208 in order within the PR. Full review (scoring).
+
+### T208 Trail Trace engine and screen on the shorter board
+- Type: feature
+- Status: todo
+- Depends on: T207
+- Acceptance criteria:
+  - [ ] `engine.ts` follows T207: `startLength = 4`, so a full run is 4 to 12 tiles (up to 9 rounds); `MAX_TAPS` is recomputed for the longest path (12) plus two missed attempts at the last length. Scoring is unchanged (longest length cleared + lives left ÷ 3, rounded to 3 decimals). With an explicit 10-tile path: all 10 tapped correctly scores 10 + 1 = 11; clearing 4 to 6 then missing three times scores 6; clearing everything with one miss scores 10 + 2/3. Golden scores for 3 seeds are re-pinned; `engine.test.ts` stays rewritten, not weakened; over 1 000 seeds at least 90% of paths are distinct.
+  - [ ] `render.ts`: `boardLayout` fits the new 5 x 8 board (tiles still at least 44 x 44 CSS px at 390 px width; test at 390 x 480 and 1 280 x 720); start and finish marks and the trail stay correct on the shorter board.
+  - [ ] `EchoPathGame` and the practice result follow: the path-length bar has up to 12 cells, the keyboard focus marker moves over the 5 x 8 board, "Tile 7 of 11" is the accessible label. `ECHO_PATH_HOW_TO`, the Trail Trace tagline and the `steps` label say "a path of up to 12 tiles". Tests (`EchoPathGame.test.tsx`, `EchoPathPractice.test.tsx`, practice hub) are updated without weakening.
+- Notes: Full review (attempts, scoring).
+
+### T209 Trail Trace: scale reset and cheat checks
+- Type: feature
+- Status: todo
+- Depends on: T204, T208
+- Acceptance criteria:
+  - [ ] A new migration sets `scores_since` for `echo-path` to the day after it runs, sets `default_pass_targets` for `echo-path` to 8 (clear a path of 8 tiles, the board's height; proposed, owner to confirm) in `game_settings` and the column default, and recomputes unedited, unstarted open days. pgTAP as in T204 for this type. The admin target check allows a target up to 13 for this game.
+  - [ ] `echo-path-robotic` thresholds are re-checked for runs of 4 to 12 tiles (the rule needs 10 or more taps, so it must still be reachable): `detect.test.ts` asserts the whole flag list for an honest 10-tile run (no flags) and for a scripted one, and that the rule never fires for another game's attempt. If the 10-tap minimum is now rarely reached, lower it in `src/config/cheat.ts` with a comment and a test for the new value. `timing-mismatch` still holds.
+  - [ ] `npm run db:types`, `npm run verify`, `npm run test:db` and `npm run test:e2e` pass.
+- Notes: Full review (migration, scoring).
+
+### T210 Clean Cut shapes: asymmetrical only
+- Type: feature
+- Status: todo
+- Depends on: T201
+- Acceptance criteria:
+  - [ ] Every shape kind in `src/challenges/fair-split/shapes.ts` is asymmetrical after its seeded rotation, mirror and scale: it has no mirror symmetry (about any axis) and no rotational symmetry. Symmetrical kinds are made lopsided (for example the heart, flower, star, plus, cross, cloud, teardrop, crescent and zig-zag band get seeded per-lobe or per-arm size and position differences that exceed a documented minimum), or are removed if they cannot be made so. The kind library stays at least 10 kinds and at least 70% of drawn shapes stay curved.
+  - [ ] A pure helper `asymmetry(polygon)` (exported from `shapes.ts` or a test util) measures symmetry: the smallest normalised area difference between the outline and its reflection across the best-fit axis through the centroid, over 180 axes at 1 degree steps, plus the best rotational match over the 2, 3, 4 and 5-fold rotations. A shape is asymmetrical when both measures exceed `MIN_ASYMMETRY = 0.04` of the shape's area (proposed, owner to confirm; tune with the tests and record the measured minimum in a comment).
+  - [ ] Tests over seeds 0 to 999 and every kind: every drawn shape passes `asymmetry` (and a hand-built square, circle, regular star and a symmetric heart fail it, so the check can detect symmetry); the existing checks still pass (simple outline, inside the box, area 25% to 70% of the box, at most 160 points, deterministic, five different kinds in a run, a halving line exists for each kind). At least 90% lines and branches.
+- Notes: Owner: "all shapes must be asymmetrical". Symmetry is judged on the finished outline (after the seeded transform), because mirroring and rotating does not remove symmetry. Full review (scoring).
+
+### T211 Clean Cut engine and screen: an 8 point bank
+- Type: feature
+- Status: todo
+- Depends on: T210
+- Acceptance criteria:
+  - [ ] In `src/challenges/fair-split/engine.ts`, `bank` becomes 8 percentage points (owner; about 1.6 per round). Everything else (5 shapes, `LIMIT_MS`, cost rule, schema) is unchanged. Tests updated: with explicit square params (bank 8): cuts at x = 50, 50.5, 49, 50, 51.5 score 5 + (8 - 3) ÷ 8 = 5.625; a cut at x = 40 (cost 10) scores 0; cuts at 54, 54 (costs 4 and 4, exactly the bank) then a third at 50 score 3; five perfect cuts score 6; golden scores for 3 seeds re-pinned. The simulated cutter (0.6 point aim error) is re-run and its survival band re-set from the simulation and documented.
+  - [ ] `BankGauge` for Clean Cut shows "8 points" totals and legible segments (unit test with `total=8`, format "0.8 points"); `FAIR_SPLIT_HOW_TO`, the Clean Cut tagline and the `shapes` label say "an 8 point bank" and that every shape is lopsided; tests quoting the old text are updated without weakening. A `FairSplitGame` test with mocked time shows an 8 point bank busting at the right cut.
+- Notes: Full review (scoring, attempts).
+
+### T212 Clean Cut: scale reset and cheat checks
+- Type: feature
+- Status: todo
+- Depends on: T204, T211
+- Acceptance criteria:
+  - [ ] A new migration sets `scores_since` for `fair-split` to the day after it runs, keeps `default_pass_targets` for `fair-split` at 5 (survive all five shapes) and recomputes unedited, unstarted open days. pgTAP as in T204 for this type.
+  - [ ] `FAIR_SPLIT_PRECISE_CUTS` and `FAIR_SPLIT_PRECISE_POINTS` are re-checked now that cuts on asymmetrical shapes are harder to place exactly: `detect.test.ts` asserts the whole flag list for an honest run (distances 0.9, 1.6, 0.4, 2.1, 1.2 points, each after 6 s or more: no flags) and for three cuts within 0.05 (flags `fair-split-implausible`), an instant cut flag and no rule for another game's attempt. Thresholds change only if the honest fixture flags, with a comment.
+  - [ ] `npm run db:types`, `npm run verify`, `npm run test:db` and `npm run test:e2e` pass.
+- Notes: Full review (migration, scoring).
+
+### T213 End-to-end and phone checks for the M7 changes
+- Type: feature
+- Status: todo
+- Depends on: T203, T206, T209, T212
+- Acceptance criteria:
+  - [ ] Existing e2e specs (`practice.spec.ts`, `attempts.spec.ts`, `play.spec.ts`, `look.spec.ts`, the Daily Three and mobile specs, and `global-setup.ts` fixtures) are updated for the new values without weakening: a win is a perfect run built from the params (Second Sense 2 s bank, Swift Sum counts 10 to 30, Trail Trace path of up to 12 tiles on the 5 x 8 board, Clean Cut 8 point bank), a loss is a deliberately bust bank; and a grep of `tests/e2e` and `scripts/` for `Echo Path`, `Fair Split`, `BUDGET_MS`, `MAX_PATH_LENGTH` and the old range literals finds no stale reader.
+  - [ ] Practice e2e: Second Sense shows a 2 s bank gauge and a centred 3-2-1; Swift Sum shows different dot counts across two attempts and none above 30; Trail Trace shows a 5 x 8 board and, over ten started attempts, no path where three tiles touch (read from the start reply's `params.path`); Clean Cut shows the new name and an 8 point gauge. Two players' attempts get different `params` for each game.
+  - [ ] On both mobile projects: no horizontal scroll, the Trail Trace tiles are at least 44 px at 390 px width, every button at least 44 x 44 CSS px, and the centred countdown check of T203 passes.
+  - [ ] The Daily Three flows (win two, lose two, one attempt per game) still pass through the new engines.
+- Notes: Light review. If the batch grows past about 1500 lines, split the mobile checks into their own task.
+
+### T214 Record the M7 decisions and the DESIGN.md conflicts
+- Type: docs
+- Status: todo
+- Depends on: T213
+- Acceptance criteria:
+  - [ ] `docs/DECISIONS.md` gets one entry per M7 judgment call, with date, item, choice and reason: the Second Sense ranges (10 to 20 s, rising by round) and 2 s bank; no stopwatch rule (owner decision, existing cheat check only); Swift Sum uniform 10 to 30 draw per round and whatever bank T205 settled on; Trail Trace 5 x 8 board (or 10 rows if kept), minimum length, the "touch" definition (eight neighbours) and the 90% distinctness bound; Clean Cut `MIN_ASYMMETRY`, the shapes removed or reshaped, the 8 point bank; the new pass targets (4, 5, 8, 5); cheat threshold changes; display names only with keys kept; `scores_since` reset again for each game.
+  - [ ] `docs/NEEDS_HUMAN.md` gets a "please update DESIGN.md" entry listing each M7 rule that differs from the spec (the games table: Second Sense 10 to 20 s targets and 2 s bank, Swift Sum random 10 to 30 counts, Trail Trace's 12 tile cap and no-touch rule, Clean Cut asymmetry and 8 point bank, and the two names) and a "please confirm" entry listing the proposed values and where each lives. `docs/DESIGN.md` is not edited.
+- Notes: Docs only; no reviewers needed (CLAUDE.md). Play-test points for the owner: whether the 2 s Second Sense bank is survivable, whether Swift Sum's 10 dot bank is too tight for 30 dots, whether Trail Trace feels too short or too constrained on 8 rows, and whether Clean Cut's asymmetry is obvious.
