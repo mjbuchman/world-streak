@@ -149,30 +149,26 @@ for (const size of [
   });
 }
 
-test("Swift Sum practice: three wrong counts on level 1 use up the lives and end the run", async ({ page }) => {
+test("Swift Sum practice: a count far off in round 1 busts the dot bank and ends the run", async ({ page }) => {
   const scored = attemptRequests(page);
   await gotoReady(page, "/practice/flash-count");
   await page.getByRole("button", { name: "Start" }).click();
-  const lives = page.getByRole("img", { name: /lives left$/ });
-  await expect(lives).toHaveAccessibleName("3 of 3 lives left");
+  const bank = page.getByRole("meter", { name: "Dot bank" });
+  await expect(bank).toHaveAttribute("aria-valuetext", "10 dots left of 10 dots");
+  await expect(page.getByText("Round 1", { exact: true })).toBeVisible();
 
-  // 999 is wrong on every level; each miss replays level 1 with new dots, without a 3-2-1.
-  for (const left of [2, 1, 0]) {
-    await expect(page.locator("canvas")).toHaveAttribute("data-showing", "dots");
-    // The flash lasts the level's flashMs; the check keeps looking until the board clears.
-    await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
-    const answer = page.getByRole("textbox", { name: "How many dots were there?" });
-    await expect(answer).toHaveAttribute("inputmode", "numeric");
-    await answer.fill("999");
-    await page.getByRole("button", { name: "Submit" }).click();
-    if (left > 0) {
-      await expect(lives).toHaveAccessibleName(`${left} of 3 lives left`);
-      await expect(page.getByText("Level 1 of 10")).toBeVisible();
-    }
-  }
+  // After the 3-2-1, the flash lasts the round's flashMs; the check keeps looking until the board clears.
+  await expect(page.locator("canvas")).toHaveAttribute("data-showing", "dots", { timeout: 10_000 });
+  await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
+  const answer = page.getByRole("textbox", { name: "How many dots were there?" });
+  await expect(answer).toHaveAttribute("inputmode", "numeric");
+  // Round 1 has at most 11 dots, so 999 misses by far more than the 10-dot bank.
+  await answer.fill("999");
+  await page.getByRole("button", { name: "Submit" }).click();
+  await expect(bank).toHaveAttribute("aria-valuetext", "Bank used up");
 
-  await expect(page.getByRole("heading", { level: 2 })).toHaveText("0 levels cleared");
-  await expect(page.getByText("0 of 3 lives left. Score: 0.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2 })).toHaveText("0 rounds survived");
+  await expect(page.getByText("0 dots of your 10-dot bank left. Score: 0.")).toBeVisible();
   expect(scored).toEqual([]);
 });
 

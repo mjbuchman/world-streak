@@ -50,14 +50,12 @@ test.afterAll(async () => {
 
 const heading = (page: Page, name: string) => page.getByRole("heading", { name, exact: true });
 
-/** Swift Sum: 999 is wrong on every level, so three answers use up the lives (score 0). */
+/** Swift Sum: 999 misses round 1 by more than the 10-dot bank, so one answer ends the run (score 0). */
 async function missSwiftSum(page: Page) {
-  for (let miss = 0; miss < 3; miss++) {
-    await expect(page.locator("canvas")).toHaveAttribute("data-showing", "dots");
-    await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
-    await page.getByRole("textbox", { name: "How many dots were there?" }).fill("999");
-    await page.getByRole("button", { name: "Submit" }).click();
-  }
+  await expect(page.locator("canvas")).toHaveAttribute("data-showing", "dots", { timeout: 10_000 });
+  await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
+  await page.getByRole("textbox", { name: "How many dots were there?" }).fill("999");
+  await page.getByRole("button", { name: "Submit" }).click();
 }
 
 /** Second Sense: a tap as round 1 starts misses its 15 s or longer target by more than the 10 s bank. */

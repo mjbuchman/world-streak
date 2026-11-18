@@ -1,90 +1,80 @@
 import { z } from "zod";
+import { bankScore, playBank } from "../shared/bank";
 import { ladderRanges } from "../shared/ladder";
 import { createRng } from "../shared/prng";
 import type { ChallengeModule } from "../shared/types";
 import { placeDots, type Dot } from "./dots";
 
 /**
- * Swift Sum: Flash Ladder. Levels of the Swift Sum flash (dots flash, say how many), each with
- * more dots and a shorter flash. A count within the tolerance clears the level; a wrong one costs
- * one of LIVES lives and retries the same level with a new layout (DECISIONS, T141). Score =
- * levels cleared + lives left as a fraction, when the run ends. All numbers below are
- * placeholders tuned at the M5 play-test.
+ * Swift Sum (T184): ROUNDS flashes of dots, each with more dots and a shorter flash. Every dot an
+ * answer is off by comes out of one bank of BANK dots; the run ends at the first round whose miss
+ * is bigger than what is left (the shared bank rule). Score = rounds survived + the bank left as
+ * a fraction. All numbers below are placeholders (DECISIONS, T184).
  */
 
-export const LIVES = 3;
-export const MAX_ROUNDS = 10;
-/** How long "Right" or "Off by N" shows after an answer, before the next flash's board. */
+export const ROUNDS = 5;
+export const BANK = 10;
+/** How long "Right on" or "Off by N" shows after an answer, before the next round's 3-2-1. */
 export const REVEAL_MS = 1200;
-/** A count is right within this share of the true count (and always within 1). */
-export const TOLERANCE_FRACTION = 0.1;
 
-/** Level i's dot count range: three more dots a level, so the counts always rise. */
-export const DOT_COUNT_RANGES = ladderRanges(MAX_ROUNDS, 8, 3, 2);
+/** Round i's dot count range: three more dots a round, so the counts always rise. */
+export const DOT_COUNT_RANGES = ladderRanges(ROUNDS, 6, 3, 5);
 
-/** The flash shortens by FLASH_STEP_MS a level, from the max down to the min. */
-const FLASH_STEP_MS = 120;
-export const FLASH_MS_RANGE = { min: 1800 - FLASH_STEP_MS * (MAX_ROUNDS - 1), max: 1800 } as const;
+/** The flash shortens by FLASH_STEP_MS a round, from the max down to the min. */
+const FLASH_STEP_MS = 100;
+export const FLASH_MS_RANGE = { min: 1800 - FLASH_STEP_MS * (ROUNDS - 1), max: 1800 } as const;
 
 export type FlashLadderLevel = { dotCount: number; flashMs: number };
-/** One showing of a level: its count, its flash, and that showing's layout. */
+/** One round as shown: its count, its flash, and its layout. */
 export type FlashShowing = FlashLadderLevel & { dots: Dot[] };
 
-/** The levels, and the seed every layout is built from (a layout is drawn when it is shown). */
-export type FlashLadderParams = { layoutSeed: number; levels: FlashLadderLevel[] };
+/** The rounds, the bank, and the seed every layout is built from (a layout is drawn when it is shown). */
+export type FlashLadderParams = { layoutSeed: number; bank: number; levels: FlashLadderLevel[] };
 
-/** Every answer in order, retries included, timed from the run start. */
+/** One answer a round, timed from the run start. */
 export type FlashLadderInputs = { answers: { count: number; atMs: number }[] };
 
 export function paramsFromSeed(seed: number): FlashLadderParams {
   const rng = createRng(seed);
   const levels = DOT_COUNT_RANGES.map(({ min, max }, i) => ({ dotCount: rng.int(min, max), flashMs: FLASH_MS_RANGE.max - FLASH_STEP_MS * i }));
-  return { layoutSeed: rng.int(0, 0xffff_ffff), levels };
+  return { layoutSeed: rng.int(0, 0xffff_ffff), bank: BANK, levels };
 }
 
-/** The dots for a level's `tryIndex`-th showing (0 first): the same every time, new for each retry. */
-export function layoutFor(params: FlashLadderParams, level: number, tryIndex: number): Dot[] {
-  // Mixes the three numbers into one 32-bit seed, so neighbouring levels and tries differ.
-  const seed = (params.layoutSeed ^ Math.imul(level + 1, 0x9e37_79b1) ^ Math.imul(tryIndex + 1, 0x85eb_ca6b)) >>> 0;
+/** Round `level`'s dots: the same every time it is drawn, and different for each round. */
+export function layoutFor(params: FlashLadderParams, level: number): Dot[] {
+  // Mixes the two numbers into one 32-bit seed, so neighbouring rounds differ.
+  const seed = (params.layoutSeed ^ Math.imul(level + 1, 0x9e37_79b1)) >>> 0;
   return placeDots(createRng(seed), params.levels[level].dotCount);
 }
 
-export const tolerance = (dotCount: number) => Math.max(1, Math.floor(dotCount * TOLERANCE_FRACTION));
+/** One dot of the bank for every dot missed or counted too many. */
+export const roundCost = (dotCount: number, count: number) => Math.abs(count - dotCount);
 
-/** Plays the answers: levels cleared, lives left, which showing of the current level is next, and whether the run is over. */
-export function play(params: FlashLadderParams, inputs: FlashLadderInputs) {
-  let cleared = 0;
-  let lives = LIVES;
-  let tryIndex = 0;
-  for (const { count } of inputs.answers) {
-    if (lives === 0 || cleared === params.levels.length) break;
-    const { dotCount } = params.levels[cleared];
-    if (Math.abs(count - dotCount) <= tolerance(dotCount)) {
-      cleared++;
-      tryIndex = 0;
-    } else {
-      lives--;
-      tryIndex++;
-    }
-  }
-  return { cleared, lives, tryIndex, finished: lives === 0 || cleared === params.levels.length };
+/** Plays the answers against the bank; answers past the last round are ignored. */
+export function play(params: FlashLadderParams, { answers }: FlashLadderInputs) {
+  const costs = answers.slice(0, params.levels.length).map(({ count }, i) => roundCost(params.levels[i].dotCount, count));
+  return playBank(params.bank, costs);
 }
 
 const inputsSchema: z.ZodType<FlashLadderInputs> = z.object({
   answers: z
     .array(z.object({ count: z.number().int().min(0).max(999), atMs: z.number().nonnegative() }))
-    .max(MAX_ROUNDS + LIVES)
+    .max(ROUNDS)
     .refine((answers) => answers.every((answer, i) => i === 0 || answer.atMs > answers[i - 1].atMs), "answer times must rise"),
 });
 
 export const flashLadder: ChallengeModule<FlashLadderParams, FlashLadderInputs> = {
   paramsFromSeed,
   score: (params, inputs) => {
-    const { cleared, lives } = play(params, inputs);
-    return Math.round((cleared + lives / LIVES) * 1000) / 1000;
+    const { survived, left } = play(params, inputs);
+    return bankScore(survived, left, params.bank);
   },
-  finished: (params, inputs) => play(params, inputs).finished,
+  finished: (params, inputs) => {
+    const { survived, failed } = play(params, inputs);
+    return failed || survived >= params.levels.length;
+  },
   inputsSchema,
   direction: "higher-better",
+  // Answers are timed from the run's start, so the last one already includes every 3-2-1, flash and reveal.
   lastInputMs: ({ answers }) => answers.at(-1)?.atMs ?? 0,
 };

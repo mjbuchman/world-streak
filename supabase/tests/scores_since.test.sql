@@ -1,6 +1,6 @@
 begin;
 \ir fixtures/fixtures.psql
-select plan(8);
+select plan(11);
 
 -- T183: a challenge's pass-target percentile reads only scores from its scores_since date on.
 select has_column('public', 'challenge_types', 'scores_since', 'challenge types have a scores_since date');
@@ -8,15 +8,20 @@ select ok(
   (select scores_since is not null and scores_since <= (now() at time zone 'utc')::date + 1 from public.challenge_types where type = 'inner-clock'),
   'Second Sense counts scores from at most the day after the migration ran'
 );
+select ok(
+  (select scores_since is not null and scores_since <= (now() at time zone 'utc')::date + 1 from public.challenge_types where type = 'flash-count'),
+  'Swift Sum counts scores from at most the day after its migration ran (T186)'
+);
 select is(
-  (select count(*)::integer from public.challenge_types where type <> 'inner-clock' and scores_since is not null), 0,
+  (select count(*)::integer from public.challenge_types where type not in ('inner-clock', 'flash-count') and scores_since is not null), 0,
   'every other challenge still counts all its scores'
 );
 select is((select (default_pass_targets ->> 'inner-clock')::numeric from public.game_settings), 4::numeric, 'the placeholder stays 4: survive all four');
+select is((select (default_pass_targets ->> 'flash-count')::numeric from public.game_settings), 5::numeric, 'Swift Sum''s is 5: survive all five');
 select ok(
   (select column_default from information_schema.columns
-    where table_schema = 'public' and table_name = 'game_settings' and column_name = 'default_pass_targets') like '%"inner-clock": 4%',
-  'and a fresh settings row has it'
+    where table_schema = 'public' and table_name = 'game_settings' and column_name = 'default_pass_targets') like all (array['%"inner-clock": 4%', '%"flash-count": 5%']),
+  'and a fresh settings row has both'
 );
 
 -- Scores laid out directly: the attempt triggers (counters, day results, lineup checks) are not
@@ -41,6 +46,12 @@ select is(public.pass_target_for('inner-clock', '2033-01-11', 0), 4::numeric, 'o
 select tests.scored(8, '2033-01-11', 'inner-clock', 4.9);
 select tests.scored(9, '2033-01-11', 'inner-clock', 2);
 select is(public.pass_target_for('inner-clock', '2033-01-12', 0), 2::numeric, 'the percentile is over new-scale scores only');
+
+-- Swift Sum the same way: three old-scale scores before its date, one new one after it.
+update public.challenge_types set scores_since = '2033-01-10' where type = 'flash-count';
+select tests.scored(n, '2033-01-05', 'flash-count', n) from generate_series(6, 8) n;
+select tests.scored(1, '2033-01-11', 'flash-count', 5.5);
+select is(public.pass_target_for('flash-count', '2033-01-12', 0), 5::numeric, 'Swift Sum''s old scores do not make up the sample either');
 
 -- The Tower has no scores_since: its old scores still count.
 select tests.scored(n, '2033-01-05', 'stacking', 18 + 2 * n) from generate_series(10, 12) n;

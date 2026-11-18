@@ -99,18 +99,19 @@ describe("submitAttempt", () => {
       expect(fail.body).toMatchObject({ score: 3, passed: false, passTarget: 4 });
     });
 
-    it("Swift Sum with a target of 5 levels: five right then three misses passes, four fails", async () => {
+    it("Swift Sum with a target of 5 rounds: all five survived passes, a bust in round 5 fails", async () => {
       const counts = flashLadder.paramsFromSeed(seed).levels.map((level) => level.dotCount);
-      // n levels exactly right, then three counts of 0 (wrong at any level).
-      const run = (n: number) => ({ answers: [...counts.slice(0, n), 0, 0, 0].map((count, i) => ({ count, atMs: 5_000 * (i + 1) })) });
+      // Rounds exactly right, then (for the fail) a count of 999, which busts any bank.
+      const run = (...answers: number[]) => ({ answers: answers.map((count, i) => ({ count, atMs: 5_000 * (i + 1) })) });
       // A minute after the start: later than any of these runs' last answer.
       const later = new Date(startedAt.getTime() + 60_000);
-      const pass = await submit({ attemptId, inputs: run(5) }, dayOf("flash-count", 5), later);
-      expect(pass.body).toMatchObject({ score: 5, passed: true, passTarget: 5 });
+      const pass = await submit({ attemptId, inputs: run(...counts) }, dayOf("flash-count", 5), later);
+      expect(pass.body).toMatchObject({ score: 6, passed: true, passTarget: 5 });
       const store = dayOf("flash-count", 5);
-      const fail = await submit({ attemptId, inputs: run(4) }, store, later);
+      const bust = run(...counts.slice(0, 4), 999);
+      const fail = await submit({ attemptId, inputs: bust }, store, later);
       expect(fail.body).toMatchObject({ score: 4, passed: false, passTarget: 5 });
-      expect(store.recordResult).toHaveBeenCalledWith({ attemptId, inputs: run(4), score: 4, passed: false });
+      expect(store.recordResult).toHaveBeenCalledWith({ attemptId, inputs: bust, score: 4, passed: false });
     });
 
     it("refuses another challenge's inputs (each type's own schema decides)", async () => {

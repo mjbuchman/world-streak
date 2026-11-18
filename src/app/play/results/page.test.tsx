@@ -86,7 +86,7 @@ describe("ResultsPage", () => {
     expect(html).toContain("You passed today: two wins");
     expect(rows(html)).toEqual([
       { status: "won", text: "Game 1: Teetering Tower Won You reached row 12. Today's target was row 10." },
-      { status: "won", text: "Game 2: Swift Sum Won You scored 6 levels. Today's target was 5 levels." },
+      { status: "won", text: "Game 2: Swift Sum Won You scored 6 rounds. Today's target was 5 rounds: survive all five." },
       { status: "not-started", text: "Game 3: Second Sense Not played Today's target was 4 rounds: survive all four." },
     ]);
     // The remaining game is still offered.
@@ -100,7 +100,7 @@ describe("ResultsPage", () => {
     expect(html).toContain("1 win, 2 losses.");
     expect(rows(html).map((row) => row.text)).toEqual([
       "Game 1: Teetering Tower Lost You reached row 3. Today's target was row 10.",
-      "Game 2: Swift Sum Lost Left before finishing. Today's target was 5 levels.",
+      "Game 2: Swift Sum Lost Left before finishing. Today's target was 5 rounds: survive all five.",
       "Game 3: Second Sense Won You scored 4.7 rounds. Today's target was 4 rounds: survive all four.",
     ]);
     expect(html).not.toContain('href="/play"');

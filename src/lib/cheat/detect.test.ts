@@ -65,17 +65,17 @@ const clock = (score: number, over: Partial<DetectArgs> = {}): DetectArgs => ({
 });
 
 /**
- * A Flash Ladder run of two right answers, each `gapsMs` after its flash cleared: the first after
- * the 3-2-1 and its flash, the second after the reveal and its flash.
+ * A Swift Sum run of two right answers, each `gapsMs` after its flash cleared: the first after
+ * the 3-2-1 and its flash, the second after the reveal, its own 3-2-1 and its flash.
  */
 const sum = (gapsMs = [2_000, 2_000], over: Partial<DetectArgs> = {}): DetectArgs => {
   const first = RUN_COUNTDOWN_MS + 1_500 + gapsMs[0];
-  const second = first + REVEAL_MS + 1_500 + gapsMs[1];
+  const second = first + REVEAL_MS + RUN_COUNTDOWN_MS + 1_500 + gapsMs[1];
   return {
     challengeType: "flash-count",
     inputs: { answers: [{ count: 10, atMs: first }, { count: 14, atMs: second }] },
     score: 3,
-    params: { layoutSeed: 1, levels: [10, 14].map((dotCount) => ({ dotCount, flashMs: 1_500 })) },
+    params: { layoutSeed: 1, bank: 10, levels: [10, 14].map((dotCount) => ({ dotCount, flashMs: 1_500 })) },
     serverElapsedMs: second + 1_000,
     history: [],
     ...over,
@@ -283,47 +283,48 @@ describe("fair-split-instant", () => {
 });
 
 describe("flash-count-instant", () => {
-  it("flags an answer under 800 ms after its dots cleared (worked out from the 3-2-1, the reveals and the flashes)", () => {
+  it("flags an answer under 800 ms after its dots cleared (worked out from the 3-2-1s, the reveals and the flashes)", () => {
     expect(detectFlags(sum([2_000, 799]))).toEqual(["flash-count-instant"]);
     expect(detectFlags(sum([799, 2_000]))).toEqual(["flash-count-instant"]);
     expect(detectFlags(sum([800, 800]))).toEqual([]);
   });
 
   /**
-   * Levels of 10 dots (a 1 s flash) and 14 dots (a 2.5 s flash): right on level 1, wrong on
-   * level 2, then right on its retry, each answer `gapsMs` after its flash cleared.
+   * Rounds of 10 dots (a 1 s flash), 14 (2.5 s) and 18 (2 s): right, off by 2, then right, each
+   * answer `gapsMs` after its flash cleared. A miss the bank covers moves on like a right answer.
    */
-  function retried(gapsMs: number[]): DetectArgs {
+  function missed(gapsMs: number[]): DetectArgs {
     const levels = [
       { dotCount: 10, flashMs: 1_000 },
       { dotCount: 14, flashMs: 2_500 },
+      { dotCount: 18, flashMs: 2_000 },
     ];
     const first = RUN_COUNTDOWN_MS + 1_000 + gapsMs[0];
-    const second = first + REVEAL_MS + 2_500 + gapsMs[1];
-    const third = second + REVEAL_MS + 2_500 + gapsMs[2];
+    const second = first + REVEAL_MS + RUN_COUNTDOWN_MS + 2_500 + gapsMs[1];
+    const third = second + REVEAL_MS + RUN_COUNTDOWN_MS + 2_000 + gapsMs[2];
     const answers = [
       { count: 10, atMs: first },
-      { count: 99, atMs: second },
-      { count: 14, atMs: third },
+      { count: 12, atMs: second },
+      { count: 18, atMs: third },
     ];
-    return sum(undefined, { inputs: { answers }, params: { layoutSeed: 1, levels }, serverElapsedMs: third + 1_000 });
+    return sum(undefined, { inputs: { answers }, params: { layoutSeed: 1, bank: 10, levels }, serverElapsedMs: third + 1_000 });
   }
 
-  it("times each answer from its own level's flash, a retry's included", () => {
-    expect(detectFlags(retried([800, 800, 800]))).toEqual([]);
-    expect(detectFlags(retried([800, 799, 800]))).toEqual(["flash-count-instant"]);
-    expect(detectFlags(retried([800, 800, 799]))).toEqual(["flash-count-instant"]);
+  it("times each answer from its own round's flash, after a miss too", () => {
+    expect(detectFlags(missed([800, 800, 800]))).toEqual([]);
+    expect(detectFlags(missed([800, 799, 800]))).toEqual(["flash-count-instant"]);
+    expect(detectFlags(missed([800, 800, 799]))).toEqual(["flash-count-instant"]);
   });
 
-  it("ignores answers after the run ended, whether it ended on the last level or out of lives", () => {
+  it("ignores answers after the run ended, whether it ended on the last round or with the bank bust", () => {
     const run = sum();
     const { answers } = run.inputs as { answers: { count: number; atMs: number }[] };
     const late = { ...run, inputs: { answers: [...answers, { count: 1, atMs: answers[1].atMs + 1 }] } };
     expect(detectFlags(late)).toEqual([]);
-    // Three misses on level 1 (each 2 s after its flash), then an answer at once.
-    const misses = [0, 1, 2].map((i) => ({ count: 99, atMs: RUN_COUNTDOWN_MS + 1_500 + 2_000 + i * (REVEAL_MS + 1_500 + 2_000) }));
-    const outOfLives = [...misses, { count: 10, atMs: misses[2].atMs + 1 }];
-    expect(detectFlags(sum(undefined, { inputs: { answers: outOfLives }, serverElapsedMs: misses[2].atMs + 1_000 }))).toEqual([]);
+    // A count of 99 busts the bank in round 1 (2 s after its flash); an answer at once follows.
+    const bust = { count: 99, atMs: RUN_COUNTDOWN_MS + 1_500 + 2_000 };
+    const afterBust = [bust, { count: 14, atMs: bust.atMs + 1 }];
+    expect(detectFlags(sum(undefined, { inputs: { answers: afterBust }, serverElapsedMs: bust.atMs + 1_000 }))).toEqual([]);
   });
 });
 

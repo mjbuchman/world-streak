@@ -1,42 +1,22 @@
-/* Flash Ladder: the level and the lives above the Swift Sum board (T170). */
+/* Swift Sum: the round steps and the dot bank above the board (T185). */
 .ladder {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-.status {
+/* The 3-2-1 in the board's place, so the page does not jump between rounds. */
+.waiting {
+  min-height: 320px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
+  justify-content: center;
+  border: 1px solid var(--fs-color-surface-border);
+  border-radius: var(--fs-radius-surface);
+  background: var(--fs-color-meter-surface);
 }
 
-.level {
-  margin: 0;
-  font-weight: 700;
-}
-
-.lives {
-  display: flex;
-  gap: var(--space-2);
-}
-
-/* A life: filled while it lasts, an outline once lost. */
-.pip {
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--fs-color-mint);
-  border-radius: 50%;
-  background: var(--fs-color-mint);
-}
-
-.pip[data-lost] {
-  background: transparent;
-  border-color: var(--fs-color-surface-border);
-}
-
-/* "Right" or "Off by N", in the board's place, so the page does not jump between showings. */
+/* "Right on" or "Off by N", in the board's place. */
 .reveal {
   min-height: 320px;
   margin: 0;

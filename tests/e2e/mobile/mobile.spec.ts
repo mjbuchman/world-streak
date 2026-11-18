@@ -117,14 +117,17 @@ test("Swift Sum can be answered with taps, on a board that fits", async ({ page 
   await gotoReady(page, "/practice/flash-count");
   await tap(page, page.getByRole("button", { name: "Start" }));
   const board = page.locator("canvas");
+  // The board appears after round 1's 3-2-1.
+  await expect(board).toHaveAttribute("data-showing", "dots", { timeout: 10_000 });
   await expectBoardFits(page, board);
   await expect(board).toHaveAttribute("data-showing", "clear", { timeout: 10_000 });
   const answer = page.getByRole("textbox", { name: "How many dots were there?" });
   await tap(page, answer);
-  // 999 is wrong on any level: a life goes, and the level replays.
+  // 999 busts the 10-dot bank in round 1; the reveal shows before the result, so the tap's click lands on it.
   await page.keyboard.type("999");
   await tap(page, page.getByRole("button", { name: "Submit" }));
-  await expect(page.getByRole("img", { name: "2 of 3 lives left" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "0 rounds survived" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
   await expectPhoneFriendly(page);
 });
 

@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import type { EchoPathInputs, EchoPathParams } from "@/challenges/echo-path/engine";
 import type { FairSplitInputs, FairSplitParams } from "@/challenges/fair-split/engine";
-import type { FlashLadderInputs, FlashLadderParams } from "@/challenges/flash-count/flashLadder";
+import { ROUNDS as FLASH_LADDER_ROUNDS, type FlashLadderInputs, type FlashLadderParams } from "@/challenges/flash-count/flashLadder";
 import { ROUNDS as TIME_BANK_ROUNDS, type TimeBankInputs, type TimeBankParams } from "@/challenges/inner-clock/timeBank";
 import type { ChallengeType } from "@/challenges/shared/types";
 import type { StackingInputs, StackingParams } from "@/challenges/stacking/engine";
@@ -36,10 +36,10 @@ type ChallengeUi<Params, Inputs> = {
 
 /** Time Bank: rounds survived plus the budget left as a fraction ("3.9 rounds"). */
 const rounds = (score: number) => `${score} ${score === 1 ? "round" : "rounds"}`;
-/** Second Sense's target: a score of 4 is surviving all four rounds of the 10 s bank (T183). */
-const roundsTarget = (target: number) => (target === TIME_BANK_ROUNDS ? `${rounds(target)}: survive all four` : rounds(target));
-/** Flash Ladder: levels cleared plus the lives left as a fraction ("4.667 levels"). */
-const levels = (score: number) => `${score} ${score === 1 ? "level" : "levels"}`;
+/** A bank game's target: a score of all its rounds is surviving every one (T183, T186). */
+const roundsTarget = (all: number, word: string) => (target: number) => (target === all ? `${rounds(target)}: survive all ${word}` : rounds(target));
+const timeBankTarget = roundsTarget(TIME_BANK_ROUNDS, "four");
+const flashLadderTarget = roundsTarget(FLASH_LADDER_ROUNDS, "five");
 
 const stacking: ChallengeUi<StackingParams, StackingInputs> = {
   howTo: STACKING_HOW_TO,
@@ -57,17 +57,17 @@ const innerClock: ChallengeUi<TimeBankParams, TimeBankInputs> = {
   practicePath: practicePath("inner-clock"),
   play: ({ params, onFinish }) => <TimeBankGame params={params} onFinish={onFinish} />,
   scoreLabel: rounds,
-  summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${roundsTarget(passTarget)}.`,
-  target: roundsTarget,
+  summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${timeBankTarget(passTarget)}.`,
+  target: timeBankTarget,
 };
 
 const flashCount: ChallengeUi<FlashLadderParams, FlashLadderInputs> = {
   howTo: FLASH_COUNT_HOW_TO,
   practicePath: practicePath("flash-count"),
   play: ({ params, onFinish }) => <FlashLadderGame params={params} onFinish={onFinish} />,
-  scoreLabel: levels,
-  summary: (score, passTarget) => `You scored ${levels(score)}. Today's target was ${levels(passTarget)}.`,
-  target: levels,
+  scoreLabel: rounds,
+  summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${flashLadderTarget(passTarget)}.`,
+  target: flashLadderTarget,
 };
 
 /** Echo Path: the longest path repeated plus the lives left as a fraction ("5.667 steps"). */

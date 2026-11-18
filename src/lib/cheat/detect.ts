@@ -133,18 +133,17 @@ function lastTimedInputMs(challengeType: string, inputs: unknown, params: unknow
 }
 
 /**
- * Each Flash Ladder answer's time after its flash cleared. The clear time is the earliest the game
- * allows: the 3-2-1 or the previous answer's reveal, then the level's flash. Real frames only come
- * later, so an honest answer is never measured as faster than it was. Answer times count from
- * the game's start, before its 3-2-1 (FlashLadderGame, T170).
+ * Each Swift Sum answer's time after its flash cleared. The clear time is the earliest the game
+ * allows: the previous answer's reveal (if any), the round's 3-2-1, then its flash. Real frames
+ * only come later, so an honest answer is never measured as faster than it was. Answer times
+ * count from the game's start, before its first 3-2-1 (FlashLadderGame, T185).
  */
 function flashLadderAnswerGapsMs(params: FlashLadderParams, { answers }: FlashLadderInputs): number[] {
   const gaps: number[] = [];
-  for (let i = 0; i < answers.length; i++) {
-    const { cleared, finished } = play(params, { answers: answers.slice(0, i) });
-    if (finished) break;
-    const shownAtMs = i === 0 ? RUN_COUNTDOWN_MS : answers[i - 1].atMs + REVEAL_MS;
-    gaps.push(answers[i].atMs - shownAtMs - params.levels[cleared].flashMs);
+  for (let i = 0; i < answers.length && i < params.levels.length; i++) {
+    if (play(params, { answers: answers.slice(0, i) }).failed) break;
+    const shownAtMs = (i === 0 ? 0 : answers[i - 1].atMs + REVEAL_MS) + RUN_COUNTDOWN_MS;
+    gaps.push(answers[i].atMs - shownAtMs - params.levels[i].flashMs);
   }
   return gaps;
 }
