@@ -106,6 +106,8 @@ describe("saveGameSettings", () => {
       percentile_min_sample: "1",
       new_account_weight: "0",
       "target-stacking": "1",
+      // Past Trail Trace's longest path of 12, as T209 allows.
+      "target-echo-path": "13",
       pool: "flash-count, echo-path, fair-split, stacking, inner-clock",
     };
     expect(await saveGameSettings(db, form(edges))).toEqual({ ok: true, message: "Settings saved." });
