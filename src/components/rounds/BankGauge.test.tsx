@@ -41,6 +41,10 @@ describe("bankLayout", () => {
     expect(segments.every((s) => s.startPct >= 0)).toBe(true);
   });
 
+  it("refuses a bank with no positive total, rather than drawing NaN widths", () => {
+    expect(() => bankLayout(0, [])).toThrow(RangeError);
+  });
+
   it("is not a bust when the costs use the bank exactly", () => {
     expect(bankLayout(10, [4, 6])).toMatchObject({ left: 0, busted: false });
   });

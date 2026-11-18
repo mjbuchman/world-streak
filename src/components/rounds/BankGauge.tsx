@@ -12,6 +12,7 @@ const round3 = (value: number) => Math.round(value * 1000) / 1000;
  * above the total) leaves an empty fill and clips the latest cost; no width is ever negative.
  */
 export function bankLayout(total: number, spent: readonly number[]): BankLayout {
+  if (!(total > 0)) throw new RangeError(`A bank needs a positive total, not ${total}`);
   const used = spent.reduce((sum, cost) => sum + cost, 0);
   const left = round3(Math.max(0, total - used));
   let rightEdge = 100;
