@@ -161,9 +161,12 @@ describe("InnerClockGame", () => {
     const shownClock = () => document.querySelector("[data-clock]");
     // Before the start frame, the clock waits at zero.
     expect(shownClock()?.textContent).toBe("0.0");
+    // Not "shown" until the start frame: before it, a tap does not count (e2e waits on this).
+    expect(shownClock()?.getAttribute("data-clock")).toBe("ready");
     clock().mockReturnValue(1000);
     showStart();
     expect(shownClock()?.textContent).toBe("0.0");
+    expect(shownClock()?.getAttribute("data-clock")).toBe("shown");
     clock().mockReturnValue(1540);
     act(() => frame!(0));
     expect(shownClock()?.textContent).toBe("0.5");

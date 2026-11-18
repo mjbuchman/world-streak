@@ -25,7 +25,13 @@ const clockLabel = (ms: number) => (Math.floor(ms / 100) / 10).toFixed(1);
 /** After its reveal the clock stops and fades out over this long (T118), or just goes with reduced motion. */
 export const CLOCK_FADE_MS = 400;
 
-type ClockState = { phase: "countdown"; number: number } | { phase: "shown"; ms: number } | { phase: "fading" } | { phase: "hidden" };
+// "ready" is the clock at zero before the start frame, when a tap does not count yet.
+type ClockState =
+  | { phase: "countdown"; number: number }
+  | { phase: "ready" }
+  | { phase: "shown"; ms: number }
+  | { phase: "fading" }
+  | { phase: "hidden" };
 
 /** One round's tap in ms from its start, or null when it timed out. */
 type RoundTap = { tapMs: number | null };
@@ -58,7 +64,7 @@ export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_M
   // The clock: the countdown in its place, then running for revealMs, then stopped at
   // the reveal and fading, then gone.
   const [clockState, setClockState] = useState<ClockState>(() =>
-    countdownMs > 0 ? { phase: "countdown", number: COUNTDOWN_FROM } : { phase: "shown", ms: 0 },
+    countdownMs > 0 ? { phase: "countdown", number: COUNTDOWN_FROM } : { phase: "ready" },
   );
   // Read in the frame loop, which must not restart when the preference arrives after hydration.
   const reducedMotion = usePrefersReducedMotion();
@@ -147,6 +153,8 @@ export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_M
       <span className={styles.clock} data-clock={clockState.phase} aria-hidden="true">
         {clockState.phase === "countdown" ? (
           <CountdownNumber key={clockState.number} value={clockState.number} />
+        ) : clockState.phase === "ready" ? (
+          clockLabel(0)
         ) : clockState.phase === "shown" ? (
           clockLabel(clockState.ms)
         ) : clockState.phase === "fading" ? (
