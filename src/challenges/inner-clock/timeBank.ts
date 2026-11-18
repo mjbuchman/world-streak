@@ -7,15 +7,15 @@ import type { ChallengeModule } from "../shared/types";
 
 /**
  * Second Sense: Time Bank (M6, T181). Four rounds of the Second Sense tap: tap when the round's
- * hidden interval (15 to 25 s) has passed, with the clock visible for its first 2 s. Each round's
- * error comes out of one 10 s bank by the shared bank rule (T180). Score = rounds survived + bank
- * left as a fraction. All numbers below are placeholders (DECISIONS, T198).
+ * hidden interval (10 to 20 s, T202) has passed, with the clock visible for its first 2 s. Each
+ * round's error comes out of one 2 s bank by the shared bank rule (T180). Score = rounds survived +
+ * bank left as a fraction. The bank and target span are the owner's (M7); the rest are placeholders.
  *
  * The design calls it a "hold"; the game is a tap and the design allows no new round types, so the
  * tap stays (DECISIONS, T139).
  */
 
-export const BUDGET_MS = 10_000;
+export const BUDGET_MS = 2_000;
 export const ROUNDS = 4;
 
 /** The clock shows for this long at the start of every round, then fades. */
@@ -29,8 +29,8 @@ export const ROUND_COUNTDOWN_MS = RUN_COUNTDOWN_MS;
 
 const TARGET_STEP_MS = 100;
 
-/** Round i's hidden interval: 15.0 to 17.4 s, then 2.5 s later per round, so a run covers 15 to 25 s. */
-export const TARGET_RANGES_MS = ladderRanges(ROUNDS, 15_000, 2_500, 2_400);
+/** Round i's hidden interval: 10.0 to 12.4 s, then 2.5 s later per round, so a run covers 10 to 20 s. */
+export const TARGET_RANGES_MS = ladderRanges(ROUNDS, 10_000, 2_500, 2_400);
 
 export type TimeBankRound = {
   /** When the player should tap, in ms from the round's start. */

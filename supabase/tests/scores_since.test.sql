@@ -1,6 +1,6 @@
 begin;
 \ir fixtures/fixtures.psql
-select plan(16);
+select plan(17);
 
 -- T183: a challenge's pass-target percentile reads only scores from its scores_since date on.
 select has_column('public', 'challenge_types', 'scores_since', 'challenge types have a scores_since date');
@@ -19,6 +19,12 @@ select ok(
 select ok(
   (select scores_since is not null and scores_since <= (now() at time zone 'utc')::date + 1 from public.challenge_types where type = 'fair-split'),
   'Fair Split counts scores from at most the day after its migration ran (T196)'
+);
+-- The M7 migration (T204) set Second Sense's date again, after the M6 games' migrations set theirs.
+select ok(
+  (select scores_since from public.challenge_types where type = 'inner-clock')
+    >= (select scores_since from public.challenge_types where type = 'fair-split'),
+  'Second Sense''s 2 s bank starts its scale again (T204)'
 );
 select is(
   (select count(*)::integer from public.challenge_types where type not in ('inner-clock', 'flash-count', 'echo-path', 'fair-split') and scores_since is not null), 0,

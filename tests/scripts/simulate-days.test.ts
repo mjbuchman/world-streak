@@ -108,9 +108,9 @@ describe("runSimulation", () => {
     expect(calls.indexOf("close 2027-01-02")).toBeGreaterThan(calls.lastIndexOf("result 2027-01-02 game 3 7 true"));
     expect(log.mock.calls).toEqual([
       ["Closed 2 empty days before 2027-01-01 (broken)."],
-      ["2027-01-01 (Teetering Tower, Swift Sum, Echo Path) survived."],
-      ["2027-01-02 (Teetering Tower, Swift Sum, Echo Path) survived."],
-      ["2027-01-03 (Teetering Tower, Swift Sum, Echo Path) survived."],
+      ["2027-01-01 (Teetering Tower, Swift Sum, Trail Trace) survived."],
+      ["2027-01-02 (Teetering Tower, Swift Sum, Trail Trace) survived."],
+      ["2027-01-03 (Teetering Tower, Swift Sum, Trail Trace) survived."],
       ["Simulated 3 days with 4 players. World streak: 30 (best 30)."],
     ]);
   });

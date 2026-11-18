@@ -15,24 +15,24 @@ import {
   type TimeBankParams,
 } from "./timeBank";
 
-/** Explicit params from the backlog's worked examples: a 10 s bank. */
+/** Explicit params from the backlog's worked examples (T202): a 2 s bank. */
 function withTargets(...targetsMs: number[]): TimeBankParams {
-  return { budgetMs: 10_000, rounds: targetsMs.map((targetMs) => ({ targetMs, revealMs: REVEAL_MS, timeoutMs: targetMs + 10_000 })) };
+  return { budgetMs: 2_000, rounds: targetsMs.map((targetMs) => ({ targetMs, revealMs: REVEAL_MS, timeoutMs: targetMs + 2_000 })) };
 }
 
-const four = withTargets(15_000, 18_000, 21_000, 24_000);
+const four = withTargets(10_000, 13_000, 16_000, 19_000);
 
 describe("Time Bank params", () => {
-  it("documents the placeholders: a 10 s bank, 4 rounds, a 2 s clock, 15 to 25 s targets", () => {
-    expect(BUDGET_MS).toBe(10_000);
+  it("documents the values: a 2 s bank, 4 rounds, a 2 s clock, 10 to 20 s targets (T202)", () => {
+    expect(BUDGET_MS).toBe(2_000);
     expect(ROUNDS).toBe(4);
     expect(REVEAL_MS).toBe(2000);
     expect(ROUND_COUNTDOWN_MS).toBe(RUN_COUNTDOWN_MS);
     expect(TARGET_RANGES_MS).toEqual([
+      { min: 10_000, max: 12_400 },
+      { min: 12_500, max: 14_900 },
       { min: 15_000, max: 17_400 },
       { min: 17_500, max: 19_900 },
-      { min: 20_000, max: 22_400 },
-      { min: 22_500, max: 24_900 },
     ]);
   });
 
@@ -65,48 +65,49 @@ describe("Time Bank params", () => {
 
 describe("Time Bank score", () => {
   it.each([
-    ["errors 500, 0, 0, 0: four rounds and 0.95 of the bank", [15_500, 18_000, 21_000, 24_000], 4.95],
-    ["errors 2,000, 0, 7,000, 0: four rounds and 0.1 left", [17_000, 18_000, 28_000, 24_000], 4.1],
-    ["an error of exactly the bank in round 1 survives with nothing left", [25_000, 18_000, 21_000, 24_000], 4],
-    ["an error past the bank in round 1 busts it", [26_000], 0],
+    ["error 500 in round 1: four rounds and 0.75 of the bank", [10_500, 13_000, 16_000, 19_000], 4.75],
+    ["errors 400 and 800: four rounds and 0.4 left", [10_400, 13_800, 16_000, 19_000], 4.4],
+    ["an error of exactly the bank in round 1 survives with nothing left", [12_000, 13_000, 16_000, 19_000], 4],
+    ["an error past the bank in round 1 busts it", [12_500], 0],
     ["no tap in round 1", [null], 0],
-    ["a good round, then no tap", [15_000, null], 1],
+    ["a good round, then no tap", [10_000, null], 1],
   ])("%s", (_name, tapsMs, score) => {
     expect(timeBank.score(four, { tapsMs })).toBe(score);
   });
 
   it("makes a missing or late tap cost more than the whole bank, and a tap at the timeout itself", () => {
     const round = four.rounds[0];
-    expect(roundErrorMs(round, null, 10_000)).toBe(10_001);
-    expect(roundErrorMs(round, 25_000.5, 10_000)).toBe(10_001);
-    expect(roundErrorMs(round, 25_000, 10_000)).toBe(10_000);
-    expect(roundErrorMs(round, 14_000, 10_000)).toBe(1000);
+    expect(roundErrorMs(round, null, 2_000)).toBe(2_001);
+    expect(roundErrorMs(round, 12_000.5, 2_000)).toBe(2_001);
+    expect(roundErrorMs(round, 12_000, 2_000)).toBe(2_000);
+    expect(roundErrorMs(round, 9_000, 2_000)).toBe(1000);
   });
 
   it("rounds each error to the millisecond and the score to 3 decimals", () => {
-    // Error 1,000.4 ms rounds to 1,000: 9,000 of 10,000 left.
-    expect(play(withTargets(15_000), { tapsMs: [16_000.4] })).toEqual({ survived: 1, left: 9000, failed: false });
-    expect(timeBank.score(withTargets(15_000), { tapsMs: [16_000.4] })).toBe(1.9);
+    // Error 1,000.4 ms rounds to 1,000: 1,000 of 2,000 left.
+    expect(play(withTargets(10_000), { tapsMs: [11_000.4] })).toEqual({ survived: 1, left: 1000, failed: false });
+    expect(timeBank.score(withTargets(10_000), { tapsMs: [10_123.4] })).toBe(1.939);
   });
 
   it("ignores taps after the round that emptied the bank, and taps beyond the rounds", () => {
-    expect(timeBank.score(four, { tapsMs: [null, 18_000, 21_000] })).toBe(0);
-    expect(play(withTargets(15_000), { tapsMs: [15_000, 1] })).toEqual({ survived: 1, left: 10_000, failed: false });
+    expect(timeBank.score(four, { tapsMs: [null, 13_000, 16_000] })).toBe(0);
+    expect(play(withTargets(10_000), { tapsMs: [10_000, 1] })).toEqual({ survived: 1, left: 2_000, failed: false });
   });
 
   it.each([
-    [0, 4.71],
-    [1, 4.65],
-    [4_294_967_295, 4.59],
+    // Mid-range taps bust a 2 s bank part-way through, so these runs end early.
+    [0, 2],
+    [1, 3],
+    [4_294_967_295, 2],
   ])("golden: seed %i with fixed taps scores %d (changing the PRNG or the ranges changes these)", (seed, score) => {
-    const tapsMs = [16_000, 18_800, 21_000, 23_500];
+    const tapsMs = [11_200, 13_700, 16_200, 18_700];
     expect(timeBank.score(paramsFromSeed(seed), { tapsMs })).toBe(score);
   });
 
   it("gives the same score for the same taps, between 0 and the number of rounds plus one (property)", () => {
     for (let seed = 0; seed < 200; seed++) {
       const params = paramsFromSeed(seed);
-      const tapsMs = params.rounds.map((round, i) => round.targetMs + ((seed * 37 + i * 211) % 6000) - 3000);
+      const tapsMs = params.rounds.map((round, i) => round.targetMs + ((seed * 37 + i * 211) % 2000) - 1000);
       const first = timeBank.score(params, { tapsMs });
       expect(timeBank.score(params, { tapsMs })).toBe(first);
       expect(first).toBeGreaterThanOrEqual(0);
@@ -121,15 +122,18 @@ describe("Time Bank score", () => {
 
 describe("Time Bank balance", () => {
   /**
-   * A simulated player whose error is roughly normal with a spread (standard deviation) of 15% of
-   * the interval, about 3 s on 20 s: the spread people show when counting seconds this long.
+   * A simulated player whose error is roughly normal with a fixed spread (standard deviation) of
+   * SPREAD_MS. The backlog suggested 250 ms, but at 250 ms nearly every run survives a 2 s bank;
+   * the spread is set so the survival share lands mid-band (T202).
    */
+  const SPREAD_MS = 600;
+
   function survivesAll(seed: number): boolean {
     const params = paramsFromSeed(seed);
     const rng = createRng(seed + 1_000_000);
     const tapsMs = params.rounds.map((round) => {
       const normalish = (rng.next() + rng.next() + rng.next() - 1.5) * 2;
-      return Math.max(0, Math.round(round.targetMs * (1 + 0.15 * normalish)));
+      return Math.max(0, Math.round(round.targetMs + SPREAD_MS * normalish));
     });
     return timeBank.score(params, { tapsMs }) >= ROUNDS;
   }
@@ -163,21 +167,21 @@ describe("Time Bank inputs", () => {
 
   it("are finished once a round empties the bank or every round has a tap", () => {
     expect(timeBank.finished(four, { tapsMs: [] })).toBe(false);
-    expect(timeBank.finished(four, { tapsMs: [15_000, 18_000, 21_000] })).toBe(false);
-    expect(timeBank.finished(four, { tapsMs: [15_000, 18_000, 21_000, 24_000] })).toBe(true);
+    expect(timeBank.finished(four, { tapsMs: [10_000, 13_000, 16_000] })).toBe(false);
+    expect(timeBank.finished(four, { tapsMs: [10_000, 13_000, 16_000, 19_000] })).toBe(true);
     expect(timeBank.finished(four, { tapsMs: [null] })).toBe(true);
-    expect(timeBank.finished(four, { tapsMs: [26_000] })).toBe(true);
+    expect(timeBank.finished(four, { tapsMs: [12_500] })).toBe(true);
     // An exactly empty bank still leaves the next round to play.
-    expect(timeBank.finished(four, { tapsMs: [25_000] })).toBe(false);
+    expect(timeBank.finished(four, { tapsMs: [12_000] })).toBe(false);
   });
 
   it("time the latest tap from the run start: every tap, plus the gap and the 3-2-1 before each later round", () => {
     const between = ROUND_GAP_MS + ROUND_COUNTDOWN_MS;
     expect(timeBank.lastInputMs({ tapsMs: [] }, four)).toBe(0);
-    expect(timeBank.lastInputMs({ tapsMs: [15_200] }, four)).toBe(15_200);
-    expect(timeBank.lastInputMs({ tapsMs: [15_200, 18_900] }, four)).toBe(15_200 + between + 18_900);
-    // A round with no tap counts until its timeout (18,000 + 10,000).
-    expect(timeBank.lastInputMs({ tapsMs: [15_200, null] }, four)).toBe(15_200 + between + 28_000);
+    expect(timeBank.lastInputMs({ tapsMs: [10_200] }, four)).toBe(10_200);
+    expect(timeBank.lastInputMs({ tapsMs: [10_200, 13_900] }, four)).toBe(10_200 + between + 13_900);
+    // A round with no tap counts until its timeout (13,000 + 2,000).
+    expect(timeBank.lastInputMs({ tapsMs: [10_200, null] }, four)).toBe(10_200 + between + 15_000);
   });
 
   it.each([0, 1, 4_294_967_295])("golden: seed %i times a full on-target run", (seed) => {

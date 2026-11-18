@@ -114,7 +114,7 @@ test("Second Sense practice: a 3-2-1 under the target, a 2 s clock, and a miss b
   // The 3-2-1 under round 1's target (T182), with the four steps and the full bank above.
   await expect(page.getByRole("img", { name: "Round 1 of 4" })).toBeVisible();
   const bank = page.getByRole("meter", { name: "Time bank" });
-  await expect(bank).toHaveAttribute("aria-valuenow", "10000");
+  await expect(bank).toHaveAttribute("aria-valuenow", "2000");
   await expect(page.locator("[data-countdown]")).toBeVisible();
   await expect(page.getByText(/^Tap when you think [\d.]+ seconds have passed$/)).toBeVisible();
 
@@ -126,11 +126,11 @@ test("Second Sense practice: a 3-2-1 under the target, a 2 s clock, and a miss b
   await expect(shownClock).toHaveText(/^[01]\.\d$/);
   await expect(shownClock).toHaveAttribute("data-clock", "hidden");
   await expect(page.getByRole("timer")).toHaveCount(0);
-  // Round 1's target is at least 15 s, so a tap now misses by more than the 10 s bank.
+  // Round 1's target is at least 10 s, so a tap now misses by more than the 2 s bank.
   await tapArea.click();
 
   await expect(page.getByRole("heading", { level: 2 })).toHaveText("0 rounds survived");
-  await expect(page.getByText(/^0 s of your 10 s time bank left\. Score: 0\.$/)).toBeVisible();
+  await expect(page.getByText(/^0 s of your 2 s time bank left\. Score: 0\.$/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
   expect(scored).toEqual([]);
 });
@@ -150,7 +150,7 @@ test("Second Sense practice: a tap near the target survives round 1, and round 2
   await expect(tapArea).toBeVisible();
   await page.clock.runFor(targetMs);
   await tapArea.press("Space");
-  await expect(page.getByRole("meter", { name: "Time bank" })).toHaveAttribute("aria-valuetext", /^\d+\.\d s left of 10\.0 s$/);
+  await expect(page.getByRole("meter", { name: "Time bank" })).toHaveAttribute("aria-valuetext", /^\d+\.\d s left of 2\.0 s$/);
 
   // After the error shows, round 2 starts with its own 3-2-1.
   await page.clock.runFor(ROUND_GAP_MS + 100);
@@ -175,6 +175,37 @@ for (const size of [
     await expect(shownClock).toBeVisible();
     await expectApart(target, shownClock);
   });
+
+  for (const [game, path] of [
+    ["Second Sense", "/practice/inner-clock"],
+    ["Swift Sum", "/practice/flash-count"],
+  ]) {
+    test(`${game} centres its 3-2-1 in the slot and the board at ${size.width} x ${size.height} (T203)`, async ({ page }) => {
+      await page.setViewportSize(size);
+      // No pop animation, so the glyph is measured at its resting size.
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await gotoReady(page, path);
+      await page.getByRole("button", { name: "Start" }).click();
+      const number = page.locator("[data-countdown]");
+      await expect(number).toBeVisible();
+      // The span fills its stage whatever happens to the glyph, so measure the text itself.
+      const boxes = await number.evaluate((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const centre = (r: DOMRect) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+        const stage = el.parentElement!;
+        const board = stage.parentElement!.parentElement!;
+        return {
+          glyph: centre(range.getBoundingClientRect()),
+          stage: centre(stage.getBoundingClientRect()),
+          board: centre(board.getBoundingClientRect()),
+        };
+      });
+      expect(Math.abs(boxes.glyph.x - boxes.stage.x)).toBeLessThanOrEqual(2);
+      expect(Math.abs(boxes.glyph.y - boxes.stage.y)).toBeLessThanOrEqual(2);
+      expect(Math.abs(boxes.glyph.x - boxes.board.x)).toBeLessThanOrEqual(2);
+    });
+  }
 }
 
 test("Swift Sum practice: a count far off in round 1 busts the dot bank and ends the run", async ({ page }) => {
@@ -301,8 +332,8 @@ test("the practice hub opens each challenge's practice page", async ({ page }) =
     ["Teetering Tower", "/practice/stacking", "Practice: Teetering Tower"],
     ["Second Sense", "/practice/inner-clock", "Practice: Second Sense"],
     ["Swift Sum", "/practice/flash-count", "Practice: Swift Sum"],
-    ["Echo Path", "/practice/echo-path", "Practice: Echo Path"],
-    ["Fair Split", "/practice/fair-split", "Practice: Fair Split"],
+    ["Trail Trace", "/practice/echo-path", "Practice: Trail Trace"],
+    ["Clean Cut", "/practice/fair-split", "Practice: Clean Cut"],
   ]) {
     await gotoReady(page, "/practice");
     await page.getByRole("list", { name: "Challenges" }).getByRole("link", { name }).click();

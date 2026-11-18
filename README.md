@@ -205,7 +205,7 @@ npm run dev                      # start the app at http://localhost:3000
 
 http://localhost:3000/api/health should return `{"db":"ok"}`. Local Supabase Studio (a database browser) is at http://127.0.0.1:54323. `npm run db:reset` wipes the local database and re-applies every migration in `supabase/migrations/`.
 
-**The Daily Three:** each game day has three of the five games, played in order: Teetering Tower (`stacking`), Second Sense (`inner-clock`), Swift Sum (`flash-count`), Echo Path (`echo-path`) and Fair Split (`fair-split`). Each game has its own pass target for the day, and a player passes the day by winning two of the three. The lineup comes from a rule (seeded by the date, drawn from the pool in `/admin/settings`, never the same as the day before) unless an admin sets it. Every game can be practised without an account at http://localhost:3000/practice.
+**The Daily Three:** each game day has three of the five games, played in order: Teetering Tower (`stacking`), Second Sense (`inner-clock`), Swift Sum (`flash-count`), Trail Trace (`echo-path`) and Clean Cut (`fair-split`). Each game has its own pass target for the day, and a player passes the day by winning two of the three. The lineup comes from a rule (seeded by the date, drawn from the pool in `/admin/settings`, never the same as the day before) unless an admin sets it. Every game can be practised without an account at http://localhost:3000/practice.
 
 **Play-testing:** each account plays the day's three games once per game day, and the day changes at midnight UTC (7 pm US Eastern, 8 pm during daylight saving). For another go the same day, sign up with a new email, or use **Clear my day** in the admin page's local tools. `npm run db:reset` wipes everything, accounts included.
 
@@ -221,7 +221,7 @@ It creates fresh fake accounts (`seed-…@example.test`, with profiles) that eac
 **The daily close:** the database closes each game day itself at the midnight UTC deadline (a `pg_cron` job, with a catch-up run every 5 minutes), recording the outcome, updating the world streak and preparing the next day. Locally this means past days close on their own within 5 minutes of `npx supabase start`. To close one by hand and see the result:
 
 ```bash
-npm run close-day -- --date 2026-11-10   # prints e.g. "2026-11-10 (Teetering Tower, Echo Path, Fair Split) survived. World streak: 3 (best 5)."
+npm run close-day -- --date 2026-11-10   # prints e.g. "2026-11-10 (Teetering Tower, Trail Trace, Clean Cut) survived. World streak: 3 (best 5)."
 ```
 
 Only a day whose deadline has passed can close, and days close in order (close earlier ones first). Closing a closed day again just prints its outcome. Like `seed:dev`, it reads `.env.local` and refuses anything but a localhost URL.

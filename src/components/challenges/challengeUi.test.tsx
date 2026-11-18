@@ -55,8 +55,8 @@ describe("challengeUi", () => {
     }
   });
 
-  it("explains Second Sense's four rounds and 10-second time bank (T183)", () => {
-    expect(challengeUi("inner-clock").howTo).toMatch(/four rounds.*10-second time bank.*Survive all four/);
+  it("explains Second Sense's four rounds, 10 to 20 second targets and 2-second time bank (T183, T203)", () => {
+    expect(challengeUi("inner-clock").howTo).toMatch(/four rounds.*10 to 20 seconds.*2-second time bank.*Survive all four/);
   });
 
   it("calls a Second Sense target of 4 surviving all four rounds, and any other target plain rounds", () => {

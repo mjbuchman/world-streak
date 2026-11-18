@@ -73,6 +73,14 @@ describe("BankGauge", () => {
     expect((container.querySelector("[data-bank-fill]") as HTMLElement).style.width).toBe("0%");
   });
 
+  it("stays legible with Second Sense's 2 s bank (T203)", () => {
+    const tenths = (v: number) => `${v.toFixed(1)} s`;
+    const { container } = render(<BankGauge total={2} spent={[0.4, 1.2]} format={tenths} label="Time bank" />);
+    expect(screen.getByText("0.4 s left of 2.0 s")).toBeTruthy();
+    expect(screen.getByText("Round 2 cost 1.2 s")).toBeTruthy();
+    expect((container.querySelector("[data-bank-fill]") as HTMLElement).style.width).toBe("20%");
+  });
+
   it("has no cost caption before the first round", () => {
     render(<BankGauge total={3} spent={[]} format={(v) => `${v} dots`} label="Dot bank" />);
     expect(screen.getByText("3 dots left of 3 dots")).toBeTruthy();

@@ -69,8 +69,8 @@ describe("GameDayEditRow", () => {
       ["stacking", "Teetering Tower"],
       ["inner-clock", "Second Sense"],
       ["flash-count", "Swift Sum"],
-      ["echo-path", "Echo Path"],
-      ["fair-split", "Fair Split"],
+      ["echo-path", "Trail Trace"],
+      ["fair-split", "Clean Cut"],
     ]);
     await user.selectOptions(picker(1), "inner-clock");
     await user.selectOptions(picker(2), "stacking");

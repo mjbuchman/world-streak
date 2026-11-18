@@ -116,7 +116,7 @@ describe("main", () => {
     await main(local, args, makeClient, log);
     expect(makeClient).toHaveBeenCalledWith(local.NEXT_PUBLIC_SUPABASE_URL, "key");
     expect(calls[0]).toEqual(["close_game_day", { d: "2026-11-10" }]);
-    expect(log.mock.calls).toEqual([["2026-11-10 (Teetering Tower, Echo Path, Fair Split) survived. World streak: 1 (best 1)."]]);
+    expect(log.mock.calls).toEqual([["2026-11-10 (Teetering Tower, Trail Trace, Clean Cut) survived. World streak: 1 (best 1)."]]);
   });
 
   it("exits non-zero with a one-line message when run against a real project", () => {

@@ -21,7 +21,8 @@ export const FLASH_COUNT_MIN_ANSWER_MS = 800;
 
 /**
  * Second Sense: this many of the four rounds of one run each tapped under this error (ms) look
- * scripted on 15 to 25 s intervals (T164, T183).
+ * scripted on 10 to 20 s intervals (T164, T183). Re-checked for the 2 s bank (T204): honest errors
+ * that survive it are a few hundred ms, still far above 25 ms, so the values stay.
  */
 export const TIME_BANK_PRECISE_ROUNDS = 3;
 export const TIME_BANK_PRECISE_ERROR_MS = 25;

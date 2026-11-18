@@ -23,7 +23,7 @@ describe("HistoryTable", () => {
     expect(rows.map(cells)).toEqual([
       ["Nov 10, 2026", "Swift Sum, Teetering Tower, Second Sense", "52%", "60%", "Broke"],
       // A game this build does not know shows as itself.
-      ["Nov 9, 2026", "Teetering Tower, future-game, Echo Path", "no attempts", "60%", "Broke"],
+      ["Nov 9, 2026", "Teetering Tower, future-game, Trail Trace", "no attempts", "60%", "Broke"],
       ["Nov 8, 2026", "Teetering Tower", "81%", "60%", "Survived"],
     ]);
     expect(screen.queryByRole("navigation")).toBeNull();

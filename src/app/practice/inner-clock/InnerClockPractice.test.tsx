@@ -37,7 +37,7 @@ async function playWith(inputs: TimeBankInputs) {
 describe("InnerClockPractice", () => {
   it("explains the time bank and shows the first target before the start", () => {
     render(<InnerClockPractice />);
-    expect(screen.getByText(/10-second time bank/)).toBeTruthy();
+    expect(screen.getByText(/targets? time \(10 to 20 seconds\).*2-second time bank/)).toBeTruthy();
     expect(screen.getByText("First target: 15 seconds")).toBeTruthy();
   });
 
