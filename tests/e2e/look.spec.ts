@@ -91,7 +91,8 @@ for (const { game, path, canvasName, names } of [
     await gotoReady(page, path);
     await page.getByRole("button", { name: "Start" }).click();
     const canvas = page.getByRole("img", { name: canvasName });
-    await expect(canvas).toBeVisible();
+    // Swift Sum's board appears only after round 1's 3-2-1 (T185).
+    await expect(canvas).toBeVisible({ timeout: 10_000 });
     const tokens = await canvas.evaluate((el, list) => list.map((name) => getComputedStyle(el).getPropertyValue(name).trim()), names);
     expect(tokens).toHaveLength(names.length);
     for (const value of tokens) expect(value).not.toBe("");

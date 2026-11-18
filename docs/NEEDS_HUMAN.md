@@ -19,7 +19,7 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: build as listed. Check them at the M5 play-test.
 
 ### Please confirm: M6 gameplay calls (blocks nothing)
-- What is needed: say if any of these should change. (1) Second Sense: target 4 means "survive all four", the cheat check flags 3+ rounds under 25 ms off, and only scores from the day after the T183 migration count toward its pass target (DECISIONS.md, T180-T183).
+- What is needed: say if any of these should change. (1) Second Sense: target 4 means "survive all four", the cheat check flags 3+ rounds under 25 ms off, and only scores from the day after the T183 migration count toward its pass target (DECISIONS.md, T180-T183). (2) Swift Sum: five rounds, a 10-dot bank, 6-11 dots rising by 3 a round, target 5 "survive all five" (T184-T186).
 - Where to put it: reply in chat.
 - Why: the design leaves these open.
 - Agent's recommendation: keep them; check them at the M6 play-test.

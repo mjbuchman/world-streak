@@ -424,3 +424,9 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: Open items (targets, thresholds); the backlog proposes these, and a flat 1 s error would make 15 to 25 s targets too easy compared with real counting.
 - How to change it later: `game_settings.default_pass_targets` or /admin; `src/challenges/inner-clock/timeBank.test.ts`; `src/config/cheat.ts`; `challenge_types.scores_since`.
 - Confirmed by human: pending (NEEDS_HUMAN, M6 calls)
+
+### 2026-11-18 — Swift Sum rounds (T184-T186)
+- Choice: (1) Five rounds against a 10-dot bank; round i draws 6+3i to 11+3i dots; the flash goes from 1800 to 1400 ms. (2) Default pass target 5, "survive all five". (3) The reveal ("Right on", "Off by N") shows 1.2 s, then each round has its own 3-2-1. (4) `lastInputMs` stays the last answer's time: answers are timed from the run's start, so it already covers every 3-2-1, flash and reveal. (5) Old-scale scores are left out through `scores_since` (as T183).
+- Reason: Open items (targets, numbers); the backlog proposes (1), (2) and (5).
+- How to change it later: `src/challenges/flash-count/flashLadder.ts` constants; `game_settings.default_pass_targets` or /admin.
+- Confirmed by human: pending (NEEDS_HUMAN, M6 calls)

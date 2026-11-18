@@ -64,8 +64,8 @@ describe("challengeUi", () => {
     expect(challengeUi("inner-clock").target(4.5)).toBe("4.5 rounds");
   });
 
-  it("explains Swift Sum's levels and lives (T142)", () => {
-    expect(challengeUi("flash-count").howTo).toMatch(/level.*3 lives.*same level/);
+  it("explains Swift Sum's five rounds and its dot bank (T186)", () => {
+    expect(challengeUi("flash-count").howTo).toMatch(/five rounds.*10-dot bank.*Survive all five/);
   });
 
   it.each([
@@ -85,8 +85,8 @@ describe("challengeUi", () => {
     ["stacking", 7, 10, "You reached row 7. Today's target was row 10."],
     ["inner-clock", 3.9, 4, "You scored 3.9 rounds. Today's target was 4 rounds: survive all four."],
     ["inner-clock", 1, 4.5, "You scored 1 round. Today's target was 4.5 rounds."],
-    ["flash-count", 4.667, 5, "You scored 4.667 levels. Today's target was 5 levels."],
-    ["flash-count", 1, 5, "You scored 1 level. Today's target was 5 levels."],
+    ["flash-count", 5.4, 5, "You scored 5.4 rounds. Today's target was 5 rounds: survive all five."],
+    ["flash-count", 1, 4, "You scored 1 round. Today's target was 4 rounds."],
     ["echo-path", 5.667, 6, "You scored 5.667 steps. Today's target was 6 steps."],
     ["echo-path", 1, 6, "You scored 1 step. Today's target was 6 steps."],
     ["fair-split", 6.333, 5, "You scored 6.333 shapes. Today's target was 5 shapes."],

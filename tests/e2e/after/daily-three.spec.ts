@@ -50,14 +50,12 @@ test.afterAll(async () => {
 
 const heading = (page: Page, name: string) => page.getByRole("heading", { name, exact: true });
 
-/** Swift Sum: 999 is wrong on every level, so three answers use up the lives (score 0). */
+/** Swift Sum: 999 misses round 1 by more than the 10-dot bank, so one answer ends the run (score 0). */
 async function missSwiftSum(page: Page) {
-  for (let miss = 0; miss < 3; miss++) {
-    await expect(page.locator("canvas")).toHaveAttribute("data-showing", "dots");
-    await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
-    await page.getByRole("textbox", { name: "How many dots were there?" }).fill("999");
-    await page.getByRole("button", { name: "Submit" }).click();
-  }
+  await expect(page.locator("canvas")).toHaveAttribute("data-showing", "dots", { timeout: 10_000 });
+  await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
+  await page.getByRole("textbox", { name: "How many dots were there?" }).fill("999");
+  await page.getByRole("button", { name: "Submit" }).click();
 }
 
 /** Second Sense: a tap as round 1 starts misses its 15 s or longer target by more than the 10 s bank. */
@@ -161,9 +159,9 @@ test("two losses: the day fails after game 2, and the third game is still offere
   await gotoReady(page, "/play");
   await page.getByRole("button", { name: "Start" }).click();
   await missSwiftSum(page);
-  // The server scored the answers against the game's own target, in levels.
+  // The server scored the answers against the game's own target, in rounds.
   await expect(heading(page, "Game 1 of 3: lost")).toBeVisible();
-  await expect(page.getByText("You scored 0 levels. Today's target was 1000 levels.")).toBeVisible();
+  await expect(page.getByText("You scored 0 rounds. Today's target was 1000 rounds.")).toBeVisible();
   await page.getByRole("button", { name: "Continue" }).click();
 
   await page.getByRole("button", { name: "Start" }).click();

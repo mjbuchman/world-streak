@@ -7,8 +7,8 @@ import { RUN_COUNTDOWN_MS } from "@/config/countdown";
 import type { FlashCountGame } from "./FlashCountGame";
 import { FlashLadderGame } from "./FlashLadderGame";
 
-// The flash itself (the countdown, the dots, the hidden-tab rule and the answer field) is
-// FlashCountGame's, tested on its own; here a stand-in records what each showing is given.
+// The flash itself (the dots, the hidden-tab rule and the answer field) is FlashCountGame's,
+// tested on its own; here a stand-in records what each round is given.
 type ShowingProps = ComponentProps<typeof FlashCountGame>;
 let showing: ShowingProps | null;
 let mounts: number;
@@ -23,17 +23,21 @@ vi.mock("./FlashCountGame", async () => {
   };
 });
 
-const params: FlashLadderParams = { layoutSeed: 11, levels: [10, 14].map((dotCount) => ({ dotCount, flashMs: 1500 - 100 * dotCount })) };
+// Frames from fake timers: performance.now and requestAnimationFrame both follow them.
+const params: FlashLadderParams = { layoutSeed: 11, bank: 10, levels: [10, 14, 18, 22, 26].map((dotCount, i) => ({ dotCount, flashMs: 1800 - 100 * i })) };
 
 const answer = (count: number) => act(() => showing!.onFinish({ count }));
-const reveal = () => act(() => void vi.advanceTimersByTime(REVEAL_MS));
-const now = vi.spyOn(performance, "now");
+const wait = (ms: number) => act(() => void vi.advanceTimersByTime(ms));
+/** The 3-2-1, run out (a few frames past its end). */
+const countdown = () => wait(RUN_COUNTDOWN_MS + 100);
+const reveal = () => wait(REVEAL_MS);
+const bank = () => screen.getByRole("meter", { name: "Dot bank" });
+const steps = () => [...document.querySelectorAll("[data-step]")].map((step) => step.getAttribute("data-step"));
 
 beforeEach(() => {
   showing = null;
   mounts = 0;
-  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-  now.mockReturnValue(1000);
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "requestAnimationFrame", "cancelAnimationFrame", "performance"] });
 });
 
 afterEach(() => {
@@ -42,75 +46,104 @@ afterEach(() => {
 });
 
 describe("FlashLadderGame", () => {
-  it("flashes level 1 after the 3-2-1 with its own layout, then level 2 without it after a right answer", () => {
+  it("runs a 3-2-1 before every round, then flashes that round's own layout without one", () => {
     render(<FlashLadderGame params={params} onFinish={vi.fn()} />);
-    expect(screen.getByText("Level 1 of 2")).toBeTruthy();
-    expect(showing).toMatchObject({ countdownMs: RUN_COUNTDOWN_MS, params: { dotCount: 10, flashMs: 500, dots: layoutFor(params, 0, 0) } });
-    answer(11);
-    expect(screen.getByText("Right")).toBeTruthy();
-    expect(screen.queryByText("Flash on screen")).toBeNull();
-    act(() => void vi.advanceTimersByTime(REVEAL_MS - 1));
-    expect(screen.queryByText("Flash on screen")).toBeNull();
-    act(() => void vi.advanceTimersByTime(1));
-    expect(screen.getByText("Level 2 of 2")).toBeTruthy();
-    expect(showing).toMatchObject({ countdownMs: 0, params: { dotCount: 14, flashMs: 100, dots: layoutFor(params, 1, 0) } });
-  });
-
-  it("costs a life for a wrong answer and retries the same level with a new layout", () => {
-    render(<FlashLadderGame params={params} onFinish={vi.fn()} />);
-    const lives = () => screen.getByRole("img", { name: /lives left$/ }).getAttribute("aria-label");
-    expect(lives()).toBe("3 of 3 lives left");
+    expect(screen.getByText("Round 1")).toBeTruthy();
+    expect(showing).toBeNull();
+    countdown();
+    expect(showing).toMatchObject({ countdownMs: 0, params: { dotCount: 10, flashMs: 1800, dots: layoutFor(params, 0) } });
     answer(10);
     reveal();
-    answer(17);
-    expect(screen.getByText("Off by 3")).toBeTruthy();
-    expect(lives()).toBe("2 of 3 lives left");
+    expect(screen.getByText("Round 2")).toBeTruthy();
+    expect(screen.queryByText("Flash on screen")).toBeNull();
+    countdown();
+    expect(showing).toMatchObject({ countdownMs: 0, params: { dotCount: 14, flashMs: 1700, dots: layoutFor(params, 1) } });
+    // A fresh flash for every round, so the hidden-tab rule (T110) covers each one.
+    expect(mounts).toBe(2);
+  });
+
+  it("shows each answer's miss for the reveal and drains the bank by it, with a step per round", () => {
+    render(<FlashLadderGame params={params} onFinish={vi.fn()} />);
+    expect(bank().getAttribute("aria-valuetext")).toBe("10 dots left of 10 dots");
+    expect(steps()).toEqual(["current", "later", "later", "later", "later"]);
+    countdown();
+    answer(10);
+    wait(REVEAL_MS - 1);
+    expect(screen.getByRole("status").textContent).toBe("Right on");
+    wait(1);
+    expect(screen.getByText("Round 2")).toBeTruthy();
+    countdown();
+    answer(11);
+    expect(screen.getByRole("status").textContent).toBe("Off by 3");
+    expect(screen.getByText("-3 dots")).toBeTruthy();
+    expect(bank().getAttribute("aria-valuetext")).toBe("7 dots left of 10 dots");
+    expect(steps()).toEqual(["done", "done", "current", "later", "later"]);
+  });
+
+  it("says a miss of one dot in the singular", () => {
+    render(<FlashLadderGame params={params} onFinish={vi.fn()} />);
+    countdown();
+    answer(9);
+    expect(screen.getByText("-1 dot")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toBe("Off by 1");
+  });
+
+  it("ends the run in the round that busts the bank, after its reveal, with the answers timed from the start", () => {
+    const onFinish = vi.fn();
+    render(<FlashLadderGame params={params} onFinish={onFinish} />);
+    countdown();
+    wait(900);
+    answer(16);
     reveal();
-    expect(screen.getByText("Level 2 of 2")).toBeTruthy();
-    expect(showing?.params.dots).toEqual(layoutFor(params, 1, 1));
-    expect(showing?.params.dots).not.toEqual(layoutFor(params, 1, 0));
-    // A fresh flash for every showing, so the hidden-tab rule (T110) covers each one.
+    countdown();
+    answer(14);
+    reveal();
+    countdown();
+    // Off by 6, right on, then off by 5 with 4 left: the bank is bust in round 3.
+    answer(13);
+    expect(bank().getAttribute("aria-valuetext")).toBe("Bank used up");
+    expect(steps()).toEqual(["done", "done", "failed", "later", "later"]);
+    // The last miss shows for the reveal first, so a phone's click after the answer cannot reach the result.
+    wait(REVEAL_MS - 1);
+    expect(onFinish).not.toHaveBeenCalled();
+    expect(screen.getByRole("status").textContent).toBe("Off by 5");
+    wait(1);
+    const first = RUN_COUNTDOWN_MS + 100 + 900;
+    const round = REVEAL_MS + RUN_COUNTDOWN_MS + 100;
+    expect(onFinish).toHaveBeenCalledExactlyOnceWith({
+      answers: [
+        { count: 16, atMs: first },
+        { count: 14, atMs: first + round },
+        { count: 13, atMs: first + 2 * round },
+      ],
+    });
+    countdown();
+    expect(screen.queryByText("Flash on screen")).toBeNull();
     expect(mounts).toBe(3);
   });
 
-  it("times each answer from its start and reports them once the last level is cleared", () => {
+  it("reports the answers after all five rounds when small misses leave the bank", () => {
     const onFinish = vi.fn();
     render(<FlashLadderGame params={params} onFinish={onFinish} />);
-    now.mockReturnValue(5200);
-    answer(10);
-    reveal();
-    now.mockReturnValue(9000);
-    answer(13);
-    expect(onFinish).toHaveBeenCalledExactlyOnceWith({
-      answers: [
-        { count: 10, atMs: 4200 },
-        { count: 13, atMs: 8000 },
-      ],
-    });
-    // The last answer's reveal stays; no further flash starts.
-    expect(screen.getByText("Right")).toBeTruthy();
-    reveal();
-    expect(screen.queryByText("Flash on screen")).toBeNull();
-  });
-
-  it("reports the answers once the lives run out", () => {
-    const onFinish = vi.fn();
-    render(<FlashLadderGame params={params} onFinish={onFinish} />);
-    for (const count of [1, 2]) {
-      now.mockReturnValue(1000 + 1000 * count);
+    for (const count of [9, 15, 17, 23]) {
+      countdown();
       answer(count);
       reveal();
     }
+    countdown();
+    answer(25);
+    expect(bank().getAttribute("aria-valuetext")).toBe("5 dots left of 10 dots");
+    // As in Second Sense, the last step stays current until the result replaces the run.
+    expect(steps()).toEqual(["done", "done", "done", "done", "current"]);
     expect(onFinish).not.toHaveBeenCalled();
-    now.mockReturnValue(4000);
-    answer(3);
-    expect(onFinish).toHaveBeenCalledExactlyOnceWith({ answers: [1, 2, 3].map((count) => ({ count, atMs: 1000 * count })) });
-    expect(screen.getByRole("img", { name: "0 of 3 lives left" })).toBeTruthy();
-    expect(screen.getByText("Off by 7")).toBeTruthy();
+    reveal();
+    expect(onFinish).toHaveBeenCalledOnce();
+    expect(onFinish.mock.calls[0][0].answers.map((a: { count: number }) => a.count)).toEqual([9, 15, 17, 23, 25]);
+    expect(mounts).toBe(5);
   });
 
-  it("passes a custom countdown to level 1 (0 skips it in tests of the run)", () => {
+  it("skips the 3-2-1 with a countdown of 0 (tests of the run)", () => {
     render(<FlashLadderGame countdownMs={0} params={params} onFinish={vi.fn()} />);
-    expect(showing?.countdownMs).toBe(0);
+    expect(showing?.params.dotCount).toBe(10);
   });
 });
