@@ -3,6 +3,8 @@
   position: absolute;
   inset: 0;
   display: grid;
+  /* place-content too: a number wider than its box still overflows evenly on both sides (T203). */
+  place-content: center;
   place-items: center;
   font-family: var(--fs-font-display);
   font-weight: 800;

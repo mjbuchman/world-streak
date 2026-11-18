@@ -93,10 +93,11 @@ const sum = (gapsMs = [2_000, 2_000], over: Partial<DetectArgs> = {}): DetectArg
 
 /** A Time Bank run of four 20 s rounds, each tapped `errorsMs[i]` late (null: no tap). */
 const bank = (errorsMs: (number | null)[], over: Partial<DetectArgs> = {}): DetectArgs => {
-  const rounds = Array.from({ length: 4 }, () => ({ targetMs: 20_000, revealMs: 2_000, timeoutMs: 30_000 }));
-  const tapsMs = errorsMs.map((error) => (error === null ? null : 20_000 + error));
-  const lastMs = tapsMs.reduce<number>((sum, tap, i) => sum + (i > 0 ? ROUND_GAP_MS + ROUND_COUNTDOWN_MS : 0) + (tap ?? 30_000), 0);
-  return clock(errorsMs.length, { inputs: { tapsMs }, params: { budgetMs: 10_000, rounds }, serverElapsedMs: lastMs + 4_000, ...over });
+  // A 2 s bank on 15 s targets, as the game has since T202.
+  const rounds = Array.from({ length: 4 }, () => ({ targetMs: 15_000, revealMs: 2_000, timeoutMs: 17_000 }));
+  const tapsMs = errorsMs.map((error) => (error === null ? null : 15_000 + error));
+  const lastMs = tapsMs.reduce<number>((sum, tap, i) => sum + (i > 0 ? ROUND_GAP_MS + ROUND_COUNTDOWN_MS : 0) + (tap ?? 17_000), 0);
+  return clock(errorsMs.length, { inputs: { tapsMs }, params: { budgetMs: 2_000, rounds }, serverElapsedMs: lastMs + 4_000, ...over });
 };
 
 /** A real Echo Path board: its path is 17 tiles long, played back at 300 ms a tile. */
@@ -238,8 +239,12 @@ describe("stacking-perfect-run", () => {
 });
 
 describe("time-bank-implausible", () => {
-  it("leaves an honest run alone", () => {
-    expect(detectFlags(bank([400, -900, 250, 1_100]))).toEqual([]);
+  it("leaves an honest run that survives the 2 s bank alone (T204)", () => {
+    expect(detectFlags(bank([400, -300, 600, -200]))).toEqual([]);
+  });
+
+  it("flags a scripted run inside the 2 s bank (T204)", () => {
+    expect(detectFlags(bank([10, -12, 8, 15]))).toEqual(["time-bank-implausible"]);
   });
 
   it("flags 3 of the 4 rounds tapped under 25 ms off, either side", () => {

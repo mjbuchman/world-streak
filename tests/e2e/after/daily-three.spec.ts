@@ -58,7 +58,7 @@ async function missSwiftSum(page: Page) {
   await page.getByRole("button", { name: "Submit" }).click();
 }
 
-/** Second Sense: a tap as round 1 starts misses its 15 s or longer target by more than the 10 s bank. */
+/** Second Sense: a tap as round 1 starts misses its 10 s or longer target by more than the 2 s bank. */
 async function rushSecondSense(page: Page) {
   const clock = page.locator("[data-clock]");
   const tapArea = page.getByRole("button", { name: /Tap when you think [\d.]+ seconds have passed/ });
@@ -134,7 +134,7 @@ test("win two of three: the day passes after game 2, the meter counts it, and ga
   expect(sharedBefore).toContain("I passed today.\n✅✅⬜");
 
   await gotoReady(page, "/play");
-  await expect(heading(page, "Game 3 of 3: Echo Path")).toBeVisible();
+  await expect(heading(page, "Game 3 of 3: Trail Trace")).toBeVisible();
   await expect(page.getByText(/won't change the result/)).toBeVisible();
   await page.getByRole("button", { name: "Play it anyway" }).click();
   await missEchoPath(page);
@@ -171,7 +171,7 @@ test("two losses: the day fails after game 2, and the third game is still offere
   await page.getByRole("button", { name: "Continue" }).click();
 
   await expect(heading(page, "Not today: two losses")).toBeVisible();
-  await expect(heading(page, "Game 3 of 3: Echo Path")).toBeVisible();
+  await expect(heading(page, "Game 3 of 3: Trail Trace")).toBeVisible();
   await expect(page.getByRole("button", { name: "Play it anyway" })).toBeVisible();
 });
 

@@ -121,7 +121,7 @@ describe("set-lineup", () => {
     const { db, calls } = fakeDb([ok(), OPEN_DAY, NOBODY, ok({ current: 4, best: 9 }), ok(15), ok("6"), ok(7), ok(true)]);
     expect(await runLocalTool(caller(), db, setTo("flash-count"), NOW, fakeData())).toEqual({
       ok: true,
-      message: "Nov 13, 2026 is now Swift Sum, Echo Path, Fair Split.",
+      message: "Nov 13, 2026 is now Swift Sum, Trail Trace, Clean Cut.",
     });
     expect(calls[0]).toEqual([["rpc", "ensure_game_day", { d: "2026-11-13" }]]);
     expect(calls.slice(4, 7)).toEqual([
@@ -248,7 +248,7 @@ describe("restore-pool", () => {
     const { db, calls } = fakeDb([ok()]);
     expect(await runLocalTool(caller(), db, form({ tool: "restore-pool" }), NOW, fakeData())).toEqual({
       ok: true,
-      message: "The pool is back to Teetering Tower, Second Sense, Swift Sum, Echo Path, Fair Split.",
+      message: "The pool is back to Teetering Tower, Second Sense, Swift Sum, Trail Trace, Clean Cut.",
     });
     expect(calls[0]).toEqual([["from", "game_settings"], ["update", { pool: [...DEFAULT_POOL] }], ["eq", "id", true]]);
     expect(DEFAULT_POOL).toEqual(["stacking", "inner-clock", "flash-count", "echo-path", "fair-split"]);

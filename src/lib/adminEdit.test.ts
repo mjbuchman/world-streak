@@ -170,7 +170,7 @@ describe("saveGameDayEdit", () => {
       expect(await saveGameDayEdit(db, edit({ game2: "echo-path" }))).toEqual({
         ok: true,
         message:
-          "Saved Nov 12, 2026. Its games are now Teetering Tower, Echo Path, Swift Sum. " +
+          "Saved Nov 12, 2026. Its games are now Teetering Tower, Trail Trace, Swift Sum. " +
           "A changed game with its old target left as it was takes its default pass target.",
       });
     });

@@ -94,8 +94,8 @@ describe("/admin", () => {
       ["stacking", "Teetering Tower"],
       ["inner-clock", "Second Sense"],
       ["flash-count", "Swift Sum"],
-      ["echo-path", "Echo Path"],
-      ["fair-split", "Fair Split"],
+      ["echo-path", "Trail Trace"],
+      ["fair-split", "Clean Cut"],
     ]);
     // Three different games to start with, so the form is valid as it stands.
     expect(["Game 1", "Game 2", "Game 3"].map((name) => select(name).value)).toEqual(["stacking", "inner-clock", "flash-count"]);

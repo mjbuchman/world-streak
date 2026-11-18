@@ -139,7 +139,7 @@ describe("runSeed", () => {
     ]);
     expect(deps.recordPastResult).not.toHaveBeenCalled();
     expect(deps.log).toHaveBeenLastCalledWith(
-      "Seeded 2 players for 2026-11-08 (Teetering Tower, Second Sense, Echo Path): 1 passed the day, 1 did not.",
+      "Seeded 2 players for 2026-11-08 (Teetering Tower, Second Sense, Trail Trace): 1 passed the day, 1 did not.",
     );
   });
 
@@ -150,7 +150,7 @@ describe("runSeed", () => {
     expect(deps.recordResult).not.toHaveBeenCalled();
     expect(deps.calls.filter((call) => call.startsWith("past "))).toHaveLength(12);
     expect(deps.log).toHaveBeenLastCalledWith(
-      "Seeded 4 players for 2026-11-07 (Teetering Tower, Second Sense, Echo Path): 2 passed the day, 2 did not.",
+      "Seeded 4 players for 2026-11-07 (Teetering Tower, Second Sense, Trail Trace): 2 passed the day, 2 did not.",
     );
   });
 

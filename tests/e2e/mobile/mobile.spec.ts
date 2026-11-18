@@ -118,7 +118,7 @@ test("Second Sense can be played with a tap, on an area that fits", async ({ pag
   await expectReadableBank(page, "Time bank");
   await expect(page.locator("[data-clock]")).toHaveAttribute("data-clock", "shown");
   await tap(page, area);
-  // A tap at once misses round 1's 15 s or longer target by more than the 10 s bank.
+  // A tap at once misses round 1's 10 s or longer target by more than the 2 s bank.
   await expect(page.getByRole("heading", { level: 2, name: "0 rounds survived" })).toBeVisible();
   await expectPhoneFriendly(page);
 });

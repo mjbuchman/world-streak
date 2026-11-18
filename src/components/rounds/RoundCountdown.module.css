@@ -1,5 +1,10 @@
-/* A fixed-height slot, so nothing below jumps when the numbers end (T178). */
+/*
+ * A fixed-height slot, so nothing below jumps when the numbers end (T178). Full width: in a
+ * centring column it would otherwise shrink to the caption, and the big number would overflow
+ * that narrow box to the right, off centre (T203).
+ */
 .slot {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
