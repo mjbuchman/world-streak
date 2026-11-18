@@ -442,3 +442,15 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - Reason: Open items (shape mix, bank, timing, target, thresholds); the backlog proposes (1), (2), (4) and (6).
 - How to change it later: `src/challenges/fair-split/shapes.ts`, `engine.ts` and `render.ts` constants; `game_settings.default_pass_targets` or /admin; `src/config/cheat.ts`.
 - Confirmed by human: pending (NEEDS_HUMAN, M6 calls)
+
+### 2026-11-18 — M6 calls shared by the four games (T197, T198)
+- Choice: (1) "Targets 15 to 25 seconds" is read as each round's interval: round i (from 0) draws 15 + 2.5i to 17.4 + 2.5i s in 0.1 s steps. The clock shows for the first 2 s of every round, and a round with no tap ends at its target plus the 10 s bank. (2) A round whose cost equals what is left of the bank survives; only a cost above it ends the run (all four games). (3) `challenge_types.scores_since`: each reworked game's scores before the rework are on another scale, so they are left out of its pass-target percentile until new scores build up; the Tower has none. (4) The per-player variation the backlog asks for is the per-attempt seed: every attempt gets its own seed, so two players never share a Second Sense target list, a dot layout, a path or a shape set. The e2e test checks this for the day's three lineup games; each engine's own tests cover the rest. (5) Echo Path's path never revisits a tile, so each tile is tapped at most once per echo. (6) The Teetering Tower is unchanged in M6.
+- Reason: Open items; the backlog proposes (1) to (4). (2) keeps "0 left" a survival, as players read a bank reaching zero.
+- How to change it later: `src/challenges/inner-clock/timeBank.ts` (`TARGET_RANGES_MS`, `REVEAL_MS`, `BUDGET_MS`); each engine's bank check; `challenge_types.scores_since` in a migration; `src/challenges/echo-path/path.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, M6 calls)
+
+### 2026-11-18 — Where M6 departs from DESIGN.md (T198)
+- Choice: the games table and its scoring text no longer describe four games; the backlog's M6 rules win. (1) Second Sense: "budget placeholder 3.0 s; the run ends when the budget runs out; survive N rounds; target length rises, clock fades sooner" became four fixed rounds against a 10 s bank, 15 to 25 s targets, a 2 s clock every round and a 3-2-1 every round. (2) Swift Sum: "a wrong count costs one of 3 lives; more dots, shorter flash" became five rounds against a 10-dot bank, with no lives and no tolerance. (3) Echo Path: "grid size; a mistake gives a new sequence of the same length" became one 5 x 10 path per player, growing a tile a round; a mistake replays the same length. (4) Fair Split: "within plus or minus 1 point counts; a cut outside costs one of 3 lives; a time limit per cut; concave shapes" became five rounds against a 6-point bank, curved and abstract shapes, a movable line with a Cut button and a 25 s limit.
+- Reason: the owner's M6 rework (backlog M6) replaces these rules; agents never edit DESIGN.md.
+- How to change it later: the owner updates DESIGN.md (NEEDS_HUMAN, "Please update DESIGN.md").
+- Confirmed by human: pending (NEEDS_HUMAN, update DESIGN.md)

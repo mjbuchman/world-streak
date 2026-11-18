@@ -5,13 +5,14 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M6 Gameplay tweaks (T177–T198, approved Nov 18). Batches 14–18 run in order without play-test stops; one M6 play-test at the end. T45, T52 and T128 still wait on the owner.
-- Active task: batch 17, T192–T196 Fair Split as five rounds against a bank of points.
+- Active task: batch 18, T197–T198 e2e and phone checks for the reworked games, and the M6 decisions.
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: batch 18.
+- Next: maintainer pass, then the M6 play-test.
 
 ## Log
 
+- 2026-11-18 T192–T196 done, PR #175: Fair Split as five shapes against a 6-point bank, with a line that stays movable until Cut and an auto-cut at 25 s.
 - 2026-11-18 T187–T191 done, PR #174: Echo Path as one seeded path growing up a 5 x 10 board; arrow keys and Enter replace the number keys.
 - 2026-11-18 T184–T186 done, PR #173: Swift Sum as five rounds against a 10-dot bank; results read in rounds. One CI rerun for a runner fault.
 - 2026-11-18 T180–T183 done, PR #171: Second Sense as four rounds against a 10 s bank (shared `playBank`, `scores_since` scale reset). Blocked after 3 CI failures on a phone ghost click, unblocked by the owner; fixed by showing the last error for ROUND_GAP_MS before the result.
