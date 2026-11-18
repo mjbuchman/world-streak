@@ -1944,7 +1944,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T175 Per-file coverage thresholds for the M5 lib modules (maintainer, Nov 17)
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] `vitest.config.mts` gains 90% lines and branches entries for `src/lib/share.ts` and the other small lib modules without one (`rules.ts`, `random.ts`, `forms.ts`, `passwords.ts`, `health.ts`), with tests added first where a file is under 90%; never below a file's current coverage.
@@ -1953,7 +1953,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T176 README for the Daily Three (maintainer, Nov 17)
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] README covers the Daily Three and its five games, the T163/T164 local tools and seed, and the admin lineup editor; every command and env var it names exists in `package.json` / `.env.example`.
