@@ -1,4 +1,4 @@
-/* Echo Path: the lives and the path bar above a tall 5 x 10 board (T171, T190). */
+/* Trail Trace: the lives and the path bar above a 5 x 8 board (T171, T190, T208). */
 .game {
   display: flex;
   flex-direction: column;
@@ -56,7 +56,7 @@
   border-color: var(--fs-color-surface-border);
 }
 
-/* The board, 250 px wide at most so its 10 rows fit a phone screen, with the countdown over its middle. */
+/* The board, 250 px wide at most so its 8 rows fit a phone screen, with the countdown over its middle. */
 .stage {
   position: relative;
   width: min(100%, 250px);
@@ -66,8 +66,8 @@
 .board {
   display: block;
   width: 100%;
-  /* Five tiles and six gaps of a tenth of a tile across, ten tiles and eleven gaps up. */
-  aspect-ratio: 5.6 / 11.1;
+  /* Five tiles and six gaps of a tenth of a tile across, eight tiles and nine gaps up (T208). */
+  aspect-ratio: 5.6 / 8.9;
   /* Quick taps on a phone never zoom the page, by double tap or pinch (T166). */
   touch-action: none;
   border-radius: var(--fs-radius-surface);

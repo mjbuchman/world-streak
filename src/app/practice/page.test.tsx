@@ -18,7 +18,7 @@ describe("/practice", () => {
       ["Teetering Tower", "/practice/stacking", "Stack the sliding rows as high as you can."],
       ["Second Sense", "/practice/inner-clock", "Four rounds: tap when each target time has passed. Targets of 10 to 20 seconds; every miss drains your 2-second time bank."],
       ["Swift Sum", "/practice/flash-count", "Five rounds of 10 to 30 dots, a new count every round: say how many. Every dot you miss drains your 10-dot bank."],
-      ["Trail Trace", "/practice/echo-path", "A path of tiles climbs the board. Tap it back, one tile longer each time, all the way to the top."],
+      ["Trail Trace", "/practice/echo-path", "A path of up to 12 tiles climbs the board. Tap it back, one tile longer each time, all the way to the top."],
       ["Clean Cut", "/practice/fair-split", "Five odd shapes: place one straight line to cut each in half. Every point off 50% drains your 6-point bank."],
     ]);
   });

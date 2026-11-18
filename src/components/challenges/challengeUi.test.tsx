@@ -69,7 +69,7 @@ describe("challengeUi", () => {
   });
 
   it("explains Echo Path's climbing path and its arrow keys, and states its target as a path length (T190, T191)", () => {
-    expect(challengeUi("echo-path").howTo).toMatch(/path of 4 tiles.*arrow keys.*Space or Enter.*reaches the top.*3 lives/);
+    expect(challengeUi("echo-path").howTo).toMatch(/path of 4 tiles.*arrow keys.*Space or Enter.*reaches the top: a path of up to 12 tiles.*3 lives/);
     expect(challengeUi("echo-path").target(10)).toBe("a path of 10 tiles");
   });
 

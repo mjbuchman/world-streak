@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { sequenceFor, type EchoPathInputs, type EchoPathParams } from "@/challenges/echo-path/engine";
 
 // Every run: a 6-tile path (shorter than any real one, so a test can clear it all), from a start of 4.
-const params: EchoPathParams = { cols: 5, rows: 10, path: [2, 7, 12, 17, 22, 27], startLength: 4, stepMs: 350 };
+const params: EchoPathParams = { cols: 5, rows: 8, path: [2, 7, 12, 17, 22, 27], startLength: 4, stepMs: 350 };
 vi.mock("@/challenges/echo-path/engine", async (importOriginal) => {
   const real = await importOriginal<typeof import("@/challenges/echo-path/engine")>();
   return { ...real, paramsFromSeed: () => params };
@@ -39,7 +39,7 @@ const WRONG = 7;
 describe("EchoPathPractice", () => {
   it("explains the path, the keys and the lives before the start", () => {
     render(<EchoPathPractice />);
-    expect(screen.getByText(/a path of 4 tiles lights up from the bottom of the board.*arrow keys.*until it reaches the top.*3 lives/)).toBeTruthy();
+    expect(screen.getByText(/a path of 4 tiles lights up from the bottom of the board.*arrow keys.*until it reaches the top: a path of up to 12 tiles.*3 lives/)).toBeTruthy();
   });
 
   it("shows the longest path against the whole and the lives left, and focuses the result", async () => {

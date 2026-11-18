@@ -4,7 +4,7 @@ import type { ChallengeModule } from "../shared/types";
 import { COLS, MAX_PATH_LENGTH, pathFor, ROWS } from "./path";
 
 /**
- * Echo Path (T188): one seeded path climbs a tall board from the bottom row to the top (T187).
+ * Trail Trace (T188, T208): one seeded path of 8 to 12 tiles climbs the 5 x 8 board from the bottom row to the top (T207).
  * Each round plays back the path's first tiles and the player taps them back in order; a cleared
  * round adds the path's next tile. A wrong tile costs one of LIVES lives and the same tiles play
  * again. The run ends when the whole path is cleared or the lives run out. There is no time
