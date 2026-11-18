@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { deadlineLabel, isDraft, RULES_CONFIG, rulesSections, type RulesConfig } from "./rules";
+import { countryName, deadlineLabel, isDraft, RULES_CONFIG, rulesSections, type RulesConfig } from "./rules";
+
+describe("countryName", () => {
+  it("gives a United country its article, others none, and an unknown code as itself", () => {
+    expect(countryName("US")).toBe("the United States");
+    expect(countryName("CA")).toBe("Canada");
+    expect(countryName("XQ")).toBe("XQ");
+  });
+});
 
 const text = (config: RulesConfig) =>
   rulesSections(config)

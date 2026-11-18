@@ -23,7 +23,7 @@ export type RulesConfig = {
 };
 
 /** A country as a sentence names it: "the United States", "Canada". */
-function countryName(code: string): string {
+export function countryName(code: string): string {
   const name = COUNTRY_OPTIONS.find((option) => option.code === code)?.name ?? code;
   return name.startsWith("United ") ? `the ${name}` : name;
 }
