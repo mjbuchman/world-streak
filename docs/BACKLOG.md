@@ -1917,7 +1917,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T172 Normalize line endings with .gitattributes
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] A root `.gitattributes` sets `* text=auto eol=lf` and marks binary assets (png, ico, woff2) as `binary`.
@@ -1926,7 +1926,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T173 Patch-level dependency bumps
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] `@playwright/test` 1.65.1, `jsdom` 31.0.1 and `@testing-library/user-event` 14.6.12 in `package.json` and the lockfile; no major bumps.
@@ -1935,7 +1935,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T174 Drop the old single-game columns from game_days (split from T161)
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: T163
 - Acceptance criteria:
   - [ ] Nothing reads or writes `game_days.challenge_type` or `game_days.pass_target` (the local tools' "set a day's challenge", `tests/e2e/global-setup.ts`, `tests/e2e/after/` and `today.ts` move to `game_day_games`); a grep in the PR description shows no readers.

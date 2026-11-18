@@ -21,35 +21,35 @@ select tests.play_day('2000-04-09', 10, 8, 0.60, '2000-04-10T00:00:05Z');
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000ad","role":"authenticated"}', true);
 set local role authenticated;
 select lives_ok(
-  $$update public.game_days set pass_target = 12, survival_threshold = 0.55, edited = true where game_date = '2000-04-10'$$,
-  'an admin can edit an open day''s pass target and threshold'
+  $$update public.game_days set survival_threshold = 0.55, edited = true where game_date = '2000-04-10'$$,
+  'an admin can edit an open day''s threshold'
 );
 select throws_ok(
-  $$update public.game_days set pass_target = 13, edited = false where game_date = '2000-04-10'$$,
+  $$update public.game_days set survival_threshold = 0.5, edited = false where game_date = '2000-04-10'$$,
   '42501', null, 'an edit must mark the day edited, so the automatic preparation leaves it alone'
 );
 select throws_ok(
   $$update public.game_days set outcome = 'survived' where game_date = '2000-04-10'$$,
   '42501', null, 'an admin cannot change any other column'
 );
-update public.game_days set pass_target = 1, edited = true where game_date = '2000-04-09';
+update public.game_days set survival_threshold = 0.9, edited = true where game_date = '2000-04-09';
 reset role;
 select results_eq(
-  $$select pass_target, survival_threshold, edited from public.game_days where game_date in ('2000-04-09', '2000-04-10') order by game_date$$,
-  $$values (10::numeric, 0.60::numeric, false), (12::numeric, 0.55::numeric, true)$$,
+  $$select survival_threshold, edited from public.game_days where game_date in ('2000-04-09', '2000-04-10') order by game_date$$,
+  $$values (0.60::numeric, false), (0.55::numeric, true)$$,
   'the open day took the edit; the closed day did not'
 );
 
 -- As a player, and as a visitor.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000b0","role":"authenticated"}', true);
 set local role authenticated;
-update public.game_days set pass_target = 1, edited = true where game_date = '2000-04-10';
+update public.game_days set survival_threshold = 0.9, edited = true where game_date = '2000-04-10';
 reset role;
-select is((select pass_target from public.game_days where game_date = '2000-04-10'), 12::numeric, 'a player''s edit changes nothing');
+select is((select survival_threshold from public.game_days where game_date = '2000-04-10'), 0.55::numeric, 'a player''s edit changes nothing');
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
 set local role anon;
 select throws_ok(
-  $$update public.game_days set pass_target = 1, edited = true where game_date = '2000-04-10'$$,
+  $$update public.game_days set survival_threshold = 0.9, edited = true where game_date = '2000-04-10'$$,
   '42501', null, 'a visitor cannot edit a game day at all'
 );
 reset role;

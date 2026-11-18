@@ -92,9 +92,14 @@ test("a player loses game 1 on purpose, sees the server's result, and after a re
   await page.getByRole("button", { name: "Start" }).click();
   const instance = (await (await started).json()) as { attemptId: string; gameDate: string; params: StackingParams };
   await expect(page.getByRole("status")).toHaveText("Row 1");
-  // Today's target, as stored on the game day the start created.
-  const { data: day } = await adminClient().from("game_days").select("pass_target").eq("game_date", instance.gameDate).single();
-  const passTarget = Number(day!.pass_target);
+  // The Tower's target, as stored in the lineup of the day the start created.
+  const { data: game } = await adminClient()
+    .from("game_day_games")
+    .select("pass_target")
+    .eq("game_date", instance.gameDate)
+    .eq("position", 1)
+    .single();
+  const passTarget = Number(game!.pass_target);
   await expect(page.getByText(`Row ${passTarget} to pass`)).toBeVisible();
   await expect(back).toBeHidden();
   // No header link one stray tap away either (UI rule 8; leaving would lose the attempt).

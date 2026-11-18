@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M5 The Daily Three (planned Nov 15).
-- Active task: none. M5 complete. The owner (Nov 17) will play-test later, all at once: do not stop for it; finish every remaining batch first, stopping only for things that need the owner. Next: batch 10 (T172, T173) on branch `task/172-maintenance`, which already holds these doc updates, and batch 11 (T174).
+- Active task: none. M5 complete. The owner (Nov 17) will play-test later, all at once: do not stop for it; finish every remaining batch first, stopping only for things that need the owner. Next: batch 11 (T174) on branch `task/174-drop-game-day-columns`, then batch 12 (T175, T176).
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M5 The Daily Three (T139–T166, approved in advance on Nov 15), starting with T139.
@@ -18,6 +18,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Review rounds: spec 1, quality 2, tests 1
 - Notes: anything the next session should know
 -->
+
+### 2026-11-17 — T172, T173 LF line endings and patch dependency bumps (PR #165)
+- `.gitattributes` forces LF (Windows snapshot no longer dirty); Playwright 1.65.1, jsdom 31.0.1, user-event 14.6.12.
+- Review rounds: quality 1 (light). CI passed first time.
+- Notes: merges since the last maintainer check: 1.
 
 ### 2026-11-17 — T165, T166 Daily Three e2e and phone checks (PR #164)
 - `after/daily-three.spec.ts` sets today's lineup and targets (0 wins, 1000 loses) and covers two wins, two losses and one attempt per game; it replaces `flash-count-day.spec.ts`. Phone checks for Echo Path, Fair Split, /play and results; Echo Path board now `touch-action: none`.

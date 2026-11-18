@@ -5,9 +5,14 @@ select plan(61);
 select has_table('public', 'game_days', 'game_days table exists');
 select col_is_pk('public', 'game_days', 'game_date', 'game_date is the primary key');
 select col_type_is('public', 'game_days', 'game_date', 'date', 'game_date is a date');
-select col_not_null('public', 'game_days', 'challenge_type', 'challenge_type is required');
-select col_type_is('public', 'game_days', 'pass_target', 'numeric', 'pass_target is numeric');
-select col_not_null('public', 'game_days', 'pass_target', 'pass_target is required');
+-- The day's games and targets live in game_day_games (T174 dropped the first-game mirror).
+select hasnt_column('public', 'game_days', 'challenge_type', 'game_days has no challenge_type');
+select hasnt_column('public', 'game_days', 'pass_target', 'game_days has no pass_target');
+select is(
+  (select count(*)::int from pg_trigger where tgrelid = 'public.game_days'::regclass and tgname in
+    ('game_days_mirror_first_game', 'game_days_change_challenge', 'game_days_lock_started_pass_target', 'game_days_add_first_game')),
+  0, 'the triggers for the old columns are gone'
+);
 select col_type_is('public', 'game_days', 'survival_threshold', 'numeric', 'survival_threshold is numeric');
 select col_not_null('public', 'game_days', 'survival_threshold', 'survival_threshold is required');
 select col_type_is('public', 'game_days', 'final_pass_rate', 'numeric', 'final_pass_rate is numeric');
@@ -76,42 +81,40 @@ insert into public.profiles (id, birth_date, country) values
 update public.game_settings set percentile_min_sample = 2147483647;
 select lives_ok($$select public.ensure_game_day('2001-11-08')$$, 'ensure_game_day creates a missing day');
 select results_eq(
-  $$select challenge_type, pass_target, survival_threshold, outcome, closed_at
-    from public.game_days where game_date = '2001-11-08'$$,
+  $$select g.challenge_type, g.pass_target, d.survival_threshold, d.outcome, d.closed_at
+    from public.game_days d join public.game_day_games g on g.game_date = d.game_date and g.position = 1
+   where d.game_date = '2001-11-08'$$,
   $$values ('stacking'::text, 10::numeric, 0.60::numeric, null::text, null::timestamptz)$$,
   'a new day is a stacking day with the default target and a 60% threshold, still open'
 );
 -- An admin's edit (T99) marks the day edited.
-update public.game_days set pass_target = 12, edited = true where game_date = '2001-11-08';
+update public.game_days set survival_threshold = 0.5, edited = true where game_date = '2001-11-08';
 select public.ensure_game_day('2001-11-08');
 select is(
   (select count(*)::int from public.game_days where game_date = '2001-11-08'), 1,
   'ensure_game_day run twice leaves one row'
 );
 select is(
-  (select pass_target from public.game_days where game_date = '2001-11-08'), 12::numeric,
+  (select survival_threshold from public.game_days where game_date = '2001-11-08'), 0.5::numeric,
   'ensure_game_day leaves an edited day untouched'
 );
 
 -- Check constraints.
 select throws_ok(
-  $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold)
-    values ('2001-11-09', 'stacking', 10, 1.5)$$,
+  $$insert into public.game_days (game_date, survival_threshold) values ('2001-11-09', 1.5)$$,
   '23514', null, 'survival_threshold must be between 0 and 1'
 );
 select throws_ok(
-  $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold, outcome)
-    values ('2001-11-09', 'stacking', 10, 0.6, 'tied')$$,
+  $$insert into public.game_days (game_date, survival_threshold, outcome) values ('2001-11-09', 0.6, 'tied')$$,
   '23514', null, 'outcome is survived or broken'
 );
 select throws_ok(
-  $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold)
-    values ('2001-11-09', 'stacking', -1, 0.6)$$,
+  $$insert into public.game_day_games (game_date, position, challenge_type, pass_target)
+    values ('2001-11-08', 2, 'inner-clock', -1)$$,
   '23514', null, 'pass_target cannot be negative'
 );
 select throws_ok(
-  $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold, final_pass_rate)
-    values ('2001-11-09', 'stacking', 10, 0.6, 1.2)$$,
+  $$insert into public.game_days (game_date, survival_threshold, final_pass_rate) values ('2001-11-09', 0.6, 1.2)$$,
   '23514', null, 'final_pass_rate is a fraction between 0 and 1'
 );
 
@@ -152,8 +155,7 @@ select throws_ok(
   '42501', null, 'a signed-in user cannot insert an attempt directly'
 );
 select throws_ok(
-  $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold)
-    values ('2001-11-10', 'stacking', 0, 0)$$,
+  $$insert into public.game_days (game_date, survival_threshold) values ('2001-11-10', 0)$$,
   '42501', null, 'a signed-in user cannot create a game day'
 );
 select throws_ok(
