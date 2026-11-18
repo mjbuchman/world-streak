@@ -1,0 +1,23 @@
+/* A fixed-height slot, so nothing below jumps when the numbers end (T178). */
+.slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.caption {
+  margin: 0;
+  font-size: var(--fs-text-label);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fs-color-text-muted);
+}
+
+/* CountdownNumber is centred over this positioned box. */
+.stage {
+  position: relative;
+  width: 100%;
+  height: calc(var(--fs-text-display) * 2);
+}

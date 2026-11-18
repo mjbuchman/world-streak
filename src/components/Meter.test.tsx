@@ -59,6 +59,17 @@ afterEach(() => {
 });
 
 describe("Meter", () => {
+  it.each([
+    [1, "100%", "3"],
+    [0.72, "72%", "2"],
+    [0.05, "5%", "1"],
+  ])("marks a reading of %s (%s) with its digit count, so only 100%% gets the smaller type", async (passRate, text, digits) => {
+    fetchSpy.mockImplementation(async () => json(open({ passRate })));
+    render(<Meter />);
+    await flush();
+    expect(screen.getByText(text).dataset.digits).toBe(digits);
+  });
+
   it("shows the pass rate as a half-circle gauge with a tick at the threshold, the gap to the line and the counts", async () => {
     const { container } = render(<Meter />);
     await flush();

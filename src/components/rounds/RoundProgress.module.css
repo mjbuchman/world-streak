@@ -1,0 +1,42 @@
+/* One step per round, joined into a bar (T178). */
+.bar {
+  display: flex;
+  gap: var(--space-1);
+  width: 100%;
+}
+
+/* The highlight moves with a short transition; reduced motion sets the duration to 0. */
+.step {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  height: 28px;
+  border-radius: var(--fs-radius-cell);
+  border: 2px solid var(--fs-color-surface-border);
+  font-size: var(--fs-text-label);
+  font-weight: 700;
+  color: var(--fs-color-text-muted);
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color var(--fs-duration-medium) var(--fs-ease-out),
+    border-color var(--fs-duration-medium) var(--fs-ease-out),
+    box-shadow var(--fs-duration-medium) var(--fs-ease-out);
+}
+
+.step[data-step="done"] {
+  background: var(--fs-color-mint);
+  border-color: var(--fs-color-mint);
+  color: var(--fs-color-meter-surface);
+}
+
+.step[data-step="failed"] {
+  background: var(--fs-color-tangerine-light);
+  border-color: var(--fs-color-tangerine-light);
+  color: var(--fs-color-meter-surface);
+}
+
+.step[data-step="current"] {
+  border-color: var(--fs-color-tangerine);
+  box-shadow: 0 0 0 2px var(--fs-tint-tangerine);
+  color: var(--fs-color-text);
+}

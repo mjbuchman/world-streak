@@ -57,6 +57,36 @@ test.describe("on a 390 x 844 phone", () => {
   });
 });
 
+// Up to every player passing, the reading must sit inside the arc's inner circle, not over the arc (T177).
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 1280, height: 720 },
+]) {
+  test(`the reading stays inside the gauge up to 100% at ${viewport.width} x ${viewport.height}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    const closesAt = new Date(Date.now() + 3_600_000).toISOString();
+    for (const passRate of [0, 0.09, 0.6, 0.99, 1]) {
+      const reading = { gameDate: "2026-11-18", status: "open", passRate, completed: 12, threshold: 0.6, closesAt, streak: { current: 1, best: 1 } };
+      await page.route("/api/meter", (route) => route.fulfill({ json: reading }));
+      await page.goto("/");
+      const rate = page.getByText(`${Math.round(passRate * 100)}%`, { exact: true });
+      await expect(rate).toBeVisible();
+
+      // The arc is a 300 x 165 viewBox with its centre at (150, 150) and an inner radius of 120.
+      const arc = (await page.getByRole("meter", { name: "Today's pass rate" }).locator("svg").boundingBox())!;
+      const scale = arc.width / 300;
+      const centre = { x: arc.x + 150 * scale, y: arc.y + 150 * scale };
+      const box = (await rate.boundingBox())!;
+      for (const x of [box.x, box.x + box.width]) {
+        for (const y of [box.y, box.y + box.height]) {
+          expect(Math.hypot(x - centre.x, y - centre.y), `${passRate} at (${x}, ${y})`).toBeLessThan(120 * scale);
+        }
+      }
+      await page.unroute("/api/meter");
+    }
+  });
+}
+
 test("a signed-in player's meter request carries no cookie, and a decided day shows in it", async ({ page, accounts }) => {
   test.setTimeout(60_000);
   await signUpViaForm(page, { email: accounts.uniqueEmail() });

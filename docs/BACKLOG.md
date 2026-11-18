@@ -1987,7 +1987,7 @@ Planning notes for M6:
 
 ### T177 Meter: the percentage fits inside the gauge at 100%
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] In `src/components/Meter.tsx` and `Meter.module.css`, the big percentage (`styles.rate`, 0 to 100, so up to three digits plus "%") stays inside the arc's inner circle and does not touch or cross the arc at 0%, 9%, 60%, 99% and 100%, on a 390 px wide phone and on desktop. Fix by sizing the text from the gauge (for example a `clamp` or container-relative size, or fewer pixels for three digits), not by clipping.
@@ -1997,7 +1997,7 @@ Planning notes for M6:
 
 ### T178 Shared round progress bar and between-round countdown
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T138
 - Acceptance criteria:
   - [ ] `src/components/rounds/RoundProgress.tsx` renders N numbered steps (1, 2, 3, ...) as a bar, not text: finished rounds are filled mint, a round the player failed is filled light tangerine, the current round is highlighted (tangerine ring), later rounds are outlined. Props: `total`, `current` (0-based), and `failedRound?` (0-based). It has `role="img"` and an `aria-label` such as "Round 2 of 4"; the step highlight moves with a short transition, and with reduced motion it changes instantly.
@@ -2008,7 +2008,7 @@ Planning notes for M6:
 
 ### T179 Shared bank gauge
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T178
 - Acceptance criteria:
   - [ ] `src/components/rounds/BankGauge.tsx` shows a bank as a horizontal bar. Props: `total`, `spent: number[]` (the cost of each round played so far), `format: (value: number) => string` (for example "2.4 s", "3 dots", "0.8 points"), `label` (for example "Time bank"). The filled part is what is left; each round's cost is drawn as its own tangerine segment at the right end of the fill, with a "-2.4 s" caption on the latest one, so the player sees every round subtract from the bank. A line under the bar reads "6.1 s left of 10 s".
