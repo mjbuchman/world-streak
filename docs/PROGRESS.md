@@ -5,13 +5,14 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M7 play-test tweaks (T201–T214, approved Nov 18). Batches M7-a to M7-e run without play-test stops; one play-test at the end. T45, T52 and T128 still wait on the owner.
-- Active task: batch M7-d (T210–T212).
+- Active task: batch M7-e (T213, T214).
 - Blocked tasks: none
-- Waiting on the human: the M6 play-test and M6 please-confirms; updating DESIGN.md for M6; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
+- Waiting on the human: the M7 play-test and the M6 and M7 please-confirms; updating DESIGN.md for M6 and M7; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M7 play-test tweaks (T201–T214, approved Nov 18), batches M7-a to M7-e, then batch 19 (T199, T200).
 
 ## Log
 
+- 2026-11-18 T210–T212 done, PR #182: Clean Cut shapes all lopsided (`MIN_ASYMMETRY` 0.04), an 8-point bank (98.7% simulated survival), and its scale reset.
 - 2026-11-18 T207–T209 done, PR #181: Trail Trace on a 5 x 8 board, paths of 8 to 12 tiles that never share an edge with themselves (target 8), and its scale reset.
 - 2026-11-18 T205–T206 done, PR #180: Swift Sum draws a fresh 10 to 30 dots every round (bank stays 10; simulated survival 41%), and its scale reset.
 

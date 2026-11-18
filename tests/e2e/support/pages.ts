@@ -26,6 +26,21 @@ export async function submitAndWait(page: Page, button: Locator): Promise<void> 
   await reply;
 }
 
+/**
+ * How far the 3-2-1's glyph sits from the centre of its slot and of the board below it, in px (T203).
+ * The span fills its stage whatever happens to the glyph, so the text itself is measured.
+ */
+export async function countdownOffsets(page: Page): Promise<{ slotX: number; slotY: number; boardX: number }> {
+  return page.locator("[data-countdown]").evaluate((el) => {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const centre = (r: DOMRect) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+    const stage = el.parentElement!;
+    const [glyph, slot, board] = [range.getBoundingClientRect(), stage.getBoundingClientRect(), stage.parentElement!.parentElement!.getBoundingClientRect()].map(centre);
+    return { slotX: Math.abs(glyph.x - slot.x), slotY: Math.abs(glyph.y - slot.y), boardX: Math.abs(glyph.x - board.x) };
+  });
+}
+
 /** True when the browser holds a Supabase session cookie. */
 export async function hasSessionCookie(page: Page): Promise<boolean> {
   const cookies = await page.context().cookies();

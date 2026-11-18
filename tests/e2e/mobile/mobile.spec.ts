@@ -4,7 +4,7 @@ import { boardLayout } from "../../../src/challenges/echo-path/render";
 import { paramsFromSeed, type StackingParams } from "../../../src/challenges/stacking/engine";
 import { FALL_MS } from "../../../src/challenges/stacking/render";
 import { expect, test } from "../support/fixtures";
-import { gotoReady, signUpViaForm } from "../support/pages";
+import { countdownOffsets, gotoReady, signUpViaForm } from "../support/pages";
 import { pinSeed, playTaps, skipCountdown, tapsForAMiss } from "../support/tower";
 
 // Runs on the phone projects only (playwright.config.ts): Pixel 7 and a 390 x 844 touch screen.
@@ -133,6 +133,21 @@ test("Second Sense keeps its target text clear of the 3-2-1 on the phone (T197)"
   expect(overlaps).toBe(false);
 });
 
+for (const [game, path] of [
+  ["Second Sense", "/practice/inner-clock"],
+  ["Swift Sum", "/practice/flash-count"],
+]) {
+  test(`${game} centres its 3-2-1 on the phone (T203, T213)`, async ({ page }) => {
+    // No pop animation, so the glyph is measured at its resting size.
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await gotoReady(page, path);
+    await tap(page, page.getByRole("button", { name: "Start" }));
+    await expect(page.locator("[data-countdown]")).toBeVisible();
+    const off = await countdownOffsets(page);
+    expect(Math.max(off.slotX, off.slotY, off.boardX)).toBeLessThanOrEqual(2);
+  });
+}
+
 test("Swift Sum can be answered with taps, on a board that fits", async ({ page }) => {
   await gotoReady(page, "/practice/flash-count");
   await tap(page, page.getByRole("button", { name: "Start" }));
@@ -157,7 +172,7 @@ async function expectNoZoom(board: Locator) {
   expect(await board.evaluate((element) => getComputedStyle(element).touchAction)).toBe("none");
 }
 
-test("Echo Path can be played to the end with taps, on tiles big enough to tap", async ({ page }) => {
+test("Trail Trace can be played to the end with taps, on tiles big enough to tap", async ({ page }) => {
   await gotoReady(page, "/practice/echo-path");
   await tap(page, page.getByRole("button", { name: "Start" }));
   const board = page.locator("canvas[data-phase]");
@@ -178,7 +193,7 @@ test("Echo Path can be played to the end with taps, on tiles big enough to tap",
   await expectPhoneFriendly(page);
 });
 
-test("Fair Split moves its line by touch and cuts with the Cut button, on a board that fits", async ({ page }) => {
+test("Clean Cut moves its line by touch and cuts with the Cut button, on a board that fits", async ({ page }) => {
   await gotoReady(page, "/practice/fair-split");
   await tap(page, page.getByRole("button", { name: "Start" }));
   const board = page.locator("canvas[data-phase]");
