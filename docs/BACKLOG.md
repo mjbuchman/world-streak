@@ -2102,7 +2102,7 @@ Planning notes for M6:
 
 ### T187 Echo Path: path generator (pure)
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/echo-path/path.ts` exports `COLS = 5`, `ROWS = 10`, `MAX_PATH_LENGTH = 18` and `MIN_PATH_LENGTH = 12` (a tall narrow board like Teetering Tower; the length cap is the owner's "height 10, max 18"; 5 columns and the minimum are proposed, owner to confirm), and `pathFor(seed: number): number[]`, a deterministic list of tile indices (row by row from the bottom: index = `row * COLS + col`, row 0 the bottom row) from the bottom row to the top row.
@@ -2112,7 +2112,7 @@ Planning notes for M6:
 
 ### T188 Echo Path engine: one growing path
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T187
 - Acceptance criteria:
   - [ ] `src/challenges/echo-path/engine.ts` uses the path of T187: `paramsFromSeed(seed)` returns `{ cols, rows, path, startLength, stepMs }` with `startLength = 4` (the owner's start) and `stepMs` drawn from 300 to 400 in 50 ms steps (proposed, owner to confirm); `sequenceFor(params, length)` is the first `length` tiles of the path (the tries no longer differ: the path is fixed for the attempt). `COLS`, `ROWS`, `MAX_LENGTH` and the 3 x 3 grid constants are replaced.
@@ -2123,7 +2123,7 @@ Planning notes for M6:
 
 ### T189 Echo Path renderer: tall board and path playback
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T188
 - Acceptance criteria:
   - [ ] `src/challenges/echo-path/render.ts`: `boardLayout(width, height, cols, rows)` fits the 5 x 10 board into the canvas (portrait), with tiles of at least 44 x 44 CSS px at 390 px width (so the board is up to about 480 px tall, scrolled into view by the page, not clipped); `hitTile` and `litTileAt` keep their contracts.
@@ -2133,7 +2133,7 @@ Planning notes for M6:
 
 ### T190 Echo Path screen, practice page and wording
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T189
 - Acceptance criteria:
   - [ ] `EchoPathGame` (`src/components/echo-path/EchoPathGame.tsx`) plays the new engine: a 3-2-1, then the playback of the first 4 tiles, the player's taps, a short pause, one more tile each round; taps during playback are ignored; the status row shows life pips and a path-length bar (T178's `RoundProgress` is not used, because the round count varies per player: a bar of `pathLength` cells whose cleared part fills, with the board's top as the goal) and the text "Tile 7 of 14" only as the accessible label.
@@ -2144,7 +2144,7 @@ Planning notes for M6:
 
 ### T191 Echo Path: scale reset, cheat checks and wording
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T183, T188
 - Acceptance criteria:
   - [ ] A migration sets `challenge_types.scores_since` for `echo-path` (T183) and its `default_pass_targets` entry to 10 (clear a path of 10 tiles, the board's height; proposed, owner to confirm), in `game_settings` and the column default; unedited, unstarted open `echo-path` days are recomputed. pgTAP as in T183 for this type.
@@ -2155,7 +2155,7 @@ Planning notes for M6:
 
 ### T192 Fair Split shapes: mostly curved and abstract (pure)
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T146
 - Acceptance criteria:
   - [ ] `src/challenges/fair-split/shapes.ts` exports a library of shape kinds, each a pure function of a seeded RNG returning a simple closed outline in the 100 x 100 box as a polygon with many points (a curved edge is sampled at 64 to 160 points, so `splitShare` in `geometry.ts` works unchanged). Curved and organic kinds: a lumpy blob, a flower, a crescent, a heart, a teardrop, a kidney bean, a swoosh or comma, a thick "C", a cloud. Angular kinds: an arrow, a star, a plus or cross, a zig-zag band. Each kind is marked `curved: true | false`.
@@ -2165,7 +2165,7 @@ Planning notes for M6:
 
 ### T193 Fair Split engine: five rounds against a bank of points
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T180, T192
 - Acceptance criteria:
   - [ ] `src/challenges/fair-split/engine.ts` plays `ROUNDS = 5` shapes (replacing `MAX_SHAPES = 12`, `LIVES`, `TOLERANCE_POINTS`, the retry of a missed shape and the shrinking limit). `paramsFromSeed(seed)` returns `{ bank, shapes: { polygon, limitMs }[] }` with `bank = 6` percentage points (about 1.2 per round; proposed, owner to confirm) and `limitMs = LIMIT_MS = 25_000` for every shape (the old 7 s to 4 s was "much too short"; proposed, owner to confirm).
@@ -2176,7 +2176,7 @@ Planning notes for M6:
 
 ### T194 Fair Split renderer: a line that stays adjustable
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T193
 - Acceptance criteria:
   - [ ] `src/challenges/fair-split/render.ts` draws the shape (including the sampled curves smoothly), the current cut line extended through the box, two round handles at the line's ends (at least 44 x 44 CSS px hit areas) and a centre grip, the draining time ring, the two pieces and their percentages after a cut, and a miss state. No live percentage is drawn while the line is being adjusted (proposed, owner to confirm: showing it would make the task a matter of watching a number).
@@ -2186,7 +2186,7 @@ Planning notes for M6:
 
 ### T195 Fair Split screen: Cut button, auto-cut, progress and bank
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T178, T179, T194
 - Acceptance criteria:
   - [ ] `FairSplitGame` (`src/components/fair-split/FairSplitGame.tsx`): releasing the pointer no longer cuts. Dragging a handle or the line moves it and it can be released and picked up again any number of times. A "Cut" button (at least 44 px tall, below the board, also bound to Enter) commits the line as that shape's cut with `atMs` of the press. When the time ring runs out the game commits the current line at the limit (an auto-cut at the deadline), so an honest run is never timed out.
@@ -2198,7 +2198,7 @@ Planning notes for M6:
 
 ### T196 Fair Split: scale reset, cheat checks and wording
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T183, T193
 - Acceptance criteria:
   - [ ] A migration sets `challenge_types.scores_since` for `fair-split` (T183) and its `default_pass_targets` entry to 5 (survive all five shapes; proposed, owner to confirm), in `game_settings` and the column default; unedited, unstarted open `fair-split` days are recomputed. pgTAP as in T183 for this type.

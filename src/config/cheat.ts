@@ -32,11 +32,14 @@ export const ECHO_PATH_MIN_TAP_INTERVAL_MS = 80;
 export const ECHO_PATH_RHYTHM_MIN_TAPS = 10;
 export const ECHO_PATH_RHYTHM_MAX_SD_MS = 5;
 
-/** Fair Split: this many cuts of one run within this many points of 50% look computed (T164). */
-export const FAIR_SPLIT_PRECISE_CUTS = 6;
+/**
+ * Fair Split: this many cuts of one run within this many points of 50% look computed (T164; three
+ * of the five rounds since T196).
+ */
+export const FAIR_SPLIT_PRECISE_CUTS = 3;
 export const FAIR_SPLIT_PRECISE_POINTS = 0.05;
-/** A counted cut this soon after its shape appeared is faster than a person can aim and drag. */
-export const FAIR_SPLIT_MIN_CUT_MS = 300;
+/** A cut the bank survived this soon after its shape appeared is faster than a person can place the line (T196). */
+export const FAIR_SPLIT_MIN_CUT_MS = 1500;
 
 /**
  * Loading and reading before a run starts (15 s), and the 3-2-1 before its own clock starts

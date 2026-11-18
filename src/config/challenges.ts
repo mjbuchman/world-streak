@@ -18,7 +18,7 @@ export const CHALLENGE_TAGLINES: Record<ChallengeType, string> = {
   "inner-clock": "Four rounds: tap when each target time has passed. Every miss drains your 10-second time bank.",
   "flash-count": "Five rounds: dots flash, say how many. Every dot you miss drains your 10-dot bank.",
   "echo-path": "A path of tiles climbs the board. Tap it back, one tile longer each time, all the way to the top.",
-  "fair-split": "Cut each odd shape in half with one straight line, before time runs out.",
+  "fair-split": "Five odd shapes: place one straight line to cut each in half. Every point off 50% drains your 6-point bank.",
 };
 
 /** Each challenge's practice page (the route folders are named after the types). */
@@ -40,7 +40,7 @@ export const ECHO_PATH_HOW_TO =
 
 /** How to play Fair Split: shown before a practice run and before a scored attempt. */
 export const FAIR_SPLIT_HOW_TO =
-  "Press Start and a shape appears. Drag one straight line across it to cut it in half: within 1 point of 50% on each side counts. Each shape has a time limit, shown by the ring. You have 3 lives; a cut that is off, or no cut in time, costs one and brings the shape back. Cut as many shapes as you can.";
+  "Press Start for five shapes. A line crosses each one: drag its ends or the line itself (or use the arrow keys, and [ and ] to turn it) until you think it cuts the shape in half, then press Cut or Enter. You have 25 seconds a shape, shown by the ring; when it runs out, the line is cut where it is. Every point a cut is off 50% comes out of one 6-point bank; the run ends when a cut is off by more than what is left. Survive all five to pass.";
 
 /** How to play the Tower: shown before a practice run and before today's scored attempt. */
 export const STACKING_HOW_TO =

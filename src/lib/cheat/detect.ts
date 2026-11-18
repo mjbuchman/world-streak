@@ -2,7 +2,7 @@
 // protect prize entries only. A flag never changes a pass, a fail or the meter: cheating to pass
 // only helps the streak, and sabotage must look the same as an honest fail (DESIGN.md).
 import { play as playEchoPath, type EchoPathInputs, type EchoPathParams } from "@/challenges/echo-path/engine";
-import { isFair, play as playFairSplit, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
+import { play as playFairSplit, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
 import { splitShare } from "@/challenges/fair-split/geometry";
 import { play, REVEAL_MS, type FlashLadderInputs, type FlashLadderParams } from "@/challenges/flash-count/flashLadder";
 import { roundErrorMs, type TimeBankInputs, type TimeBankParams } from "@/challenges/inner-clock/timeBank";
@@ -109,16 +109,17 @@ function timeBankImplausible(params: TimeBankParams, { tapsMs }: TimeBankInputs)
 }
 
 /**
- * Each Fair Split cut the game judged: how far from half it was (in points), whether it counted
- * and how long after its shape appeared. Cuts in the pause before a shape, or after the run
- * ended, were never judged, so they are left out.
+ * Each Fair Split cut the game judged: how far from half it was (in points), whether the bank
+ * survived it and how long after its shape appeared. Cuts in the pause and the 3-2-1 before a
+ * shape, or after the run ended, were never judged, so they are left out (T196).
  */
 function judgedCuts(params: FairSplitParams, { cuts }: FairSplitInputs) {
   return cuts.flatMap((cut, i) => {
     const before = playFairSplit(params, { cuts: cuts.slice(0, i), endMs: cut.atMs });
     if (before.finished || cut.atMs < before.appearsAt) return [];
-    const share = splitShare(params.shapes[before.shape].polygon, { x: cut.ax, y: cut.ay }, { x: cut.bx, y: cut.by });
-    return [{ offPoints: Math.abs(share * 100 - 50), counted: isFair(share), afterMs: cut.atMs - before.appearsAt }];
+    const after = playFairSplit(params, { cuts: cuts.slice(0, i + 1), endMs: cut.atMs });
+    const share = splitShare(params.shapes[before.round].polygon, { x: cut.ax, y: cut.ay }, { x: cut.bx, y: cut.by });
+    return [{ offPoints: Math.abs(share * 100 - 50), counted: !after.failed, afterMs: cut.atMs - before.appearsAt }];
   });
 }
 

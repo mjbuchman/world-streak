@@ -94,8 +94,8 @@ describe("challengeUi", () => {
     ["flash-count", 1, 4, "You scored 1 round. Today's target was 4 rounds."],
     ["echo-path", 7.667, 10, "You scored 7.667 tiles. Today's target was a path of 10 tiles."],
     ["echo-path", 1, 10, "You scored 1 tile. Today's target was a path of 10 tiles."],
-    ["fair-split", 6.333, 5, "You scored 6.333 shapes. Today's target was 5 shapes."],
-    ["fair-split", 1, 5, "You scored 1 shape. Today's target was 5 shapes."],
+    ["fair-split", 5.5, 5, "You scored 5.5 shapes. Today's target was 5 shapes: survive all five."],
+    ["fair-split", 1, 4, "You scored 1 shape. Today's target was 4 shapes."],
   ] as const)("sums up a %s result against today's target", (type, score, target, line) => {
     expect(challengeUi(type).summary(score, target)).toBe(line);
   });

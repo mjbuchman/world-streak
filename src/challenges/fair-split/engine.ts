@@ -1,89 +1,100 @@
 import { z } from "zod";
+import { RUN_COUNTDOWN_MS } from "@/config/countdown";
+import { bankScore, playBank } from "../shared/bank";
 import { createRng } from "../shared/prng";
 import type { ChallengeModule } from "../shared/types";
-import { BOX, shapeFor, splitShare, type Point } from "./geometry";
+import { BOX, splitShare, type Point } from "./geometry";
+import { shapeFor } from "./shapes";
 
 /**
- * Fair Split: a shape appears and the player drags one straight cut across it. The cut counts when
- * both sides are within TOLERANCE_POINTS of 50% of the area; a cut outside that (a line missing
- * the shape included), or no cut by the shape's time limit, costs one of LIVES lives and the same
- * shape comes back. Each shape appears GAP_MS after the last one ended. Score = shapes cut + lives
- * left as a fraction, when the run ends. All numbers below are placeholders tuned at the M5
- * play-test (DECISIONS, T147).
+ * Fair Split (T193): five shapes, one straight cut each, against a bank of points. A cut costs its
+ * distance from 50% of the area, in points; a cut that does not fit what is left of the bank ends
+ * the run. A cut after the shape's time limit, or none by then, costs the furthest a cut can be
+ * from half, which no bank survives. Score = shapes survived + bank left as a fraction (T180).
+ *
+ * Time runs from the start of the game, which opens with a 3-2-1; every shape follows its own 3-2-1,
+ * and the cut pieces stay on screen for SHOW_MS before the next one. Bank, limit and SHOW_MS are
+ * proposed, owner to confirm (DECISIONS, T193).
  */
 
-export const LIVES = 3;
-export const TOLERANCE_POINTS = 1;
-export const MAX_SHAPES = 12;
-/** The pause between one shape ending (cut or timed out) and the next appearing. */
-export const GAP_MS = 1200;
-/** The first shape's time limit, how much each later shape loses, and the floor. */
-export const LIMIT_MS = { first: 7000, step: 300, min: 4000 } as const;
-/** The most cuts a run can take: every shape cut, plus a miss for all but the last life. */
-export const MAX_CUTS = MAX_SHAPES + LIVES - 1;
-/** Rounding slack, so a cut exactly at 49/51 counts. */
-const EPSILON = 1e-9;
+export const ROUNDS = 5;
+/** The bank, in percentage points (about 1.2 a shape). */
+export const BANK_POINTS = 6;
+/** Each shape's time limit. The screen cuts the current line when it runs out. */
+export const LIMIT_MS = 25_000;
+/** How long the two pieces and their shares stay on screen after a cut. */
+export const SHOW_MS = 1200;
+/** The 3-2-1 before every shape. */
+export const ROUND_COUNTDOWN_MS = RUN_COUNTDOWN_MS;
+/** From one shape's cut to the next shape appearing: the pieces, then the 3-2-1. */
+export const GAP_MS = SHOW_MS + ROUND_COUNTDOWN_MS;
+/** What a late cut, or no cut, costs: the most a cut can be off. */
+export const MISSED_COST = 50;
 
 export type FairSplitShape = { polygon: Point[]; limitMs: number };
-export type FairSplitParams = { shapes: FairSplitShape[] };
+export type FairSplitParams = { bank: number; shapes: FairSplitShape[] };
 
-/** A cut is the line through (ax, ay) and (bx, by), in shape units, `atMs` from the run start. */
+/** A cut is the line through (ax, ay) and (bx, by), in shape units, `atMs` from the game's start. */
 export type FairSplitCut = { atMs: number; ax: number; ay: number; bx: number; by: number };
-/** Every cut in order, and when the run ended (a timeout is judged against it). */
+/** Every cut in order, and when the run ended (a missed limit is judged against it). */
 export type FairSplitInputs = { cuts: FairSplitCut[]; endMs: number };
-
-/** Shape k's time limit. */
-export const limitFor = (k: number) => Math.max(LIMIT_MS.min, LIMIT_MS.first - k * LIMIT_MS.step);
-/** Shapes 0 and 1 are convex; oddness then rises to 1 by shape 7. */
-export const oddnessFor = (k: number) => Math.min(1, Math.max(0, (k - 1) / 6));
 
 export function paramsFromSeed(seed: number): FairSplitParams {
   const shapeSeed = createRng(seed).int(0, 0xffff_ffff);
-  return { shapes: Array.from({ length: MAX_SHAPES }, (_, k) => ({ polygon: shapeFor(shapeSeed, k, oddnessFor(k)), limitMs: limitFor(k) })) };
+  return { bank: BANK_POINTS, shapes: Array.from({ length: ROUNDS }, (_, k) => ({ polygon: shapeFor(shapeSeed, k), limitMs: LIMIT_MS })) };
 }
 
-/** How a shape's turn ended: a cut (with the share on its left, and whether it counted) or a timeout. */
+/** A cut's distance from half, in points, to 0.01 (a 49/51 split costs 1). */
+export const cutCost = (share: number) => Math.round(Math.abs(share * 100 - 50) * 100) / 100;
+
+/** How a shape's turn ended: a cut (its share on the left and its cost) or a missed limit. */
 export type FairSplitOutcome =
-  | { kind: "cut"; shape: number; atMs: number; share: number; counted: boolean; cut: FairSplitCut }
+  | { kind: "cut"; shape: number; atMs: number; share: number; cost: number; survived: boolean; cut: FairSplitCut }
   | { kind: "timeout"; shape: number; atMs: number };
 
-/** Whether a share (0 to 1) is close enough to half. */
-export const isFair = (share: number) => Math.abs(share * 100 - 50) <= TOLERANCE_POINTS + EPSILON;
-
 /**
- * Plays the cuts up to `endMs`: the shape on screen, when it appeared and its deadline, the lives,
- * the last turn's outcome and whether the run is over. Cuts during the pause before a shape are
- * ignored; a cut after the deadline is judged against the next shape, the timed-out one having
- * already cost a life.
+ * Plays the cuts up to `endMs`: the shape on screen (`round`), when it appeared and its deadline,
+ * each shape's cost, the bank, the last turn's outcome and whether the run is over. Cuts during
+ * the pieces and the 3-2-1 before a shape are ignored; a cut after the deadline is a missed limit.
  */
 export function play(params: FairSplitParams, { cuts, endMs }: FairSplitInputs) {
-  let shape = 0;
-  let lives = LIVES;
-  let appearsAt = 0;
+  const costs: number[] = [];
+  let appearsAt = ROUND_COUNTDOWN_MS;
   let last: FairSplitOutcome | null = null;
-  const over = () => lives === 0 || shape === params.shapes.length;
-  const deadline = () => appearsAt + params.shapes[shape].limitMs;
-  const end = (outcome: FairSplitOutcome, counted: boolean) => {
-    last = outcome;
-    if (counted) shape++;
-    else lives--;
-    appearsAt = outcome.atMs + GAP_MS;
-  };
-  const timeOutBefore = (ms: number) => {
-    while (!over() && ms > deadline()) end({ kind: "timeout", shape, atMs: deadline() }, false);
+  const over = () => costs.length === params.shapes.length || playBank(params.bank, costs).failed;
+  const deadline = () => appearsAt + params.shapes[costs.length].limitMs;
+  const missed = () => {
+    last = { kind: "timeout", shape: costs.length, atMs: deadline() };
+    costs.push(MISSED_COST);
   };
   for (const cut of cuts) {
-    timeOutBefore(cut.atMs);
     if (over()) break;
     if (cut.atMs < appearsAt) continue;
-    const share = splitShare(params.shapes[shape].polygon, { x: cut.ax, y: cut.ay }, { x: cut.bx, y: cut.by });
-    const counted = isFair(share);
-    end({ kind: "cut", shape, atMs: cut.atMs, share, counted, cut }, counted);
+    if (cut.atMs > deadline()) {
+      missed();
+      break;
+    }
+    const share = splitShare(params.shapes[costs.length].polygon, { x: cut.ax, y: cut.ay }, { x: cut.bx, y: cut.by });
+    const shape = costs.length;
+    costs.push(cutCost(share));
+    last = { kind: "cut", shape, atMs: cut.atMs, share, cost: costs[shape], survived: !playBank(params.bank, costs).failed, cut };
+    appearsAt = cut.atMs + GAP_MS;
   }
-  timeOutBefore(endMs);
+  if (!over() && endMs > deadline()) missed();
   const finished = over();
-  // `last` is assigned inside `end`, which TypeScript cannot see, so it still narrows it to null.
-  return { shape, lives, appearsAt, deadline: finished ? null : deadline(), last: last as FairSplitOutcome | null, finished };
+  const { survived, left, failed } = playBank(params.bank, costs);
+  return {
+    round: Math.min(costs.length, params.shapes.length - 1),
+    costs,
+    survived,
+    left,
+    failed,
+    appearsAt,
+    deadline: finished ? null : deadline(),
+    // `last` is assigned inside closures TypeScript cannot follow, so it still narrows it to null.
+    last: last as FairSplitOutcome | null,
+    finished,
+  };
 }
 
 const coordinate = z.number().min(0).max(BOX);
@@ -91,7 +102,7 @@ const inputsSchema: z.ZodType<FairSplitInputs> = z
   .object({
     cuts: z
       .array(z.object({ atMs: z.number().nonnegative().finite(), ax: coordinate, ay: coordinate, bx: coordinate, by: coordinate }))
-      .max(MAX_CUTS)
+      .max(ROUNDS)
       .refine((cuts) => cuts.every((cut, i) => i === 0 || cut.atMs > cuts[i - 1].atMs), "cut times must rise"),
     endMs: z.number().nonnegative().finite(),
   })
@@ -100,11 +111,12 @@ const inputsSchema: z.ZodType<FairSplitInputs> = z
 export const fairSplit: ChallengeModule<FairSplitParams, FairSplitInputs> = {
   paramsFromSeed,
   score: (params, inputs) => {
-    const { shape, lives } = play(params, inputs);
-    return Math.round((shape + lives / LIVES) * 1000) / 1000;
+    const { survived, left } = play(params, inputs);
+    return bankScore(survived, left, params.bank);
   },
   finished: (params, inputs) => play(params, inputs).finished,
   inputsSchema,
   direction: "higher-better",
+  // The game's clock runs through every 3-2-1 and every pause, so the run's end already holds them.
   lastInputMs: ({ endMs }) => endMs,
 };

@@ -157,7 +157,7 @@ test("Echo Path can be played to the end with taps, on tiles big enough to tap",
   await expectPhoneFriendly(page);
 });
 
-test("Fair Split takes a cut from a touch drag, on a board that fits", async ({ page }) => {
+test("Fair Split moves its line by touch and cuts with the Cut button, on a board that fits", async ({ page }) => {
   await gotoReady(page, "/practice/fair-split");
   await tap(page, page.getByRole("button", { name: "Start" }));
   const board = page.locator("canvas[data-phase]");
@@ -165,8 +165,11 @@ test("Fair Split takes a cut from a touch drag, on a board that fits", async ({ 
   await expectNoZoom(board);
   await expect(board).toHaveAttribute("data-phase", "cut", { timeout: 10_000 });
   const box = (await board.boundingBox())!;
-  const middle = box.x + box.width / 2;
-  await touchDrag(page, { x: middle, y: box.y + 4 }, { x: middle, y: box.y + box.height - 4 });
+  // Drag the line by its middle; letting go leaves it placed, not cut.
+  const middle = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  await touchDrag(page, middle, { x: middle.x - 16, y: middle.y });
+  await expect(board).toHaveAttribute("data-phase", "cut");
+  await tap(page, page.getByRole("button", { name: "Cut" }));
   await expect(page.getByText(/^\d+\.\d% and \d+\.\d%\./)).toBeVisible();
   await expectPhoneFriendly(page);
 });

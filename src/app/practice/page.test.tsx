@@ -19,7 +19,7 @@ describe("/practice", () => {
       ["Second Sense", "/practice/inner-clock", "Four rounds: tap when each target time has passed. Every miss drains your 10-second time bank."],
       ["Swift Sum", "/practice/flash-count", "Five rounds: dots flash, say how many. Every dot you miss drains your 10-dot bank."],
       ["Echo Path", "/practice/echo-path", "A path of tiles climbs the board. Tap it back, one tile longer each time, all the way to the top."],
-      ["Fair Split", "/practice/fair-split", "Cut each odd shape in half with one straight line, before time runs out."],
+      ["Fair Split", "/practice/fair-split", "Five odd shapes: place one straight line to cut each in half. Every point off 50% drains your 6-point bank."],
     ]);
   });
 
