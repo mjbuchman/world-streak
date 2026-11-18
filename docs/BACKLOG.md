@@ -2,6 +2,8 @@
 
 Status: Approved (2026-11-07)
 
+Note (Nov 18, 2026): **M6 Gameplay tweaks (T177 to T198, batches 13 to 18) approved by the owner on Nov 18, 2026, with the proposed values as written.** Values tagged "(proposed, owner to confirm)" stand as the defaults; the owner may still adjust them at the M6 play-test.
+
 Planning notes for the builder:
 
 - Requirements come from `docs/DESIGN.md` (Decided items) plus the human owner's answers given at planning time (Nov 7, 2026):
@@ -31,6 +33,15 @@ One branch, review round and PR per batch, in this order (dependencies still app
 10. Maintenance: T172, T173 (light; any time)
 11. Drop the old game_days columns: T174 (full; after T163)
 12. Coverage and README: T175, T176 (light)
+
+M6 Gameplay tweaks (Nov 18, 2026; approved Nov 18):
+
+13. Shared round UI and the meter fix: T177, T178, T179 (light)
+14. Second Sense as four rounds: T180, T181, T182, T183 (full: scoring, migration)
+15. Swift Sum as five rounds: T184, T185, T186 (full: scoring, migration)
+16. Echo Path as one growing path: T187, T188, T189, T190, T191 (full: scoring, migration)
+17. Fair Split as five rounds: T192, T193, T194, T195, T196 (full: scoring, migration; if over about 1500 lines, split T196 into its own PR, still full)
+18. M6 end-to-end checks and docs: T197, T198 (light; T198 is docs only)
 
 ## M1 Foundation and first challenge end to end
 
@@ -1958,3 +1969,261 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 - Acceptance criteria:
   - [ ] README covers the Daily Three and its five games, the T163/T164 local tools and seed, and the admin lineup editor; every command and env var it names exists in `package.json` / `.env.example`.
 - Notes: README does not mention the Daily Three yet.
+
+## M6 Gameplay tweaks
+
+Awaiting the owner's approval (planned Nov 18, 2026 from the owner's M5 play-test feedback; this overrides `docs/DESIGN.md` where they conflict, and DESIGN.md is not edited: T198 records each conflict).
+
+Goal: play-test the reworked games. Second Sense is four rounds of 15 to 25 seconds against a time bank, with a 1-2-3-4 progress bar, a 3-2-1 before every round and the target clear of the countdown. Swift Sum is five rounds against a bank of missed dots. Echo Path is a tall narrow board with one path from bottom to top that grows a tile a round, different for every player. Fair Split is five rounds against a bank of percentage points, with curved and abstract shapes, a line you can keep adjusting and a Cut button. The meter's "100%" no longer spills into the arc. Teetering Tower is unchanged.
+
+Planning notes for M6:
+
+- **Readings of the feedback.** "Targets 15-25 seconds" for Second Sense is each round's hidden interval (the time the player counts), not the pass target; the pass target stays a score (see T183). "Sideways" in Echo Path means a step to the left or right tile in the same row; a path never revisits a tile, so a sideways step cannot undo the one before it.
+- **Per-player randomness needs no new seed plumbing.** `startAttempt` (`src/lib/attempts/start.ts`) already draws a fresh 32-bit `secureRandomSeed()` for every attempt and stores it, and the server replays `paramsFromSeed(seed)`. So every number and layout below must come from `paramsFromSeed`, never from the date or the lineup, and each engine task tests that different seeds give different instances. Percentile pass targets then compare players on slightly different instances; the owner accepted that for Echo Path ("slightly harder ones, but that's ok") and it applies to the others.
+- **Old scores must not pollute the new pass targets.** `pass_target_for` takes the percentile over all attempts of a type in the lookback window, and those attempts scored a different game. T183 adds a per-type `scores_since` date so only attempts of the reworked shape count; each game's migration sets it for that game.
+- **Shared pieces are built once** (T178, T179, T180) and reused by Second Sense, Swift Sum and Fair Split: the round progress bar, the between-round 3-2-1, the bank gauge and the pure bank rule.
+- **Time bank rule** (all three bank games): each round has a cost (ms off, dots off, percentage points off). A round survives if its cost is at most the bank left; the bank goes down by the cost. The run ends at the first round that does not survive, or after the last round. Score = rounds survived + bank left ÷ bank, rounded to 3 decimals, so a perfect-bank run of N rounds scores N + 1 at most. The default pass target for each is N (survive every round), which keeps the "survive all the rounds with something in the bank" goal; admins can edit it.
+- Each engine's placeholders live in exported constants and are recorded in T198.
+
+### T177 Meter: the percentage fits inside the gauge at 100%
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] In `src/components/Meter.tsx` and `Meter.module.css`, the big percentage (`styles.rate`, 0 to 100, so up to three digits plus "%") stays inside the arc's inner circle and does not touch or cross the arc at 0%, 9%, 60%, 99% and 100%, on a 390 px wide phone and on desktop. Fix by sizing the text from the gauge (for example a `clamp` or container-relative size, or fewer pixels for three digits), not by clipping.
+  - [ ] `Meter.test.tsx` renders the gauge with `passRate: 1` and checks the reading is shown as "100%" in an element carrying the three-digit sizing hook (for example `data-digits="3"`); the two-digit and one-digit cases keep their current size.
+  - [ ] An e2e check (added to `tests/e2e/meter.spec.ts` with a fixture where every counted day passed) asserts the percentage's bounding box lies inside the gauge's inner circle at 390 x 844 and at 1280 x 720. Existing meter tests pass unchanged.
+- Notes: Owner's note: "when the meter is at 100% the number overflows into the meter since it's a three digit number". Light review.
+
+### T178 Shared round progress bar and between-round countdown
+- Type: feature
+- Status: todo
+- Depends on: T138
+- Acceptance criteria:
+  - [ ] `src/components/rounds/RoundProgress.tsx` renders N numbered steps (1, 2, 3, ...) as a bar, not text: finished rounds are filled mint, a round the player failed is filled light tangerine, the current round is highlighted (tangerine ring), later rounds are outlined. Props: `total`, `current` (0-based), and `failedRound?` (0-based). It has `role="img"` and an `aria-label` such as "Round 2 of 4"; the step highlight moves with a short transition, and with reduced motion it changes instantly.
+  - [ ] `src/components/rounds/RoundCountdown.tsx` shows the shared 3-2-1 (`CountdownNumber`, `countdownNumber`, `RUN_COUNTDOWN_MS` from `src/config/countdown.ts`) by elapsed time through `runFrames`, with a "Round N" caption, reserves a fixed-height slot so nothing jumps when it ends, and calls `onDone` once when the countdown is over. `ms` defaults to `RUN_COUNTDOWN_MS`; with `ms={0}` it calls `onDone` at once and renders nothing.
+  - [ ] Unit tests with mocked time and `requestAnimationFrame`: 3, then 2, then 1, then `onDone` exactly once at 2400 ms; the progress bar marks the right steps for rounds 1, 3 and 4 of 4 and for a failed round; the labels read correctly for 4 and 5 rounds; touch targets are not needed (display only).
+  - [ ] Styles use `--fs-*` tokens only (the T84 token guard passes), follow `docs/UI_GUIDELINES.md` and contain no emojis or em dashes.
+- Notes: Built once for Second Sense (T182), Swift Sum (T185) and Fair Split (T195). Not wired into a game yet, so `npm run verify` stays green. Light review.
+
+### T179 Shared bank gauge
+- Type: feature
+- Status: todo
+- Depends on: T178
+- Acceptance criteria:
+  - [ ] `src/components/rounds/BankGauge.tsx` shows a bank as a horizontal bar. Props: `total`, `spent: number[]` (the cost of each round played so far), `format: (value: number) => string` (for example "2.4 s", "3 dots", "0.8 points"), `label` (for example "Time bank"). The filled part is what is left; each round's cost is drawn as its own tangerine segment at the right end of the fill, with a "-2.4 s" caption on the latest one, so the player sees every round subtract from the bank. A line under the bar reads "6.1 s left of 10 s".
+  - [ ] The latest round's segment animates draining out of the fill (about 600 ms); with reduced motion it just appears. `role="meter"` with `aria-valuemin`, `aria-valuemax`, `aria-valuenow` and `aria-valuetext` such as "6.1 seconds left of 10", and a polite live region announces "Round 2 cost 2.4 s".
+  - [ ] When the costs exceed the total (the round that busts the bank), the bar shows empty and the caption says "Bank used up"; spent values larger than the total never produce a negative width (tested).
+  - [ ] Unit tests: widths for [], [2.4], [2.4, 1.5] of 10; the bust case; the formatter is used for the caption and the text line; `aria-valuenow` is the bank left.
+- Notes: The bank bar must stay legible at 390 px (full width, at least 16 px tall); check at that width in the Second Sense e2e (T197). Not wired in yet. Light review.
+
+### T180 Shared bank rule (pure) and its tests
+- Type: feature
+- Status: todo
+- Depends on: T139
+- Acceptance criteria:
+  - [ ] `src/challenges/shared/bank.ts` exports `playBank(total: number, costs: readonly number[])` returning `{ survived, left, failed }`: a cost at most `left` survives and reduces it; the first cost above `left` ends the run with `failed: true`, `left: 0` and `survived` set to the rounds before it; no costs gives `survived: 0, left: total, failed: false`. It also exports `bankScore(survived, left, total)` = `Math.round((survived + left / total) * 1000) / 1000`.
+  - [ ] Tests: costs [2, 3, 5] of 10 give survived 3, left 0 (exactly used up still survives, score 3); [2, 3, 6] of 10 gives survived 2, failed, score 2; [] gives score 1 (bank full, nothing survived); a tiny-cost example with floating-point costs (0.1 + 0.2 of 0.3) survives (costs are summed in a way that tolerates 1e-9); property test: for random cost lists the score never decreases when a cost is made smaller, and survived never exceeds the number of costs.
+  - [ ] `timeBank.ts`'s `play` is rewritten on top of `playBank` with its existing tests passing unchanged (the same results for the same taps), so the rule exists once. At least 90% lines and branches.
+- Notes: The pure rule behind Second Sense (T181), Swift Sum (T184) and Fair Split (T193). Judgment call recorded in T198: a round whose cost equals the bank left survives (as Time Bank does today). Full review (scoring).
+
+### T181 Second Sense engine: four rounds, 15 to 25 seconds, a 10 second bank
+- Type: feature
+- Status: todo
+- Depends on: T180
+- Acceptance criteria:
+  - [ ] `src/challenges/inner-clock/timeBank.ts` plays `ROUNDS = 4` rounds (replacing `MAX_ROUNDS = 8`). `paramsFromSeed(seed)` returns `{ budgetMs, rounds: { targetMs, revealMs, timeoutMs }[] }` with `budgetMs = BUDGET_MS = 10_000` (2.5 s per round; proposed, owner to confirm). Round targets are multiples of 100 ms drawn from `TARGET_RANGES_MS` = `ladderRanges(4, 15_000, 2_500, 2_400)`: 15.0 to 17.4 s, 17.5 to 19.9 s, 20.0 to 22.4 s, 22.5 to 24.9 s, so a run covers 15 to 25 s and later rounds are longer (proposed, owner to confirm).
+  - [ ] The clock is visible for `REVEAL_MS = 2000` in every round (the same constant for all four; the old shrinking reveal is gone), then fades as today (proposed length: 2 full seconds, as the owner asked).
+  - [ ] `timeoutMs = targetMs + BUDGET_MS`: a tap after it, or no tap, costs more than the whole bank (`roundErrorMs` returns `budgetMs + 1`), so the run ends. The old `TIMEOUT_FACTOR` is removed.
+  - [ ] Inputs stay `{ tapsMs: (number | null)[] }` (at most `ROUNDS`, nonnegative, `null` for a timeout); score = `bankScore` over the rounds (T180). With explicit params (targets 15 000, 18 000, 21 000, 24 000 ms, bank 10 000): taps `[15 500, 18 000, 21 000, 24 000]` score 4 + 9 500 ÷ 10 000 = 4.95; `[17 000, 18 000, 28 000, 24 000]` (errors 2 000, 0, 7 000, 0 against 10 000) score 4.1; `[25 000, 18 000, 21 000, 24 000]` (an error of exactly the bank in round 1) scores 4 with 0 left; `[26 000]` busts in round 1 and scores 0; `[null]` scores 0.
+  - [ ] `lastInputMs` counts each round as the 3-2-1 (`RUN_COUNTDOWN_MS`, exported as `ROUND_COUNTDOWN_MS`), the tap (or timeout) and, between rounds, `ROUND_GAP_MS`; the first round's countdown is left out because `TIMING_LOAD_ALLOWANCE_MS` already covers one 3-2-1 (`src/config/cheat.ts`). The new golden test pins it for 3 seeds.
+  - [ ] Determinism, range tests over seeds 0 to 999 (every round's target inside its range and on a 100 ms step, strictly rising between rounds, `revealMs` 2 000 everywhere), golden scores for 3 seeds with fixed taps, and a different instance per seed: over 1 000 seeds each round's target takes at least 20 distinct values. A simulated player with a documented spread of 1 000 ms (a normal-ish error) survives all four rounds between about 30% and 70% of the time (documents the intended difficulty). At least 90% lines and branches.
+- Notes: Reading of the owner's "targets 15-25 seconds": the hidden interval of each round (see M6 notes); the owner can correct this when approving. Starts from `timeBank.ts` and `timeBank.test.ts`; the registry entry is unchanged. Full review (scoring). A full run is about 4 x (2.4 + 20 + 1.5) = 95 s.
+
+### T182 Second Sense screen: progress bar, bank gauge, countdown every round, clear target
+- Type: feature
+- Status: todo
+- Depends on: T178, T179, T181
+- Acceptance criteria:
+  - [ ] `TimeBankGame` (`src/components/inner-clock/TimeBankGame.tsx`) shows `RoundProgress` (1-2-3-4, the current round highlighted, a failed round tangerine) in place of the "Round N of 4" text, and `BankGauge` ("Time bank", format "2.4 s") with each finished round's error as a segment and a "-1.2 s late" style caption; the error reveal still shows for `ROUND_GAP_MS`.
+  - [ ] Every round, including round 1, starts with `RoundCountdown` (3-2-1, T178) before its clock; `InnerClockGame` is given `countdownMs={0}` and no longer runs its own countdown for later rounds. The clock then runs for the full 2 seconds (`REVEAL_MS`) and fades.
+  - [ ] Layout: the target ("Tap when 20.3 seconds have passed") is one block at the top of the round, large (headline size), in its own row and never overlapped; the clock and the 3-2-1 sit in a separate row below it (the shared `RoundCountdown` slot), so the countdown never covers the target. In `InnerClockGame` the prompt moves above the clock slot in the DOM and CSS (`InnerClockGame.module.css`), keeping the tap area the full width.
+  - [ ] The hidden-tab rule (T110) still applies per round; the practice result (`InnerClockPractice.tsx`) shows rounds survived, the bank left and the score; a Playwright check on `/practice/inner-clock` at 390 x 844 and 1280 x 720 asserts the target text's bounding box does not intersect the countdown number's or the clock's.
+  - [ ] Unit tests with mocked time (`TimeBankGame.test.tsx`, `InnerClockGame.test.tsx` updated): four rounds, the third busts the bank and the run ends with the right taps; the countdown runs before round 2; the gauge caption and the progress steps follow; reduced motion has no transition classes.
+- Notes: Owner: "run the timer for 2 full seconds every round before disappearing and each round should have the countdown", "make the target goal visually clearer and not covered by the countdown timer", "more visually evident that you have a time bank and each round is subtracting your difference from it", "a 1-2-3-4 progress bar". UI per `docs/UI_GUIDELINES.md`. Full review (attempts).
+
+### T183 Second Sense: pass target scale, `scores_since`, cheat thresholds and wording
+- Type: feature
+- Status: todo
+- Depends on: T181
+- Acceptance criteria:
+  - [ ] A migration adds `challenge_types.scores_since date` (null means all) and changes `pass_target_for` (last defined in `supabase/migrations/20261117020000_daily_three_attempts.sql`) to take the percentile only over attempts with `game_date >= scores_since` for that type, with the rest of the function unchanged. It sets `scores_since` for `inner-clock` to the day after the migration runs (UTC), and recomputes the targets of unedited, unstarted open `game_day_games` rows of `inner-clock` (the T140 pattern).
+  - [ ] The `default_pass_targets` value for `inner-clock` stays 4 and now means "survive all four rounds" (a score of at least 4, so a run that finishes with an empty bank still passes); the migration restates it in the column default and in `game_settings` (proposed, owner to confirm).
+  - [ ] pgTAP: old attempts before `scores_since` are ignored by the percentile (the default applies when fewer than `percentile_min_sample` new attempts exist); new attempts count; other types are unaffected; the percentile of 80% is taken over new-scale scores only.
+  - [ ] `src/config/cheat.ts` and `src/lib/cheat/detect.ts`: `TIME_BANK_PRECISE_ROUNDS` becomes 3 of the 4 rounds and `TIME_BANK_PRECISE_ERROR_MS` 25 ms, since errors this small three times on 15 to 25 s intervals look scripted (proposed, owner to confirm); the old 5-of-8 rule could not fire any more. `detect.test.ts` follows: an honest fixture (errors 400, 900, 250, 1 100 ms) gives no flags; three errors under 25 ms flag `time-bank-implausible`; two do not; the `timing-mismatch` allowance includes the extra per-round 3-2-1.
+  - [ ] Wording: `INNER_CLOCK_HOW_TO` and the Second Sense tagline in `src/config/challenges.ts`, and `rounds` in `src/components/challenges/challengeUi.tsx`, describe four rounds, the 10 second bank and "survive all four"; related tests (`page.test.tsx` of the practice hub, `TodaysGames.test.tsx`) updated without weakening. The admin target check allows a fractional target up to 5 for this game.
+  - [ ] `npm run db:types` output is committed; `npm run verify`, `npm run test:db` and `npm run test:e2e` pass.
+- Notes: The reading of the owner's "targets" matters here: the pass target stays a score. Full review (migration, scoring). Old stored attempts keep their old inputs; nothing replays them.
+
+### T184 Swift Sum engine: five rounds against a bank of missed dots
+- Type: feature
+- Status: todo
+- Depends on: T180
+- Acceptance criteria:
+  - [ ] `src/challenges/flash-count/flashLadder.ts` (file and `flashLadder` export names kept so imports stay; header comment rewritten) plays `ROUNDS = 5` rounds in place of lives and retries. `paramsFromSeed(seed)` returns `{ layoutSeed, bank, levels: { dotCount, flashMs }[] }` with `bank = 10` dots (2 per round; proposed, owner to confirm).
+  - [ ] Each round's `dotCount` is drawn from `[6 + 3i, 11 + 3i]` for round i (6 to 11, 9 to 14, 12 to 17, 15 to 20, 18 to 23): it starts small and grows on average, and two players get different counts (proposed, owner to confirm). The flash shortens by 100 ms a round from 1 800 to 1 400 ms (proposed, owner to confirm). There is no retry: `layoutFor(params, level)` gives each round one layout from `layoutSeed`, so every player's dots differ.
+  - [ ] Inputs `{ answers: { count: integer 0..999, atMs }[] }` (at most `ROUNDS`, `atMs` strictly increasing). A round's cost is `|count - dotCount|` (every dot not counted or counted too many costs one); score = `bankScore` over the rounds (T180). With explicit params (dot counts 10, 14, 18, 22, 26; bank 10): answers 10, 14, 18, 22, 26 score 5 + 1 = 6; 9, 15, 17, 23, 25 (costs 1, 1, 1, 1, 1) score 5 + 0.5 = 5.5; 4, 14, 18, 22, 26 (cost 6, then zeros) score 5.4; 0, 14, 18, 22, 26 (cost 10, exactly the bank) score 5; a first answer of 30 against 10 dots (cost 20) busts the bank and scores 0.
+  - [ ] `finished` once the bank is bust or all five answers are in; `lastInputMs` counts each round as the 3-2-1, the flash, the answer time and `REVEAL_MS`, with the first countdown covered by the cheat allowance as in T181; the schema refuses more than `ROUNDS` answers. The tolerance concept (`TOLERANCE_FRACTION`, `tolerance`) and `LIVES` are removed.
+  - [ ] Determinism, range tests over seeds 0 to 999 (each round's count in its range, flash decreasing), layouts keep today's spacing invariant (`dots.ts` unchanged), golden scores for 3 seeds; **different per player**: over 1 000 seeds every round's count takes at least 5 distinct values, fewer than 0.1% of seed pairs share all five counts, and two seeds' layouts for the same round differ. A simulated estimator with an error of about 15% survives all five rounds roughly 40% to 80% of the time. At least 90% lines and branches.
+- Notes: Owner: "work like the time bank on Second Sense. Every dot you don't count or overcount subtracts from it", "5 rounds", "starts with fewer dots and grows each round but ... not the same number of dots in each round for every player". The attempt seed is already random per attempt (see M6 notes). Full review (scoring).
+
+### T185 Swift Sum screen: progress bar, bank gauge, countdown between rounds
+- Type: feature
+- Status: todo
+- Depends on: T178, T179, T184
+- Acceptance criteria:
+  - [ ] `FlashLadderGame` (`src/components/flash-count/FlashLadderGame.tsx`; `FlashCountGame` stays the single flash) drops the life pips and the level text and shows `RoundProgress` (5 steps) and `BankGauge` ("Dot bank", format "3 dots"), with each round's miss as a segment and the reveal "Right on" or "Off by 3" from the answer against that round's count.
+  - [ ] Each round, including round 1, starts with `RoundCountdown` (3-2-1) before the flash; `FlashCountGame` gets `countdownMs={0}`. The answer box and the reveal keep today's layout; the run ends at once when the bank is bust, with the reveal shown.
+  - [ ] The hidden-tab rule (T110) still applies to every flash.
+  - [ ] The practice result (`FlashCountPractice.tsx`) shows rounds survived, dots of bank left and the score.
+  - [ ] Unit tests with mocked time (`FlashLadderGame.test.tsx`): five rounds with small misses; a miss that busts the bank on round 3 ends the run with three answers; the countdown runs before round 2; the gauge and progress follow.
+- Notes: Owner: "Add the same UI here that you do to second sense for the bank and round counter ... Also countdown between rounds here." Full review (attempts).
+
+### T186 Swift Sum: scale reset, cheat rule and wording
+- Type: feature
+- Status: todo
+- Depends on: T183, T184
+- Acceptance criteria:
+  - [ ] A migration sets `challenge_types.scores_since` for `flash-count` to the day after it runs (T183) and sets its `default_pass_targets` entry to 5 (survive all five rounds; proposed, owner to confirm), in `game_settings` and the column default; unedited, unstarted open `flash-count` days are recomputed. pgTAP as in T183 for this type.
+  - [ ] `flashLadderAnswerGapsMs` in `src/lib/cheat/detect.ts` is rewritten for rounds: the earliest an answer can come is the previous answer plus `REVEAL_MS` plus the 3-2-1 plus that round's `flashMs` (the first round: the first 3-2-1 plus the flash). `FLASH_COUNT_MIN_ANSWER_MS` stays 800 ms. `detect.test.ts`: an honest fixture gives no flags; an answer 300 ms after its flash cleared flags `flash-count-instant`; the other games' attempts are never flagged by it.
+  - [ ] `FLASH_COUNT_HOW_TO`, the Swift Sum tagline and the `levels` label in `challengeUi.tsx` describe five rounds and the dot bank ("rounds"); tests that quote the old text (`FlashCountPractice.test.tsx`, practice hub, `TodaysGames.test.tsx`) are updated without weakening.
+  - [ ] `npm run db:types`, `npm run verify`, `npm run test:db` and `npm run test:e2e` pass.
+- Notes: Full review (migration, scoring).
+
+### T187 Echo Path: path generator (pure)
+- Type: feature
+- Status: todo
+- Depends on: T08
+- Acceptance criteria:
+  - [ ] `src/challenges/echo-path/path.ts` exports `COLS = 5`, `ROWS = 10`, `MAX_PATH_LENGTH = 18` and `MIN_PATH_LENGTH = 12` (a tall narrow board like Teetering Tower; the length cap is the owner's "height 10, max 18"; 5 columns and the minimum are proposed, owner to confirm), and `pathFor(seed: number): number[]`, a deterministic list of tile indices (row by row from the bottom: index = `row * COLS + col`, row 0 the bottom row) from the bottom row to the top row.
+  - [ ] Every path starts in row 0 at a seeded column and ends the first time it reaches row `ROWS - 1`. Each step goes to an adjacent tile by one of five moves: straight forward, forward-left, forward-right, left, right (left and right stay in the same row). It never leaves the board and never visits a tile twice. It never makes the same move more than 2 times in a row. Its length is between `MIN_PATH_LENGTH` and `MAX_PATH_LENGTH`; sideways steps are limited so a path cannot exceed 18 (length = 10 + sideways steps). A bounded number of seeded retries is used to reach the minimum, with a deterministic fallback that still obeys every rule.
+  - [ ] Tests over seeds 0 to 9 999: all the rules above hold for every path (including the 2-in-a-row limit at the board's edges, where only one forward move may exist); lengths cover the whole 12 to 18 range; same seed gives the same path; at least 95% of 1 000 seeds give distinct paths; a hand-built path with a 3-in-a-row, a revisit and a diagonal sideways step is rejected by the exported `isValidPath` checker used in the tests. At least 90% lines and branches.
+- Notes: The owner's rules, verbatim in effect: contiguous, adjacent each step, only sideways, diagonal forward or straight forward (never backward), no more than two of the same direction in a row, a fixed maximum length. No self-crossing is the sensible reading of "contiguous" (see M6 notes). Pure module, not wired in. Full review (scoring).
+
+### T188 Echo Path engine: one growing path
+- Type: feature
+- Status: todo
+- Depends on: T187
+- Acceptance criteria:
+  - [ ] `src/challenges/echo-path/engine.ts` uses the path of T187: `paramsFromSeed(seed)` returns `{ cols, rows, path, startLength, stepMs }` with `startLength = 4` (the owner's start) and `stepMs` drawn from 300 to 400 in 50 ms steps (proposed, owner to confirm); `sequenceFor(params, length)` is the first `length` tiles of the path (the tries no longer differ: the path is fixed for the attempt). `COLS`, `ROWS`, `MAX_LENGTH` and the 3 x 3 grid constants are replaced.
+  - [ ] Rules: each round shows the first `length` tiles and the player taps them back in order; a cleared round adds the next tile of the path; a wrong tile costs one of `LIVES = 3` lives and the same length is shown again (the owner did not say; lives are kept so a slip is not fatal; proposed, owner to confirm). The run ends when the full path is cleared or lives run out. Score = longest length cleared + lives left ÷ 3, rounded to 3 decimals. With an explicit 12-tile path: tapping all 12 tiles correctly scores 12 + 1 = 13; clearing 4 to 7 then missing three times scores 7; clearing everything with two misses on the way scores 12 + 1/3.
+  - [ ] Inputs `{ taps: { tile, atMs }[] }` (tiles within the board, `atMs` strictly increasing); `MAX_TAPS` is recomputed for the longest allowed path (start 4, up to 18, plus two missed attempts at the last length); `finished`, `lastInputMs` as before.
+  - [ ] Different per player: over 1 000 seeds the paths differ (at least 95% distinct); determinism, range and golden scores for 3 seeds. At least 90% lines and branches. `engine.test.ts` is rewritten, not weakened.
+- Notes: Owner: "start off ... a path of 4 and then every round after adds one new tile ... random seed for every player ... until the player gets to the end of the board". Lengths of 4 up to 18 mean 9 to 15 rounds; a run is about 2 to 3 minutes (record in T198 as a play-test point). Full review (scoring).
+
+### T189 Echo Path renderer: tall board and path playback
+- Type: feature
+- Status: todo
+- Depends on: T188
+- Acceptance criteria:
+  - [ ] `src/challenges/echo-path/render.ts`: `boardLayout(width, height, cols, rows)` fits the 5 x 10 board into the canvas (portrait), with tiles of at least 44 x 44 CSS px at 390 px width (so the board is up to about 480 px tall, scrolled into view by the page, not clipped); `hitTile` and `litTileAt` keep their contracts.
+  - [ ] The renderer draws the bottom row as the start (a marker) and the top row as the finish (a goal mark), and during playback leaves a fading trail on the tiles already lit so the path reads as a line; after a clear the cleared prefix is shown briefly. Reduced motion drops the fade and the flash but keeps the lit states.
+  - [ ] Unit tests: the layout for 390 x 560 and 1 280 x 720 (tile size, no overlap), `hitTile` at tile edges and in gaps, `litTileAt` for a 6-tile prefix at given ms (including the trail fraction).
+- Notes: Colours from the shared canvas token helper (T135) and `ECHO_PATH_COLOR_TOKENS`; new tokens (start, finish, trail) go in the token list and the e2e look check. Fresh Sport look per `docs/UI_GUIDELINES.md`.
+
+### T190 Echo Path screen, practice page and wording
+- Type: feature
+- Status: todo
+- Depends on: T189
+- Acceptance criteria:
+  - [ ] `EchoPathGame` (`src/components/echo-path/EchoPathGame.tsx`) plays the new engine: a 3-2-1, then the playback of the first 4 tiles, the player's taps, a short pause, one more tile each round; taps during playback are ignored; the status row shows life pips and a path-length bar (T178's `RoundProgress` is not used, because the round count varies per player: a bar of `pathLength` cells whose cleared part fills, with the board's top as the goal) and the text "Tile 7 of 14" only as the accessible label.
+  - [ ] Keyboard: the 1 to 9 keys are replaced by arrow keys that move a focus marker around the board and Space or Enter to tap it (a tall board has more tiles than keys); the hint line says so.
+  - [ ] `EchoPathPractice.tsx` and `/practice/echo-path` work signed out; the result shows the longest length cleared, lives left, and whether the top was reached; `ECHO_PATH_HOW_TO`, the tagline and the `steps` label in `challengeUi.tsx` follow ("path of N tiles").
+  - [ ] Unit tests with mocked time (`EchoPathGame.test.tsx`): the first round plays 4 tiles and a correct echo adds a fifth; a wrong tile costs a life and replays the same 4; clearing the whole path ends the run; keyboard tapping works. `EchoPathPractice.test.tsx` and the practice hub tests are updated without weakening.
+- Notes: Owner: "a long and narrow grid like teetering tower ... from the bottom all the way to the top". Full review (attempts).
+
+### T191 Echo Path: scale reset, cheat checks and wording
+- Type: feature
+- Status: todo
+- Depends on: T183, T188
+- Acceptance criteria:
+  - [ ] A migration sets `challenge_types.scores_since` for `echo-path` (T183) and its `default_pass_targets` entry to 10 (clear a path of 10 tiles, the board's height; proposed, owner to confirm), in `game_settings` and the column default; unedited, unstarted open `echo-path` days are recomputed. pgTAP as in T183 for this type.
+  - [ ] The cheat rule `echo-path-robotic` (`src/lib/cheat/detect.ts`, thresholds in `src/config/cheat.ts`): re-checked against runs of up to 18 tiles. The thresholds stay 80 ms between taps and a standard deviation under 5 ms over 10 or more taps unless a test shows an honest fixture flagging; tests assert the whole flag list for an honest 14-tile run and for a scripted one, and that the rule never fires for another game's attempt.
+  - [ ] `timing-mismatch` for Echo Path still holds with the longer runs (`lastInputMs` is the last tap).
+  - [ ] `npm run db:types`, `npm run verify`, `npm run test:db` and `npm run test:e2e` pass.
+- Notes: Full review (migration, scoring).
+
+### T192 Fair Split shapes: mostly curved and abstract (pure)
+- Type: feature
+- Status: todo
+- Depends on: T146
+- Acceptance criteria:
+  - [ ] `src/challenges/fair-split/shapes.ts` exports a library of shape kinds, each a pure function of a seeded RNG returning a simple closed outline in the 100 x 100 box as a polygon with many points (a curved edge is sampled at 64 to 160 points, so `splitShare` in `geometry.ts` works unchanged). Curved and organic kinds: a lumpy blob, a flower, a crescent, a heart, a teardrop, a kidney bean, a swoosh or comma, a thick "C", a cloud. Angular kinds: an arrow, a star, a plus or cross, a zig-zag band. Each kind is marked `curved: true | false`.
+  - [ ] `shapeFor(seed, index)` (replacing the oddness-based `shapeFor` in `geometry.ts`, which is removed with its tests) picks the kind with a weighted draw so that at least 70% of shapes over many seeds are curved (proposed 75%, owner to confirm), never repeats a kind within one run's five shapes, and applies a seeded rotation, a mirror and a scale so the same kind looks different each time (a heart may arrive tipped over: the owner allows "recognizable or totally abstract").
+  - [ ] Tests over seeds 0 to 999 and every kind: each outline is simple (no edge crossings), lies inside the box with a small margin, has an area of at least 25% of the box and at most 70%, has 160 or fewer points, is deterministic, and the kinds drawn in a run are all different; the curved share of 5 000 drawn shapes is at least 70%; the area-halving line for each kind (found by bisection in the test) exists. At least 90% lines and branches.
+- Notes: Owner: "The shapes should be a variety of unique shapes not just polygons. In fact it should mostly not be polygons ... kind of abnormal such that it is more difficult." Holes stay out (DESIGN's "holes later"). A cut through a concave shape may make several pieces; the share is the total on a side (as T146). Full review (scoring).
+
+### T193 Fair Split engine: five rounds against a bank of points
+- Type: feature
+- Status: todo
+- Depends on: T180, T192
+- Acceptance criteria:
+  - [ ] `src/challenges/fair-split/engine.ts` plays `ROUNDS = 5` shapes (replacing `MAX_SHAPES = 12`, `LIVES`, `TOLERANCE_POINTS`, the retry of a missed shape and the shrinking limit). `paramsFromSeed(seed)` returns `{ bank, shapes: { polygon, limitMs }[] }` with `bank = 6` percentage points (about 1.2 per round; proposed, owner to confirm) and `limitMs = LIMIT_MS = 25_000` for every shape (the old 7 s to 4 s was "much too short"; proposed, owner to confirm).
+  - [ ] Inputs `{ cuts: { atMs, ax, ay, bx, by }[], endMs }` keep their shape (at most `ROUNDS` cuts). A shape's cost is `|share_left x 100 - 50|` in points, rounded to 0.01 (a 49/51 split costs 1). A cut that misses the shape, or comes after the shape's limit, or no cut by the limit (judged against the next cut or `endMs`), costs the whole bank and ends the run. Score = `bankScore` over the shapes (T180). With explicit square params (bank 6): cuts at x = 50, 50.5, 49, 50, 51.5 score 5 + (6 - 0 - 0.5 - 1 - 0 - 1.5) ÷ 6 = 5.5; a cut at x = 40 (cost 10) scores 0; cuts at 53, 53 (costs 3 and 3, exactly the bank) then a third cut at 50 score 3; five perfect cuts score 6; `endMs` alone past the first limit scores 0.
+  - [ ] Shape k appears `GAP_MS` after the previous shape ended (the between-round 3-2-1 replaces the gap in the screen; the engine's `lastInputMs` counts `GAP_MS` plus `ROUND_COUNTDOWN_MS` per round after the first); `finished`, schema bounds and `lastInputMs` follow.
+  - [ ] Determinism and golden tests for 3 seeds; different per player: over 1 000 seeds the first shape's polygon differs between at least 95% of seeds and the five kinds in a run are distinct; a simulated cutter with a documented 0.6 point aim error survives all five rounds roughly 50% to 90% of the time. At least 90% lines and branches.
+- Notes: Owner: "a time bank type thing with the percentage off from 50 ... 5 rounds. The timer here is much too short." Full review (scoring).
+
+### T194 Fair Split renderer: a line that stays adjustable
+- Type: feature
+- Status: todo
+- Depends on: T193
+- Acceptance criteria:
+  - [ ] `src/challenges/fair-split/render.ts` draws the shape (including the sampled curves smoothly), the current cut line extended through the box, two round handles at the line's ends (at least 44 x 44 CSS px hit areas) and a centre grip, the draining time ring, the two pieces and their percentages after a cut, and a miss state. No live percentage is drawn while the line is being adjusted (proposed, owner to confirm: showing it would make the task a matter of watching a number).
+  - [ ] Pure helpers (unit tested): `initialLine()` returns the starting line (vertical through the centre; proposed), `moveHandle(line, which, point)` moves one end, `translateLine(line, delta)` slides the line, both clipped so the line stays through the box; `hitLine(layout, line, x, y)` returns `"a"`, `"b"`, `"body"` or null with the handles taking priority; `nudge(line, key)` and `rotate(line, step)` for the keyboard. The coordinate round trip (canvas to shape space and back) stays within 0.01 units at any canvas size.
+  - [ ] Tests for the helpers at the box edges, a degenerate line (both ends equal is repaired to the previous line), and the timer fraction at given ms.
+- Notes: Owner: "The cut line should be moveable ... moveable until I click a button that says cut or the timer runs out and cuts for me." Fresh Sport look per `docs/UI_GUIDELINES.md`; colours from the token helper.
+
+### T195 Fair Split screen: Cut button, auto-cut, progress and bank
+- Type: feature
+- Status: todo
+- Depends on: T178, T179, T194
+- Acceptance criteria:
+  - [ ] `FairSplitGame` (`src/components/fair-split/FairSplitGame.tsx`): releasing the pointer no longer cuts. Dragging a handle or the line moves it and it can be released and picked up again any number of times. A "Cut" button (at least 44 px tall, below the board, also bound to Enter) commits the line as that shape's cut with `atMs` of the press. When the time ring runs out the game commits the current line at the limit (an auto-cut at the deadline), so an honest run is never timed out.
+  - [ ] `MIN_DRAG` and the pointer-up cut are removed; the canvas keeps `touch-action: none`; keyboard users move the line with the arrow keys and rotate it with `[` and `]` (hint line says so); pressing Cut twice does not double-cut.
+  - [ ] The screen shows `RoundProgress` (5 steps), `BankGauge` ("Split bank", format "0.8 points") with each cut's distance from 50 as a segment, `RoundCountdown` (3-2-1) before every shape including the first, and after each cut the two pieces with their percentages for `GAP_MS`.
+  - [ ] `FairSplitPractice.tsx` and the result show shapes survived, bank left and the score; `FAIR_SPLIT_HOW_TO`, the tagline and the `shapes` label in `challengeUi.tsx` describe the movable line, the Cut button, the 25 second limit and the bank.
+  - [ ] Unit tests with mocked time and pointer events: a drag, a release and a second drag of the same line do not cut; Cut commits once; the auto-cut commits the current line at the limit; a 6-point miss busts the bank and ends the run; the countdown runs before shape 2; reduced motion skips the separation.
+- Notes: Full review (attempts).
+
+### T196 Fair Split: scale reset, cheat checks and wording
+- Type: feature
+- Status: todo
+- Depends on: T183, T193
+- Acceptance criteria:
+  - [ ] A migration sets `challenge_types.scores_since` for `fair-split` (T183) and its `default_pass_targets` entry to 5 (survive all five shapes; proposed, owner to confirm), in `game_settings` and the column default; unedited, unstarted open `fair-split` days are recomputed. pgTAP as in T183 for this type.
+  - [ ] `src/config/cheat.ts` and `detect.ts`: `FAIR_SPLIT_PRECISE_CUTS` becomes 3 of the 5 shapes within `FAIR_SPLIT_PRECISE_POINTS` 0.05 of 50% (proposed, owner to confirm; the old 6 could not fire in 5 rounds); `FAIR_SPLIT_MIN_CUT_MS` becomes 1 500 ms between a shape appearing and its committed cut (proposed, owner to confirm: placing a line and pressing Cut takes longer than the old drag). "Counted" cuts now mean cuts that survived the bank. `judgedCuts` follows the new engine's shape timing. Tests: an honest run (distances 0.4, 1.1, 0.7, 0.2, 0.9 points, each after 6 s or more) gives no flags; three cuts within 0.05 flag `fair-split-implausible`; a cut 800 ms after its shape flags `fair-split-instant`; an auto-cut at the limit is never flagged as instant; no rule fires for another game's attempt.
+  - [ ] `timing-mismatch` covers the per-round 3-2-1 for this game (its `lastInputMs` from T193).
+  - [ ] `npm run db:types`, `npm run verify`, `npm run test:db` and `npm run test:e2e` pass.
+- Notes: Full review (migration, scoring).
+
+### T197 End-to-end and phone checks for the reworked games
+- Type: feature
+- Status: todo
+- Depends on: T183, T186, T191, T196, T177
+- Acceptance criteria:
+  - [ ] Existing e2e specs (`tests/e2e/practice.spec.ts`, `attempts.spec.ts`, `play.spec.ts`, `look.spec.ts`, `global-setup.ts`, the T165 Daily Three specs and the T166 mobile specs) are updated for the new games without weakening: wrong inputs are now a deliberately bust bank, a win is a perfect run built from the params, and a grep of `tests/e2e` and `scripts/` for `lives`, `tolerance`, `MAX_ROUNDS` and `MAX_SHAPES` finds no stale reader.
+  - [ ] One practice e2e per reworked game: Second Sense shows 1-2-3-4, the bank gauge and a 3-2-1 before round 2; Swift Sum shows five steps, the dot bank and a 3-2-1 before round 2; Echo Path shows a 5 x 10 board and a 4-tile first playback and a fifth tile after a clear; Fair Split lets the line be moved twice before Cut and shows the pieces after Cut. Two attempts started by two players get different params (the start reply differs in `params`) for each game.
+  - [ ] On both mobile projects: no horizontal scroll, canvases fit the width, every button at least 44 x 44 CSS px, Echo Path's tiles at least 44 px at 390 px width, Fair Split completes a move and a Cut with touch, the bank gauge is at least 16 px tall and readable at 390 px; the Second Sense target text does not overlap its countdown.
+  - [ ] The Daily Three flows (win two, lose two, one attempt per game) still pass with fixtures that force results through the new engines; the meter e2e covers T177.
+- Notes: Light review. If the batch grows past about 1500 lines, split the mobile checks into their own task.
+
+### T198 Record the M6 decisions and the DESIGN.md conflicts
+- Type: docs
+- Status: todo
+- Depends on: T197
+- Acceptance criteria:
+  - [ ] `docs/DECISIONS.md` gets one entry per M6 judgment call, with the date, item, choice and reason: the reading of "targets 15 to 25 seconds" as the per-round interval; every "(proposed, owner to confirm)" value (Second Sense bank 10 s, target ranges, 2 s clock, timeout; Swift Sum 5 rounds, bank 10 dots, counts 6 to 23, flash 1 800 to 1 400 ms; Echo Path 5 x 10 board, start 4, minimum 12 and maximum 18 tiles, step 300 to 400 ms, lives kept; Fair Split bank 6 points, 25 s limit, 75% curved shapes, start line, no live percentage; pass targets 4, 5, 10 and 5; cheat thresholds); a round whose cost equals the bank survives; `scores_since` and why; per-attempt seeds are the per-player variation; Echo Path's no-revisit reading; Teetering Tower unchanged.
+  - [ ] Each conflict with `docs/DESIGN.md` (the games table and any scoring text) is recorded in `docs/DECISIONS.md`: Second Sense ("budget placeholder 3.0 s; the run ends when the budget runs out; survive N rounds; target length rises, clock fades sooner" becomes fixed four rounds, 10 s bank, 15 to 25 s targets, 2 s clock every round, 3-2-1 every round); Swift Sum ("wrong count costs one of 3 lives; more dots, shorter flash" becomes five rounds against a dot bank, no lives or tolerance); Echo Path ("grid size, a mistake gives a new sequence of the same length" becomes one tall-board path per player growing a tile a round, a mistake replays the same length); Fair Split ("within plus or minus 1 point counts, a cut outside costs one of 3 lives, a time limit per cut, concave shapes" becomes five rounds against a point bank, curved and abstract shapes, an adjustable line with a Cut button, a 25 s limit).
+  - [ ] `docs/NEEDS_HUMAN.md` gets a "please update DESIGN.md" entry listing each conflict and the new rule, and a "please confirm" entry listing the proposed values above with where each one lives (constant or admin-editable target). `docs/DESIGN.md` is not edited.
+- Notes: Docs only; no reviewers needed (CLAUDE.md). Play-test points to list for the owner: Echo Path run length (9 to 15 rounds, 2 to 3 minutes), Second Sense run length (about 95 s), and whether the bank sizes feel fair.
