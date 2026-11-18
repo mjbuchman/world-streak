@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M5 The Daily Three (planned Nov 15).
-- Active task: none. M5 complete. The owner (Nov 17) will play-test later, all at once: do not stop for it; finish every remaining batch first, stopping only for things that need the owner. All batches done (Nov 17); waiting on the owner's combined play-test and gameplay tweak list. Only T45, T52 and T128 remain, all waiting on the owner.
+- Active task: none. M5 complete. The owner (Nov 17) will play-test later, all at once: do not stop for it; finish every remaining batch first, stopping only for things that need the owner. M6 Gameplay tweaks (T177–T198) planned from the owner's play-test feedback and approved Nov 18. Next: batch 13 (T177–T179), then batches 14–18 in order without play-test stops; one M6 play-test at the end. T45, T52 and T128 still wait on the owner.
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: the owner's gameplay tweak list, planned as new tasks.
+- Next: M6 batch 13 (T177–T179).
 
 ## Log
 
