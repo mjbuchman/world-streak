@@ -1,12 +1,11 @@
 import { z } from "zod";
 import { bankScore, playBank } from "../shared/bank";
-import { ladderRanges } from "../shared/ladder";
 import { createRng } from "../shared/prng";
 import type { ChallengeModule } from "../shared/types";
 import { placeDots, type Dot } from "./dots";
 
 /**
- * Swift Sum (T184): ROUNDS flashes of dots, each with more dots and a shorter flash. Every dot an
+ * Swift Sum (T184, T205): ROUNDS flashes of 10 to 30 dots, each flash shorter. Every dot an
  * answer is off by comes out of one bank of BANK dots; the run ends at the first round whose miss
  * is bigger than what is left (the shared bank rule). Score = rounds survived + the bank left as
  * a fraction. All numbers below are placeholders (DECISIONS, T184).
@@ -17,8 +16,12 @@ export const BANK = 10;
 /** How long "Right on" or "Off by N" shows after an answer, before the next round's 3-2-1. */
 export const REVEAL_MS = 1200;
 
-/** Round i's dot count range: three more dots a round, so the counts always rise. */
-export const DOT_COUNT_RANGES = ladderRanges(ROUNDS, 6, 3, 5);
+/**
+ * Every round draws its own count from this one range (owner, T205): the counts jump up and down,
+ * so no round's count can be worked out from its place in the run.
+ */
+export const DOT_COUNT_MIN = 10;
+export const DOT_COUNT_MAX = 30;
 
 /** The flash shortens by FLASH_STEP_MS a round, from the max down to the min. */
 const FLASH_STEP_MS = 100;
@@ -36,7 +39,7 @@ export type FlashLadderInputs = { answers: { count: number; atMs: number }[] };
 
 export function paramsFromSeed(seed: number): FlashLadderParams {
   const rng = createRng(seed);
-  const levels = DOT_COUNT_RANGES.map(({ min, max }, i) => ({ dotCount: rng.int(min, max), flashMs: FLASH_MS_RANGE.max - FLASH_STEP_MS * i }));
+  const levels = Array.from({ length: ROUNDS }, (_, i) => ({ dotCount: rng.int(DOT_COUNT_MIN, DOT_COUNT_MAX), flashMs: FLASH_MS_RANGE.max - FLASH_STEP_MS * i }));
   return { layoutSeed: rng.int(0, 0xffff_ffff), bank: BANK, levels };
 }
 

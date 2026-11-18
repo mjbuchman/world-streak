@@ -2275,7 +2275,7 @@ Planning notes for M7:
 
 ### T201 Display names: Trail Trace and Clean Cut
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] The display name of `echo-path` is "Trail Trace" and of `fair-split` is "Clean Cut" everywhere the player or admin sees it: `src/config/challenges.ts`, `challengeUi.tsx`, the practice hub and pages, how-to text, game screens, results, share text and card, history, admin pages, rules page, `README.md`, and e2e text matchers. The stored type keys, routes (`/practice/echo-path`, `/practice/fair-split`), component and folder names, flag names and database values are unchanged.
@@ -2285,7 +2285,7 @@ Planning notes for M7:
 
 ### T202 Second Sense engine: targets 10 to 20 seconds, a 2 second bank
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T201
 - Acceptance criteria:
   - [ ] In `src/challenges/inner-clock/timeBank.ts`, `BUDGET_MS` becomes 2 000 (owner) and `TARGET_RANGES_MS` becomes `ladderRanges(4, 10_000, 2_500, 2_400)`: 10.0 to 12.4 s, 12.5 to 14.9 s, 15.0 to 17.4 s, 17.5 to 19.9 s, so targets run from 10 to 20 s and still rise by round (the 4 rounds and the rising ranges are proposed, owner to confirm). `REVEAL_MS`, `ROUNDS`, `timeoutMs = targetMs + BUDGET_MS` and the input schema are unchanged.
@@ -2295,7 +2295,7 @@ Planning notes for M7:
 
 ### T203 Second Sense screen: centre the 3-2-1 and update the wording
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T202
 - Acceptance criteria:
   - [ ] The 3-2-1 number is horizontally and vertically centred in its slot on `/practice/inner-clock` and in the Daily Three flow: fix the cause in `RoundCountdown.module.css` or `CountdownNumber` (the cause may differ per game, so check all users of the shared slot: Second Sense, Swift Sum, Trail Trace, Clean Cut and Teetering Tower, and do not shift the others off centre). A Playwright check at 390 x 844 and 1280 x 720 asserts the number's bounding-box centre is within 2 px of the slot's centre horizontally (and of the board or clock centre where the slot sits above one), for Second Sense and for one other game.
@@ -2305,7 +2305,7 @@ Planning notes for M7:
 
 ### T204 Second Sense: scale reset and cheat thresholds
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T202
 - Acceptance criteria:
   - [ ] A new migration sets `challenge_types.scores_since` for `inner-clock` to the day after it runs (UTC), keeps `default_pass_targets` at 4 (survive all four rounds), and recomputes unedited, unstarted open `inner-clock` days (T183 pattern). pgTAP: attempts before the new `scores_since` are ignored by the percentile, newer ones count, other types are unaffected.
@@ -2315,7 +2315,7 @@ Planning notes for M7:
 
 ### T205 Swift Sum engine: a random 10 to 30 dots every round
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T201
 - Acceptance criteria:
   - [ ] In `src/challenges/flash-count/flashLadder.ts`, each round's `dotCount` is drawn from the seeded RNG uniformly from 10 to 30 inclusive (`DOT_COUNT_MIN = 10`, `DOT_COUNT_MAX = 30`), independently per round, with no growth by round and no per-round range, so a player cannot work out a round's range. The old `[6 + 3i, 11 + 3i]` rule is removed. Bank (10 dots), `ROUNDS = 5`, flash times and the input schema are unchanged.
@@ -2325,7 +2325,7 @@ Planning notes for M7:
 
 ### T206 Swift Sum: scale reset, cheat rule and wording
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T204, T205
 - Acceptance criteria:
   - [ ] A new migration sets `scores_since` for `flash-count` to the day after it runs, restates `default_pass_targets` for `flash-count` as 5 (or the value that matches the bank if T205 changed the score scale; it stays "survive all five rounds"), and recomputes unedited, unstarted open days. pgTAP as in T204 for this type.

@@ -142,6 +142,25 @@ describe("FlashLadderGame", () => {
     expect(mounts).toBe(5);
   });
 
+  it("plays five rounds whose counts jump up and down, each showing its own count and miss (T206)", () => {
+    const jumps = { ...params, levels: [28, 11, 24, 15, 30].map((dotCount) => ({ dotCount, flashMs: 1500 })) };
+    render(<FlashLadderGame params={jumps} onFinish={vi.fn()} />);
+    const rounds: [number, number, string][] = [
+      [28, 27, "Off by 1"],
+      [11, 11, "Right on"],
+      [24, 26, "Off by 2"],
+      [15, 15, "Right on"],
+      [30, 29, "Off by 1"],
+    ];
+    for (const [dotCount, count, said] of rounds) {
+      countdown();
+      expect(showing?.params.dotCount).toBe(dotCount);
+      answer(count);
+      expect(screen.getByRole("status").textContent).toBe(said);
+      reveal();
+    }
+  });
+
   it("skips the 3-2-1 with a countdown of 0 (tests of the run)", () => {
     render(<FlashLadderGame countdownMs={0} params={params} onFinish={vi.fn()} />);
     expect(showing?.params.dotCount).toBe(10);

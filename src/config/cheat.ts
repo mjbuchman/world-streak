@@ -16,7 +16,10 @@ export const STACKING_RHYTHM_MAX_SD_MS = 5;
  */
 export const STACKING_PERFECT_RUN_ROWS = 12;
 
-/** Swift Sum: an answer this soon after the dots cleared is faster than typing, when reported. */
+/**
+ * Swift Sum: an answer this soon after the dots cleared is faster than typing, when reported.
+ * Re-checked for 10 to 30 dots (T206): more dots only make honest answers slower, so it stays.
+ */
 export const FLASH_COUNT_MIN_ANSWER_MS = 800;
 
 /**

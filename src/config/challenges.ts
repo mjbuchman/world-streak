@@ -16,7 +16,7 @@ export const CHALLENGE_NAMES: Record<ChallengeType, string> = {
 export const CHALLENGE_TAGLINES: Record<ChallengeType, string> = {
   stacking: "Stack the sliding rows as high as you can.",
   "inner-clock": "Four rounds: tap when each target time has passed. Targets of 10 to 20 seconds; every miss drains your 2-second time bank.",
-  "flash-count": "Five rounds: dots flash, say how many. Every dot you miss drains your 10-dot bank.",
+  "flash-count": "Five rounds of 10 to 30 dots, a new count every round: say how many. Every dot you miss drains your 10-dot bank.",
   "echo-path": "A path of tiles climbs the board. Tap it back, one tile longer each time, all the way to the top.",
   "fair-split": "Five odd shapes: place one straight line to cut each in half. Every point off 50% drains your 6-point bank.",
 };
@@ -32,7 +32,7 @@ export const INNER_CLOCK_HOW_TO =
 
 /** How to play Swift Sum: shown before a practice run (and later before a scored attempt). */
 export const FLASH_COUNT_HOW_TO =
-  "Press Start for five rounds. In each, dots flash on the board: enter how many you think there were. Each round has more dots and a shorter flash. Every dot you are off by comes out of one 10-dot bank; the run ends when a miss is bigger than what is left. Survive all five to pass.";
+  "Press Start for five rounds. In each, dots flash on the board: enter how many you think there were. Each round has a new count of 10 to 30 dots, and a shorter flash. Every dot you are off by comes out of one 10-dot bank; the run ends when a miss is bigger than what is left. Survive all five to pass.";
 
 /** How to play Echo Path: shown before a practice run and before a scored attempt. */
 export const ECHO_PATH_HOW_TO =

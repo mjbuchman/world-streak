@@ -1,6 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { COLS, paramsFromSeed as echoPathParams, ROWS } from "../../src/challenges/echo-path/engine";
 import { boardLayout } from "../../src/challenges/echo-path/render";
+import { paramsFromSeed as flashLadderParams } from "../../src/challenges/flash-count/flashLadder";
 import { ROUND_GAP_MS } from "../../src/challenges/inner-clock/timeBank";
 import { paramsFromSeed, simulate } from "../../src/challenges/stacking/engine";
 import { RUN_COUNTDOWN_MS } from "../../src/config/countdown";
@@ -221,7 +222,7 @@ test("Swift Sum practice: a count far off in round 1 busts the dot bank and ends
   await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
   const answer = page.getByRole("textbox", { name: "How many dots were there?" });
   await expect(answer).toHaveAttribute("inputmode", "numeric");
-  // Round 1 has at most 11 dots, so 999 misses by far more than the 10-dot bank.
+  // Round 1 has at most 30 dots, so 999 misses by far more than the 10-dot bank.
   await answer.fill("999");
   await page.getByRole("button", { name: "Submit" }).click();
   await expect(bank).toHaveAttribute("aria-valuetext", "Bank used up");
@@ -232,16 +233,19 @@ test("Swift Sum practice: a count far off in round 1 busts the dot bank and ends
 });
 
 test("Swift Sum practice: five steps, and a close count survives round 1 into round 2's 3-2-1 (T197)", async ({ page }) => {
+  const seed = 2024;
+  await pinSeed(page, seed);
+  const firstCount = flashLadderParams(seed).levels[0].dotCount;
   await gotoReady(page, "/practice/flash-count");
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByRole("img", { name: "Round 1 of 5" })).toBeVisible();
   const board = page.locator("canvas");
   await expect(board).toHaveAttribute("data-showing", "dots", { timeout: 10_000 });
   await expect(board).toHaveAttribute("data-showing", "clear");
-  // Round 1 has 6 to 11 dots, so 8 is off by at most 3 of the 10-dot bank.
-  await page.getByRole("textbox", { name: "How many dots were there?" }).fill("8");
+  // Off by one: well inside the 10-dot bank.
+  await page.getByRole("textbox", { name: "How many dots were there?" }).fill(String(firstCount + 1));
   await page.getByRole("button", { name: "Submit" }).click();
-  await expect(page.getByRole("meter", { name: "Dot bank" })).toHaveAttribute("aria-valuetext", /^\d+ dots left of 10 dots$/);
+  await expect(page.getByRole("meter", { name: "Dot bank" })).toHaveAttribute("aria-valuetext", "9 dots left of 10 dots");
   await expect(page.getByRole("img", { name: "Round 2 of 5" })).toBeVisible();
   await expect(page.getByText("Round 2", { exact: true })).toBeVisible({ timeout: 5_000 });
   await expect(page.locator("[data-countdown]")).toBeVisible();

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { createRng } from "../shared/prng";
 import { DOT_RADIUS_RANGE, MIN_SPACING, placeDots, type Dot } from "./dots";
-import { DOT_COUNT_RANGES } from "./flashLadder";
+import { DOT_COUNT_MAX, DOT_COUNT_MIN } from "./flashLadder";
 
 const distance = (a: Dot, b: Dot) => Math.hypot(a.x - b.x, a.y - b.y);
-/** Flash Ladder's largest count. */
-const MOST = DOT_COUNT_RANGES[DOT_COUNT_RANGES.length - 1].max;
+/** Swift Sum's largest count. */
+const MOST = DOT_COUNT_MAX;
 
 /** Every pair at least MIN_SPACING apart (centre to centre), and every dot fully inside the square. */
 function expectValidLayout(dots: Dot[]) {
@@ -32,6 +32,16 @@ describe("placeDots", () => {
       expect(dots).toHaveLength(MOST);
       expectValidLayout(dots);
       expect(placeDots(createRng(seed), MOST)).toEqual(dots);
+    }
+  });
+
+  it("lays out every count from 10 to 30 validly over several seeds (T205)", () => {
+    for (let count = DOT_COUNT_MIN; count <= DOT_COUNT_MAX; count++) {
+      for (let seed = 0; seed < 10; seed++) {
+        const dots = placeDots(createRng(seed), count);
+        expect(dots).toHaveLength(count);
+        expectValidLayout(dots);
+      }
     }
   });
 
