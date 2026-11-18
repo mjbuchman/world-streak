@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M5 The Daily Three (planned Nov 15).
-- Active task: none. M5 complete; waiting on the human's M5 play-test. Then batch 10 (T172, T173) on branch `task/172-maintenance`, which already holds these doc updates, and batch 11 (T174).
+- Active task: none. M5 complete. The owner (Nov 17) will play-test later, all at once: do not stop for it; finish every remaining batch first, stopping only for things that need the owner. Next: batch 10 (T172, T173) on branch `task/172-maintenance`, which already holds these doc updates, and batch 11 (T174).
 - Blocked tasks: none
 - Waiting on the human: T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M5 The Daily Three (T139–T166, approved in advance on Nov 15), starting with T139.
