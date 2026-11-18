@@ -44,9 +44,9 @@ create function tests.play_day(
   day date, attempt_count integer, pass_count integer, threshold numeric default 0.6, closed timestamptz default null
 ) returns date
 language sql as $$
-  insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold, closed_at, outcome)
+  insert into public.game_days (game_date, survival_threshold, closed_at, outcome)
   values (
-    day, 'stacking', 10, threshold, closed,
+    day, threshold, closed,
     case
       when closed is null then null
       when attempt_count > 0 and pass_count::numeric / attempt_count >= threshold then 'survived'
@@ -54,7 +54,6 @@ language sql as $$
     end
   )
   on conflict (game_date) do update set
-    challenge_type = excluded.challenge_type, pass_target = excluded.pass_target,
     survival_threshold = excluded.survival_threshold, closed_at = excluded.closed_at, outcome = excluded.outcome;
   insert into public.game_day_counters (game_date, attempts, passes, weighted_attempts, weighted_passes)
   values (day, attempt_count, pass_count, attempt_count, pass_count)
@@ -67,5 +66,8 @@ language sql as $$
          weighted_completed_days = attempt_count, weighted_passed_days = pass_count
    where game_date = day;
   delete from public.game_day_games where game_date = day and position > 1;
+  insert into public.game_day_games (game_date, position, challenge_type, pass_target)
+  values (day, 1, 'stacking', 10)
+  on conflict (game_date, position) do update set challenge_type = 'stacking', pass_target = 10;
   select day;
 $$;

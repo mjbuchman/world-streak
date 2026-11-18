@@ -208,7 +208,9 @@ update public.game_settings set default_survival_threshold = 0.55, default_pass_
   percentile_min_sample = 2147483647;
 select public.ensure_game_day('2001-11-20');
 select results_eq(
-  $$select challenge_type, pass_target, survival_threshold from public.game_days where game_date = '2001-11-20'$$,
+  $$select g.challenge_type, g.pass_target, d.survival_threshold
+      from public.game_days d join public.game_day_games g on g.game_date = d.game_date and g.position = 1
+     where d.game_date = '2001-11-20'$$,
   $$values ('stacking'::text, 12::numeric, 0.55::numeric)$$,
   'a new game day takes its pass target and survival threshold from game_settings'
 );
@@ -216,7 +218,9 @@ update public.game_settings set default_survival_threshold = 0.60, default_pass_
 select public.ensure_game_day('2001-11-20');
 -- Since T99 a day nobody has edited or started follows the settings until then.
 select results_eq(
-  $$select pass_target, survival_threshold from public.game_days where game_date = '2001-11-20'$$,
+  $$select g.pass_target, d.survival_threshold
+      from public.game_days d join public.game_day_games g on g.game_date = d.game_date and g.position = 1
+     where d.game_date = '2001-11-20'$$,
   $$values (10::numeric, 0.60::numeric)$$,
   'an untouched game day follows a change to the settings'
 );

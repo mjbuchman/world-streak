@@ -1,5 +1,5 @@
 begin;
-select plan(38);
+select plan(34);
 
 -- The pool (T150).
 select col_default_is(
@@ -97,11 +97,6 @@ select results_eq(
   'three games, each with its own target: the Tower''s from its scores (80% reached 1), the others their defaults'
 );
 select is(public.lineup_of('2031-03-01'), public.lineup_for('2031-03-01', public.lineup_of('2031-02-28')), 'the lineup is the rule''s');
-select results_eq(
-  $$select d.challenge_type, d.pass_target from public.game_days d where game_date = '2031-03-01'$$,
-  $$select challenge_type, pass_target from public.game_day_games where game_date = '2031-03-01' and position = 1$$,
-  'game_days mirrors the first game'
-);
 
 -- A day's rows (position, game, target) as text, to compare before and after.
 create function tests.rows_of(d date) returns text
@@ -131,17 +126,6 @@ select public.ensure_game_day(d) from (values ('2031-03-01'::date), ('2031-03-02
 select is(tests.rows_of('2031-03-01'), :'edited_rows', 'an edited day''s lineup and targets are never overwritten');
 select is(tests.rows_of('2031-03-02'), :'started_rows', 'nor a started day''s');
 select is(tests.rows_of('2031-03-03'), :'closed_rows', 'nor a closed day''s');
-
--- An edit of game_days' challenge moves to the first game, swapping with the game it brings forward.
-select public.lineup_of('2031-03-01') as before,
-  (select pass_target from public.game_day_games where game_date = '2031-03-01' and position = 1) as first_target \gset
-update public.game_days set challenge_type = (public.lineup_of('2031-03-01'))[3], pass_target = 7 where game_date = '2031-03-01';
-select is(public.lineup_of('2031-03-01'), array[(:'before'::text[])[3], (:'before'::text[])[2], (:'before'::text[])[1]],
-  'the first and third games swap places');
-select is((select pass_target from public.game_day_games where game_date = '2031-03-01' and position = 1), 7::numeric,
-  'the first game takes the edited target');
-select is((select pass_target from public.game_day_games where game_date = '2031-03-01' and position = 3), :'first_target'::numeric,
-  'the displaced game keeps its own target');
 
 -- The close prepares the next day from the closing day's lineup (2031-02-28 has no open day
 -- before it). Its lineup is set to the one the rule picks first for 2031-03-01, so the close

@@ -233,23 +233,17 @@ isOneToOne: false
                   ]
                 },"game_days": {
                   Row: {
-                    "challenge_type": string,"closed_at": string | null,"edited": boolean,"final_pass_rate": number | null,"game_date": string,"outcome": string | null,"pass_target": number,"survival_threshold": number
+                    "closed_at": string | null,"edited": boolean,"final_pass_rate": number | null,"game_date": string,"outcome": string | null,"survival_threshold": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "challenge_type": string,"closed_at"?: string | null,"edited"?: boolean,"final_pass_rate"?: number | null,"game_date": string,"outcome"?: string | null,"pass_target": number,"survival_threshold": number
+                    "closed_at"?: string | null,"edited"?: boolean,"final_pass_rate"?: number | null,"game_date": string,"outcome"?: string | null,"survival_threshold": number
                   }
                   Update: {
-                    "challenge_type"?: string,"closed_at"?: string | null,"edited"?: boolean,"final_pass_rate"?: number | null,"game_date"?: string,"outcome"?: string | null,"pass_target"?: number,"survival_threshold"?: number
+                    "closed_at"?: string | null,"edited"?: boolean,"final_pass_rate"?: number | null,"game_date"?: string,"outcome"?: string | null,"survival_threshold"?: number
                   }
                   Relationships: [
-                    {
-      foreignKeyName: "game_days_challenge_type_fkey"
-      columns: ["challenge_type"]
-isOneToOne: false
-      referencedRelation: "challenge_types"
-      referencedColumns: ["type"]
-    }
+                    
                   ]
                 },"game_settings": {
                   Row: {

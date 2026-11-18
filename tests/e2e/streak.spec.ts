@@ -23,19 +23,22 @@ async function seedThreeClosedDays() {
     { game_date: daysAgo(2), final_pass_rate: 0.74, outcome: "survived" },
     { game_date: daysAgo(1), final_pass_rate: 0.52, outcome: "broken" },
   ];
-  // Create missing days, but never rewrite an existing day's pass target: once a day has
-  // attempts (earlier local runs) the database refuses to move it (T102).
+  // Create missing days and their one-game lineups, but never rewrite an existing day's games:
+  // once a day has attempts (earlier local runs) the database refuses to move them (T102).
   const created = await db
     .from("game_days")
-    .upsert(
-      results.map(({ game_date }) => ({ game_date, challenge_type: "stacking", pass_target: 10, survival_threshold: 0.6 })),
-      { ignoreDuplicates: true },
-    );
+    .upsert(results.map(({ game_date }) => ({ game_date, survival_threshold: 0.6 })), { ignoreDuplicates: true });
   if (created.error) throw created.error;
+  const games = await db
+    .from("game_day_games")
+    .upsert(results.map(({ game_date }) => ({ game_date, position: 1, challenge_type: "stacking", pass_target: 10 })), {
+      ignoreDuplicates: true,
+    });
+  if (games.error) throw games.error;
   for (const { game_date, ...result } of results) {
     const closed = await db
       .from("game_days")
-      .update({ ...result, challenge_type: "stacking", survival_threshold: 0.6, closed_at: closedAt })
+      .update({ ...result, survival_threshold: 0.6, closed_at: closedAt })
       .eq("game_date", game_date);
     if (closed.error) throw closed.error;
   }

@@ -22,20 +22,23 @@ select ok(
 update public.game_settings set percentile_min_sample = 2147483647, pass_target_streak_step = 0;
 select is(public.pass_target_for('flash-count', '2000-06-01', 0), 5::numeric, 'with too few scores, the target is the placeholder');
 
--- The migration's re-target, run again verbatim on days still holding a percentage target: only
--- the untouched one (not edited, started or closed) gets the target in levels.
-insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold, edited, closed_at, outcome)
-values ('2000-06-02', 'flash-count', 15, 0.6, false, null, null),
-       ('2000-06-03', 'flash-count', 15, 0.6, true, null, null),
-       ('2000-06-04', 'flash-count', 15, 0.6, false, null, null),
-       ('2000-06-05', 'flash-count', 15, 0.6, false, now(), 'broken');
+-- The migration's re-target, run again (on the lineup table since T174) on days still holding a
+-- percentage target: only the untouched one (not edited, started or closed) gets the target in levels.
+insert into public.game_days (game_date, survival_threshold, edited, closed_at, outcome)
+values ('2000-06-02', 0.6, false, null, null),
+       ('2000-06-03', 0.6, true, null, null),
+       ('2000-06-04', 0.6, false, null, null),
+       ('2000-06-05', 0.6, false, now(), 'broken');
+insert into public.game_day_games (game_date, position, challenge_type, pass_target)
+select d, 1, 'flash-count', 15 from (values ('2000-06-02'::date), ('2000-06-03'), ('2000-06-04'), ('2000-06-05')) as days(d);
 select tests.start('00000000-0000-0000-0000-0000000000c2', tests.make_player('00000000-0000-0000-0000-0000000000b2'), '2000-06-04', 1);
-update public.game_days g
+update public.game_day_games g
    set pass_target = public.pass_target_for('flash-count', g.game_date, (select current from public.world_streak()))
- where g.challenge_type = 'flash-count' and not g.edited and g.closed_at is null
+  from public.game_days d
+ where d.game_date = g.game_date and g.challenge_type = 'flash-count' and not d.edited and d.closed_at is null
    and not exists (select 1 from public.attempts a where a.game_date = g.game_date);
 select results_eq(
-  $$select game_date, pass_target from public.game_days where game_date between '2000-06-02' and '2000-06-05' order by game_date$$,
+  $$select game_date, pass_target from public.game_day_games where game_date between '2000-06-02' and '2000-06-05' order by game_date$$,
   $$values ('2000-06-02'::date, 5::numeric), ('2000-06-03'::date, 15::numeric), ('2000-06-04'::date, 15::numeric), ('2000-06-05'::date, 15::numeric)$$,
   'an untouched day gets 5 levels; edited, started and closed days keep their targets'
 );

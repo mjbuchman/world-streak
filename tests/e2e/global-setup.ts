@@ -49,16 +49,25 @@ async function pinTowerToday(): Promise<() => Promise<void>> {
   const today = gameDateAt(new Date());
   const ensured = await db.rpc("ensure_game_day", { d: today });
   if (ensured.error) throw ensured.error;
-  const before = await db.from("game_days").select("challenge_type, edited").eq("game_date", today).single();
-  if (before.error) throw before.error;
-  const pinned = await db.from("game_days").update({ challenge_type: "stacking", edited: true }).eq("game_date", today);
-  if (pinned.error) throw pinned.error;
+  const day = await db.from("game_days").select("survival_threshold, edited").eq("game_date", today).single();
+  if (day.error) throw day.error;
+  const lineup = await db.from("game_day_games").select("challenge_type, pass_target").eq("game_date", today).order("position");
+  if (lineup.error) throw lineup.error;
+  const games = lineup.data.map((game) => game.challenge_type);
+  const targets = lineup.data.map((game) => Number(game.pass_target));
+  const save = async (lineupGames: string[]) => {
+    // A slot whose game changes while its target stays gets the new game's default (T161).
+    const saved = await db.rpc("save_game_day", { d: today, games: lineupGames, targets, threshold: day.data.survival_threshold });
+    if (saved.error) throw saved.error;
+  };
+  await save(["stacking", ...games.filter((game) => game !== "stacking")].slice(0, 3));
   return async () => {
     // A day still holding attempts has its games locked (T111), so it stays the Tower.
     const left = await db.from("attempts").select("id", { count: "exact", head: true }).eq("game_date", today);
     if (left.error) throw left.error;
     if (left.count) return;
-    const restored = await db.from("game_days").update(before.data).eq("game_date", today);
+    await save(games);
+    const restored = await db.from("game_days").update({ edited: day.data.edited }).eq("game_date", today);
     if (restored.error) throw restored.error;
   };
 }

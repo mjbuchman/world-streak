@@ -12,8 +12,9 @@ select is(
 \ir fixtures/fixtures.psql
 create temporary table today as select tests.clear_today() as d;
 -- A closed day with no counters row, so a refused start there would show up as a new row.
-insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold, closed_at, outcome)
-values ('2000-01-01', 'stacking', 10, 0.6, '2000-01-02T00:00:05Z', 'survived');
+insert into public.game_days (game_date, survival_threshold, closed_at, outcome)
+values ('2000-01-01', 0.6, '2000-01-02T00:00:05Z', 'survived');
+insert into public.game_day_games (game_date, position, challenge_type, pass_target) values ('2000-01-01', 1, 'stacking', 10);
 select tests.make_player('00000000-0000-0000-0000-00000000000a');
 select tests.make_player('00000000-0000-0000-0000-00000000000b');
 select tests.make_player('00000000-0000-0000-0000-00000000000c', 0.5);

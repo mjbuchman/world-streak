@@ -17,8 +17,8 @@ select throws_ok(
   '23514', null, 'a direction is higher-better or lower-better'
 );
 select throws_ok(
-  $$insert into public.game_days (game_date, challenge_type, pass_target, survival_threshold) values ('2000-02-28', 'nope', 1, 0.6)$$,
-  '23503', null, 'a game day names a known challenge type'
+  $$insert into public.game_day_games (game_date, position, challenge_type, pass_target) values ('2000-02-28', 1, 'nope', 1)$$,
+  '23503', null, 'a lineup names a known challenge type'
 );
 select function_privs_are('public', 'pass_target_for', array['text', 'date', 'integer'], 'anon', array[]::text[], 'visitors cannot call pass_target_for');
 
@@ -58,9 +58,8 @@ select is(public.pass_target_for('stacking', '2000-02-09', 0), 10::numeric, 'nor
 insert into public.challenge_types values ('testLower', 'lower-better');
 update public.game_settings set default_pass_targets = '{"stacking": 10, "testLower": 50}', pass_target_streak_step = 0.5;
 -- The day has scores, so its challenge is locked (T111); lifted here to relabel the fixture.
-alter table public.game_days disable trigger game_days_change_challenge;
 alter table public.game_day_games disable trigger game_day_games_edit;
-update public.game_days set challenge_type = 'testLower' where game_date = '2000-02-09';
+update public.game_day_games set challenge_type = 'testLower' where game_date = '2000-02-09';
 update public.attempts set challenge_type = 'testLower' where game_date = '2000-02-09';
 select is(public.pass_target_for('testLower', '2000-02-10', 4), 6::numeric, 'lower is better: the 8th smallest of 1 to 10 is 8, less 0.5 × 4');
 select is(public.pass_target_for('testLower', '2000-02-10', 100), 0::numeric, 'a lower-better target never drops below 0');
@@ -69,9 +68,9 @@ select throws_ok(
   $$select public.pass_target_for('nope', '2000-02-10', 0)$$,
   'P0001', 'unknown challenge type nope', 'an unknown challenge type is refused'
 );
-update public.game_days set challenge_type = 'stacking' where game_date = '2000-02-09';
+update public.game_day_games set challenge_type = 'stacking' where game_date = '2000-02-09';
 update public.attempts set challenge_type = 'stacking' where game_date = '2000-02-09';
-alter table public.game_days enable trigger game_days_change_challenge;
+alter table public.game_day_games enable trigger game_day_games_edit;
 update public.game_settings set default_pass_targets = '{"stacking": 10}', pass_target_streak_step = 0;
 
 -- The close prepares the next day from them, with the threshold rising with the streak.
@@ -79,7 +78,9 @@ update public.game_settings set threshold_streak_step = 0.1;
 insert into public.streak_runs (start_date, length) values ('2000-02-05', 4);
 select is(public.close_game_day('2000-02-09'), 'broken', 'setup: 2000-02-09 closes (no passes counted)');
 select results_eq(
-  $$select challenge_type, pass_target, survival_threshold, closed_at from public.game_days where game_date = '2000-02-10'$$,
+  $$select g.challenge_type, g.pass_target, d.survival_threshold, d.closed_at
+      from public.game_days d join public.game_day_games g on g.game_date = d.game_date and g.position = 1
+     where d.game_date = '2000-02-10'$$,
   $$values ('stacking'::text, 3::numeric, 0.60::numeric, null::timestamptz)$$,
   'the close creates the next day, open, with the target from recent scores and the threshold for the new streak of 0'
 );
@@ -97,9 +98,10 @@ delete from public.attempts where id = '00000000-0000-0000-0000-000000000110';
 select is(public.pass_target_for('stacking', '2000-02-10', 0), 10::numeric, 'with 9 scores the default target of 10 is used');
 
 -- An existing next day (an admin's edit) is never overwritten, by the close or a re-run of it.
-update public.game_days set pass_target = 99, edited = true where game_date = '2000-02-10';
+update public.game_days set edited = true where game_date = '2000-02-10';
+update public.game_day_games set pass_target = 99 where game_date = '2000-02-10' and position = 1;
 select is(public.close_game_day('2000-02-09'), 'broken', 'setup: re-running the close');
-select is((select pass_target from public.game_days where game_date = '2000-02-10'), 99::numeric, 'the edited next day keeps its target');
+select is((select pass_target from public.game_day_games where game_date = '2000-02-10' and position = 1), 99::numeric, 'the edited next day keeps its target');
 
 -- A survived close prepares the next day with the streak as it now stands, for both steps.
 -- 2000-02-10 breaks (nobody played); 2000-02-11 survives, starting a streak of 1, and its one
@@ -111,7 +113,9 @@ update public.attempts set score = 10, submitted_at = '2000-02-11T12:00:00Z' whe
 update public.game_settings set pass_target_streak_step = 0.5;
 select is(public.close_game_day('2000-02-11'), 'survived', 'setup: 2000-02-11 survives');
 select results_eq(
-  $$select pass_target, survival_threshold from public.game_days where game_date = '2000-02-12'$$,
+  $$select g.pass_target, d.survival_threshold
+      from public.game_days d join public.game_day_games g on g.game_date = d.game_date and g.position = 1
+     where d.game_date = '2000-02-12'$$,
   $$values (3.5::numeric, 0.70::numeric)$$,
   'the next day uses the new streak of 1: target 3 + 0.5, threshold 0.60 + 0.1'
 );
