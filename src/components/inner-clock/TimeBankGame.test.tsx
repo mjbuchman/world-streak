@@ -109,9 +109,14 @@ describe("TimeBankGame", () => {
     expect(onFinish).not.toHaveBeenCalled();
     // Errors 4,000 and 3,000 leave 3,000; 3,500 busts it.
     tap(24_500);
-    expect(onFinish).toHaveBeenCalledExactlyOnceWith({ tapsMs: [19_000, 21_000, 24_500] });
     expect(bank().getAttribute("aria-valuetext")).toBe("Bank used up");
     expect(steps()).toEqual(["done", "done", "failed", "later"]);
+    // The last error shows for the gap first, so a phone's click after the tap cannot reach the result.
+    wait(ROUND_GAP_MS - 1);
+    expect(onFinish).not.toHaveBeenCalled();
+    expect(screen.getByRole("status").textContent).toBe("3.5 s late");
+    wait(1);
+    expect(onFinish).toHaveBeenCalledExactlyOnceWith({ tapsMs: [19_000, 21_000, 24_500] });
     gap();
     countdown();
     expect(screen.queryByText("Round on screen")).toBeNull();
@@ -129,6 +134,7 @@ describe("TimeBankGame", () => {
     countdown();
     expect(onFinish).not.toHaveBeenCalled();
     tap(24_100);
+    gap();
     expect(onFinish).toHaveBeenCalledExactlyOnceWith({ tapsMs: [15_100, 18_100, 21_100, 24_100] });
   });
 

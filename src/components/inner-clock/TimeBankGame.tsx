@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   play,
   ROUND_COUNTDOWN_MS,
@@ -52,18 +52,28 @@ export function TimeBankGame({ params, onFinish, countdownMs = ROUND_COUNTDOWN_M
   const index = tapsMs.length;
   const costs = tapsMs.map((tapMs, i) => roundErrorMs(params.rounds[i], tapMs, params.budgetMs));
 
+  // The latest callback and taps, so the reveal's timer is not restarted by a re-render.
+  const finishRef = useRef(onFinish);
+  const tapsRef = useRef(tapsMs);
   useEffect(() => {
-    if (phase !== "reveal" || finished) return;
-    const timer = setTimeout(() => setPhase("countdown"), ROUND_GAP_MS);
+    finishRef.current = onFinish;
+    tapsRef.current = tapsMs;
+  });
+
+  // Every error, the last one too, shows for ROUND_GAP_MS. Ending the run only after it means a
+  // phone's click, which follows the tap, lands on the error rather than the result ("Play again").
+  useEffect(() => {
+    if (phase !== "reveal") return;
+    const timer = setTimeout(
+      () => (finished ? finishRef.current({ tapsMs: tapsRef.current }) : setPhase("countdown")),
+      ROUND_GAP_MS,
+    );
     return () => clearTimeout(timer);
   }, [phase, finished]);
 
-  // Reads this render's taps: safe because each round is a fresh InnerClockGame (key={index}) that finishes once.
   const finishRound = ({ tapMs }: { tapMs: number | null }) => {
-    const next = [...tapsMs, tapMs];
-    setTapsMs(next);
+    setTapsMs((taps) => [...taps, tapMs]);
     setPhase("reveal");
-    if (timeBank.finished(params, { tapsMs: next })) onFinish({ tapsMs: next });
   };
 
   const total = params.rounds.length;

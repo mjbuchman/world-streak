@@ -149,11 +149,6 @@ describe("InnerClockGame", () => {
     expect(onFinish).toHaveBeenCalledOnce();
   });
 
-  it("cancels a touch's click, so it cannot land on the result screen that replaces the round", () => {
-    render(<InnerClockGame countdownMs={0} params={params} onFinish={vi.fn()} />);
-    expect(fireEvent.touchEnd(tapArea())).toBe(false);
-  });
-
   it("ignores a tap before the start is on screen", () => {
     const onFinish = vi.fn();
     render(<InnerClockGame countdownMs={0} params={params} onFinish={onFinish} />);

@@ -73,16 +73,6 @@ export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_M
     reducedRef.current = reducedMotion;
   });
 
-  // The round counts the tap on pointerdown, so a run can end and the result screen take its place
-  // before the touch ends: cancelling touchend stops that touch's click landing on what is now
-  // under the finger ("Play again"). React's touch listeners are passive, hence a native one.
-  useEffect(() => {
-    const area = areaRef.current;
-    const cancelClick = (event: TouchEvent) => event.preventDefault();
-    area?.addEventListener("touchend", cancelClick, { passive: false });
-    return () => area?.removeEventListener("touchend", cancelClick);
-  }, []);
-
   useEffect(() => {
     areaRef.current?.focus();
     let timer: ReturnType<typeof setTimeout> | undefined;

@@ -99,6 +99,7 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 
 ## Resolved
 
+- **T180–T183 blocked** (Nov 18, 2026): PR #171 failed CI 3 times on a phone ghost click; the owner unblocked it with 3 more attempts.
 - **M4 play-test** (Nov 12, 2026): Second Sense fade and targets good; Swift Sum countdown perfect, so every game gets it (T138). No sponsor yet: T39 dropped. `record_attempt_result_unchecked` stays (checked: only the service role can run it, pgTAP-tested). Turnstile's free plan has no usage charge.
 
 - **Decisions after M4** (Nov 12, 2026): all eight please-confirms accepted as built (T44 ads off, T43 draw, T40 cheat thresholds, T34 streak and cycle, T110 hidden tab, T32 share margin, T31 rotation, T104 gauge); T37 goes ahead with option A; the meter's local p95 is accepted, to be rechecked on the preview; Second Sense keeps the 0.5 s pass target.
