@@ -1,6 +1,6 @@
 begin;
 \ir fixtures/fixtures.psql
-select plan(15);
+select plan(16);
 
 -- T183: a challenge's pass-target percentile reads only scores from its scores_since date on.
 select has_column('public', 'challenge_types', 'scores_since', 'challenge types have a scores_since date');
@@ -26,11 +26,12 @@ select is(
 );
 select is((select (default_pass_targets ->> 'inner-clock')::numeric from public.game_settings), 4::numeric, 'the placeholder stays 4: survive all four');
 select is((select (default_pass_targets ->> 'flash-count')::numeric from public.game_settings), 5::numeric, 'Swift Sum''s is 5: survive all five');
+select is((select (default_pass_targets ->> 'fair-split')::numeric from public.game_settings), 5::numeric, 'Fair Split''s is 5: survive all five (T196)');
 select ok(
   (select column_default from information_schema.columns
     where table_schema = 'public' and table_name = 'game_settings' and column_name = 'default_pass_targets')
-    like all (array['%"inner-clock": 4%', '%"flash-count": 5%', '%"echo-path": 10%']),
-  'and a fresh settings row has all three'
+    like all (array['%"inner-clock": 4%', '%"flash-count": 5%', '%"echo-path": 10%', '%"fair-split": 5%']),
+  'and a fresh settings row has all four'
 );
 
 -- Scores laid out directly: the attempt triggers (counters, day results, lineup checks) are not
