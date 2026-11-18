@@ -42,6 +42,7 @@ M6 Gameplay tweaks (Nov 18, 2026; approved Nov 18):
 16. Echo Path as one growing path: T187, T188, T189, T190, T191 (full: scoring, migration)
 17. Fair Split as five rounds: T192, T193, T194, T195, T196 (full: scoring, migration; if over about 1500 lines, split T196 into its own PR, still full)
 18. M6 end-to-end checks and docs: T197, T198 (light; T198 is docs only)
+19. Maintenance after M6: T199, T200 (light; after the M6 play-test)
 
 ## M1 Foundation and first challenge end to end
 
@@ -1970,6 +1971,26 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
   - [ ] README covers the Daily Three and its five games, the T163/T164 local tools and seed, and the admin lineup editor; every command and env var it names exists in `package.json` / `.env.example`.
 - Notes: README does not mention the Daily Three yet.
 
+### T199 Retire the stale "flash ladder" and "inner-clock" code names (maintainer, Nov 18)
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] Code identifiers, files and folders for Swift Sum and Second Sense match the current games (today `flashLadder`, `FlashLadderGame`/`FlashCountGame`, `timeBank`, `InnerClockGame`/`TimeBankGame`).
+  - [ ] The stored `ChallengeType` strings ("flash-count", "inner-clock") and registry keys are unchanged (no migration); a comment above `CHALLENGES` in `src/challenges/registry.ts` says the keys are stored values.
+  - [ ] `src/components/flash-count/` keeps one game component (or documents both), with no dead exports; `npm run verify` passes, no behaviour change.
+- Notes: About 300 lines, mostly renames.
+
+### T200 Share the round-game glue across the four reworked games (maintainer, Nov 18)
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] First check that the four game components really repeat the same round state machine and bank/progress/countdown wiring; if not, close this task as not needed.
+  - [ ] If they do: the repeated glue moves into one tested hook or component under `src/components/rounds/`, and the four practice wrappers share one result helper.
+  - [ ] Existing component tests pass unchanged; `npm run verify` passes, no behaviour change.
+- Notes: Keeps a fifth game from becoming another copy. About 350 lines.
+
 ## M6 Gameplay tweaks
 
 Awaiting the owner's approval (planned Nov 18, 2026 from the owner's M5 play-test feedback; this overrides `docs/DESIGN.md` where they conflict, and DESIGN.md is not edited: T198 records each conflict).
@@ -2209,7 +2230,7 @@ Planning notes for M6:
 
 ### T197 End-to-end and phone checks for the reworked games
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T183, T186, T191, T196, T177
 - Acceptance criteria:
   - [ ] Existing e2e specs (`tests/e2e/practice.spec.ts`, `attempts.spec.ts`, `play.spec.ts`, `look.spec.ts`, `global-setup.ts`, the T165 Daily Three specs and the T166 mobile specs) are updated for the new games without weakening: wrong inputs are now a deliberately bust bank, a win is a perfect run built from the params, and a grep of `tests/e2e` and `scripts/` for `lives`, `tolerance`, `MAX_ROUNDS` and `MAX_SHAPES` finds no stale reader.
@@ -2220,7 +2241,7 @@ Planning notes for M6:
 
 ### T198 Record the M6 decisions and the DESIGN.md conflicts
 - Type: docs
-- Status: in-progress
+- Status: done
 - Depends on: T197
 - Acceptance criteria:
   - [ ] `docs/DECISIONS.md` gets one entry per M6 judgment call, with the date, item, choice and reason: the reading of "targets 15 to 25 seconds" as the per-round interval; every "(proposed, owner to confirm)" value (Second Sense bank 10 s, target ranges, 2 s clock, timeout; Swift Sum 5 rounds, bank 10 dots, counts 6 to 23, flash 1 800 to 1 400 ms; Echo Path 5 x 10 board, start 4, minimum 12 and maximum 18 tiles, step 300 to 400 ms, lives kept; Fair Split bank 6 points, 25 s limit, 75% curved shapes, start line, no live percentage; pass targets 4, 5, 10 and 5; cheat thresholds); a round whose cost equals the bank survives; `scores_since` and why; per-attempt seeds are the per-player variation; Echo Path's no-revisit reading; Teetering Tower unchanged.
