@@ -30,6 +30,7 @@ One branch, review round and PR per batch, in this order (dependencies still app
 9. Daily Three e2e and mobile: T165, T166 (light)
 10. Maintenance: T172, T173 (light; any time)
 11. Drop the old game_days columns: T174 (full; after T163)
+12. Coverage and README: T175, T176 (light)
 
 ## M1 Foundation and first challenge end to end
 
@@ -1268,7 +1269,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T165 End-to-end coverage of the Daily Three
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T157, T160, T163
 - Acceptance criteria:
   - [ ] e2e "win two of three": with today's lineup and targets set by SQL fixture so wins and losses can be forced, a new user wins two games, sees the day passed after game 2, plays the remaining game, and the results page and share text are unchanged by it; `/api/meter` shows 1 player finished.
@@ -1279,7 +1280,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T166 Mobile checks for the new games
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T145, T149, T156
 - Acceptance criteria:
   - [ ] On both mobile projects (T47): `/practice/echo-path`, `/practice/fair-split` and the `/play` interstitials and results page have no horizontal scroll; each canvas fits the viewport; Echo Path tiles and every button are at least 44 x 44 CSS px.
@@ -1916,7 +1917,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T172 Normalize line endings with .gitattributes
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] A root `.gitattributes` sets `* text=auto eol=lf` and marks binary assets (png, ico, woff2) as `binary`.
@@ -1925,7 +1926,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T173 Patch-level dependency bumps
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] `@playwright/test` 1.65.1, `jsdom` 31.0.1 and `@testing-library/user-event` 14.6.12 in `package.json` and the lockfile; no major bumps.
@@ -1940,3 +1941,20 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
   - [ ] Nothing reads or writes `game_days.challenge_type` or `game_days.pass_target` (the local tools' "set a day's challenge", `tests/e2e/global-setup.ts`, `tests/e2e/after/` and `today.ts` move to `game_day_games`); a grep in the PR description shows no readers.
   - [ ] A migration drops both columns, the `mirror_first_game` trigger and the `game_days_change_challenge` trigger; pgTAP and `npm run db:types` updated; `npm run verify` and e2e pass.
 - Notes: Full review (migration). T161 stopped the admin editor writing these columns, but the local tools and e2e setup still pin today through them until T163 rewrites the tools.
+
+### T175 Per-file coverage thresholds for the M5 lib modules (maintainer, Nov 17)
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `vitest.config.mts` gains 90% lines and branches entries for `src/lib/share.ts` and the other small lib modules without one (`rules.ts`, `random.ts`, `forms.ts`, `passwords.ts`, `health.ts`), with tests added first where a file is under 90%; never below a file's current coverage.
+  - [ ] 80% entries for `adminPage.ts`, `adminForm.ts`, `devData.ts`, `localTools.ts` where current numbers allow; `npm run verify` passes, no behaviour change.
+- Notes: Only the 70% global floor guards these now.
+
+### T176 README for the Daily Three (maintainer, Nov 17)
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] README covers the Daily Three and its five games, the T163/T164 local tools and seed, and the admin lineup editor; every command and env var it names exists in `package.json` / `.env.example`.
+- Notes: README does not mention the Daily Three yet.
