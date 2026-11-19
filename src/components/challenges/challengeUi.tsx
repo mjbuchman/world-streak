@@ -41,7 +41,7 @@ type ChallengeUi<Params, Inputs> = {
 
 /** Rounds or shapes survived, in words ("1 round", "3 shapes"). */
 const counted = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-/** Rounds survived plus the bank left as a fraction ("3.9 rounds"): practice's heading counts whole ones. */
+/** Whole rounds survived ("3 rounds"), for practice's heading. */
 const rounds = (score: number) => counted(score, "round", "rounds");
 
 /**
@@ -109,7 +109,7 @@ const echoPath: ChallengeUi<EchoPathParams, EchoPathInputs> = {
   showScore: true,
 };
 
-/** Fair Split: shapes survived plus the bank left as a fraction ("4.5 shapes", T195). */
+/** Fair Split: whole shapes survived ("4 shapes"), for practice's heading. */
 const shapes = (score: number) => counted(score, "shape", "shapes");
 
 const fairSplit: ChallengeUi<FairSplitParams, FairSplitInputs> = {
