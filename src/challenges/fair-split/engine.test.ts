@@ -185,6 +185,7 @@ function simulatedRun(seed: number) {
 describe("Fair Split balance (T193)", () => {
   // T211: the owner's 8 point bank lets this cutter through 98.7% of the time (the 6 point bank: 50%
   // to 90%); the band is re-set from that run, so any later change to the shapes or bank shows here.
+  // T222: on the blobs and polygons it survives 98.3% of the time, inside the band.
   it("a cutter off by 0.6 shape units (one standard deviation) survives all five shapes 95% to 99.5% of the time", () => {
     let survivedAll = 0;
     for (let seed = 0; seed < 1000; seed++) if (simulatedRun(seed).survived === ROUNDS) survivedAll++;

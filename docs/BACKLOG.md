@@ -193,7 +193,7 @@ Planning notes for M8:
 - Status: todo
 - Depends on: none
 - Acceptance criteria:
-  - [ ] `shapeFor` in `src/challenges/fair-split/shapes.ts` no longer keeps its last try whatever it measures: if every try fails, it falls back to a shape known to be simple, inside the margin, lopsided and above the area floor. A test forces that path.
+  - [x] The fallback shape and its forced-path test (done by T221).
   - [ ] The pgTAP checks of each game's `scores_since` reset assert the exact date, not `>=`; the copied re-target setup in `fair_split.test.sql` is shared or trimmed.
   - [ ] `npm run verify` and `npm run test:db` pass; no behaviour change for real seeds.
 - Notes: From M7 review notes. About 120 lines. If T221 lands first, its fallback covers the first criterion; keep only the test and the pgTAP part. Full review (scoring tests).
