@@ -30,8 +30,14 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: these are agent proposals the backlog marked "owner to confirm".
 - Agent's recommendation: keep them, and check at the play-test whether the 2 s bank is survivable, the 10-dot bank too tight for 30 dots, 8 rows too short, and the Clean Cut shapes clearly lopsided.
 
-### Please update DESIGN.md for the M6 and M7 games (blocks nothing)
-- What is needed: update the games table and its scoring text in `docs/DESIGN.md` (agents never edit it). Second Sense: four rounds against a 2 s bank, 10 to 20 s targets, a 2 s clock and a 3-2-1 every round (was a 3.0 s budget, run until it is gone, the clock fading sooner). Swift Sum: five rounds against a 10-dot bank, a random 10 to 30 dots each round, no lives or tolerance (was 3 lives, a life per wrong count, more dots each level). Trail Trace (was Echo Path): one path per player on a 5 x 8 board, at most 12 tiles, never sharing an edge with itself except tile to next tile, a tile longer each round, a mistake replays the same length (was a new sequence after a mistake). Clean Cut (was Fair Split): five lopsided shapes against an 8-point bank, a movable line with a Cut button, 25 s a shape (was within 1 point or lose one of 3 lives).
+### Please confirm: M8 Clean Cut shape mix (blocks nothing)
+- What is needed: say if Clean Cut's mix of 70% blobs and 30% polygons, each at least 0.08 lopsided, should change (`src/challenges/fair-split/shapes.ts`).
+- Where to put it: reply in chat.
+- Why: you asked for blobs and polygons; the mix and floor are agent proposals (DECISIONS.md, "M8 play-test tweaks").
+- Agent's recommendation: keep it; check at the play-test that the shapes look varied.
+
+### Please update DESIGN.md for the M6, M7 and M8 games (blocks nothing)
+- What is needed: update the games table and its scoring text in `docs/DESIGN.md` (agents never edit it). Second Sense: four rounds against a 2 s bank, 10 to 20 s targets, a 2 s clock and a 3-2-1 every round (was a 3.0 s budget, run until it is gone, the clock fading sooner). Swift Sum: five rounds against a 10-dot bank, a random 10 to 30 dots each round, no lives or tolerance (was 3 lives, a life per wrong count, more dots each level). Trail Trace (was Echo Path): one path per player on a 5 x 8 board, at most 12 tiles, never sharing an edge with itself except tile to next tile, a tile longer each round, a mistake replays the same length (was a new sequence after a mistake). Clean Cut (was Fair Split): five lopsided shapes against an 8-point bank, a movable line with a Cut button, 25 s a shape (was within 1 point or lose one of 3 lives). M8 then changed the Second Sense bank to 4 s, capped Swift Sum at 25 dots, gave Trail Trace 2 lives, and made Clean Cut's shapes blobs and polygons; the three bank games show no score.
 - Where to put it: `docs/DESIGN.md`, or tell the agent which wording to use.
 - Why: the doc still describes the pre-M6 rules (DECISIONS.md, "Where M6 departs from DESIGN.md" and "Where M7 departs from DESIGN.md").
 - Agent's recommendation: copy the M6 rules above into the games table.

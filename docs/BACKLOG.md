@@ -148,7 +148,7 @@ Planning notes for M8:
 
 ### T224 Round counter: big numbers joined by progress bars
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] `src/components/rounds/RoundProgress.tsx` (and its CSS module) renders one large number per round with a bar between each pair, replacing the boxes. Props are unchanged (`total`, `current`, `failedRound`), so all users (Second Sense, Swift Sum, Clean Cut, `useRevealRounds` consumers) keep working.
@@ -158,7 +158,7 @@ Planning notes for M8:
 
 ### T225 Results window: no score for bank games
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] `challengeUi` gains a `showScore` flag: false for `inner-clock`, `flash-count` and `fair-split`, true for `stacking` and `echo-path`. `PlayToday` (`between` phase) and `PracticeShell` (via the practice `result`) pass `score` to `ResultHero` only when the flag is true; the big number and the fractional "You scored" text are gone for bank games.
@@ -169,7 +169,7 @@ Planning notes for M8:
 
 ### T226 End-to-end and phone checks for the M8 changes
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T220, T223, T224, T225
 - Acceptance criteria:
   - [ ] Existing e2e specs and `global-setup.ts` fixtures follow the new values without weakening (Second Sense 4 s bank, Swift Sum 10 to 25, Trail Trace 2 lives, Clean Cut blobs); a grep of `tests/e2e` for stale values finds none.
@@ -179,7 +179,7 @@ Planning notes for M8:
 
 ### T227 Record the M8 decisions
 - Type: docs
-- Status: todo
+- Status: in-progress
 - Depends on: T226
 - Acceptance criteria:
   - [ ] `docs/DECISIONS.md` gets entries for: the 4 s bank, 25 dot cap, two lives in total, the blob and polygon generators with the 70/30 mix and `MIN_ASYMMETRY`, the bank-game list and where the score is still shown, the new `scores_since` resets.
