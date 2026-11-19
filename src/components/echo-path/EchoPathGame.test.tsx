@@ -67,19 +67,19 @@ describe("EchoPathGame", () => {
     expect(canvas().getAttribute("aria-label")).toBe("Watch the tiles light up.");
     // A wrong tile during the playback costs nothing: it is ignored.
     tapTile(WRONG);
-    expect(lives()).toBe("3 of 3 lives left");
+    expect(lives()).toBe("2 of 2 lives left");
     frameAt(1000 + RUN_COUNTDOWN_MS + 1199);
     expect(phase()).toBe("watch");
     frameAt(1000 + RUN_COUNTDOWN_MS + 1200);
     expect(phase()).toBe("repeat");
     expect(canvas().getAttribute("aria-label")).toBe("Tap the tiles in the same order.");
-    expect(lives()).toBe("3 of 3 lives left");
+    expect(lives()).toBe("2 of 2 lives left");
     expect(onFinish).not.toHaveBeenCalled();
   });
 
   it("shows the lives as pips and the path as a bar of one cell a tile, labelled with the tile reached", () => {
     render(<EchoPathGame countdownMs={0} params={params} onFinish={vi.fn()} />);
-    expect(screen.getByRole("img", { name: "3 of 3 lives left" }).children).toHaveLength(3);
+    expect(screen.getByRole("img", { name: "2 of 2 lives left" }).children).toHaveLength(2);
     expect(pathBar().getAttribute("aria-label")).toBe("Tile 4 of 6");
     expect(pathBar().children).toHaveLength(PATH.length);
     expect(clearedCells()).toBe(0);
@@ -100,12 +100,12 @@ describe("EchoPathGame", () => {
     tapTile(WRONG);
     frameAt(1200 + BETWEEN_MS + 1499);
     tapTile(WRONG);
-    expect(lives()).toBe("3 of 3 lives left");
+    expect(lives()).toBe("2 of 2 lives left");
     frameAt(1200 + BETWEEN_MS + 1500);
     expect(phase()).toBe("repeat");
     // A wrong tile part way: a life goes, and the same 5 tiles play again.
     tapAll([...PATH.slice(0, 2), WRONG]);
-    expect(lives()).toBe("2 of 3 lives left");
+    expect(lives()).toBe("1 of 2 lives left");
     expect(phase()).toBe("watch");
     expect(pathBar().getAttribute("aria-label")).toBe("Tile 5 of 6");
     frameAt(clock + BETWEEN_MS + 1500);
@@ -134,7 +134,7 @@ describe("EchoPathGame", () => {
     expect(canvas().tabIndex).toBe(0);
     // The first key only shows the ring, on the bottom row's middle tile (2): it taps nothing.
     key("Enter");
-    expect(lives()).toBe("3 of 3 lives left");
+    expect(lives()).toBe("2 of 2 lives left");
     key(" ");
     key("ArrowUp");
     key("Enter");
@@ -144,7 +144,7 @@ describe("EchoPathGame", () => {
     key(" ", true);
     key("a");
     key("1");
-    expect(lives()).toBe("3 of 3 lives left");
+    expect(lives()).toBe("2 of 2 lives left");
     key("ArrowUp");
     key("Enter");
     expect(clearedCells()).toBe(4);
@@ -159,7 +159,7 @@ describe("EchoPathGame", () => {
     key("ArrowLeft");
     key(" ");
     // Tile 0, the bottom left corner: a wrong first tile.
-    expect(lives()).toBe("2 of 3 lives left");
+    expect(lives()).toBe("1 of 2 lives left");
     expect(onFinish.mock.calls).toHaveLength(0);
   });
 
@@ -172,7 +172,7 @@ describe("EchoPathGame", () => {
     for (let i = 0; i < 4; i++) key("ArrowRight");
     key("Enter");
     // Tile 39, the top right corner of the 5 x 8 board: wrong, so a life goes.
-    expect(lives()).toBe("2 of 3 lives left");
+    expect(lives()).toBe("1 of 2 lives left");
   });
 
   it("gives an 11-tile path a bar of 11 cells, labelled with the tile reached (T208)", () => {
@@ -187,20 +187,18 @@ describe("EchoPathGame", () => {
     frameAt(500);
     frameAt(1700);
     tapTile(WRONG);
-    // Each miss pauses and replays: wait out the pause and the 4-tile playback each time.
+    // The miss pauses and replays: wait out the pause and the 4-tile playback.
     frameAt(1700 + BETWEEN_MS + 1200);
+    expect(onFinish).not.toHaveBeenCalled();
     tapTile(1);
-    frameAt(clock + BETWEEN_MS + 1200);
-    tapTile(3);
     expect(onFinish).toHaveBeenCalledExactlyOnceWith({
       taps: [
         { tile: WRONG, atMs: 1200 },
         { tile: 1, atMs: 1200 + BETWEEN_MS + 1200 },
-        { tile: 3, atMs: 1200 + 2 * (BETWEEN_MS + 1200) },
       ],
     });
     expect(phase()).toBe("done");
-    expect(lives()).toBe("0 of 3 lives left");
+    expect(lives()).toBe("0 of 2 lives left");
     // No tap counts after the end.
     tapTile(PATH[0]);
     expect(onFinish).toHaveBeenCalledOnce();
@@ -215,10 +213,10 @@ describe("EchoPathGame", () => {
     fireEvent.pointerDown(canvas(), { button: 2, ...centre(PATH[0]) });
     // The gap between tiles 2 and 3 on the bottom row.
     fireEvent.pointerDown(canvas(), { button: 0, clientX: 167, clientY: centre(PATH[0]).clientY });
-    expect(lives()).toBe("3 of 3 lives left");
+    expect(lives()).toBe("2 of 2 lives left");
     // So the path still needs all four taps: starting at its second tile is a miss.
     tapTile(PATH[1]);
-    expect(lives()).toBe("2 of 3 lives left");
+    expect(lives()).toBe("1 of 2 lives left");
   });
 
   it("stops its frame loop when it leaves the screen", () => {

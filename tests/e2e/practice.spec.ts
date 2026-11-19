@@ -115,7 +115,7 @@ test("Second Sense practice: a 3-2-1 under the target, a 2 s clock, and a miss b
   // The 3-2-1 under round 1's target (T182), with the four steps and the full bank above.
   await expect(page.getByRole("img", { name: "Round 1 of 4" })).toBeVisible();
   const bank = page.getByRole("meter", { name: "Time bank" });
-  await expect(bank).toHaveAttribute("aria-valuenow", "2000");
+  await expect(bank).toHaveAttribute("aria-valuenow", "4000");
   await expect(page.locator("[data-countdown]")).toBeVisible();
   await expect(page.getByText(/^Tap when you think [\d.]+ seconds have passed$/)).toBeVisible();
 
@@ -127,11 +127,12 @@ test("Second Sense practice: a 3-2-1 under the target, a 2 s clock, and a miss b
   await expect(shownClock).toHaveText(/^[01]\.\d$/);
   await expect(shownClock).toHaveAttribute("data-clock", "hidden");
   await expect(page.getByRole("timer")).toHaveCount(0);
-  // Round 1's target is at least 10 s, so a tap now misses by more than the 2 s bank.
+  // Round 1's target is at least 10 s and the clock has just hidden (about 2 s in), so a tap now
+  // misses by more than the 4 s bank.
   await tapArea.click();
 
   await expect(page.getByRole("heading", { level: 2 })).toHaveText("0 rounds survived");
-  await expect(page.getByText(/^0 s of your 2 s time bank left\. Score: 0\.$/)).toBeVisible();
+  await expect(page.getByText(/^0 s of your 4 s time bank left\. Score: 0\.$/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
   expect(scored).toEqual([]);
 });
@@ -151,7 +152,7 @@ test("Second Sense practice: a tap near the target survives round 1, and round 2
   await expect(tapArea).toBeVisible();
   await page.clock.runFor(targetMs);
   await tapArea.press("Space");
-  await expect(page.getByRole("meter", { name: "Time bank" })).toHaveAttribute("aria-valuetext", /^\d+\.\d s left of 2\.0 s$/);
+  await expect(page.getByRole("meter", { name: "Time bank" })).toHaveAttribute("aria-valuetext", /^\d+\.\d s left of 4\.0 s$/);
 
   // After the error shows, round 2 starts with its own 3-2-1.
   await page.clock.runFor(ROUND_GAP_MS + 100);
@@ -207,7 +208,7 @@ test("Swift Sum practice: a count far off in round 1 busts the dot bank and ends
   await expect(page.locator("canvas")).toHaveAttribute("data-showing", "clear");
   const answer = page.getByRole("textbox", { name: "How many dots were there?" });
   await expect(answer).toHaveAttribute("inputmode", "numeric");
-  // Round 1 has at most 30 dots, so 999 misses by far more than the 10-dot bank.
+  // Round 1 has at most 25 dots, so 999 misses by far more than the 10-dot bank.
   await answer.fill("999");
   await page.getByRole("button", { name: "Submit" }).click();
   await expect(bank).toHaveAttribute("aria-valuetext", "Bank used up");
@@ -266,7 +267,7 @@ test("Trail Trace practice: a 4-tile first playback on the 5 x 8 board, and a fi
   }
   await expect(length).toHaveAccessibleName(`Tile 5 of ${params.path.length}`);
   await expect(page.locator("[data-cleared]")).toHaveCount(4);
-  await expect(page.getByRole("img", { name: /lives left$/ })).toHaveAccessibleName("3 of 3 lives left");
+  await expect(page.getByRole("img", { name: /lives left$/ })).toHaveAccessibleName("2 of 2 lives left");
 });
 
 test("Trail Trace practice: watch, then wrong tiles use up the lives and end the run", async ({ page }) => {
@@ -275,18 +276,18 @@ test("Trail Trace practice: watch, then wrong tiles use up the lives and end the
   await page.getByRole("button", { name: "Start" }).click();
   const board = page.getByRole("img", { name: /Get ready|Watch the tiles|Tap the tiles/ });
   const lives = page.getByRole("img", { name: /lives left$/ });
-  await expect(lives).toHaveAccessibleName("3 of 3 lives left");
+  await expect(lives).toHaveAccessibleName("2 of 2 lives left");
   // The first arrow shows the ring on the bottom row; nine more take it to the top row, where a
   // path never starts. Each Enter there is a wrong first tile and costs a life (T190).
   for (let i = 0; i < 10; i++) await board.press("ArrowUp");
-  for (const left of [2, 1, 0]) {
+  for (const left of [1, 0]) {
     await expect(board).toHaveAttribute("data-phase", "repeat", { timeout: 15_000 });
     await board.press("Enter");
     // (After the last life the game, and its lives, give way to the result.)
-    if (left > 0) await expect(lives).toHaveAccessibleName(`${left} of 3 lives left`);
+    if (left > 0) await expect(lives).toHaveAccessibleName(`${left} of 2 lives left`);
   }
   await expect(page.getByRole("heading", { level: 2 })).toHaveText("No path repeated");
-  await expect(page.getByText("0 of 3 lives left. Score: 0.")).toBeVisible();
+  await expect(page.getByText("0 of 2 lives left. Score: 0.")).toBeVisible();
   expect(scored).toEqual([]);
 });
 

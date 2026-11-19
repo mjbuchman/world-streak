@@ -5,7 +5,7 @@ import type { ChallengeModule } from "../shared/types";
 import { placeDots, type Dot } from "./dots";
 
 /**
- * Swift Sum (T184, T205): ROUNDS flashes of 10 to 30 dots, each flash shorter. Every dot an
+ * Swift Sum (T184, T205, T218): ROUNDS flashes of 10 to 25 dots, each flash shorter. Every dot an
  * answer is off by comes out of one bank of BANK dots; the run ends at the first round whose miss
  * is bigger than what is left (the shared bank rule). Score = rounds survived + the bank left as
  * a fraction. All numbers below are placeholders (DECISIONS, T184).
@@ -18,10 +18,11 @@ export const REVEAL_MS = 1200;
 
 /**
  * Every round draws its own count from this one range (owner, T205): the counts jump up and down,
- * so no round's count can be worked out from its place in the run.
+ * so no round's count can be worked out from its place in the run. The top came down from 30 to
+ * 25 after the M7 play-test (T218).
  */
 export const DOT_COUNT_MIN = 10;
-export const DOT_COUNT_MAX = 30;
+export const DOT_COUNT_MAX = 25;
 
 /** The flash shortens by FLASH_STEP_MS a round, from the max down to the min. */
 const FLASH_STEP_MS = 100;

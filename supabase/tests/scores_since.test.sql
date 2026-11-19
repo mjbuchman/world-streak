@@ -1,6 +1,6 @@
 begin;
 \ir fixtures/fixtures.psql
-select plan(21);
+select plan(22);
 
 -- T183: a challenge's pass-target percentile reads only scores from its scores_since date on.
 select has_column('public', 'challenge_types', 'scores_since', 'challenge types have a scores_since date');
@@ -20,21 +20,19 @@ select ok(
   (select scores_since is not null and scores_since <= (now() at time zone 'utc')::date + 1 from public.challenge_types where type = 'fair-split'),
   'Fair Split counts scores from at most the day after its migration ran (T196)'
 );
--- The M7 migration (T204) set Second Sense's date again, after the M6 games' migrations set theirs.
-select ok(
-  (select scores_since from public.challenge_types where type = 'inner-clock')
-    >= (select scores_since from public.challenge_types where type = 'fair-split'),
-  'Second Sense''s 2 s bank starts its scale again (T204)'
+-- The M8 migration (T220) set these three dates to the day after it ran. The tests run on a freshly
+-- reset database (CI, or `supabase db reset` first), so that is tomorrow (UTC).
+select is(
+  (select scores_since from public.challenge_types where type = 'inner-clock'), (now() at time zone 'utc')::date + 1,
+  'Second Sense''s 4 s bank starts its scale again the day after the migration (T220)'
 );
-select ok(
-  (select scores_since from public.challenge_types where type = 'flash-count')
-    >= (select scores_since from public.challenge_types where type = 'fair-split'),
-  'Swift Sum''s 10 to 30 dots start its scale again (T206)'
+select is(
+  (select scores_since from public.challenge_types where type = 'flash-count'), (now() at time zone 'utc')::date + 1,
+  'Swift Sum''s 10 to 25 dots start its scale again the day after the migration (T220)'
 );
-select ok(
-  (select scores_since from public.challenge_types where type = 'echo-path')
-    >= (select scores_since from public.challenge_types where type = 'fair-split'),
-  'Trail Trace''s 5 x 8 board starts its scale again (T209)'
+select is(
+  (select scores_since from public.challenge_types where type = 'echo-path'), (now() at time zone 'utc')::date + 1,
+  'Trail Trace''s 2 lives start its scale again the day after the migration (T220)'
 );
 -- Clean Cut's own M7 migration ran last of the four, after Second Sense's (T204).
 select ok(
@@ -101,6 +99,25 @@ select is(public.pass_target_for('fair-split', '2033-01-12', 0), 5::numeric, 'Fa
 -- The Tower has no scores_since: its old scores still count.
 select tests.scored(n, '2033-01-05', 'stacking', 18 + 2 * n) from generate_series(10, 12) n;
 select is(public.pass_target_for('stacking', '2033-01-12', 0), 38::numeric, 'other challenges keep every score in the lookback');
+
+-- The T220 migration's re-target, run again on days still holding an old-scale target of 1: only the
+-- three changed games on untouched days get their placeholders; an edited day and Clean Cut keep theirs.
+insert into public.game_days (game_date, survival_threshold, edited)
+values ('2034-06-01', 0.6, false), ('2034-06-02', 0.6, true), ('2034-06-03', 0.6, false), ('2034-06-04', 0.6, false), ('2034-06-05', 0.6, false);
+insert into public.game_day_games (game_date, position, challenge_type, pass_target)
+values ('2034-06-01', 1, 'inner-clock', 1), ('2034-06-02', 1, 'flash-count', 1), ('2034-06-03', 1, 'echo-path', 1),
+       ('2034-06-04', 1, 'fair-split', 1), ('2034-06-05', 1, 'flash-count', 1);
+update public.game_day_games g
+   set pass_target = public.pass_target_for(g.challenge_type, g.game_date, (select current from public.world_streak()))
+  from public.game_days d
+ where d.game_date = g.game_date and g.challenge_type in ('inner-clock', 'flash-count', 'echo-path')
+   and not d.edited and d.closed_at is null
+   and not exists (select 1 from public.attempts a where a.game_date = g.game_date);
+select results_eq(
+  $$select game_date, pass_target from public.game_day_games where game_date between '2034-06-01' and '2034-06-05' order by game_date$$,
+  $$values ('2034-06-01'::date, 4::numeric), ('2034-06-02'::date, 1::numeric), ('2034-06-03'::date, 8::numeric), ('2034-06-04'::date, 1::numeric), ('2034-06-05'::date, 5::numeric)$$,
+  'untouched Second Sense, Swift Sum and Trail Trace days get new-scale targets; an edited day and Clean Cut keep theirs (T220)'
+);
 
 select * from finish();
 rollback;

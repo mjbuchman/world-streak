@@ -118,7 +118,7 @@ test("Second Sense can be played with a tap, on an area that fits", async ({ pag
   await expectReadableBank(page, "Time bank");
   await expect(page.locator("[data-clock]")).toHaveAttribute("data-clock", "shown");
   await tap(page, area);
-  // A tap at once misses round 1's 10 s or longer target by more than the 2 s bank.
+  // A tap at once misses round 1's 10 s or longer target by more than the 4 s bank.
   await expect(page.getByRole("heading", { level: 2, name: "0 rounds survived" })).toBeVisible();
   await expectPhoneFriendly(page);
 });
@@ -184,10 +184,10 @@ test("Trail Trace can be played to the end with taps, on tiles big enough to tap
   // The top left tile: on the top row, where a path never starts, so each tap there costs a life.
   const topLeft = { x: box.x + layout.left + layout.gap + layout.tileSize / 2, y: box.y + layout.top + layout.gap + layout.tileSize / 2 };
   const lives = page.getByRole("img", { name: /lives left$/ });
-  for (const left of [2, 1, 0]) {
+  for (const left of [1, 0]) {
     await expect(board).toHaveAttribute("data-phase", "repeat", { timeout: 15_000 });
     await page.touchscreen.tap(topLeft.x, topLeft.y);
-    if (left > 0) await expect(lives).toHaveAccessibleName(`${left} of 3 lives left`);
+    if (left > 0) await expect(lives).toHaveAccessibleName(`${left} of 2 lives left`);
   }
   await expect(page.getByRole("heading", { level: 2 })).toHaveText("No path repeated");
   await expectPhoneFriendly(page);

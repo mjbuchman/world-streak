@@ -15,8 +15,8 @@ const clear = (p: EchoPathParams, ...ls: number[]) => ls.map((length) => sequenc
 const wrongFirst = (p: EchoPathParams) => [p.path[1]];
 
 describe("Echo Path params", () => {
-  it("documents the numbers: a 5 x 8 board, a start of 4, 3 lives (T208)", () => {
-    expect([COLS, ROWS, START_LENGTH, LIVES]).toEqual([5, 8, 4, 3]);
+  it("documents the numbers: a 5 x 8 board, a start of 4, 2 lives (T208, T219)", () => {
+    expect([COLS, ROWS, START_LENGTH, LIVES]).toEqual([5, 8, 4, 2]);
     expect(STEP_MS_RANGE).toEqual({ min: 300, max: 400 });
     expect(isValidPath(TEN)).toBe(true);
   });
@@ -41,7 +41,7 @@ describe("Echo Path params", () => {
   it.each([0, 1, 4_294_967_295])("golden: seed %i (changing the PRNG, the path rules or the ranges changes these)", (seed) => {
     const p = paramsFromSeed(seed);
     const full = run(...clear(p, ...lengths(START_LENGTH, p.path.length)));
-    const slips = run(...clear(p, 4, 5), wrongFirst(p), wrongFirst(p), clear(p, 6)[0]);
+    const slips = run(...clear(p, 4, 5), wrongFirst(p), clear(p, 6)[0]);
     expect({ stepMs: p.stepMs, path: p.path, full: echoPath.score(p, full), slips: echoPath.score(p, slips) }).toMatchSnapshot();
   });
 });
@@ -53,11 +53,11 @@ describe("Echo Path rounds", () => {
   });
 
   it("add the path's next tile after a clear, and replay the same length after a miss", () => {
-    expect(play(params, run())).toEqual({ length: 4, position: 0, lives: 3, longest: 0, finished: false });
+    expect(play(params, run())).toEqual({ length: 4, position: 0, lives: 2, longest: 0, finished: false });
     expect(play(params, run([0, 1]))).toMatchObject({ length: 4, position: 2 });
-    expect(play(params, run(...clear(params, 4)))).toEqual({ length: 5, position: 0, lives: 3, longest: 4, finished: false });
-    expect(play(params, run(...clear(params, 4), [0, 1, 3]))).toEqual({ length: 5, position: 0, lives: 2, longest: 4, finished: false });
-    expect(play(params, run(...clear(params, 4), [0, 1, 3], ...clear(params, 5)))).toMatchObject({ length: 6, lives: 2, longest: 5 });
+    expect(play(params, run(...clear(params, 4)))).toEqual({ length: 5, position: 0, lives: 2, longest: 4, finished: false });
+    expect(play(params, run(...clear(params, 4), [0, 1, 3]))).toEqual({ length: 5, position: 0, lives: 1, longest: 4, finished: false });
+    expect(play(params, run(...clear(params, 4), [0, 1, 3], ...clear(params, 5)))).toMatchObject({ length: 6, lives: 1, longest: 5 });
   });
 });
 
@@ -66,21 +66,25 @@ describe("Echo Path score", () => {
     expect(echoPath.score(params, run(...clear(params, ...lengths(4, 10))))).toBe(11);
   });
 
-  it("clearing 4 to 6, then missing three times, scores 6", () => {
-    expect(echoPath.score(params, run(...clear(params, ...lengths(4, 6)), wrongFirst(params), wrongFirst(params), wrongFirst(params)))).toBe(6);
+  it("clearing 4 to 6, then missing twice, scores 6", () => {
+    expect(echoPath.score(params, run(...clear(params, ...lengths(4, 6)), wrongFirst(params), wrongFirst(params)))).toBe(6);
   });
 
-  it("clearing everything with one miss on the way scores 10 + 2/3", () => {
+  it("clearing everything with one miss on the way scores 10 + 1/2", () => {
     const taps = run(...clear(params, 4, 5, 6, 7), [0, 1, 6, 12, 17, 18, 0], ...clear(params, ...lengths(8, 10)));
-    expect(echoPath.score(params, taps)).toBe(10.667);
+    expect(echoPath.score(params, taps)).toBe(10.5);
   });
 
-  it("three wrong first taps score 0", () => {
-    expect(echoPath.score(params, run(wrongFirst(params), wrongFirst(params), wrongFirst(params)))).toBe(0);
+  it("a first miss, then a clean run to 10, scores 10 + 1/2", () => {
+    expect(echoPath.score(params, run(wrongFirst(params), ...clear(params, ...lengths(4, 10))))).toBe(10.5);
+  });
+
+  it("two wrong first taps score 0", () => {
+    expect(echoPath.score(params, run(wrongFirst(params), wrongFirst(params)))).toBe(0);
   });
 
   it("ignores taps after the run has ended", () => {
-    expect(echoPath.score(params, run(wrongFirst(params), wrongFirst(params), wrongFirst(params), ...clear(params, 4)))).toBe(0);
+    expect(echoPath.score(params, run(wrongFirst(params), wrongFirst(params), ...clear(params, 4)))).toBe(0);
     expect(echoPath.score(params, run(...clear(params, ...lengths(4, 10)), [5, 5, 5]))).toBe(11);
   });
 
@@ -116,16 +120,16 @@ describe("Echo Path inputs", () => {
     expect(echoPath.inputsSchema.safeParse(inputs).success).toBe(false);
   });
 
-  it("bound the taps by the longest run: every length of a 12-tile path cleared, with two full misses at the end", () => {
+  it("bound the taps by the longest run: every length of a 12-tile path cleared, with one full miss at the end", () => {
     const total = lengths(START_LENGTH, MAX_PATH_LENGTH).reduce((sum, length) => sum + length, 0);
     expect(MAX_TAPS).toBe(total + (LIVES - 1) * MAX_PATH_LENGTH);
-    expect(MAX_TAPS).toBe(96);
+    expect(MAX_TAPS).toBe(84);
   });
 
   it("are finished once the lives run out or the whole path is cleared", () => {
     expect(echoPath.finished(params, run())).toBe(false);
     expect(echoPath.finished(params, run(...clear(params, 4), wrongFirst(params)))).toBe(false);
-    expect(echoPath.finished(params, run(wrongFirst(params), wrongFirst(params), wrongFirst(params)))).toBe(true);
+    expect(echoPath.finished(params, run(wrongFirst(params), wrongFirst(params)))).toBe(true);
     expect(echoPath.finished(params, run(...clear(params, ...lengths(4, 9))))).toBe(false);
     expect(echoPath.finished(params, run(...clear(params, ...lengths(4, 10))))).toBe(true);
   });

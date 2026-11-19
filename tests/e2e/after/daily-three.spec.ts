@@ -59,7 +59,7 @@ async function missSwiftSum(page: Page) {
   await page.getByRole("button", { name: "Submit" }).click();
 }
 
-/** Second Sense: a tap as round 1 starts misses its 10 s or longer target by more than the 2 s bank. */
+/** Second Sense: a tap as round 1 starts misses its 10 s or longer target by more than the 4 s bank. */
 async function rushSecondSense(page: Page) {
   const clock = page.locator("[data-clock]");
   const tapArea = page.getByRole("button", { name: /Tap when you think [\d.]+ seconds have passed/ });
@@ -67,16 +67,16 @@ async function rushSecondSense(page: Page) {
   await tapArea.click();
 }
 
-/** Trail Trace: three taps on the top row, where a path never starts, each a wrong first tile (score 0). */
+/** Trail Trace: two taps on the top row, where a path never starts, each a wrong first tile (score 0). */
 async function missEchoPath(page: Page) {
   const board = page.getByRole("img", { name: /Get ready|Watch the tiles|Tap the tiles/ });
   const lives = page.getByRole("img", { name: /lives left$/ });
   // The first arrow shows the ring on the bottom row; nine more take it to the top.
   for (let i = 0; i < 10; i++) await board.press("ArrowUp");
-  for (const left of [2, 1, 0]) {
+  for (const left of [1, 0]) {
     await expect(board).toHaveAttribute("data-phase", "repeat", { timeout: 15_000 });
     await board.press("Enter");
-    if (left > 0) await expect(lives).toHaveAccessibleName(`${left} of 3 lives left`);
+    if (left > 0) await expect(lives).toHaveAccessibleName(`${left} of 2 lives left`);
   }
 }
 
@@ -190,7 +190,7 @@ function selfContacts(path: number[]): string[] {
   return contacts;
 }
 
-test("ten players' starts: Swift Sum counts of 10 to 30 that vary, and Trail Trace paths that never touch themselves (T213)", async ({ page, accounts }) => {
+test("ten players' starts: Swift Sum counts of 10 to 25 that vary, and Trail Trace paths that never touch themselves (T213)", async ({ page, accounts }) => {
   test.setTimeout(240_000);
   await saveDay(LINEUP, [LOSE, LOSE, LOSE]);
   const counts: number[][] = [];
@@ -209,7 +209,7 @@ test("ten players' starts: Swift Sum counts of 10 to 30 that vary, and Trail Tra
     await page.context().clearCookies();
   }
   expect(counts).toHaveLength(10);
-  expect(counts.flat().every((count) => count >= 10 && count <= 30)).toBe(true);
+  expect(counts.flat().every((count) => count >= 10 && count <= 25)).toBe(true);
   expect(new Set(counts.map((run) => run.join())).size).toBeGreaterThan(1);
   expect(new Set(counts[0]).size).toBeGreaterThan(1);
   expect(paths).toHaveLength(10);
