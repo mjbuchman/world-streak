@@ -65,3 +65,9 @@ Older entries (everything up to Nov 19, 2026) are in `docs/archive/DECISIONS-to-
 - Reason: agents never edit DESIGN.md.
 - How to change it later: the owner updates DESIGN.md (NEEDS_HUMAN, "Please update DESIGN.md").
 - Confirmed by human: pending (NEEDS_HUMAN, update DESIGN.md)
+
+### 2026-11-19 — M8 play-test tweaks (T217-T227)
+- Choice: (1) Second Sense: a 4 s bank (owner). (2) Swift Sum: at most 25 dots a round (owner). (3) Trail Trace: 2 lives (owner). (4) Clean Cut: irregular blobs and polygons (owner), mixed 70% blobs, 30% polygons, each at least `MIN_ASYMMETRY` = 0.08 lopsided. (5) The three bank games show no score: players see the whole rounds got through and pass or fail; a target between two counts reads "3 of 4 rounds and part of the bank". Stored scores are unchanged. (6) A numbered round counter joined by bars. (7) Each changed game's `scores_since` was reset to the day after its M8 migration ran. As in T198 and T214, these rules win over DESIGN.md's games table.
+- Reason: the owner's M7 play-test list (backlog M8, approved Nov 19); the 70/30 mix and 0.08 floor are agent proposals.
+- How to change it later: `BUDGET_MS` in `src/challenges/inner-clock/engine.ts`; `DOT_COUNT_MAX` in `src/challenges/flash-count/engine.ts`; `LIVES` in `src/challenges/echo-path/engine.ts`; `BLOB_SHARE` and `MIN_ASYMMETRY` in `src/challenges/fair-split/shapes.ts`; `showScore` in `src/components/challenges/challengeUi.tsx`.
+- Confirmed by human: (1)-(3), (5), (6) by the owner; (4)'s mix and floor pending (NEEDS_HUMAN, M8 calls)

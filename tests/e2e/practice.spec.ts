@@ -1,6 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { COLS, paramsFromSeed as echoPathParams, ROWS } from "../../src/challenges/echo-path/engine";
 import { boardLayout } from "../../src/challenges/echo-path/render";
+import { paramsFromSeed as fairSplitParams } from "../../src/challenges/fair-split/engine";
 import { paramsFromSeed as flashCountParams } from "../../src/challenges/flash-count/engine";
 import { ROUND_GAP_MS } from "../../src/challenges/inner-clock/engine";
 import { paramsFromSeed, simulate } from "../../src/challenges/stacking/engine";
@@ -133,6 +134,8 @@ test("Second Sense practice: a 3-2-1 under the target, a 2 s clock, and a miss b
 
   await expect(page.getByRole("heading", { level: 2 })).toHaveText("0 rounds survived");
   await expect(page.getByText(/^0 s of your 4 s time bank left\.$/)).toBeVisible();
+  // A bank game shows no big score (T225), unlike the Tower.
+  await expect(page.locator("[data-big-score]")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
   expect(scored).toEqual([]);
 });
@@ -215,7 +218,26 @@ test("Swift Sum practice: a count far off in round 1 busts the dot bank and ends
 
   await expect(page.getByRole("heading", { level: 2 })).toHaveText("0 rounds survived");
   await expect(page.getByText("0 dots of your 10-dot bank left.")).toBeVisible();
+  await expect(page.locator("[data-big-score]")).toHaveCount(0);
   expect(scored).toEqual([]);
+});
+
+test("Swift Sum practice: ten runs never flash more than 25 dots in round 1 (T218, T226)", async ({ page }) => {
+  test.setTimeout(150_000);
+  await gotoReady(page, "/practice/flash-count");
+  const board = page.locator("canvas");
+  const reveal = page.getByText(/^Off by \d+$/);
+  for (let run = 0; run < 10; run++) {
+    await page.getByRole("button", { name: run === 0 ? "Start" : "Play again" }).click();
+    await expect(board).toHaveAttribute("data-showing", "clear", { timeout: 10_000 });
+    // An answer of 1 is off by one less than the count, and busts the 10-dot bank at once.
+    await page.getByRole("textbox", { name: "How many dots were there?" }).fill("1");
+    await page.getByRole("button", { name: "Submit" }).click();
+    const count = Number(/\d+/.exec((await reveal.textContent())!)![0]) + 1;
+    expect(count).toBeGreaterThanOrEqual(10);
+    expect(count).toBeLessThanOrEqual(25);
+    await expect(page.getByRole("heading", { level: 2 })).toHaveText("0 rounds survived");
+  }
 });
 
 test("Swift Sum practice: five steps, and a close count survives round 1 into round 2's 3-2-1 (T197)", async ({ page }) => {
@@ -224,7 +246,11 @@ test("Swift Sum practice: five steps, and a close count survives round 1 into ro
   const firstCount = flashCountParams(seed).levels[0].dotCount;
   await gotoReady(page, "/practice/flash-count");
   await page.getByRole("button", { name: "Start" }).click();
-  await expect(page.getByRole("img", { name: "Round 1 of 5" })).toBeVisible();
+  const counter = page.getByRole("img", { name: "Round 1 of 5" });
+  await expect(counter).toBeVisible();
+  // The counter (T224): five numbers joined by four bars, none lit yet.
+  await expect(counter.locator("[data-step]")).toHaveText(["1", "2", "3", "4", "5"]);
+  await expect(counter.locator('[data-bar="unlit"]')).toHaveCount(4);
   const board = page.locator("canvas");
   await expect(board).toHaveAttribute("data-showing", "dots", { timeout: 10_000 });
   await expect(board).toHaveAttribute("data-showing", "clear");
@@ -232,7 +258,12 @@ test("Swift Sum practice: five steps, and a close count survives round 1 into ro
   await page.getByRole("textbox", { name: "How many dots were there?" }).fill(String(firstCount + 1));
   await page.getByRole("button", { name: "Submit" }).click();
   await expect(page.getByRole("meter", { name: "Dot bank" })).toHaveAttribute("aria-valuetext", "9 dots left of 10 dots");
-  await expect(page.getByRole("img", { name: "Round 2 of 5" })).toBeVisible();
+  const next = page.getByRole("img", { name: "Round 2 of 5" });
+  await expect(next).toBeVisible();
+  // Round 1 passed: its number and the bar after it light up.
+  await expect(next.locator("[data-step]").first()).toHaveAttribute("data-step", "done");
+  await expect(next.locator("[data-bar]").first()).toHaveAttribute("data-bar", "lit");
+  await expect(next.locator('[data-bar="unlit"]')).toHaveCount(3);
   await expect(page.getByText("Round 2", { exact: true })).toBeVisible({ timeout: 5_000 });
   await expect(page.locator("[data-countdown]")).toBeVisible();
 });
@@ -317,6 +348,32 @@ test("Clean Cut practice: an 8 point bank; the line moves twice without cutting;
   await expect(board).toHaveAttribute("data-phase", "result");
   await expect(page.getByText(/^\d+\.\d% and \d+\.\d%\./)).toBeVisible();
   expect(scored).toEqual([]);
+});
+
+test("Clean Cut practice: each run draws new shapes (T221, T226)", async ({ page }) => {
+  // Record, without changing, each seed the page draws for a run. Start draws the run's seed with
+  // one Uint32Array(1) (`secureRandomSeed`), so the last one recorded after Start is that run's.
+  await page.addInitScript(() => {
+    const real = crypto.getRandomValues.bind(crypto);
+    const seeds: number[] = [];
+    (window as unknown as { seeds: number[] }).seeds = seeds;
+    crypto.getRandomValues = (<T extends ArrayBufferView>(array: T): T => {
+      real(array);
+      if (array instanceof Uint32Array && array.length === 1) seeds.push(array[0]);
+      return array;
+    }) as Crypto["getRandomValues"];
+  });
+  // Two attempts, each on a fresh load of the page.
+  const runs: string[] = [];
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await gotoReady(page, "/practice/fair-split");
+    await page.getByRole("button", { name: "Start" }).click();
+    await expect(page.locator("canvas[data-phase]")).toHaveAttribute("data-phase", "cut", { timeout: 10_000 });
+    const seeds = await page.evaluate(() => (window as unknown as { seeds: number[] }).seeds);
+    expect(seeds.length).toBeGreaterThan(0);
+    runs.push(JSON.stringify(fairSplitParams(seeds.at(-1)!).shapes.map((shape) => shape.polygon)));
+  }
+  expect(runs[0]).not.toBe(runs[1]);
 });
 
 test("the practice hub opens each challenge's practice page", async ({ page }) => {
