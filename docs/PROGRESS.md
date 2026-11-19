@@ -4,14 +4,15 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M7 play-test tweaks (T201–T214, approved Nov 18). Batches M7-a to M7-e run without play-test stops; one play-test at the end. T45, T52 and T128 still wait on the owner.
-- Active task: batch 19 (T199, T200).
+- Milestone: M7 play-test tweaks (T201–T214) and batch 19 done Nov 18; waiting on the combined play-test. T45, T52 and T128 still wait on the owner.
+- Active task: none; waiting on the M7 play-test. Next after it: batch 20 (T215, T216).
 - Blocked tasks: none
 - Waiting on the human: the M7 play-test and the M6 and M7 please-confirms; updating DESIGN.md for M6 and M7; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: M7 play-test tweaks (T201–T214, approved Nov 18), batches M7-a to M7-e, then batch 19 (T199, T200).
+- Next: the owner play-tests M7 (all four games); then batch 20 (T215, T216).
 
 ## Log
 
+- 2026-11-18 T199–T200 done, PR #184: Swift Sum and Second Sense code names follow their keys; their round loop is one hook (`useRevealRounds`) and the bank games share `bankResult`. M7 maintainer check added T215 and T216.
 - 2026-11-18 T213–T214 done, PR #183: e2e checks for Swift Sum's 10–30 counts, Trail Trace's self-avoiding paths, the Clean Cut bank and a centred 3-2-1 on phones; M7 decisions and please-confirms recorded. M7 complete.
 - 2026-11-18 T210–T212 done, PR #182: Clean Cut shapes all lopsided (`MIN_ASYMMETRY` 0.04), an 8-point bank (98.7% simulated survival), and its scale reset.
 - 2026-11-18 T207–T209 done, PR #181: Trail Trace on a 5 x 8 board, paths of 8 to 12 tiles that never share an edge with themselves (target 8), and its scale reset.

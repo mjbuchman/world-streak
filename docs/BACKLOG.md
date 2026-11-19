@@ -53,6 +53,7 @@ M7 M6 play-test tweaks (Nov 18, 2026; approved; runs before batch 19):
 - M7-e. M7 end-to-end checks and docs: T213, T214 (light; T214 is docs only)
 
 19. Maintenance after M6: T199, T200 (light; after the M6 play-test and M7)
+20. Maintenance after M7: T215 (full: scoring tests), T216 (light); after the M7 play-test
 
 ## M1 Foundation and first challenge end to end
 
@@ -1983,7 +1984,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T199 Retire the stale "flash ladder" and "inner-clock" code names (maintainer, Nov 18)
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] Code identifiers, files and folders for Swift Sum and Second Sense match the current games (today `flashLadder`, `FlashLadderGame`/`FlashCountGame`, `timeBank`, `InnerClockGame`/`TimeBankGame`).
@@ -1993,7 +1994,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T200 Share the round-game glue across the four reworked games (maintainer, Nov 18)
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] First check that the four game components really repeat the same round state machine and bank/progress/countdown wiring; if not, close this task as not needed.
@@ -2413,3 +2414,25 @@ Planning notes for M7:
   - [ ] `docs/DECISIONS.md` gets one entry per M7 judgment call, with date, item, choice and reason: the Second Sense ranges (10 to 20 s, rising by round) and 2 s bank; no stopwatch rule (owner decision, existing cheat check only); Swift Sum uniform 10 to 30 draw per round and whatever bank T205 settled on; Trail Trace 5 x 8 board (or 10 rows if kept), minimum length, the "touch" definition (eight neighbours) and the 90% distinctness bound; Clean Cut `MIN_ASYMMETRY`, the shapes removed or reshaped, the 8 point bank; the new pass targets (4, 5, 8, 5); cheat threshold changes; display names only with keys kept; `scores_since` reset again for each game.
   - [ ] `docs/NEEDS_HUMAN.md` gets a "please update DESIGN.md" entry listing each M7 rule that differs from the spec (the games table: Second Sense 10 to 20 s targets and 2 s bank, Swift Sum random 10 to 30 counts, Trail Trace's 12 tile cap and no-touch rule, Clean Cut asymmetry and 8 point bank, and the two names) and a "please confirm" entry listing the proposed values and where each lives. `docs/DESIGN.md` is not edited.
 - Notes: Docs only; no reviewers needed (CLAUDE.md). Play-test points for the owner: whether the 2 s Second Sense bank is survivable, whether Swift Sum's 10 dot bank is too tight for 30 dots, whether Trail Trace feels too short or too constrained on 8 rows, and whether Clean Cut's asymmetry is obvious.
+
+## Maintenance after M7 (maintainer, Nov 18)
+
+### T215 Clean Cut's last-try shape and exact scale-reset checks
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `shapeFor` in `src/challenges/fair-split/shapes.ts` no longer keeps its last try whatever it measures: if every try fails, it falls back to a shape known to be simple, inside the margin, lopsided and above the area floor. A test forces that path.
+  - [ ] The pgTAP checks of each game's `scores_since` reset assert the exact date, not `>=`; the copied re-target setup in `fair_split.test.sql` is shared or trimmed.
+  - [ ] `npm run verify` and `npm run test:db` pass; no behaviour change for real seeds.
+- Notes: From M7 review notes. About 120 lines. Full review (scoring tests).
+
+### T216 Admin sign-in e2e tests steady on a cold dev server
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] The admin e2e tests no longer time out on the first run against a cold dev server (for example a warm-up of the admin routes before they run), without raising the global timeout or skipping tests.
+  - [ ] `challengeUi`'s `shapes` formatter is renamed or commented so its job is clear; its tests still pass.
+  - [ ] `npm run verify` and `npm run test:e2e` pass from a cold start.
+- Notes: Cold starts made the admin sign-in check fail once in three local runs during M7. About 60 lines. Light review.
