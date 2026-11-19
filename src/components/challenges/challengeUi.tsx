@@ -3,14 +3,14 @@
 import type { ReactNode } from "react";
 import type { EchoPathInputs, EchoPathParams } from "@/challenges/echo-path/engine";
 import { ROUNDS as FAIR_SPLIT_ROUNDS, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
-import { ROUNDS as FLASH_LADDER_ROUNDS, type FlashLadderInputs, type FlashLadderParams } from "@/challenges/flash-count/flashLadder";
-import { ROUNDS as TIME_BANK_ROUNDS, type TimeBankInputs, type TimeBankParams } from "@/challenges/inner-clock/timeBank";
+import { ROUNDS as FLASH_COUNT_ROUNDS, type FlashCountInputs, type FlashCountParams } from "@/challenges/flash-count/engine";
+import { ROUNDS as INNER_CLOCK_ROUNDS, type InnerClockInputs, type InnerClockParams } from "@/challenges/inner-clock/engine";
 import type { ChallengeType } from "@/challenges/shared/types";
 import type { StackingInputs, StackingParams } from "@/challenges/stacking/engine";
 import { EchoPathGame } from "@/components/echo-path/EchoPathGame";
 import { FairSplitGame } from "@/components/fair-split/FairSplitGame";
-import { FlashLadderGame } from "@/components/flash-count/FlashLadderGame";
-import { TimeBankGame } from "@/components/inner-clock/TimeBankGame";
+import { FlashCountGame } from "@/components/flash-count/FlashCountGame";
+import { InnerClockGame } from "@/components/inner-clock/InnerClockGame";
 import { reachedRow, targetRow } from "@/components/stacking/rows";
 import { StackingGame } from "@/components/stacking/StackingGame";
 import { ECHO_PATH_HOW_TO, FAIR_SPLIT_HOW_TO, FLASH_COUNT_HOW_TO, INNER_CLOCK_HOW_TO, practicePath, STACKING_HOW_TO } from "@/config/challenges";
@@ -38,8 +38,8 @@ type ChallengeUi<Params, Inputs> = {
 const rounds = (score: number) => `${score} ${score === 1 ? "round" : "rounds"}`;
 /** A bank game's target: a score of all its rounds is surviving every one (T183, T186). */
 const roundsTarget = (all: number, word: string) => (target: number) => (target === all ? `${rounds(target)}: survive all ${word}` : rounds(target));
-const timeBankTarget = roundsTarget(TIME_BANK_ROUNDS, "four");
-const flashLadderTarget = roundsTarget(FLASH_LADDER_ROUNDS, "five");
+const innerClockTarget = roundsTarget(INNER_CLOCK_ROUNDS, "four");
+const flashCountTarget = roundsTarget(FLASH_COUNT_ROUNDS, "five");
 
 const stacking: ChallengeUi<StackingParams, StackingInputs> = {
   howTo: STACKING_HOW_TO,
@@ -52,22 +52,22 @@ const stacking: ChallengeUi<StackingParams, StackingInputs> = {
   target: targetRow,
 };
 
-const innerClock: ChallengeUi<TimeBankParams, TimeBankInputs> = {
+const innerClock: ChallengeUi<InnerClockParams, InnerClockInputs> = {
   howTo: INNER_CLOCK_HOW_TO,
   practicePath: practicePath("inner-clock"),
-  play: ({ params, onFinish }) => <TimeBankGame params={params} onFinish={onFinish} />,
+  play: ({ params, onFinish }) => <InnerClockGame params={params} onFinish={onFinish} />,
   scoreLabel: rounds,
-  summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${timeBankTarget(passTarget)}.`,
-  target: timeBankTarget,
+  summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${innerClockTarget(passTarget)}.`,
+  target: innerClockTarget,
 };
 
-const flashCount: ChallengeUi<FlashLadderParams, FlashLadderInputs> = {
+const flashCount: ChallengeUi<FlashCountParams, FlashCountInputs> = {
   howTo: FLASH_COUNT_HOW_TO,
   practicePath: practicePath("flash-count"),
-  play: ({ params, onFinish }) => <FlashLadderGame params={params} onFinish={onFinish} />,
+  play: ({ params, onFinish }) => <FlashCountGame params={params} onFinish={onFinish} />,
   scoreLabel: rounds,
-  summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${flashLadderTarget(passTarget)}.`,
-  target: flashLadderTarget,
+  summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${flashCountTarget(passTarget)}.`,
+  target: flashCountTarget,
 };
 
 /** Echo Path: the longest path repeated plus the lives left as a fraction ("7.667 tiles"). */

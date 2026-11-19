@@ -27,8 +27,8 @@ export const FLASH_COUNT_MIN_ANSWER_MS = 800;
  * scripted on 10 to 20 s intervals (T164, T183). Re-checked for the 2 s bank (T204): honest errors
  * that survive it are a few hundred ms, still far above 25 ms, so the values stay.
  */
-export const TIME_BANK_PRECISE_ROUNDS = 3;
-export const TIME_BANK_PRECISE_ERROR_MS = 25;
+export const INNER_CLOCK_PRECISE_ROUNDS = 3;
+export const INNER_CLOCK_PRECISE_ERROR_MS = 25;
 
 /** Echo Path: two taps closer than this are faster than a person can move to the next tile (T164). */
 export const ECHO_PATH_MIN_TAP_INTERVAL_MS = 80;

@@ -9,8 +9,8 @@ import {
 } from "@/challenges/fair-split/engine";
 import { echoPath, paramsFromSeed as echoParamsFromSeed, sequenceFor } from "@/challenges/echo-path/engine";
 import { playbackMs } from "@/challenges/echo-path/render";
-import { REVEAL_MS } from "@/challenges/flash-count/flashLadder";
-import { ROUND_COUNTDOWN_MS, ROUND_GAP_MS } from "@/challenges/inner-clock/timeBank";
+import { REVEAL_MS } from "@/challenges/flash-count/engine";
+import { ROUND_COUNTDOWN_MS, ROUND_GAP_MS } from "@/challenges/inner-clock/engine";
 import { COLUMNS, columnAt, simulate, type StackingParams } from "@/challenges/stacking/engine";
 import { createRng } from "@/challenges/shared/prng";
 import { ECHO_PATH_RHYTHM_MAX_SD_MS, STACKING_RHYTHM_MAX_SD_MS } from "@/config/cheat";

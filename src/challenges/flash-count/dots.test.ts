@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createRng } from "../shared/prng";
 import { DOT_RADIUS_RANGE, MIN_SPACING, placeDots, type Dot } from "./dots";
-import { DOT_COUNT_MAX, DOT_COUNT_MIN } from "./flashLadder";
+import { DOT_COUNT_MAX, DOT_COUNT_MIN } from "./engine";
 
 const distance = (a: Dot, b: Dot) => Math.hypot(a.x - b.x, a.y - b.y);
 /** Swift Sum's largest count. */

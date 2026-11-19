@@ -2,21 +2,21 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { FlashLadderInputs } from "@/challenges/flash-count/flashLadder";
+import type { FlashCountInputs } from "@/challenges/flash-count/engine";
 
 // The game has its own tests; here a stand-in finishes with whatever the test asks.
 const game = vi.hoisted(() => ({ counts: [10] }));
-vi.mock("@/components/flash-count/FlashLadderGame", async (importOriginal) => ({
+vi.mock("@/components/flash-count/FlashCountGame", async (importOriginal) => ({
   ...(await importOriginal<object>()),
-  FlashLadderGame: ({ onFinish }: { onFinish: (inputs: FlashLadderInputs) => void }) => (
+  FlashCountGame: ({ onFinish }: { onFinish: (inputs: FlashCountInputs) => void }) => (
     <button type="button" onClick={() => onFinish({ answers: game.counts.map((count, i) => ({ count, atMs: 1000 * (i + 1) })) })}>
       Fake run
     </button>
   ),
 }));
 // Every run has two rounds, of 10 and 14 dots, against a 10-dot bank.
-vi.mock("@/challenges/flash-count/flashLadder", async (importOriginal) => {
-  const real = await importOriginal<typeof import("@/challenges/flash-count/flashLadder")>();
+vi.mock("@/challenges/flash-count/engine", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/challenges/flash-count/engine")>();
   return { ...real, paramsFromSeed: () => ({ layoutSeed: 1, bank: 10, levels: [10, 14].map((dotCount) => ({ dotCount, flashMs: 1500 })) }) };
 });
 

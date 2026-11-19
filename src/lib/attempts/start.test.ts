@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { fairSplit } from "@/challenges/fair-split/engine";
-import { flashLadder } from "@/challenges/flash-count/flashLadder";
-import { timeBank } from "@/challenges/inner-clock/timeBank";
+import { flashCount } from "@/challenges/flash-count/engine";
+import { innerClock } from "@/challenges/inner-clock/engine";
 import { paramsFromSeed } from "@/challenges/stacking/engine";
 import { startAttempt, type AttemptStore } from "./start";
 import type { GameAttempt, GameDay } from "./types";
@@ -71,8 +71,8 @@ describe("startAttempt", () => {
   });
 
   it.each([
-    ["game 2 after a win", [won(1)], 2, "inner-clock", timeBank.paramsFromSeed, 4],
-    ["game 3 after a win and a loss", [won(1), lost(2)], 3, "flash-count", flashLadder.paramsFromSeed, 5],
+    ["game 2 after a win", [won(1)], 2, "inner-clock", innerClock.paramsFromSeed, 4],
+    ["game 3 after a win and a loss", [won(1), lost(2)], 3, "flash-count", flashCount.paramsFromSeed, 5],
   ] as const)("starts %s, with that game's challenge and its own target", async (_, attempts, position, challengeType, paramsFor, passTarget) => {
     const store = withAttempts([...attempts]);
     expect(await start(store, 99)).toEqual({

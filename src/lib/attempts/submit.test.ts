@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { flashLadder } from "@/challenges/flash-count/flashLadder";
-import { timeBank } from "@/challenges/inner-clock/timeBank";
+import { flashCount } from "@/challenges/flash-count/engine";
+import { innerClock } from "@/challenges/inner-clock/engine";
 import { simulate, stacking } from "@/challenges/stacking/engine";
 import { tapsForAMiss } from "@/challenges/stacking/player";
 import { submitAttempt, type SubmitStore } from "./submit";
@@ -88,7 +88,7 @@ describe("submitAttempt", () => {
     const dayOf = (challengeType: string, passTarget: number) => fakeStore({ gameDay: lineupOf(challengeType, passTarget) });
 
     it("Second Sense with a target of 4: surviving all four with an empty bank passes, busting in round 4 fails", async () => {
-      const targets = timeBank.paramsFromSeed(seed).rounds.map((round) => round.targetMs);
+      const targets = innerClock.paramsFromSeed(seed).rounds.map((round) => round.targetMs);
       // Three rounds exactly on target, then a fourth off by `lastErrorMs`.
       const run = (lastErrorMs: number) => ({ tapsMs: [...targets.slice(0, 3), targets[3] + lastErrorMs] });
       // Later than any of these runs could end.
@@ -101,7 +101,7 @@ describe("submitAttempt", () => {
     });
 
     it("Swift Sum with a target of 5 rounds: all five survived passes, a bust in round 5 fails", async () => {
-      const counts = flashLadder.paramsFromSeed(seed).levels.map((level) => level.dotCount);
+      const counts = flashCount.paramsFromSeed(seed).levels.map((level) => level.dotCount);
       // Rounds exactly right, then (for the fail) a count of 999, which busts any bank.
       const run = (...answers: number[]) => ({ answers: answers.map((count, i) => ({ count, atMs: 5_000 * (i + 1) })) });
       // A minute after the start: later than any of these runs' last answer.
@@ -229,7 +229,7 @@ describe("submitAttempt", () => {
 
     it("reads the player's earlier scores for the checks, and flags no honest Second Sense run", async () => {
       // No rule reads the history since T140 retired Second Sense's; T164 brings history rules back.
-      const first = timeBank.paramsFromSeed(seed).rounds[0];
+      const first = innerClock.paramsFromSeed(seed).rounds[0];
       const store = fakeStore({
         gameDay: lineupOf("inner-clock", 0),
         recentScores: vi.fn(async () => [{ challengeType: "inner-clock", score: 5 }]),

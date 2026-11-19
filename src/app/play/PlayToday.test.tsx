@@ -20,8 +20,8 @@ vi.mock("@/components/stacking/StackingGame", () => ({
   },
 }));
 // Another challenge's game: a stand-in that answers with fixed inputs.
-vi.mock("@/components/flash-count/FlashLadderGame", () => ({
-  FlashLadderGame: ({ onFinish }: { onFinish: (inputs: { answers: { count: number; atMs: number }[] }) => void }) => (
+vi.mock("@/components/flash-count/FlashCountGame", () => ({
+  FlashCountGame: ({ onFinish }: { onFinish: (inputs: { answers: { count: number; atMs: number }[] }) => void }) => (
     <button type="button" onClick={() => onFinish({ answers: [{ count: 20, atMs: 4000 }] })}>
       Answer 20
     </button>

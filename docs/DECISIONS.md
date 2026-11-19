@@ -461,6 +461,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 - How to change it later: `src/challenges/inner-clock/timeBank.ts`; `src/challenges/flash-count/flashLadder.ts`; `src/challenges/echo-path/path.ts`; `src/challenges/fair-split/shapes.ts` and `engine.ts`; `game_settings.default_pass_targets` or /admin; `src/config/cheat.ts`; `src/config/challenges.ts` for names.
 - Confirmed by human: (1) bank, (2), (3) count rule, (4) board and touch rule, (5) bank and (8) by the owner; the rest pending (NEEDS_HUMAN, M7 calls)
 
+### 2026-11-18 — Code names follow the stored keys; shared round loop (T199, T200)
+- Choice: (1) Swift Sum and Second Sense code follows the keys `flash-count` and `inner-clock`, as Trail Trace and Clean Cut follow theirs: each engine is `engine.ts` (`flashCount`, `innerClock`), the run components are `FlashCountGame` and `InnerClockGame`, and the single-round ones are `FlashCountShowing` and `InnerClockTap`. Player-facing words ("time bank", "dot bank") are unchanged. (2) Only Swift Sum and Second Sense repeat the countdown, round and reveal loop, so it moved into `useRevealRounds`; Trail Trace and Clean Cut drive their phases from their own frame loops and keep them. (3) The three bank games' practice results share `bankResult`; Trail Trace counts lives and the longest path, so it keeps its own.
+- Reason: names keyed to stored values do not go stale when a game is renamed again; the backlog asks to check first whether all four repeat the loop.
+- How to change it later: `src/components/rounds/useRevealRounds.ts`, `src/components/practice/bankResult.ts`.
+- Confirmed by human: not needed (no behaviour change)
+
 ### 2026-11-18 — Where M7 departs from DESIGN.md (T214)
 - Choice: as T198, the backlog's M7 rules win over DESIGN.md's games table: Second Sense targets 10 to 20 s against a 2 s bank; Swift Sum a random 10 to 30 dots each round; Trail Trace paths of at most 12 tiles on a 5 x 8 board that never touch themselves; Clean Cut lopsided shapes only and an 8-point bank; the names Trail Trace and Clean Cut.
 - Reason: agents never edit DESIGN.md.

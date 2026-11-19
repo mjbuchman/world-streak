@@ -7,16 +7,16 @@ import {
   DOT_COUNT_MIN,
   FLASH_MS_RANGE,
   ROUNDS,
-  flashLadder,
+  flashCount,
   layoutFor,
   paramsFromSeed,
   play,
   roundCost,
-  type FlashLadderParams,
-} from "./flashLadder";
+  type FlashCountParams,
+} from "./engine";
 
 /** Explicit params from the backlog's worked examples: dot counts 10, 14, 18, 22 and 26, a bank of 10. */
-const five: FlashLadderParams = { layoutSeed: 7, bank: 10, levels: [10, 14, 18, 22, 26].map((dotCount) => ({ dotCount, flashMs: 1500 })) };
+const five: FlashCountParams = { layoutSeed: 7, bank: 10, levels: [10, 14, 18, 22, 26].map((dotCount) => ({ dotCount, flashMs: 1500 })) };
 
 /** Answers one second apart, from the counts. */
 const answers = (...counts: number[]) => ({ answers: counts.map((count, i) => ({ count, atMs: 1000 * (i + 1) })) });
@@ -115,18 +115,18 @@ describe("Swift Sum score", () => {
     ["off by 4, 3, then 4: round 3 busts the bank", [6, 17, 22], 2],
     ["no answers", [], 1],
   ])("%s", (_name, counts, score) => {
-    expect(flashLadder.score(five, answers(...counts))).toBe(score);
+    expect(flashCount.score(five, answers(...counts))).toBe(score);
   });
 
   it("scores counts that jump up and down the same way (T205: 12, 25, 18, 30, 21)", () => {
     const jumps = { ...five, levels: [12, 25, 18, 30, 21].map((dotCount) => ({ dotCount, flashMs: 1500 })) };
-    expect(flashLadder.score(jumps, answers(12, 25, 18, 30, 21))).toBe(6);
-    expect(flashLadder.score(jumps, answers(12, 24, 18, 29, 21))).toBe(5.8);
+    expect(flashCount.score(jumps, answers(12, 25, 18, 30, 21))).toBe(6);
+    expect(flashCount.score(jumps, answers(12, 24, 18, 29, 21))).toBe(5.8);
   });
 
   it("ignores answers after the run has ended", () => {
-    expect(flashLadder.score(five, answers(30, 14, 18))).toBe(0);
-    expect(flashLadder.score(five, answers(10, 14, 18, 22, 26, 99))).toBe(6);
+    expect(flashCount.score(five, answers(30, 14, 18))).toBe(0);
+    expect(flashCount.score(five, answers(10, 14, 18, 22, 26, 99))).toBe(6);
   });
 
   it.each([
@@ -134,22 +134,22 @@ describe("Swift Sum score", () => {
     [1, 2],
     [4_294_967_295, 0],
   ])("golden: seed %i with fixed answers scores %d", (seed, score) => {
-    expect(flashLadder.score(paramsFromSeed(seed), answers(15, 10, 15, 13, 20))).toBe(score);
+    expect(flashCount.score(paramsFromSeed(seed), answers(15, 10, 15, 13, 20))).toBe(score);
   });
 
   it("gives the same score for the same answers, between 0 and the rounds plus one (property)", () => {
     for (let seed = 0; seed < 200; seed++) {
       const params = paramsFromSeed(seed);
       const counts = params.levels.map((level, i) => level.dotCount + ((seed + i) % 7) - 3);
-      const first = flashLadder.score(params, answers(...counts));
-      expect(flashLadder.score(params, answers(...counts))).toBe(first);
+      const first = flashCount.score(params, answers(...counts));
+      expect(flashCount.score(params, answers(...counts))).toBe(first);
       expect(first).toBeGreaterThanOrEqual(0);
       expect(first).toBeLessThanOrEqual(ROUNDS + 1);
     }
   });
 
   it("is higher-better", () => {
-    expect(flashLadder.direction).toBe("higher-better");
+    expect(flashCount.direction).toBe("higher-better");
   });
 });
 
@@ -180,9 +180,9 @@ describe("Swift Sum play", () => {
 
 describe("Swift Sum inputs", () => {
   it("accept whole counts 0 to 999 at rising times, up to one answer a round", () => {
-    expect(flashLadder.inputsSchema.safeParse(answers(0, 999)).success).toBe(true);
-    expect(flashLadder.inputsSchema.safeParse({ answers: [] }).success).toBe(true);
-    expect(flashLadder.inputsSchema.safeParse(answers(...Array<number>(ROUNDS).fill(1))).success).toBe(true);
+    expect(flashCount.inputsSchema.safeParse(answers(0, 999)).success).toBe(true);
+    expect(flashCount.inputsSchema.safeParse({ answers: [] }).success).toBe(true);
+    expect(flashCount.inputsSchema.safeParse(answers(...Array<number>(ROUNDS).fill(1))).success).toBe(true);
   });
 
   it.each([
@@ -194,19 +194,19 @@ describe("Swift Sum inputs", () => {
     ["more answers than rounds", answers(...Array<number>(ROUNDS + 1).fill(1))],
     ["a single count", { count: 3 }],
   ])("reject %s", (_name, inputs) => {
-    expect(flashLadder.inputsSchema.safeParse(inputs).success).toBe(false);
+    expect(flashCount.inputsSchema.safeParse(inputs).success).toBe(false);
   });
 
   it("are finished once the bank is bust or all five rounds are answered", () => {
-    expect(flashLadder.finished(five, answers())).toBe(false);
-    expect(flashLadder.finished(five, answers(10, 14, 18, 22))).toBe(false);
-    expect(flashLadder.finished(five, answers(30))).toBe(true);
-    expect(flashLadder.finished(five, answers(10, 14, 18, 22, 26))).toBe(true);
+    expect(flashCount.finished(five, answers())).toBe(false);
+    expect(flashCount.finished(five, answers(10, 14, 18, 22))).toBe(false);
+    expect(flashCount.finished(five, answers(30))).toBe(true);
+    expect(flashCount.finished(five, answers(10, 14, 18, 22, 26))).toBe(true);
   });
 
   // Answers are timed from the run's start, so the last one already includes every 3-2-1, flash and reveal.
   it("time the latest input at the last answer", () => {
-    expect(flashLadder.lastInputMs(answers(), five)).toBe(0);
-    expect(flashLadder.lastInputMs(answers(10, 14, 18), five)).toBe(3000);
+    expect(flashCount.lastInputMs(answers(), five)).toBe(0);
+    expect(flashCount.lastInputMs(answers(10, 14, 18), five)).toBe(3000);
   });
 });

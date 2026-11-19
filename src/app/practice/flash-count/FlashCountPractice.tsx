@@ -1,8 +1,9 @@
 "use client";
 
-import { flashLadder, paramsFromSeed, play, type FlashLadderInputs, type FlashLadderParams } from "@/challenges/flash-count/flashLadder";
+import { flashCount, paramsFromSeed, play, type FlashCountInputs, type FlashCountParams } from "@/challenges/flash-count/engine";
 import { challengeUi } from "@/components/challenges/challengeUi";
-import { dots, FlashLadderGame } from "@/components/flash-count/FlashLadderGame";
+import { dots, FlashCountGame } from "@/components/flash-count/FlashCountGame";
+import { bankResult } from "@/components/practice/bankResult";
 import { PracticeShell } from "@/components/practice/PracticeShell";
 import { secureRandomSeed } from "@/lib/random";
 
@@ -10,18 +11,24 @@ const ui = challengeUi("flash-count");
 const newRun = () => paramsFromSeed(secureRandomSeed());
 
 /** The result: rounds survived and the dot bank left, as the engine counts them. */
-function result(params: FlashLadderParams, inputs: FlashLadderInputs) {
-  const { survived, left } = play(params, inputs);
-  const heading = survived === params.levels.length ? "Every round survived" : `${ui.scoreLabel(survived)} survived`;
-  return { heading, detail: `${dots(left)} of your ${params.bank}-dot bank left. Score: ${flashLadder.score(params, inputs)}.` };
+function result(params: FlashCountParams, inputs: FlashCountInputs) {
+  return bankResult({
+    ...play(params, inputs),
+    total: params.levels.length,
+    everyLabel: "Every round survived",
+    scoreLabel: ui.scoreLabel,
+    format: dots,
+    bankLabel: `${params.bank}-dot bank`,
+    score: flashCount.score(params, inputs),
+  });
 }
 
 export function FlashCountPractice() {
   return (
-    <PracticeShell<FlashLadderParams, FlashLadderInputs>
+    <PracticeShell<FlashCountParams, FlashCountInputs>
       howTo={ui.howTo}
       newRun={newRun}
-      game={(params, onFinish) => <FlashLadderGame params={params} onFinish={onFinish} />}
+      game={(params, onFinish) => <FlashCountGame params={params} onFinish={onFinish} />}
       result={result}
     />
   );

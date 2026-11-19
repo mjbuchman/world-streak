@@ -1,169 +1,74 @@
 "use client";
 
-import { type KeyboardEvent, useEffect, useRef, useState } from "react";
-import type { TimeBankRound } from "@/challenges/inner-clock/timeBank";
-import { CountdownNumber, countdownNumber } from "@/components/countdown/CountdownNumber";
-import { runFrames } from "@/components/frameLoop";
-import { usePrefersReducedMotion } from "@/components/ui/useReducedMotion";
-import { COUNTDOWN_FROM, RUN_COUNTDOWN_MS } from "@/config/countdown";
+import {
+  play,
+  ROUND_COUNTDOWN_MS,
+  ROUND_GAP_MS,
+  roundErrorMs,
+  innerClock,
+  type InnerClockInputs,
+  type InnerClockParams,
+} from "@/challenges/inner-clock/engine";
+import { BankGauge } from "@/components/rounds/BankGauge";
+import { RoundCountdown } from "@/components/rounds/RoundCountdown";
+import { RoundProgress } from "@/components/rounds/RoundProgress";
+import { progressAt, useRevealRounds } from "@/components/rounds/useRevealRounds";
+import { InnerClockTap, targetPrompt } from "./InnerClockTap";
 import styles from "./InnerClockGame.module.css";
 
-/** "5 seconds"; targets are whole multiples of 100 ms, so at most one decimal. */
-export function targetLabel(targetMs: number): string {
-  const seconds = targetMs / 1000;
-  return `${seconds} ${seconds === 1 ? "second" : "seconds"}`;
+/** "2.8 s": ms as seconds, to the ms. */
+const seconds = (ms: number) => `${Math.round(ms) / 1000} s`;
+
+/** "2.4 s": the bank's reading, to a tenth. */
+const bankSeconds = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
+
+/** A round's error as players read it, as the engine counts it (a late tap past the timeout ran out). */
+function errorLabel(round: InnerClockParams["rounds"][number], tapMs: number | null, budgetMs: number): string {
+  if (tapMs === null || tapMs > round.timeoutMs) return "Time ran out";
+  const errorMs = roundErrorMs(round, tapMs, budgetMs);
+  if (errorMs === 0) return "Spot on";
+  return `${seconds(errorMs)} ${tapMs > round.targetMs ? "late" : "early"}`;
 }
-
-/** The round's target as the player reads it, above the clock and the 3-2-1 (T182). */
-export function targetPrompt(targetMs: number): string {
-  return `Tap when you think ${targetLabel(targetMs)} have passed`;
-}
-
-/** "0.5": whole tenths of a second, rounded down, as a stopwatch shows them. */
-const clockLabel = (ms: number) => (Math.floor(ms / 100) / 10).toFixed(1);
-
-/** After its reveal the clock stops and fades out over this long (T118), or just goes with reduced motion. */
-export const CLOCK_FADE_MS = 400;
-
-// "ready" is the clock at zero before the start frame, when a tap does not count yet.
-type ClockState =
-  | { phase: "countdown"; number: number }
-  | { phase: "ready" }
-  | { phase: "shown"; ms: number }
-  | { phase: "fading" }
-  | { phase: "hidden" };
-
-/** One round's tap in ms from its start, or null when it timed out. */
-type RoundTap = { tapMs: number | null };
 
 type InnerClockGameProps = {
-  /** The round: its target, its timeout, and how long the clock shows before it fades. */
-  params: TimeBankRound;
-  onFinish: (tap: RoundTap) => void;
-  /** How long the 3-2-1 lasts; 0 skips it (tests of the round alone, and Time Bank's later rounds). */
+  params: InnerClockParams;
+  onFinish: (inputs: InnerClockInputs) => void;
+  /** How long the 3-2-1 before every round lasts; 0 skips it (tests of the run alone). */
   countdownMs?: number;
 };
 
 /**
- * A Second Sense round: one big tap area, with a running clock for the round's revealMs only (an
- * exact starting point; M3 play-test). A 3-2-1 counts from the first frame after the run is on
- * screen (T138); the clock starts right after "1" (what the player sees as the start), and the
- * run ends with the first tap after that (pointer, Space or Enter) or at the timeout with no tap.
+ * A Second Sense: Time Bank run (T182): four rounds, each a 3-2-1 under its target, then the tap
+ * round, then its error for ROUND_GAP_MS while the bank drains by it. The engine counts the gap
+ * and every later round's 3-2-1 in the run's timing.
  */
-export function InnerClockGame({ params, onFinish, countdownMs = RUN_COUNTDOWN_MS }: InnerClockGameProps) {
-  const { revealMs } = params;
-  const areaRef = useRef<HTMLButtonElement>(null);
-  const startedAt = useRef<number | null>(null);
-  const done = useRef(false);
-  // The latest callback, so the effect below runs once per run rather than per render.
-  const finishRef = useRef(onFinish);
-  useEffect(() => {
-    finishRef.current = onFinish;
+export function InnerClockGame({ params, onFinish, countdownMs = ROUND_COUNTDOWN_MS }: InnerClockGameProps) {
+  const { entries: tapsMs, inputs, phase, record, startRound } = useRevealRounds<number | null, InnerClockInputs>({
+    toInputs: (entries) => ({ tapsMs: entries }),
+    isFinished: (run) => innerClock.finished(params, run),
+    revealMs: ROUND_GAP_MS,
+    onFinish,
   });
+  const index = tapsMs.length;
+  const costs = tapsMs.map((tapMs, i) => roundErrorMs(params.rounds[i], tapMs, params.budgetMs));
 
-  // The clock: the countdown in its place, then running for revealMs, then stopped at
-  // the reveal and fading, then gone.
-  const [clockState, setClockState] = useState<ClockState>(() =>
-    countdownMs > 0 ? { phase: "countdown", number: COUNTDOWN_FROM } : { phase: "ready" },
-  );
-  // Read in the frame loop, which must not restart when the preference arrives after hydration.
-  const reducedMotion = usePrefersReducedMotion();
-  const reducedRef = useRef(reducedMotion);
-  useEffect(() => {
-    reducedRef.current = reducedMotion;
-  });
-
-  useEffect(() => {
-    areaRef.current?.focus();
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    // This effect's own start; the ref is what tap() reads, and outlives a re-run of the effect.
-    let start: number | null = null;
-    let shownAt: number | null = null;
-    // The first frame starts the countdown and the first one after it the run; each later one
-    // moves the clock on, until it has faded (elapsed time, not frames, decides).
-    const tick = (now: number) => {
-      if (start === null) {
-        shownAt ??= now;
-        const number = countdownNumber(now - shownAt, countdownMs);
-        if (number !== null) {
-          setClockState({ phase: "countdown", number });
-          return true;
-        }
-        start = startedAt.current = now;
-        timer = setTimeout(timeOut, params.timeoutMs);
-        setClockState({ phase: "shown", ms: 0 });
-        return true;
-      }
-      const elapsed = now - start;
-      if (elapsed < revealMs) {
-        setClockState({ phase: "shown", ms: elapsed });
-      } else if (!reducedRef.current && elapsed < revealMs + CLOCK_FADE_MS) {
-        setClockState({ phase: "fading" });
-      } else {
-        setClockState({ phase: "hidden" });
-        return false;
-      }
-      return true;
-    };
-    const timeOut = () => {
-      if (done.current) return;
-      done.current = true;
-      finishRef.current({ tapMs: null });
-    };
-    // The clock keeps running while the tab is hidden (T110), but a hidden tab's timer can fire
-    // late, so on return a run already past its timeout ends at once.
-    const onVisibilityChange = () => {
-      if (document.hidden || startedAt.current === null) return;
-      if (performance.now() - startedAt.current >= params.timeoutMs) timeOut();
-    };
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    const stop = runFrames(tick);
-    return () => {
-      stop();
-      clearTimeout(timer);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, [params.timeoutMs, countdownMs, revealMs]);
-
-  const tap = () => {
-    if (done.current || startedAt.current === null) return;
-    done.current = true;
-    finishRef.current({ tapMs: performance.now() - startedAt.current });
-  };
-
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.repeat || (event.key !== " " && event.key !== "Enter")) return;
-    // Keep Space from scrolling and Enter from also firing a click.
-    event.preventDefault();
-    tap();
-  };
-
+  const last = index - 1;
   return (
-    <button
-      ref={areaRef}
-      type="button"
-      className={styles.area}
-      // The main button or a touch only: a right-click is not a tap.
-      onPointerDown={(event) => event.button === 0 && tap()}
-      onKeyDown={onKeyDown}
-    >
-      {/* The target first, on its own row, so the clock and the 3-2-1 never cover it (T182). */}
-      <span className={styles.prompt}>{targetPrompt(params.targetMs)}</span>
-      {/* Hidden from screen readers: read every frame it would drown out the prompt. */}
-      <span className={styles.clock} data-clock={clockState.phase} aria-hidden="true">
-        {clockState.phase === "countdown" ? (
-          <CountdownNumber key={clockState.number} value={clockState.number} />
-        ) : clockState.phase === "ready" ? (
-          clockLabel(0)
-        ) : clockState.phase === "shown" ? (
-          clockLabel(clockState.ms)
-        ) : clockState.phase === "fading" ? (
-          clockLabel(revealMs)
-        ) : (
-          ""
-        )}
-      </span>
-      <span className={styles.hint}>Tap, click or press Space</span>
-    </button>
+    <div className={styles.bank}>
+      <RoundProgress {...progressAt(index, params.rounds.length, play(params, inputs))} />
+      <BankGauge total={params.budgetMs} spent={costs} format={bankSeconds} label="Time bank" />
+      {phase === "countdown" ? (
+        <div className={styles.waiting}>
+          <p className={styles.target}>{targetPrompt(params.rounds[index].targetMs)}</p>
+          <RoundCountdown key={index} round={index} ms={countdownMs} onDone={startRound} />
+        </div>
+      ) : phase === "round" ? (
+        <InnerClockTap key={index} params={params.rounds[index]} countdownMs={0} onFinish={({ tapMs }) => record(tapMs)} />
+      ) : (
+        <p className={styles.error} role="status">
+          {errorLabel(params.rounds[last], tapsMs[last], params.budgetMs)}
+        </p>
+      )}
+    </div>
   );
 }

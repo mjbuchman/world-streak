@@ -27,24 +27,24 @@ export const DOT_COUNT_MAX = 30;
 const FLASH_STEP_MS = 100;
 export const FLASH_MS_RANGE = { min: 1800 - FLASH_STEP_MS * (ROUNDS - 1), max: 1800 } as const;
 
-export type FlashLadderLevel = { dotCount: number; flashMs: number };
+export type FlashCountLevel = { dotCount: number; flashMs: number };
 /** One round as shown: its count, its flash, and its layout. */
-export type FlashShowing = FlashLadderLevel & { dots: Dot[] };
+export type FlashShowing = FlashCountLevel & { dots: Dot[] };
 
 /** The rounds, the bank, and the seed every layout is built from (a layout is drawn when it is shown). */
-export type FlashLadderParams = { layoutSeed: number; bank: number; levels: FlashLadderLevel[] };
+export type FlashCountParams = { layoutSeed: number; bank: number; levels: FlashCountLevel[] };
 
 /** One answer a round, timed from the run start. */
-export type FlashLadderInputs = { answers: { count: number; atMs: number }[] };
+export type FlashCountInputs = { answers: { count: number; atMs: number }[] };
 
-export function paramsFromSeed(seed: number): FlashLadderParams {
+export function paramsFromSeed(seed: number): FlashCountParams {
   const rng = createRng(seed);
   const levels = Array.from({ length: ROUNDS }, (_, i) => ({ dotCount: rng.int(DOT_COUNT_MIN, DOT_COUNT_MAX), flashMs: FLASH_MS_RANGE.max - FLASH_STEP_MS * i }));
   return { layoutSeed: rng.int(0, 0xffff_ffff), bank: BANK, levels };
 }
 
 /** Round `level`'s dots: the same every time it is drawn, and different for each round. */
-export function layoutFor(params: FlashLadderParams, level: number): Dot[] {
+export function layoutFor(params: FlashCountParams, level: number): Dot[] {
   // Mixes the two numbers into one 32-bit seed, so neighbouring rounds differ.
   const seed = (params.layoutSeed ^ Math.imul(level + 1, 0x9e37_79b1)) >>> 0;
   return placeDots(createRng(seed), params.levels[level].dotCount);
@@ -54,19 +54,19 @@ export function layoutFor(params: FlashLadderParams, level: number): Dot[] {
 export const roundCost = (dotCount: number, count: number) => Math.abs(count - dotCount);
 
 /** Plays the answers against the bank; answers past the last round are ignored. */
-export function play(params: FlashLadderParams, { answers }: FlashLadderInputs) {
+export function play(params: FlashCountParams, { answers }: FlashCountInputs) {
   const costs = answers.slice(0, params.levels.length).map(({ count }, i) => roundCost(params.levels[i].dotCount, count));
   return playBank(params.bank, costs);
 }
 
-const inputsSchema: z.ZodType<FlashLadderInputs> = z.object({
+const inputsSchema: z.ZodType<FlashCountInputs> = z.object({
   answers: z
     .array(z.object({ count: z.number().int().min(0).max(999), atMs: z.number().nonnegative() }))
     .max(ROUNDS)
     .refine((answers) => answers.every((answer, i) => i === 0 || answer.atMs > answers[i - 1].atMs), "answer times must rise"),
 });
 
-export const flashLadder: ChallengeModule<FlashLadderParams, FlashLadderInputs> = {
+export const flashCount: ChallengeModule<FlashCountParams, FlashCountInputs> = {
   paramsFromSeed,
   score: (params, inputs) => {
     const { survived, left } = play(params, inputs);

@@ -2,12 +2,12 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { TimeBankInputs } from "@/challenges/inner-clock/timeBank";
+import type { InnerClockInputs } from "@/challenges/inner-clock/engine";
 
 // The game itself has its own tests; here a stand-in finishes with whatever the test asks.
-const game = vi.hoisted(() => ({ finishWith: { tapsMs: [3200] } as TimeBankInputs }));
-vi.mock("@/components/inner-clock/TimeBankGame", () => ({
-  TimeBankGame: ({ onFinish }: { onFinish: (inputs: TimeBankInputs) => void }) => (
+const game = vi.hoisted(() => ({ finishWith: { tapsMs: [3200] } as InnerClockInputs }));
+vi.mock("@/components/inner-clock/InnerClockGame", () => ({
+  InnerClockGame: ({ onFinish }: { onFinish: (inputs: InnerClockInputs) => void }) => (
     <button type="button" onClick={() => onFinish(game.finishWith)}>
       Fake run
     </button>
@@ -15,8 +15,8 @@ vi.mock("@/components/inner-clock/TimeBankGame", () => ({
 }));
 // Fixed rounds: targets 15, 18, 21 and 24 s with a 10 s bank.
 vi.mock("@/lib/random", () => ({ secureRandomSeed: () => 0 }));
-vi.mock("@/challenges/inner-clock/timeBank", async (importOriginal) => {
-  const real = await importOriginal<typeof import("@/challenges/inner-clock/timeBank")>();
+vi.mock("@/challenges/inner-clock/engine", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/challenges/inner-clock/engine")>();
   const rounds = [15_000, 18_000, 21_000, 24_000].map((targetMs) => ({ targetMs, revealMs: 2000, timeoutMs: targetMs + 10_000 }));
   return { ...real, paramsFromSeed: () => ({ budgetMs: 10_000, rounds }) };
 });
@@ -25,7 +25,7 @@ import { InnerClockPractice } from "./InnerClockPractice";
 
 afterEach(cleanup);
 
-async function playWith(inputs: TimeBankInputs) {
+async function playWith(inputs: InnerClockInputs) {
   game.finishWith = inputs;
   const user = userEvent.setup();
   render(<InnerClockPractice />);
