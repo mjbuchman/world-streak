@@ -351,7 +351,8 @@ test("Clean Cut practice: an 8 point bank; the line moves twice without cutting;
 });
 
 test("Clean Cut practice: each run draws new shapes (T221, T226)", async ({ page }) => {
-  // Record, without changing, each seed the page draws for a run.
+  // Record, without changing, each seed the page draws for a run. Start draws the run's seed with
+  // one Uint32Array(1) (`secureRandomSeed`), so the last one recorded after Start is that run's.
   await page.addInitScript(() => {
     const real = crypto.getRandomValues.bind(crypto);
     const seeds: number[] = [];
