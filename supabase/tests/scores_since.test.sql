@@ -1,6 +1,6 @@
 begin;
 \ir fixtures/fixtures.psql
-select plan(22);
+select plan(23);
 
 -- T183: a challenge's pass-target percentile reads only scores from its scores_since date on.
 select has_column('public', 'challenge_types', 'scores_since', 'challenge types have a scores_since date');
@@ -34,11 +34,9 @@ select is(
   (select scores_since from public.challenge_types where type = 'echo-path'), (now() at time zone 'utc')::date + 1,
   'Trail Trace''s 2 lives start its scale again the day after the migration (T220)'
 );
--- Clean Cut's own M7 migration ran last of the four, after Second Sense's (T204).
-select ok(
-  (select scores_since from public.challenge_types where type = 'fair-split')
-    >= (select scores_since from public.challenge_types where type = 'inner-clock'),
-  'Clean Cut''s lopsided shapes and 8 point bank start its scale again (T212)'
+select is(
+  (select scores_since from public.challenge_types where type = 'fair-split'), (now() at time zone 'utc')::date + 1,
+  'Clean Cut''s blobs and polygons start its scale again the day after the migration (T223)'
 );
 select is(
   (select count(*)::integer from public.challenge_types where type not in ('inner-clock', 'flash-count', 'echo-path', 'fair-split') and scores_since is not null), 0,
@@ -102,7 +100,7 @@ select is(public.pass_target_for('stacking', '2033-01-12', 0), 38::numeric, 'oth
 
 -- The T220 migration's re-target, run again on days still holding an old-scale target of 1: only the
 -- three changed games on untouched days get their placeholders; an edited, a closed or a started day
--- and Clean Cut keep theirs.
+-- keep theirs. Clean Cut's day 06-04 is left for T223's re-target below.
 insert into public.game_days (game_date, survival_threshold, edited, closed_at, outcome)
 values ('2034-06-01', 0.6, false, null, null), ('2034-06-02', 0.6, true, null, null), ('2034-06-03', 0.6, false, null, null),
        ('2034-06-04', 0.6, false, null, null), ('2034-06-05', 0.6, false, null, null), ('2034-06-06', 0.6, false, now(), 'broken'),
@@ -118,11 +116,25 @@ update public.game_day_games g
  where d.game_date = g.game_date and g.challenge_type in ('inner-clock', 'flash-count', 'echo-path')
    and not d.edited and d.closed_at is null
    and not exists (select 1 from public.attempts a where a.game_date = g.game_date);
+-- And T223's, for Clean Cut alone: day 06-04 is untouched; 06-08 is edited.
+insert into public.game_days (game_date, survival_threshold, edited) values ('2034-06-08', 0.6, true);
+insert into public.game_day_games (game_date, position, challenge_type, pass_target) values ('2034-06-08', 1, 'fair-split', 1);
+update public.game_day_games g
+   set pass_target = public.pass_target_for(g.challenge_type, g.game_date, (select current from public.world_streak()))
+  from public.game_days d
+ where d.game_date = g.game_date and g.challenge_type = 'fair-split'
+   and not d.edited and d.closed_at is null
+   and not exists (select 1 from public.attempts a where a.game_date = g.game_date);
 select results_eq(
-  $$select game_date, pass_target from public.game_day_games where game_date between '2034-06-01' and '2034-06-07' order by game_date$$,
-  $$values ('2034-06-01'::date, 4::numeric), ('2034-06-02'::date, 1::numeric), ('2034-06-03'::date, 8::numeric), ('2034-06-04'::date, 1::numeric),
+  $$select game_date, pass_target from public.game_day_games where challenge_type = 'fair-split' and game_date between '2034-06-01' and '2034-06-08' order by game_date$$,
+  $$values ('2034-06-04'::date, 5::numeric), ('2034-06-08'::date, 1::numeric)$$,
+  'an untouched Clean Cut day gets its new-scale target; an edited one keeps its own (T223)'
+);
+select results_eq(
+  $$select game_date, pass_target from public.game_day_games where game_date between '2034-06-01' and '2034-06-07' and challenge_type <> 'fair-split' order by game_date$$,
+  $$values ('2034-06-01'::date, 4::numeric), ('2034-06-02'::date, 1::numeric), ('2034-06-03'::date, 8::numeric),
            ('2034-06-05'::date, 5::numeric), ('2034-06-06'::date, 1::numeric), ('2034-06-07'::date, 1::numeric)$$,
-  'untouched Second Sense, Swift Sum and Trail Trace days get new-scale targets; edited, closed and started days and Clean Cut keep theirs (T220)'
+  'untouched Second Sense, Swift Sum and Trail Trace days get new-scale targets; edited, closed and started days keep theirs (T220)'
 );
 
 select * from finish();

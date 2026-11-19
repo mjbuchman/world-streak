@@ -47,7 +47,7 @@ const FIRST = ROUND_COUNTDOWN_MS + 1000;
 describe("FairSplitPractice", () => {
   it("explains the line, the Cut button and the bank before the start", () => {
     render(<FairSplitPractice />);
-    expect(screen.getByText(/each one lopsided.*then press Cut or Enter.*one 8-point bank/)).toBeTruthy();
+    expect(screen.getByText(/^Press Start for five shapes, irregular blobs and polygons, each one lopsided.*then press Cut or Enter.*one 8-point bank/)).toBeTruthy();
   });
 
   it("shows the shapes survived and the bank left, and focuses the result", async () => {

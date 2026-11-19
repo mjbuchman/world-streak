@@ -19,7 +19,7 @@ describe("/practice", () => {
       ["Second Sense", "/practice/inner-clock", "Four rounds: tap when each target time has passed. Targets of 10 to 20 seconds; every miss drains your 4-second time bank."],
       ["Swift Sum", "/practice/flash-count", "Five rounds of 10 to 25 dots, a new count every round: say how many. Every dot you miss drains your 10-dot bank."],
       ["Trail Trace", "/practice/echo-path", "A path of up to 12 tiles climbs the board. Tap it back, one tile longer each time, all the way to the top, with one extra life."],
-      ["Clean Cut", "/practice/fair-split", "Five lopsided shapes: place one straight line to cut each in half. Every point off 50% drains your 8-point bank."],
+      ["Clean Cut", "/practice/fair-split", "Five irregular blobs and polygons: place one straight line to cut each in half. Every point off 50% drains your 8-point bank."],
     ]);
   });
 
