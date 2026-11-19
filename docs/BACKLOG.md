@@ -77,7 +77,7 @@ Planning notes for M8:
 
 ### T217 Second Sense: a 4 second bank
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] `BUDGET_MS` in `src/challenges/inner-clock/engine.ts` becomes 4 000; `timeoutMs = targetMs + BUDGET_MS` follows. Target ranges, `REVEAL_MS`, `ROUNDS` and the schema are unchanged.
@@ -87,7 +87,7 @@ Planning notes for M8:
 
 ### T218 Swift Sum: at most 25 dots
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] `DOT_COUNT_MAX` in `src/challenges/flash-count/engine.ts` becomes 25 (default, owner may edit; the recommended range was 10 to 25). `DOT_COUNT_MIN` (10), the 10 dot bank, `ROUNDS` and flash times are unchanged.
@@ -97,7 +97,7 @@ Planning notes for M8:
 
 ### T219 Trail Trace: one extra life
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] `LIVES` in `src/challenges/echo-path/engine.ts` becomes 2 (the first try plus one extra life); `MAX_TAPS` follows. Scoring formula (longest length cleared + lives left ÷ LIVES, 3 decimals) is unchanged.
@@ -107,7 +107,7 @@ Planning notes for M8:
 
 ### T220 Migration: scale reset for Second Sense, Swift Sum and Trail Trace
 - Type: infra
-- Status: in-progress
+- Status: done
 - Depends on: T217, T218, T219
 - Acceptance criteria:
   - [ ] One new migration sets `challenge_types.scores_since` to the day after it runs (UTC) for `inner-clock`, `flash-count` and `echo-path`, keeps `default_pass_targets` (4, 5, 8) and recomputes unedited, unstarted open days of those types. pgTAP: older attempts ignored, newer counted, other types untouched, exact date asserted.
@@ -117,7 +117,7 @@ Planning notes for M8:
 
 ### T221 Clean Cut: irregular blob and polygon generators
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] `src/challenges/fair-split/shapes.ts` draws every shape from two seeded generators, replacing the named kinds: an irregular blob (a smooth star-shaped outline from 3 to 5 random harmonics with random amplitudes and phases) and an irregular polygon (7 to 12 vertices at sorted random angles with random radii). Both are star-shaped around an interior point, so they are simple by construction. Same seed gives the same shape. Mix: 70% blobs, 30% polygons (keeps the curved share test at 70%).
@@ -127,7 +127,7 @@ Planning notes for M8:
 
 ### T222 Clean Cut: asymmetry and validity tests
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T221
 - Acceptance criteria:
   - [ ] Over seeds 0 to 999 and all five positions, every shape passes `asymmetry` (mirror and 2 to 5-fold rotation measures both at least `MIN_ASYMMETRY`, raised from 0.04 if the measured minimum allows; record the measured minimum in a comment). A square, circle, regular star and symmetric heart still fail it.
@@ -138,7 +138,7 @@ Planning notes for M8:
 
 ### T223 Migration: Clean Cut scale reset
 - Type: infra
-- Status: todo
+- Status: in-progress
 - Depends on: T222
 - Acceptance criteria:
   - [ ] A new migration sets `scores_since` for `fair-split` to the day after it runs, keeps `default_pass_targets` at 5, recomputes unedited, unstarted open days. pgTAP with exact-date assertion as in T220.

@@ -17,7 +17,6 @@ import {
   type FairSplitParams,
 } from "./engine";
 import { splitShare, type Point } from "./geometry";
-import { kindsFor } from "./shapes";
 
 const SQUARE = [
   { x: 0, y: 0 },
@@ -46,7 +45,7 @@ describe("Fair Split params (T193)", () => {
     expect(GAP_MS).toBe(SHOW_MS + ROUND_COUNTDOWN_MS);
   });
 
-  it("give every seed five shapes of five kinds with the bank and the limit, the same every time", () => {
+  it("give every seed five shapes with the bank and the limit, the same every time", () => {
     for (let seed = 0; seed < 1000; seed += 7) {
       const p = paramsFromSeed(seed);
       expect(p.bank).toBe(BANK_POINTS);
@@ -61,13 +60,6 @@ describe("Fair Split params (T193)", () => {
     const firsts = new Set(Array.from({ length: 1000 }, (_, seed) => JSON.stringify(paramsFromSeed(seed).shapes[0].polygon)));
     expect(firsts.size).toBeGreaterThanOrEqual(950);
   }, 60_000);
-
-  it("draw five different kinds in every run", () => {
-    for (let seed = 0; seed < 1000; seed++) {
-      const shapeSeed = createRng(seed).int(0, 0xffff_ffff);
-      expect(new Set(kindsFor(shapeSeed).map((kind) => kind.name)).size).toBe(ROUNDS);
-    }
-  });
 
   it.each([0, 1, 4_294_967_295])("golden: seed %i (changing the PRNG or the shapes changes these)", (seed) => {
     const { shapes } = paramsFromSeed(seed);
