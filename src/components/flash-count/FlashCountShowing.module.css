@@ -1,0 +1,28 @@
+.game {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* A square board as wide as the page allows, up to 420 px. */
+.board {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  /* No double-tap zoom on a phone (T47). */
+  touch-action: manipulation;
+  border-radius: var(--fs-radius-surface);
+}
+
+/* The board, with the countdown over its middle. */
+.stage {
+  position: relative;
+  width: min(100%, 420px);
+  margin: 0 auto;
+}
+
+.answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}

@@ -11,15 +11,15 @@ vi.mock("@/components/stacking/StackingGame", () => ({
     </button>
   ),
 }));
-vi.mock("@/components/inner-clock/TimeBankGame", () => ({
-  TimeBankGame: ({ onFinish }: { onFinish: (inputs: { tapsMs: number[] }) => void }) => (
+vi.mock("@/components/inner-clock/InnerClockGame", () => ({
+  InnerClockGame: ({ onFinish }: { onFinish: (inputs: { tapsMs: number[] }) => void }) => (
     <button type="button" onClick={() => onFinish({ tapsMs: [3200, 4100] })}>
       Clock
     </button>
   ),
 }));
-vi.mock("@/components/flash-count/FlashLadderGame", () => ({
-  FlashLadderGame: ({ onFinish }: { onFinish: (inputs: { answers: { count: number; atMs: number }[] }) => void }) => (
+vi.mock("@/components/flash-count/FlashCountGame", () => ({
+  FlashCountGame: ({ onFinish }: { onFinish: (inputs: { answers: { count: number; atMs: number }[] }) => void }) => (
     <button type="button" onClick={() => onFinish({ answers: [{ count: 20, atMs: 4000 }] })}>
       Dots
     </button>

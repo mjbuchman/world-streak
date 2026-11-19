@@ -1,28 +1,29 @@
-.game {
+/* Swift Sum: the round steps and the dot bank above the board (T185). */
+.run {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-/* A square board as wide as the page allows, up to 420 px. */
-.board {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1;
-  /* No double-tap zoom on a phone (T47). */
-  touch-action: manipulation;
-  border-radius: var(--fs-radius-surface);
-}
-
-/* The board, with the countdown over its middle. */
-.stage {
-  position: relative;
-  width: min(100%, 420px);
-  margin: 0 auto;
-}
-
-.answer {
+/* The 3-2-1 in the board's place, so the page does not jump between rounds. */
+.waiting {
+  min-height: 320px;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--fs-color-surface-border);
+  border-radius: var(--fs-radius-surface);
+  background: var(--fs-color-meter-surface);
+}
+
+/* "Right on" or "Off by N", in the board's place. */
+.reveal {
+  min-height: 320px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fs-font-display);
+  font-weight: 800;
+  font-size: var(--fs-text-headline);
 }

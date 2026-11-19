@@ -4,8 +4,8 @@
 import { play as playEchoPath, type EchoPathInputs, type EchoPathParams } from "@/challenges/echo-path/engine";
 import { play as playFairSplit, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
 import { splitShare } from "@/challenges/fair-split/geometry";
-import { play, REVEAL_MS, type FlashLadderInputs, type FlashLadderParams } from "@/challenges/flash-count/flashLadder";
-import { roundErrorMs, type TimeBankInputs, type TimeBankParams } from "@/challenges/inner-clock/timeBank";
+import { play, REVEAL_MS, type FlashCountInputs, type FlashCountParams } from "@/challenges/flash-count/engine";
+import { roundErrorMs, type InnerClockInputs, type InnerClockParams } from "@/challenges/inner-clock/engine";
 import { challengeForGameDay, isChallengeType } from "@/challenges/registry";
 import { simulate, type StackingParams } from "@/challenges/stacking/engine";
 import {
@@ -20,8 +20,8 @@ import {
   STACKING_PERFECT_RUN_ROWS,
   STACKING_RHYTHM_MAX_SD_MS,
   STACKING_RHYTHM_MIN_TAPS,
-  TIME_BANK_PRECISE_ERROR_MS,
-  TIME_BANK_PRECISE_ROUNDS,
+  INNER_CLOCK_PRECISE_ERROR_MS,
+  INNER_CLOCK_PRECISE_ROUNDS,
   TIMING_LOAD_ALLOWANCE_MS,
   TIMING_MISMATCH_MS,
 } from "@/config/cheat";
@@ -101,11 +101,11 @@ function echoPathRobotic(params: EchoPathParams, inputs: EchoPathInputs): boolea
 }
 
 /** Many Time Bank rounds of one run tapped almost exactly on target. */
-function timeBankImplausible(params: TimeBankParams, { tapsMs }: TimeBankInputs): boolean {
+function innerClockImplausible(params: InnerClockParams, { tapsMs }: InnerClockInputs): boolean {
   const precise = params.rounds
     .slice(0, tapsMs.length)
-    .filter((round, i) => tapsMs[i] !== null && roundErrorMs(round, tapsMs[i], params.budgetMs) < TIME_BANK_PRECISE_ERROR_MS);
-  return precise.length >= TIME_BANK_PRECISE_ROUNDS;
+    .filter((round, i) => tapsMs[i] !== null && roundErrorMs(round, tapsMs[i], params.budgetMs) < INNER_CLOCK_PRECISE_ERROR_MS);
+  return precise.length >= INNER_CLOCK_PRECISE_ROUNDS;
 }
 
 /**
@@ -148,9 +148,9 @@ function lastTimedInputMs(challengeType: string, inputs: unknown, params: unknow
  * Each Swift Sum answer's time after its flash cleared. The clear time is the earliest the game
  * allows: the previous answer's reveal (if any), the round's 3-2-1, then its flash. Real frames
  * only come later, so an honest answer is never measured as faster than it was. Answer times
- * count from the game's start, before its first 3-2-1 (FlashLadderGame, T185).
+ * count from the game's start, before its first 3-2-1 (FlashCountGame, T185).
  */
-function flashLadderAnswerGapsMs(params: FlashLadderParams, { answers }: FlashLadderInputs): number[] {
+function flashCountAnswerGapsMs(params: FlashCountParams, { answers }: FlashCountInputs): number[] {
   const gaps: number[] = [];
   for (let i = 0; i < answers.length && i < params.levels.length; i++) {
     if (play(params, { answers: answers.slice(0, i) }).failed) break;
@@ -166,9 +166,9 @@ function gameFlags({ challengeType, inputs, params }: DetectArgs): FlagReason[] 
     case "stacking":
       return stackingFlags(params as StackingParams, (inputs as { tapsMs: number[] }).tapsMs);
     case "inner-clock":
-      return timeBankImplausible(params as TimeBankParams, inputs as TimeBankInputs) ? ["time-bank-implausible"] : [];
+      return innerClockImplausible(params as InnerClockParams, inputs as InnerClockInputs) ? ["time-bank-implausible"] : [];
     case "flash-count": {
-      const gaps = flashLadderAnswerGapsMs(params as FlashLadderParams, inputs as FlashLadderInputs);
+      const gaps = flashCountAnswerGapsMs(params as FlashCountParams, inputs as FlashCountInputs);
       return gaps.some((gap) => gap < FLASH_COUNT_MIN_ANSWER_MS) ? ["flash-count-instant"] : [];
     }
     case "echo-path":

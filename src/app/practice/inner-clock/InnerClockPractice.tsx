@@ -1,9 +1,10 @@
 "use client";
 
-import { paramsFromSeed, play, timeBank, type TimeBankInputs, type TimeBankParams } from "@/challenges/inner-clock/timeBank";
+import { paramsFromSeed, play, innerClock, type InnerClockInputs, type InnerClockParams } from "@/challenges/inner-clock/engine";
 import { challengeUi } from "@/components/challenges/challengeUi";
-import { targetLabel } from "@/components/inner-clock/InnerClockGame";
-import { TimeBankGame } from "@/components/inner-clock/TimeBankGame";
+import { targetLabel } from "@/components/inner-clock/InnerClockTap";
+import { InnerClockGame } from "@/components/inner-clock/InnerClockGame";
+import { bankResult } from "@/components/practice/bankResult";
 import { PracticeShell } from "@/components/practice/PracticeShell";
 import { useIsClient } from "@/components/useIsClient";
 import { secureRandomSeed } from "@/lib/random";
@@ -15,11 +16,16 @@ const newRun = () => paramsFromSeed(secureRandomSeed());
 const seconds = (ms: number) => `${ms / 1000} s`;
 
 /** The result: rounds survived and the time bank left, as the engine counts them. */
-function result(params: TimeBankParams, inputs: TimeBankInputs) {
-  const { survived, left } = play(params, inputs);
-  const heading = survived === params.rounds.length ? "Every round survived" : `${ui.scoreLabel(survived)} survived`;
-  const detail = `${seconds(left)} of your ${seconds(params.budgetMs)} time bank left. Score: ${timeBank.score(params, inputs)}.`;
-  return { heading, detail };
+function result(params: InnerClockParams, inputs: InnerClockInputs) {
+  return bankResult({
+    ...play(params, inputs),
+    total: params.rounds.length,
+    everyLabel: "Every round survived",
+    scoreLabel: ui.scoreLabel,
+    format: seconds,
+    bankLabel: `${seconds(params.budgetMs)} time bank`,
+    score: innerClock.score(params, inputs),
+  });
 }
 
 export function InnerClockPractice() {
@@ -27,12 +33,12 @@ export function InnerClockPractice() {
   // (and allow the start) only once the page runs in the browser.
   const isClient = useIsClient();
   return (
-    <PracticeShell<TimeBankParams, TimeBankInputs>
+    <PracticeShell<InnerClockParams, InnerClockInputs>
       howTo={ui.howTo}
       newRun={newRun}
       preview={(params) => (isClient ? `First target: ${targetLabel(params.rounds[0].targetMs)}` : null)}
       startDisabled={!isClient}
-      game={(params, onFinish) => <TimeBankGame params={params} onFinish={onFinish} />}
+      game={(params, onFinish) => <InnerClockGame params={params} onFinish={onFinish} />}
       result={result}
     />
   );

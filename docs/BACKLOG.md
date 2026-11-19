@@ -1983,7 +1983,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T199 Retire the stale "flash ladder" and "inner-clock" code names (maintainer, Nov 18)
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] Code identifiers, files and folders for Swift Sum and Second Sense match the current games (today `flashLadder`, `FlashLadderGame`/`FlashCountGame`, `timeBank`, `InnerClockGame`/`TimeBankGame`).
@@ -1993,7 +1993,7 @@ Planning notes for M5 (from `docs/DESIGN.md` as updated in PR #141):
 
 ### T200 Share the round-game glue across the four reworked games (maintainer, Nov 18)
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] First check that the four game components really repeat the same round state machine and bank/progress/countdown wiring; if not, close this task as not needed.
@@ -2396,7 +2396,7 @@ Planning notes for M7:
 
 ### T213 End-to-end and phone checks for the M7 changes
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T203, T206, T209, T212
 - Acceptance criteria:
   - [ ] Existing e2e specs (`practice.spec.ts`, `attempts.spec.ts`, `play.spec.ts`, `look.spec.ts`, the Daily Three and mobile specs, and `global-setup.ts` fixtures) are updated for the new values without weakening: a win is a perfect run built from the params (Second Sense 2 s bank, Swift Sum counts 10 to 30, Trail Trace path of up to 12 tiles on the 5 x 8 board, Clean Cut 8 point bank), a loss is a deliberately bust bank; and a grep of `tests/e2e` and `scripts/` for `Echo Path`, `Fair Split`, `BUDGET_MS`, `MAX_PATH_LENGTH` and the old range literals finds no stale reader.
@@ -2407,7 +2407,7 @@ Planning notes for M7:
 
 ### T214 Record the M7 decisions and the DESIGN.md conflicts
 - Type: docs
-- Status: in-progress
+- Status: done
 - Depends on: T213
 - Acceptance criteria:
   - [ ] `docs/DECISIONS.md` gets one entry per M7 judgment call, with date, item, choice and reason: the Second Sense ranges (10 to 20 s, rising by round) and 2 s bank; no stopwatch rule (owner decision, existing cheat check only); Swift Sum uniform 10 to 30 draw per round and whatever bank T205 settled on; Trail Trace 5 x 8 board (or 10 rows if kept), minimum length, the "touch" definition (eight neighbours) and the 90% distinctness bound; Clean Cut `MIN_ASYMMETRY`, the shapes removed or reshaped, the 8 point bank; the new pass targets (4, 5, 8, 5); cheat threshold changes; display names only with keys kept; `scores_since` reset again for each game.

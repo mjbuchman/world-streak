@@ -1,227 +1,168 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import type { ComponentProps } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { COUNTDOWN_STEP_MS } from "@/config/countdown";
+import { layoutFor, REVEAL_MS, type FlashCountParams } from "@/challenges/flash-count/engine";
+import { RUN_COUNTDOWN_MS } from "@/config/countdown";
+import type { FlashCountShowing } from "./FlashCountShowing";
 import { FlashCountGame } from "./FlashCountGame";
 
-const params = {
-  dotCount: 2,
-  flashMs: 1000,
-  dots: [
-    { x: 0.5, y: 0.5, r: 0.02 },
-    { x: 0.2, y: 0.2, r: 0.02 },
-  ],
-};
+// The flash itself (the dots, the hidden-tab rule and the answer field) is FlashCountShowing's,
+// tested on its own; here a stand-in records what each round is given.
+type ShowingProps = ComponentProps<typeof FlashCountShowing>;
+let showing: ShowingProps | null;
+let mounts: number;
+vi.mock("./FlashCountShowing", async () => {
+  const { useEffect } = await import("react");
+  return {
+    FlashCountShowing: (props: ShowingProps) => {
+      showing = props;
+      useEffect(() => void mounts++, []);
+      return <p>Flash on screen</p>;
+    },
+  };
+});
 
-let frames: FrameRequestCallback[];
-let ctx: { arc: ReturnType<typeof vi.fn> } & Record<string, unknown>;
+// Frames from fake timers: performance.now and requestAnimationFrame both follow them.
+const params: FlashCountParams = { layoutSeed: 11, bank: 10, levels: [10, 14, 18, 22, 26].map((dotCount, i) => ({ dotCount, flashMs: 1800 - 100 * i })) };
+
+const answer = (count: number) => act(() => showing!.onFinish({ count }));
+const wait = (ms: number) => act(() => void vi.advanceTimersByTime(ms));
+/** The 3-2-1, run out (a few frames past its end). */
+const countdown = () => wait(RUN_COUNTDOWN_MS + 100);
+const reveal = () => wait(REVEAL_MS);
+const bank = () => screen.getByRole("meter", { name: "Dot bank" });
+const steps = () => [...document.querySelectorAll("[data-step]")].map((step) => step.getAttribute("data-step"));
 
 beforeEach(() => {
-  frames = [];
-  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => frames.push(callback));
-  vi.stubGlobal("cancelAnimationFrame", vi.fn());
-  ctx = { setTransform: vi.fn(), clearRect: vi.fn(), fillRect: vi.fn(), beginPath: vi.fn(), arc: vi.fn(), fill: vi.fn(), fillStyle: "" };
-  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(ctx as unknown as CanvasRenderingContext2D);
-  vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 300, height: 300 } as DOMRect);
+  showing = null;
+  mounts = 0;
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "requestAnimationFrame", "cancelAnimationFrame", "performance"] });
 });
 
 afterEach(() => {
   cleanup();
-  vi.unstubAllGlobals();
-  vi.restoreAllMocks();
-});
-
-/** Runs the next animation frame at `now` ms (React reads the clock too, so the value holds). */
-function frameAt(now: number) {
-  vi.spyOn(performance, "now").mockReturnValue(now);
-  const next = frames.shift();
-  if (!next) throw new Error("No frame was requested");
-  act(() => next(now));
-}
-
-const canvas = () => document.querySelector("canvas")!;
-
-describe("FlashCountGame countdown (T119)", () => {
-  const countdown = () => document.querySelector("[data-countdown]");
-
-  it("counts 3, 2, 1 by elapsed time, then flashes the dots for the whole flash", () => {
-    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
-    frameAt(1000);
-    expect(canvas().dataset.showing).toBe("countdown");
-    expect(countdown()?.textContent).toBe("3");
-    expect(canvas().getAttribute("aria-label")).toBe("Get ready.");
-    frameAt(1000 + COUNTDOWN_STEP_MS);
-    expect(countdown()?.textContent).toBe("2");
-    frameAt(1000 + 3 * COUNTDOWN_STEP_MS - 1);
-    expect(countdown()?.textContent).toBe("1");
-    // No dot is drawn before the countdown ends.
-    expect(ctx.arc).not.toHaveBeenCalled();
-
-    frameAt(1000 + 3 * COUNTDOWN_STEP_MS);
-    expect(canvas().dataset.showing).toBe("dots");
-    expect(countdown()).toBeNull();
-    expect(ctx.arc).toHaveBeenCalledTimes(2);
-    // The flash is as long as ever, counted from the end of the countdown.
-    frameAt(1000 + 3 * COUNTDOWN_STEP_MS + params.flashMs - 1);
-    expect(canvas().dataset.showing).toBe("dots");
-    frameAt(1000 + 3 * COUNTDOWN_STEP_MS + params.flashMs);
-    expect(canvas().dataset.showing).toBe("clear");
-  });
-
-  it("gives the whole flash even when a slow frame lands past the end of the countdown", () => {
-    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
-    frameAt(1000);
-    // The dots first show 300 ms late; the flash counts from then.
-    const first = 1000 + 3 * COUNTDOWN_STEP_MS + 300;
-    frameAt(first);
-    expect(canvas().dataset.showing).toBe("dots");
-    frameAt(first + params.flashMs - 1);
-    expect(canvas().dataset.showing).toBe("dots");
-    frameAt(first + params.flashMs);
-    expect(canvas().dataset.showing).toBe("clear");
-  });
-
-  it("starts the countdown again at 3 if the tab is hidden during it", () => {
-    let hidden = false;
-    vi.spyOn(document, "hidden", "get").mockImplementation(() => hidden);
-    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
-    frameAt(1000);
-    frameAt(1000 + COUNTDOWN_STEP_MS);
-    expect(countdown()?.textContent).toBe("2");
-    hidden = true;
-    act(() => void document.dispatchEvent(new Event("visibilitychange")));
-    hidden = false;
-    act(() => void document.dispatchEvent(new Event("visibilitychange")));
-    frameAt(9000);
-    expect(countdown()?.textContent).toBe("3");
-  });
+  vi.useRealTimers();
 });
 
 describe("FlashCountGame", () => {
-  it("draws nothing until the first frame after it is on screen", () => {
-    render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
-    expect(ctx.arc).not.toHaveBeenCalled();
-    frameAt(1000);
-    expect(ctx.arc).toHaveBeenCalledTimes(2);
-    expect(canvas().dataset.showing).toBe("dots");
+  it("runs a 3-2-1 before every round, then flashes that round's own layout without one", () => {
+    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+    expect(screen.getByText("Round 1")).toBeTruthy();
+    expect(showing).toBeNull();
+    countdown();
+    expect(showing).toMatchObject({ countdownMs: 0, params: { dotCount: 10, flashMs: 1800, dots: layoutFor(params, 0) } });
+    answer(10);
+    reveal();
+    expect(screen.getByText("Round 2")).toBeTruthy();
+    expect(screen.queryByText("Flash on screen")).toBeNull();
+    countdown();
+    expect(showing).toMatchObject({ countdownMs: 0, params: { dotCount: 14, flashMs: 1700, dots: layoutFor(params, 1) } });
+    // A fresh flash for every round, so the hidden-tab rule (T110) covers each one.
+    expect(mounts).toBe(2);
   });
 
-  it("clears the dots by elapsed time, not by frames, then asks for the count", () => {
-    render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
-    frameAt(1000);
-    // Many frames, but under a second: still shown.
-    for (const now of [1016, 1033, 1500, 1999]) frameAt(now);
-    expect(canvas().dataset.showing).toBe("dots");
-    expect(screen.queryByRole("textbox")).toBeNull();
-    // A single late frame at 2,000 ms clears them however few frames ran.
-    frameAt(2000);
-    expect(canvas().dataset.showing).toBe("clear");
-    expect(screen.getByRole("textbox", { name: "How many dots were there?" }).getAttribute("inputmode")).toBe("numeric");
-    expect(frames).toHaveLength(0);
+  it("shows each answer's miss for the reveal and drains the bank by it, with a step per round", () => {
+    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+    expect(bank().getAttribute("aria-valuetext")).toBe("10 dots left of 10 dots");
+    expect(steps()).toEqual(["current", "later", "later", "later", "later"]);
+    countdown();
+    answer(10);
+    wait(REVEAL_MS - 1);
+    expect(screen.getByRole("status").textContent).toBe("Right on");
+    wait(1);
+    expect(screen.getByText("Round 2")).toBeTruthy();
+    countdown();
+    answer(11);
+    expect(screen.getByRole("status").textContent).toBe("Off by 3");
+    expect(screen.getByText("-3 dots")).toBeTruthy();
+    expect(bank().getAttribute("aria-valuetext")).toBe("7 dots left of 10 dots");
+    expect(steps()).toEqual(["done", "done", "current", "later", "later"]);
   });
 
-  it("clears after one long frame too (a slow device still sees the dots for about flashMs)", () => {
-    render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
-    frameAt(1000);
-    frameAt(2400);
-    expect(canvas().dataset.showing).toBe("clear");
+  it("says a miss of one dot in the singular", () => {
+    render(<FlashCountGame params={params} onFinish={vi.fn()} />);
+    countdown();
+    answer(9);
+    expect(screen.getByText("-1 dot")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toBe("Off by 1");
   });
 
-  it("reports the entered count", async () => {
+  it("ends the run in the round that busts the bank, after its reveal, with the answers timed from the start", () => {
     const onFinish = vi.fn();
-    const user = userEvent.setup();
-    render(<FlashCountGame params={params} countdownMs={0} onFinish={onFinish} />);
-    frameAt(1000);
-    frameAt(2000);
-    const input = screen.getByRole("textbox", { name: "How many dots were there?" });
-    expect(document.activeElement).toBe(input);
-    await user.type(input, "20");
-    await user.click(screen.getByRole("button", { name: "Submit" }));
-    expect(onFinish).toHaveBeenCalledExactlyOnceWith({ count: 20 });
-  });
-
-  it("takes at most three digits", () => {
-    render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
-    frameAt(1000);
-    frameAt(2000);
-    expect(screen.getByRole("textbox").getAttribute("maxlength")).toBe("3");
-  });
-
-  it.each(["", "abc", "2.5", "-3", "1e3"])("refuses %j with a message, reporting nothing", async (typed) => {
-    const onFinish = vi.fn();
-    const user = userEvent.setup();
-    render(<FlashCountGame params={params} countdownMs={0} onFinish={onFinish} />);
-    frameAt(1000);
-    frameAt(2000);
-    if (typed) await user.type(screen.getByRole("textbox"), typed);
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    render(<FlashCountGame params={params} onFinish={onFinish} />);
+    countdown();
+    wait(900);
+    answer(16);
+    reveal();
+    countdown();
+    answer(14);
+    reveal();
+    countdown();
+    // Off by 6, right on, then off by 5 with 4 left: the bank is bust in round 3.
+    answer(13);
+    expect(bank().getAttribute("aria-valuetext")).toBe("Bank used up");
+    expect(steps()).toEqual(["done", "done", "failed", "later", "later"]);
+    // The last miss shows for the reveal first, so a phone's click after the answer cannot reach the result.
+    wait(REVEAL_MS - 1);
     expect(onFinish).not.toHaveBeenCalled();
-    expect(screen.getByText("Enter a whole number from 0 to 999.")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toBe("Off by 5");
+    wait(1);
+    const first = RUN_COUNTDOWN_MS + 100 + 900;
+    const round = REVEAL_MS + RUN_COUNTDOWN_MS + 100;
+    expect(onFinish).toHaveBeenCalledExactlyOnceWith({
+      answers: [
+        { count: 16, atMs: first },
+        { count: 14, atMs: first + round },
+        { count: 13, atMs: first + 2 * round },
+      ],
+    });
+    countdown();
+    expect(screen.queryByText("Flash on screen")).toBeNull();
+    expect(mounts).toBe(3);
   });
 
-  it("stops its frames when it leaves the screen", () => {
-    const { unmount } = render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
-    unmount();
-    expect(cancelAnimationFrame).toHaveBeenCalled();
+  it("reports the answers after all five rounds when small misses leave the bank", () => {
+    const onFinish = vi.fn();
+    render(<FlashCountGame params={params} onFinish={onFinish} />);
+    for (const count of [9, 15, 17, 23]) {
+      countdown();
+      answer(count);
+      reveal();
+    }
+    countdown();
+    answer(25);
+    expect(bank().getAttribute("aria-valuetext")).toBe("5 dots left of 10 dots");
+    // As in Second Sense, the last step stays current until the result replaces the run.
+    expect(steps()).toEqual(["done", "done", "done", "done", "current"]);
+    expect(onFinish).not.toHaveBeenCalled();
+    reveal();
+    expect(onFinish).toHaveBeenCalledOnce();
+    expect(onFinish.mock.calls[0][0].answers.map((a: { count: number }) => a.count)).toEqual([9, 15, 17, 23, 25]);
+    expect(mounts).toBe(5);
   });
 
-  describe("when the tab is hidden", () => {
-    let hidden: boolean;
-    beforeEach(() => {
-      hidden = false;
-      vi.spyOn(document, "hidden", "get").mockImplementation(() => hidden);
-    });
-    const setHidden = (value: boolean) => {
-      hidden = value;
-      act(() => void document.dispatchEvent(new Event("visibilitychange")));
-    };
+  it("plays five rounds whose counts jump up and down, each showing its own count and miss (T206)", () => {
+    const jumps = { ...params, levels: [28, 11, 24, 15, 30].map((dotCount) => ({ dotCount, flashMs: 1500 })) };
+    render(<FlashCountGame params={jumps} onFinish={vi.fn()} />);
+    const rounds: [number, number, string][] = [
+      [28, 27, "Off by 1"],
+      [11, 11, "Right on"],
+      [24, 26, "Off by 2"],
+      [15, 15, "Right on"],
+      [30, 29, "Off by 1"],
+    ];
+    for (const [dotCount, count, said] of rounds) {
+      countdown();
+      expect(showing?.params.dotCount).toBe(dotCount);
+      answer(count);
+      expect(screen.getByRole("status").textContent).toBe(said);
+      reveal();
+    }
+  });
 
-    it("shows the dots again in full when the tab returns, if it was hidden while they were shown", () => {
-      render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
-      frameAt(1000);
-      frameAt(1900);
-      setHidden(true);
-      setHidden(false);
-      // Long after the original flash ended: the dots come back for a whole flashMs.
-      frameAt(5000);
-      expect(canvas().dataset.showing).toBe("dots");
-      frameAt(5999);
-      expect(canvas().dataset.showing).toBe("dots");
-      frameAt(6000);
-      expect(canvas().dataset.showing).toBe("clear");
-    });
-
-    it("does not count a frame that runs while the tab is hidden as the start of the flash", () => {
-      render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
-      frameAt(1000);
-      setHidden(true);
-      frameAt(1100);
-      expect(canvas().dataset.showing).toBe("dots");
-      setHidden(false);
-      frameAt(5000);
-      frameAt(5999);
-      expect(canvas().dataset.showing).toBe("dots");
-      frameAt(6000);
-      expect(canvas().dataset.showing).toBe("clear");
-    });
-
-    it("changes nothing once the dots have cleared", () => {
-      render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
-      frameAt(1000);
-      frameAt(2000);
-      setHidden(true);
-      setHidden(false);
-      expect(canvas().dataset.showing).toBe("clear");
-      expect(screen.getByRole("textbox")).toBeTruthy();
-      expect(frames).toHaveLength(0);
-    });
-
-    it("stops listening when it leaves the screen", () => {
-      const remove = vi.spyOn(document, "removeEventListener");
-      const { unmount } = render(<FlashCountGame params={params} countdownMs={0} onFinish={vi.fn()} />);
-      unmount();
-      expect(remove).toHaveBeenCalledWith("visibilitychange", expect.any(Function));
-    });
+  it("skips the 3-2-1 with a countdown of 0 (tests of the run)", () => {
+    render(<FlashCountGame countdownMs={0} params={params} onFinish={vi.fn()} />);
+    expect(showing?.params.dotCount).toBe(10);
   });
 });
