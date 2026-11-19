@@ -45,13 +45,13 @@ describe("InnerClockPractice", () => {
     await playWith({ tapsMs: [16_200, 30_000] });
     const heading = screen.getByRole("heading", { name: "1 round survived" });
     expect(document.activeElement).toBe(heading);
-    expect(screen.getByText("0 s of your 10 s time bank left. Score: 1.")).toBeTruthy();
+    expect(screen.getByText("0 s of your 10 s time bank left.")).toBeTruthy();
   });
 
   it("says so when every round survives, with the bank left", async () => {
     await playWith({ tapsMs: [15_100, 18_100, 21_100, 24_100] });
     expect(screen.getByRole("heading", { name: "Every round survived" })).toBeTruthy();
-    expect(screen.getByText("9.6 s of your 10 s time bank left. Score: 4.96.")).toBeTruthy();
+    expect(screen.getByText("9.6 s of your 10 s time bank left.")).toBeTruthy();
   });
 
   it("counts a first round that timed out as none survived", async () => {

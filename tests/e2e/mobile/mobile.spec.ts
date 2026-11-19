@@ -199,6 +199,11 @@ test("Clean Cut moves its line by touch and cuts with the Cut button, on a board
   const board = page.locator("canvas[data-phase]");
   await expectBoardFits(page, board);
   await expectNoZoom(board);
+  // The five-round counter (T224): inside the screen, its numbers at least 24 px tall.
+  const counter = page.getByRole("img", { name: "Round 1 of 5" });
+  const counterBox = (await counter.boundingBox())!;
+  expect(counterBox.x + counterBox.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  for (const number of await counter.locator("[data-step]").all()) expect((await number.boundingBox())!.height).toBeGreaterThanOrEqual(24);
   await expect(board).toHaveAttribute("data-phase", "cut", { timeout: 10_000 });
   const box = (await board.boundingBox())!;
   // Drag the line by its middle; letting go leaves it placed, not cut.

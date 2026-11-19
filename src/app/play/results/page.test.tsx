@@ -83,11 +83,13 @@ describe("ResultsPage", () => {
 
   it("shows a passed day's verdict and each game in order with its score, target and status", async () => {
     const html = await render();
+    // The bank games show rounds survived, never their fractional score (T225).
+    expect(html).not.toMatch(/You scored \d+(\.\d+)? rounds/);
     expect(html).toContain("You passed today: two wins");
     expect(rows(html)).toEqual([
       { status: "won", text: "Game 1: Teetering Tower Won You reached row 12. Today's target was row 10." },
-      { status: "won", text: "Game 2: Swift Sum Won You scored 6 rounds. Today's target was 5 rounds: survive all five." },
-      { status: "not-started", text: "Game 3: Second Sense Not played Today's target was 4 rounds: survive all four." },
+      { status: "won", text: "Game 2: Swift Sum Won You got through 5 of 5 rounds. Today's target was all 5." },
+      { status: "not-started", text: "Game 3: Second Sense Not played Today's target was all 4." },
     ]);
     // The remaining game is still offered.
     expect(html).toContain('href="/play"');
@@ -100,8 +102,8 @@ describe("ResultsPage", () => {
     expect(html).toContain("1 win, 2 losses.");
     expect(rows(html).map((row) => row.text)).toEqual([
       "Game 1: Teetering Tower Lost You reached row 3. Today's target was row 10.",
-      "Game 2: Swift Sum Lost Left before finishing. Today's target was 5 rounds: survive all five.",
-      "Game 3: Second Sense Won You scored 4.7 rounds. Today's target was 4 rounds: survive all four.",
+      "Game 2: Swift Sum Lost Left before finishing. Today's target was all 5.",
+      "Game 3: Second Sense Won You got through 4 of 4 rounds. Today's target was all 4.",
     ]);
     expect(html).not.toContain('href="/play"');
   });

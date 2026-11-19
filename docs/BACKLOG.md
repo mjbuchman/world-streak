@@ -117,7 +117,7 @@ Planning notes for M8:
 
 ### T221 Clean Cut: irregular blob and polygon generators
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [ ] `src/challenges/fair-split/shapes.ts` draws every shape from two seeded generators, replacing the named kinds: an irregular blob (a smooth star-shaped outline from 3 to 5 random harmonics with random amplitudes and phases) and an irregular polygon (7 to 12 vertices at sorted random angles with random radii). Both are star-shaped around an interior point, so they are simple by construction. Same seed gives the same shape. Mix: 70% blobs, 30% polygons (keeps the curved share test at 70%).
@@ -127,7 +127,7 @@ Planning notes for M8:
 
 ### T222 Clean Cut: asymmetry and validity tests
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T221
 - Acceptance criteria:
   - [ ] Over seeds 0 to 999 and all five positions, every shape passes `asymmetry` (mirror and 2 to 5-fold rotation measures both at least `MIN_ASYMMETRY`, raised from 0.04 if the measured minimum allows; record the measured minimum in a comment). A square, circle, regular star and symmetric heart still fail it.
@@ -138,7 +138,7 @@ Planning notes for M8:
 
 ### T223 Migration: Clean Cut scale reset
 - Type: infra
-- Status: in-progress
+- Status: done
 - Depends on: T222
 - Acceptance criteria:
   - [ ] A new migration sets `scores_since` for `fair-split` to the day after it runs, keeps `default_pass_targets` at 5, recomputes unedited, unstarted open days. pgTAP with exact-date assertion as in T220.
@@ -148,7 +148,7 @@ Planning notes for M8:
 
 ### T224 Round counter: big numbers joined by progress bars
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] `src/components/rounds/RoundProgress.tsx` (and its CSS module) renders one large number per round with a bar between each pair, replacing the boxes. Props are unchanged (`total`, `current`, `failedRound`), so all users (Second Sense, Swift Sum, Clean Cut, `useRevealRounds` consumers) keep working.
@@ -158,7 +158,7 @@ Planning notes for M8:
 
 ### T225 Results window: no score for bank games
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] `challengeUi` gains a `showScore` flag: false for `inner-clock`, `flash-count` and `fair-split`, true for `stacking` and `echo-path`. `PlayToday` (`between` phase) and `PracticeShell` (via the practice `result`) pass `score` to `ResultHero` only when the flag is true; the big number and the fractional "You scored" text are gone for bank games.

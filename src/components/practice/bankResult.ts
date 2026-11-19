@@ -10,15 +10,14 @@ type BankResultArgs = {
   format: (left: number) => string;
   /** The bank as players read it, e.g. "10-dot bank". */
   bankLabel: string;
-  score: number;
 };
 
 /**
- * The practice result for a run against a bank (T200): how far it got, and the bank left and the
- * score as the engine counts them. Swift Sum, Second Sense and Clean Cut share it; Trail Trace
- * counts lives and the longest path instead.
+ * The practice result for a run against a bank (T200): how far it got and the bank left, with no
+ * score (T225). Swift Sum, Second Sense and Clean Cut share it; Trail Trace counts lives and the
+ * longest path instead.
  */
-export function bankResult({ survived, total, everyLabel, scoreLabel, left, format, bankLabel, score }: BankResultArgs) {
+export function bankResult({ survived, total, everyLabel, scoreLabel, left, format, bankLabel }: BankResultArgs) {
   const heading = survived === total ? everyLabel : `${scoreLabel(survived)} survived`;
-  return { heading, detail: `${format(left)} of your ${bankLabel} left. Score: ${score}.` };
+  return { heading, detail: `${format(left)} of your ${bankLabel} left.` };
 }

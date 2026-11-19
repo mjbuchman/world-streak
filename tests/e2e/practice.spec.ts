@@ -132,7 +132,7 @@ test("Second Sense practice: a 3-2-1 under the target, a 2 s clock, and a miss b
   await tapArea.click();
 
   await expect(page.getByRole("heading", { level: 2 })).toHaveText("0 rounds survived");
-  await expect(page.getByText(/^0 s of your 4 s time bank left\. Score: 0\.$/)).toBeVisible();
+  await expect(page.getByText(/^0 s of your 4 s time bank left\.$/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
   expect(scored).toEqual([]);
 });
@@ -214,7 +214,7 @@ test("Swift Sum practice: a count far off in round 1 busts the dot bank and ends
   await expect(bank).toHaveAttribute("aria-valuetext", "Bank used up");
 
   await expect(page.getByRole("heading", { level: 2 })).toHaveText("0 rounds survived");
-  await expect(page.getByText("0 dots of your 10-dot bank left. Score: 0.")).toBeVisible();
+  await expect(page.getByText("0 dots of your 10-dot bank left.")).toBeVisible();
   expect(scored).toEqual([]);
 });
 
