@@ -1,26 +1,10 @@
 begin;
 \ir fixtures/fixtures.psql
-select plan(23);
+select plan(18);
 
 -- T183: a challenge's pass-target percentile reads only scores from its scores_since date on.
 select has_column('public', 'challenge_types', 'scores_since', 'challenge types have a scores_since date');
-select ok(
-  (select scores_since is not null and scores_since <= (now() at time zone 'utc')::date + 1 from public.challenge_types where type = 'inner-clock'),
-  'Second Sense counts scores from at most the day after the migration ran'
-);
-select ok(
-  (select scores_since is not null and scores_since <= (now() at time zone 'utc')::date + 1 from public.challenge_types where type = 'flash-count'),
-  'Swift Sum counts scores from at most the day after its migration ran (T186)'
-);
-select ok(
-  (select scores_since is not null and scores_since <= (now() at time zone 'utc')::date + 1 from public.challenge_types where type = 'echo-path'),
-  'Echo Path counts scores from at most the day after its migration ran (T191)'
-);
-select ok(
-  (select scores_since is not null and scores_since <= (now() at time zone 'utc')::date + 1 from public.challenge_types where type = 'fair-split'),
-  'Fair Split counts scores from at most the day after its migration ran (T196)'
-);
--- The M8 migration (T220) set these three dates to the day after it ran. The tests run on a freshly
+-- The M8 migrations (T220, T223) set these four dates to the day after it ran. The tests run on a freshly
 -- reset database (CI, or `supabase db reset` first), so that is tomorrow (UTC).
 select is(
   (select scores_since from public.challenge_types where type = 'inner-clock'), (now() at time zone 'utc')::date + 1,
@@ -98,43 +82,30 @@ select is(public.pass_target_for('fair-split', '2033-01-12', 0), 5::numeric, 'Fa
 select tests.scored(n, '2033-01-05', 'stacking', 18 + 2 * n) from generate_series(10, 12) n;
 select is(public.pass_target_for('stacking', '2033-01-12', 0), 38::numeric, 'other challenges keep every score in the lookback');
 
--- The T220 migration's re-target, run again on days still holding an old-scale target of 1: only the
--- three changed games on untouched days get their placeholders; an edited, a closed or a started day
--- keep theirs. Clean Cut's day 06-04 is left for T223's re-target below.
+-- The re-target the T220 and T223 migrations ran (T223 for Clean Cut alone, the same statement), run
+-- again on days still holding an old-scale target of 1: only the four changed games on untouched days
+-- get their placeholders; an edited, a closed or a started day keep theirs.
 insert into public.game_days (game_date, survival_threshold, edited, closed_at, outcome)
 values ('2034-06-01', 0.6, false, null, null), ('2034-06-02', 0.6, true, null, null), ('2034-06-03', 0.6, false, null, null),
        ('2034-06-04', 0.6, false, null, null), ('2034-06-05', 0.6, false, null, null), ('2034-06-06', 0.6, false, now(), 'broken'),
-       ('2034-06-07', 0.6, false, null, null);
+       ('2034-06-07', 0.6, false, null, null), ('2034-06-08', 0.6, true, null, null);
 insert into public.game_day_games (game_date, position, challenge_type, pass_target)
 values ('2034-06-01', 1, 'inner-clock', 1), ('2034-06-02', 1, 'flash-count', 1), ('2034-06-03', 1, 'echo-path', 1),
        ('2034-06-04', 1, 'fair-split', 1), ('2034-06-05', 1, 'flash-count', 1), ('2034-06-06', 1, 'echo-path', 1),
-       ('2034-06-07', 1, 'inner-clock', 1);
+       ('2034-06-07', 1, 'inner-clock', 1), ('2034-06-08', 1, 'fair-split', 1);
 select tests.scored(4, '2034-06-07', 'inner-clock', 3);
 update public.game_day_games g
    set pass_target = public.pass_target_for(g.challenge_type, g.game_date, (select current from public.world_streak()))
   from public.game_days d
- where d.game_date = g.game_date and g.challenge_type in ('inner-clock', 'flash-count', 'echo-path')
-   and not d.edited and d.closed_at is null
-   and not exists (select 1 from public.attempts a where a.game_date = g.game_date);
--- And T223's, for Clean Cut alone: day 06-04 is untouched; 06-08 is edited.
-insert into public.game_days (game_date, survival_threshold, edited) values ('2034-06-08', 0.6, true);
-insert into public.game_day_games (game_date, position, challenge_type, pass_target) values ('2034-06-08', 1, 'fair-split', 1);
-update public.game_day_games g
-   set pass_target = public.pass_target_for(g.challenge_type, g.game_date, (select current from public.world_streak()))
-  from public.game_days d
- where d.game_date = g.game_date and g.challenge_type = 'fair-split'
+ where d.game_date = g.game_date and g.challenge_type in ('inner-clock', 'flash-count', 'echo-path', 'fair-split')
    and not d.edited and d.closed_at is null
    and not exists (select 1 from public.attempts a where a.game_date = g.game_date);
 select results_eq(
-  $$select game_date, pass_target from public.game_day_games where challenge_type = 'fair-split' and game_date between '2034-06-01' and '2034-06-08' order by game_date$$,
-  $$values ('2034-06-04'::date, 5::numeric), ('2034-06-08'::date, 1::numeric)$$,
-  'an untouched Clean Cut day gets its new-scale target; an edited one keeps its own (T223)'
-);
-select results_eq(
-  $$select game_date, pass_target from public.game_day_games where game_date between '2034-06-01' and '2034-06-07' and challenge_type <> 'fair-split' order by game_date$$,
+  $$select game_date, pass_target from public.game_day_games where game_date between '2034-06-01' and '2034-06-08' order by game_date$$,
   $$values ('2034-06-01'::date, 4::numeric), ('2034-06-02'::date, 1::numeric), ('2034-06-03'::date, 8::numeric),
-           ('2034-06-05'::date, 5::numeric), ('2034-06-06'::date, 1::numeric), ('2034-06-07'::date, 1::numeric)$$,
-  'untouched Second Sense, Swift Sum and Trail Trace days get new-scale targets; edited, closed and started days keep theirs (T220)'
+           ('2034-06-04'::date, 5::numeric), ('2034-06-05'::date, 5::numeric), ('2034-06-06'::date, 1::numeric),
+           ('2034-06-07'::date, 1::numeric), ('2034-06-08'::date, 1::numeric)$$,
+  'untouched days get new-scale targets; edited, closed and started days keep theirs (T220, T223)'
 );
 
 select * from finish();
