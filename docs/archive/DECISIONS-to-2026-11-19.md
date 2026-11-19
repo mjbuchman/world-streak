@@ -1,0 +1,474 @@
+# Decisions made by agents
+
+Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged in `docs/NEEDS_HUMAN.md` for confirmation. If the human overrules a decision, record that here too.
+
+<!-- Format:
+### YYYY-MM-DD — <item> (T05)
+- Choice: ...
+- Reason: ... (cite the design doc's recommendation if there was one)
+- How to change it later: e.g. edit GAME_DEADLINE_UTC in src/lib/config.ts or the admin page
+- Confirmed by human: pending | yes | changed to ...
+-->
+
+### 2026-11-07 — Prize amount (pre-planning)
+- Choice: flat $200 per cycle; if there's no 30-day streak, the prize rolls into the next cycle ($400 after one rollover, and so on). The design doc's "prize formula, floor and cap" wording and the Cycle "revenue share" and "cap" fields are left out of the schema and the rules page.
+- Reason: the human's answer; those fields are leftovers that may come back later.
+- How to change it later: prize amount config constant (set in the prize task).
+- Confirmed by human: yes
+
+### 2026-11-07 — Eligibility (pre-planning)
+- Choice: US residents aged 18 and over, enforced at sign-up.
+- Reason: the human's answer.
+- How to change it later: minimum age and allowed region config settings (set in the sign-up task).
+- Confirmed by human: yes
+
+### 2026-11-07 — Milestone count (pre-planning)
+- Choice: 4 milestones instead of the planner's suggested 6.
+- Reason: the human wants fewer play-test interruptions.
+- Confirmed by human: yes
+
+### 2026-11-07 — Open design items use the doc's suggestions (pre-planning)
+- Choice: deadline at midnight UTC; live meter hidden for the final 3 hours; survival threshold 60%; pass target at the 80th percentile, admin-editable; new accounts count fully from day one through a configurable weight; working name "World Streak" in one config constant; pass-target rise with the streak is a setting with a flat placeholder; challenges after the first three are not in the MVP.
+- Reason: the human said to take the design doc's suggestions for now.
+- How to change it later: each is a config constant or admin setting; the implementing task records where.
+- Confirmed by human: yes (for now)
+
+### 2026-11-07 — UI guidelines and styling approach (pre-build)
+- Choice: follow `docs/UI_GUIDELINES.md`: Material 3, styled with plain CSS Modules and CSS-variable tokens; no Tailwind, shadcn or MUI; no emojis except in the share text; no em dashes in UI text.
+- Reason: the human wants a clean Material look without the usual signs of an AI-built app; the human approved the list and the styling approach.
+- How to change it later: edit `docs/UI_GUIDELINES.md` (human approval needed).
+- Confirmed by human: yes. The brand color and typefaces are placeholders, pending confirmation in NEEDS_HUMAN.
+
+### 2026-11-07 — Public health endpoint (T02)
+- Choice: `GET /api/health` needs no sign-in, an exception to CLAUDE.md's "every route handler checks authentication".
+- Reason: it is a liveness probe for monitoring and the T02 e2e test; it takes no input and reveals only whether the database answers (via `public.health_check()`, which reads no data).
+- How to change it later: add an auth check in `src/app/api/health/route.ts`, or delete the route.
+- Confirmed by human: not needed (no Open design item); recorded for visibility.
+
+### 2026-11-07 — Final game name (T03)
+- Choice: working name "World Streak", defined once as `GAME_NAME`.
+- Reason: the design doc lists the final name as Open; the human said to keep the working name for now.
+- How to change it later: edit `GAME_NAME` in `src/config/game.ts`; the page title and home heading follow it.
+- Confirmed by human: yes (for now)
+
+### 2026-11-07 — Which "today" the age check uses (T05)
+- Choice: the calendar date in Pacific/Honolulu (`ELIGIBILITY_TIME_ZONE` in `src/config/eligibility.ts`). Hawaii is the westernmost US state time zone, so its calendar date is the earliest in the US.
+- Reason: using the UTC date would accept someone during the US evening before their 18th birthday. The earliest US date can never be ahead of any US resident's local date, so it never admits anyone early; at worst it makes someone in the eastern US wait a few extra hours on their birthday.
+- How to change it later: edit `ELIGIBILITY_TIME_ZONE`.
+- Confirmed by human: not needed (follows from the human's 18+ rule); recorded for visibility.
+
+### 2026-11-07 — Sign-up says when an email is already registered (T05)
+- Choice: signing up with a registered email shows "An account with this email already exists. Try signing in."
+- Reason: clearer for real players than a vague message. The trade-off is that anyone can check whether an email has an account. That is acceptable for a game account holding no sensitive data, and abuse of the sign-up form is handled by T52.
+- How to change it later: edit the email-taken message in `src/lib/signup.ts`.
+- Confirmed by human: not needed; recorded for visibility.
+
+### 2026-11-07 — Location check is self-declared (T03)
+- Choice: eligibility uses the date of birth and country of residence the player enters at sign-up. No IP geolocation check in the MVP.
+- Reason: judgment call by the planner (the design doc says "age and location eligibility enforced at sign-up" without a method). IP checks need a paid or third-party service, block VPN users and travellers unfairly, and the prize winner's identity and address are verified before payout anyway.
+- How to change it later: add a check alongside `checkEligibility` in `src/lib/eligibility.ts`; the rules live in `src/config/eligibility.ts`.
+- Confirmed by human: pending (see NEEDS_HUMAN)
+
+### 2026-11-08 — Public Google sign-in callback (T07)
+- Choice: `GET /auth/callback` needs no sign-in, an exception to CLAUDE.md's "every route handler checks authentication".
+- Reason: it is where Google sign-in returns, before any session exists. Its only input is the one-time code, which Supabase validates against the PKCE verifier cookie; a missing or rejected code redirects to `/signin?error=oauth`.
+- How to change it later: nothing to change unless sign-in moves elsewhere; the handler is `src/app/auth/callback/route.ts`.
+- Confirmed by human: not needed (no Open design item); recorded for visibility.
+
+### 2026-11-08 — Stacking speed ranges (T09)
+- Choice: start speed 0.10-0.12 units/ms, ramp 0.002-0.003 units/ms per block, hard cap 60 s (`PARAM_RANGES` in `src/challenges/stacking/engine.ts`).
+- Reason: the design says speed rises with height "to cap runs near one minute". A simulated player who lines up each block and taps within ±30 ms lasts a median of about 41-60 s across the ranges, while a ±80 ms player ends well before the minute. The first try (0.18-0.24, 0.004-0.008) ended good runs in 15-30 s. `src/challenges/stacking/tuning.test.ts` pins this.
+- How to change it later: edit `PARAM_RANGES`, update the tuning test bounds and `engine.golden.json` (scores for issued seeds change), and record the new values here.
+- Confirmed by human: pending; judge it at the M1 play-test.
+
+### 2026-11-08 — Stacking score is a whole block count (T09)
+- Choice: the score is the number of blocks placed, an integer.
+- Reason: the Decided challenge table says the measure is "Blocks stacked". The design also asks for a "continuous scale" elsewhere, which an integer count only approximates; the backlog flags this as ambiguous.
+- How to change it later: add a tie-breaking fraction (for example the remaining width of the top block divided by 200) to `simulate`'s score, and regenerate the golden fixture.
+- Confirmed by human: pending (see NEEDS_HUMAN).
+
+### 2026-11-08 — On-screen name for the stacking challenge (T10)
+- Choice: "Tower", defined once in `CHALLENGE_NAMES` in `src/config/challenges.ts`.
+- Reason: the design asks for an original name and art, not those of existing stacking games; the backlog suggested "Tower". The art is plain flat blocks in the Material color roles.
+- How to change it later: edit `CHALLENGE_NAMES.stacking`; the practice page, home link and canvas label follow it.
+- Confirmed by human: changed (Nov 9): the name is "Teetering Tower" and the look is Fresh Sport; see "Human decisions at the M1 play-test" below.
+
+### 2026-11-09 — Deadline and survival threshold in code (T11)
+- Choice: midnight UTC as `DEADLINE_UTC_HOUR = 0` in `src/config/schedule.ts`, repeated as `public.deadline_utc_hour()` in the game-days migration because the close job runs in Postgres; a 60% survival threshold set by `ensure_game_day`.
+- Reason: the design doc's suggestions for its Open "exact global deadline time" and "survival threshold" items, already accepted at planning. A shared boundary fixture (`src/lib/gameDay.fixture.json`) is tested in Vitest and pgTAP, and a Vitest test checks the pgTAP copy matches, so the two cannot drift.
+- How to change it later: edit both the constant and the SQL function in a new migration; the fixture tests fail if only one changes. The threshold moves into `game_settings` in T16.
+- Confirmed by human: yes (at planning).
+
+### 2026-11-09 — Placeholder stacking pass target: 10 blocks (T11)
+- Choice: new game days get a pass target of 10 blocks until T16 and T22 set it from recent scores.
+- Reason: the design says the target is set so about 80% of recent players reach it, but there are no recent players yet. The simulated player in `tuning.test.ts` stacks far more than 10, so 10 errs towards passing.
+- How to change it later: the default in `public.ensure_game_day` now; `game_settings` from T16; a day's own `pass_target` can be edited directly.
+- Confirmed by human: yes, keep for now (Nov 9); re-tuned with the grid Tower (T76) so a decent player reaches about row 10.
+
+### 2026-11-09 — Attempts belong to a profile (T11)
+- Choice: `attempts.user_id` references `profiles` (cascade on delete), not `auth.users` directly.
+- Reason: a scored attempt needs an eligible account (T12 refuses players without a profile), and the database then enforces it too. Deleting an account removes its profile and attempts.
+- How to change it later: a migration changing the foreign key.
+- Confirmed by human: not needed (no Open item); recorded for reviewers.
+
+### 2026-11-09 — An abandoned attempt cannot be restarted (T12)
+- Choice: starting an attempt creates its row at once; leaving before finishing never counts toward the pass rate (only submitted attempts are counted), but the player cannot start again that day. `POST /api/attempts/start` answers 409 `already-started` with `submitted: false`.
+- Reason: the design says abandoning "records nothing", yet a restart would replay the same seed, so the player would already know the instance (for example Flash Count's dot count). Refusing the restart keeps the one-attempt rule meaningful. T14 states the rule on the play page before Start.
+- How to change it later: let `startAttempt` return the existing unsubmitted attempt, but only with a fresh seed, which needs a migration allowing the seed to change.
+- Confirmed by human: changed (Nov 9). No restart, and leaving early is a loss: a started attempt counts as an attempt that did not pass (see the next-but-one entry).
+
+### 2026-11-09 — Submissions after the deadline record nothing (T13)
+- Choice: `POST /api/attempts/submit` answers 409 `day-closed`, and stores nothing, once the attempt's game date has passed or its day is closed, even if the attempt started before the deadline. `record_attempt_result` repeats both checks (closed, and game date passed by the database clock) under row locks, so the close job and a late submission cannot interleave.
+- Reason: the day's pass rate must be final at the deadline; accepting late results would change a day that has already closed for everyone. Since T87 a run has no time limit, so a run still going at the deadline does not count; players should start well before it.
+- How to change it later: a grace period would need the close job (T21/T23) to wait for it, plus a matching check in `submitAttempt`.
+- Confirmed by human: yes (Nov 9), no grace period.
+
+### 2026-11-09 — Focus after a run ends (T60)
+- Choice: when a run ends, focus moves to the result heading (`tabIndex={-1}`), not to "Play again"; Tab reaches the button next. When a run starts, the game canvas takes focus.
+- Reason: players drop blocks with Space, and a run usually ends mid-tap. Focusing "Play again" would let that same Space restart the run at once. Focusing the heading also makes screen readers announce the score, and needs no timing delay. T14's `/play` result view should do the same.
+- How to change it later: `StackingPractice.tsx` (the focus effect) and `StackingGame.tsx` (the canvas focus on start).
+- Confirmed by human: not needed (accessibility detail, no Open item); recorded for T14.
+
+### 2026-11-09 — Human decisions at the M1 play-test (overrides)
+- Choice:
+  - **Look:** UI guidelines v2, the Fresh Sport direction (deep teal, mint, tangerine, Unbounded and Manrope, purposeful motion), replacing strict Material 3 and the terracotta placeholder.
+  - **Names:** Teetering Tower (stacking), Second Sense (Inner Clock), Swift Sum (Flash Count).
+  - **Tower:** an arcade-style column grid, 7 columns and 3 cells wide, forced narrowing at set heights, overhanging cells lost, ends only on a miss, capped at a winning top row; a decent player should reach about 10 (T76). Supersedes the T09 speed-range entry.
+  - **Leaving early is a loss:** a started attempt counts in the day's attempts and only a recorded pass counts as a pass (T17). This overrides the design doc's "abandoning before finishing records nothing".
+  - **Score** stays a whole block count; **no grace period** after the deadline; **location** stays self-declared until the human researches contest rules.
+- Reason: the human's play-test feedback (Nov 9, 2026).
+- How to change it later: ask the human; each is recorded in the task that implements it.
+- Confirmed by human: yes (these are the human's decisions).
+
+### 2026-11-09 — Teetering Tower grid tuning and the idle drop (T76)
+- Choice:
+  - **Board:** 7 columns by 15 rows, starting 3 wide; capped at 2 from row 6 and at 1 from row 11. Row 1 rests on the floor. Each new row appears at a wall, alternating direction.
+  - **Speed:** row r steps every `startStepMs - stepDecayMs × (r − 1)` ms, never under 45 ms. Per seed: `startStepMs` 150 to 170 and `stepDecayMs` 6 to 8 (whole ms), plus the starting column and direction. Row 15 steps every 52 to 80 ms.
+  - **Tuning check** (`tuning.test.ts`, a simulated player tapping with an even timing error, averaged over 200 seeds): perfect reaches 15, decent (±80 ms) about 9.7, careless (±250 ms) about 4.
+  - **Idle drop** (judgment call; removed by T87, the human's decision): a row nobody tapped for 8 s dropped off and ended the run like a miss. Now a row waits for its tap indefinitely, and the server refuses a submission whose taps do not finish the run.
+- Reason: the human's M1 play-test requirements (arcade-style grid, forced narrowing, end only on a miss, a winning top row, a decent player reaches 10). Supersedes the T09 speed-range entry.
+- How to change it later: `PARAM_RANGES`, `MIN_STEP_MS` and `WIDTH_CAPS` in `src/challenges/stacking/engine.ts`; the tuning and golden tests pin them, so a change is deliberate.
+- Confirmed by human: speed yes, for now (Nov 10; more testers later). Idle drop: changed, removed so slow players are never timed out (T87; see "Human decisions at the second play-test").
+
+### 2026-11-10 — The header hides during a running game (T81)
+- Choice: while a game runs (practice or `/play`), the top bar (wordmark, Sign in or Sign out) is hidden like the back button, keeping its space so the board does not move; it returns with the result.
+- Reason: UI rule 8 removes the way back during a running game. On `/play` a stray tap on a header link mid-run would forfeit the day's only attempt (leaving early counts as not passed), and treating practice the same keeps the game screen consistent and focused.
+- How to change it later: the `:global(body):has([data-game-running]) .bar` rule in `src/components/AccountHeader.module.css` (narrow it to `/play` by adding a marker only PlayToday sets).
+- Confirmed by human: yes (Nov 10).
+
+### 2026-11-09 — Which forms keep a typed password after an error (T75)
+- Choice: sign-up keeps both the password and its confirmation after a failed submit (the human's play-test request); sign-in still clears the password after "Email or password is incorrect", the usual practice, so a wrong password is not resubmitted by accident. Neither password is ever sent back by the server.
+- Reason: the play-test feedback named the create-account form only; T75's criteria cover `/signup`.
+- How to change it later: `SignInForm.tsx` could keep its password the way `SignUpForm.tsx` does: save the values in a ref at submit and write them back to the inputs in a layout effect after React's form reset. Never use `defaultValue` for a password, which puts it in the page's HTML as a `value` attribute.
+- Confirmed by human: yes (Nov 10).
+
+### 2026-11-10 — Human decisions at the second play-test (overrides)
+- **Tower speed:** keep the current tuning; fine-tune later with more testers (NEEDS_HUMAN).
+- **Idle drop:** remove it. "We don't want to time out slow players." A row waits for its tap as long as the player likes (T87). Consequences: a run is no longer bounded in time, so the 3-minute submission age limit goes too (the day's deadline still applies, and the "taps from the future" check stays); a player who walks away mid-run never submits, which counts as an attempt that did not pass (T17).
+- **Result wording:** use rows, as the HUD does: "You reached row 7. Today's target was row 10." (T85).
+- **Result layout:** the practice layout (big score above the heading) for both result screens (T79).
+- **Accessibility:** keep building it in; the human tests it later in one pass (NEEDS_HUMAN).
+- Confirmed by human: yes (these are the human's decisions).
+
+### 2026-11-10 — Launch values in game_settings (T16)
+- Choice: one admin-editable `game_settings` row holds: survival threshold 60%; pass target at the 80th percentile (the score 80% of recent players reach); pass-target and threshold steps per streak day of 0 (flat for now); new accounts count fully from day one (weight 1.0, full weight after 0 days); a percentile over the last 14 days needing at least 50 scores; a stacking default pass target of 10 rows. `ensure_game_day` now reads its defaults from this row.
+- Reason: the design's Open items "survival threshold and pass-target percentile", "how pass targets and threshold rise as the streak grows" and "how much new accounts count" come with suggestions for the first two (60% when about 80% pass; a rise that is configurable, here flat at 0). The design gives no recommendation for new accounts; full weight from day one comes from the backlog's T16 notes as the simplest start. The lookback of 14 days and minimum sample of 50 have no recommendation either, so they are placeholders.
+- How to change it later: an admin updates the row (the admin page in a later M2 task, or SQL as an admin); no migration needed. Only users with `profiles.is_admin = true` can update it.
+- Confirmed by human: yes (Nov 10).
+
+### 2026-11-10 — Counters use the weight an attempt started with (T17)
+- Choice: each attempt stores `counted_weight`, the player's `profiles.weight` when it starts (a before-insert trigger). The start adds it to `weighted_attempts` (an after-insert trigger, in the start insert's transaction) and a recorded pass adds the same value to `weighted_passes`. Existing attempts are counted once by the migration.
+- Reason: the backlog says the pass uses "the submitting user's `profiles.weight`". If the weight changed mid-day (for example an account flagged at noon), reading it again at submit could add more to weighted passes than the attempt added to weighted attempts, so the pass rate could exceed 100%. One stored weight keeps both sides consistent, and lets the close job (T21) recount from the rows. The table also refuses passes above attempts.
+- How to change it later: a migration changing `count_started_attempt` and `record_attempt_result`.
+- Confirmed by human: not needed (implementation detail within the backlog's intent); recorded for reviewers.
+
+### 2026-11-10 — Wording when a result is refused or not sent (T17)
+- Choice: a submission the server refused (day closed, implausible timing) shows "Counted as not passed" and "...so it counted as not passed."; one that never arrived shows "Result not sent" and "Reload the page to see whether it counted."
+- Reason: from T17 a started attempt counts, so "Not counted" became wrong (the T74 spec review asked for this rewording). A result that never arrived may have been recorded, so it claims neither.
+- How to change it later: `SUBMIT_REFUSED`, `REFUSED_HEADING` and `SUBMIT_FAILED` in `src/app/play/PlayToday.tsx`.
+- Confirmed by human: yes (Nov 11).
+
+### 2026-11-10 — Hide the meter for the final 3 hours (T18)
+- Choice: from 3 hours before the deadline until the deadline, `GET /api/meter` answers `status: "hidden"` with the threshold and closing time only, and no pass rate or attempt count at all. `METER_HIDE_HOURS = 3` in `src/config/meter.ts`.
+- Reason: the design's Open item "How to handle last-minute sniping" recommends hiding the meter for the final hours; the backlog sets 3 as the configurable placeholder. Leaving the fields out, not nulling them, means a client cannot show them by accident.
+- What makes it real (T18 quality review): the anon key ships to every browser, so T17's "counters readable by everyone" would let anyone read the live numbers straight from Supabase during the window. Migration `20261110020000_private_day_counters` drops that read policy and the table privileges; only the service role reads the counters, and `/api/meter` reads them that way. The proxy skips `/api/meter`, so no session refresh can put a cookie on the shared, cached answer, and the cache time shrinks near 21:00 and midnight so a cached "open" reading is never served into the window.
+- How to change it later: edit `METER_HIDE_HOURS` (the meter UI, T19, reads the same constant).
+- Confirmed by human: no (Nov 11). Show the meter until the deadline; hide it later only if sniping becomes a real problem (T103).
+- Update (T103): `METER_HIDE_HOURS = 0`; the endpoint never answers `hidden` before the deadline and open readings cache up to it. The hidden path stays in place and tested, so setting a non-zero value turns it back on. The private-counters migration is kept.
+
+### 2026-11-10 — The meter before today's game day exists (T18)
+- Choice: if nobody has started today and the day's row does not exist yet, the meter answers `threshold: null`, `attempts: 0`, `passRate: null`, instead of reading the default threshold from `game_settings`.
+- Reason: the endpoint must read only `game_days` and `game_day_counters` in one query (T18). Once the close job (T21) prepares each next day, the row always exists, so this is a short-lived early state.
+- How to change it later: `readMeter` in `src/lib/meterRead.ts`.
+- Confirmed by human: not needed (implementation detail); recorded for reviewers.
+
+### 2026-11-11 — A start on a closed day is refused in the database (T93)
+- Choice: the attempt insert trigger refuses an insert for a game day with `closed_at` set (SQLSTATE `WS001`), share-locking the day row so it cannot race the close job. `POST /api/attempts/start` answers 409 `{ error: "day-closed" }`, and `/play` says "Today's challenge just closed. Press Start to play the next one." (Start stays available and starts the new day). A recorded pass whose day has no counters row raises instead of recording an uncounted pass. `attempts.counted_weight` is not null.
+- Reason: from the T17 quality review and the maintainer check after T18: a start that works out its game date just before the deadline and inserts after the close job ran would change a closed day's counts after its outcome was fixed.
+- How to change it later: `count_started_attempt` and `record_attempt_result` (migration `20261111000000_day_counter_integrity`); the message in `src/app/play/PlayToday.tsx`.
+- Confirmed by human: not needed (a bug fix); the new message follows the existing refused-start wording.
+
+### 2026-11-11 — Seeding a day other than today (T20)
+- Choice: `npm run seed:dev` records today's results through `record_attempt_result`, as the backlog asks. For `--date` on another day it writes each result directly and adds each pass to that day's counters right after, with the attempt's own `counted_weight`, so the counters end the same as if `record_attempt_result` had recorded them. It refuses a closed day.
+- Reason: `record_attempt_result` deliberately refuses any game date but today (the deadline rule), so the backlog's "through record_attempt_result" cannot hold for other dates without weakening that rule.
+- How to change it later: `runSeed` and `supabaseSeedDeps` in `scripts/seed-dev.mts`. T37 (`simulate:days`) meets the same constraint and can reuse this path.
+- Confirmed by human: not needed (dev tooling); recorded for reviewers.
+
+### 2026-11-10 — Wording for a started, unsubmitted attempt (T91)
+- Choice: "You started today's attempt but haven't finished it here. If it's still open in another tab, finish it there before the day ends. Otherwise it counts as not passed. Come back tomorrow."
+- Reason: since T87 a run has no time limit, so a run still open in another tab can be submitted; the old "You left today's attempt before finishing, so it counted as not passed" could be wrong.
+- How to change it later: the abandoned view in `src/app/play/PlayToday.tsx` (T91).
+- Confirmed by human: yes (Nov 10).
+
+### 2026-11-11 — A day nobody played breaks the streak (T21)
+- Choice: a day with no weighted attempts (nobody played, no game day row at all, or only zero-weight accounts) closes as `broken` with `final_pass_rate` null. `close_game_day` also refuses a day before its deadline and a day while an earlier day is still open (days close in order). A broken day ends the run on its last survived day. A day with no row at all is a gap and counts as not survived: a survived day after it starts a new run rather than extending across it.
+- Reason: the backlog's judgment call. The design's rule is "survives if the day's pass rate meets the threshold"; with no attempts there is no rate to meet it, and a world that does not show up has not held the line.
+- How to change it later: the `v_outcome` line in `close_game_day` (a new migration); the empty-day cases in `supabase/tests/daily_close.test.sql`.
+- Confirmed by human: yes (Nov 11).
+
+### 2026-11-11 — One path prepares every game day (T22)
+- Choice: `ensure_game_day(d)` computes the pass target (`pass_target_for`: the `pass_target_percentile` best score of the `percentile_lookback_days` days before `d`, given `percentile_min_sample` scores, else the default; plus the streak step in the harder direction) and the threshold (`default + threshold_streak_step × current streak`, at most 0.95). `close_game_day(d)` calls it for `d + 1` after updating the streak, and an attempt start calls it for today. An existing day is never touched.
+- Reason: the backlog puts the computation in the close, but a player starting just after midnight (before the close job runs, T23) would otherwise create the day with the plain defaults. One path keeps both the same. The only difference in that race is the streak used for the steps, which is one day behind; with the launch steps at 0 it changes nothing.
+- How to change it later: `pass_target_for` and `ensure_game_day` (migration `20261112010000_prepare_next_day`); the values are the admin-editable `game_settings` (T16, confirmed).
+- Confirmed by human: not needed (the values are the confirmed T16 settings); recorded for reviewers and T23.
+
+### 2026-11-11 — /admin creates the next 7 days early (T25)
+- Choice: as the backlog asks, opening `/admin` creates any missing day among today and the next 7 with `ensure_game_day`. A day created early gets the pass target and threshold that today's scores and streak give, and keeps them, since `ensure_game_day` never touches an existing row. So until an admin edits it, it misses the streak step and the newer scores it would have got from the close the night before.
+- Reason: the admin needs rows to edit (T99). With the launch steps at 0 only the percentile target differs, and only once there are 50 recent scores.
+- How to change it later: T99 could show such days as "provisional" and recompute any unedited, unstarted future day at the close (for example with an `edited` flag), or `/admin` could list future days without creating them until one is saved.
+- Update (T99, admin edits of a started day): an admin may still edit today (or any open day) after players have started. The backlog wants today's threshold change to show in the meter. A pass target change also judges later submissions by the new target, while passes already recorded stay counted. Left to the admin's judgment; NEEDS_HUMAN asks whether the pass target should lock once a day has attempts.
+- Update (T99): done the first way. `game_days.edited` is set by an admin's save, and `ensure_game_day` refreshes any day that is not edited, not started and not closed. So an early day picks up the streak and recent scores at the close before it, and also follows a change to `game_settings` until then. An admin's edit, or anyone starting the day, freezes it.
+- Confirmed by human: yes (Nov 11), and the pass target must also lock once anyone has started the day (T102). The threshold stays editable.
+
+### 2026-11-11 — Human decisions at the M2 play-test (overrides)
+- **Empty day:** breaks the streak, as built (T21).
+- **Coming days:** follow the settings until edited or started, as built (T99). Today's pass target locks once anyone has started the day (T102).
+- **Hidden meter:** not wanted for now. "We can always later hide it if it becomes an active problem in real play." The meter shows until the deadline (T103).
+- **Refused or not-sent wording:** keep it (T17).
+- **Meter and streak look:** the meter is the core of the game and should be the star of the home screen, maybe its top element; the streak card should be more interesting too. Three mockups (gauge, tower meter, rising tide): https://claude.ai/artifact/MRXZU4jQW9RvVqLLDohXXQ. Chosen: A's gauge meter and play card; the streak card takes A's header with C's bar chart over 14 days ("Chosen" artboard). Built as T104 (meter) and T105 (streak card).
+- No other issues found in the play-test.
+- Confirmed by human: yes (these are the human's decisions).
+
+### 2026-11-12 — Human decisions at the M3 play-test (overrides)
+- **Second Sense:** start with a visible timer that hides very quickly, so the player has an exact starting point; raise the targets to make up for the visible second or two (T113).
+- **Swift Sum:** works, but feels like a crapshoot. Balance it so you cannot quite count every dot in time but can make an educated guess: fewer dots or more time (T114).
+- **Admin page:** controls for everything that is done on the command line today (seed attempts, change or reset a game day, and the rest), so no commands need remembering (T116, T117).
+- **Share:** no visible share text, just the button (the messaging app shows the prefilled text). Emojis are welcome in the share text only, for example as a progress bar, so it stands out (T115).
+- Confirmed by human: yes (these are the human's decisions).
+
+### 2026-11-12 — Human decisions after trying the M3 follow-ups (overrides)
+- **Admin local tools:** look good (T116, T117 confirmed).
+- **Swift Sum:** plays much better with 12–30 dots in 1.5 s (T114 confirmed); add a 3-2-1 countdown before the dots (T119).
+- **Second Sense:** the clock should hide more gracefully (a fade, agent's judgement); targets 7–13 s (T118).
+- **Share and the rest:** "Otherwise I like what we have" (T115 emojis confirmed).
+- **Plan:** T118 and T119 are built during M4 and checked at the M4 play-test; go straight into M4 without stopping.
+- Confirmed by human: yes (these are the human's decisions).
+
+### 2026-11-12 — How the simulation records results (T37)
+- Choice: beside `close_game_day_unchecked`, a service-role-only `record_attempt_result_unchecked` (every check but "today"), which `record_attempt_result` calls after its today check, so simulated passes update the counters and earn entries in one step. The same fake players play every simulated day. The draw needs a cycle that ended in the real past, so the README moves cycle 1 into the past by hand for that.
+- How to change it later: `supabase/migrations/20261114000000_simulation_unchecked.sql`, `scripts/simulate-days.mts`.
+
+### 2026-11-12 — Human decisions after M4 (overrides)
+- **Confirmed as built:** ads off until Vercel Pro (T44); what the prize draw counts (T43); cheat check thresholds (T40); the streak and the prize cycle (T34); a hidden tab (T110); the share margin of 5 points (T32); the daily rotation (T31); gauge details (T104).
+- **T37:** option A, a service-role-only `close_game_day_unchecked(d)` beside the deadline-checked close; the simulation script stays local-only.
+- **Meter p95:** 403 ms locally is accepted for launch; recheck on the deployed preview with the CDN in front.
+- **Second Sense pass target:** keep "within 0.5 s" with the 7–13 s targets.
+- Confirmed by human: yes (these are the human's decisions).
+
+### 2026-11-12 — Admin local tools (T116)
+- Choice: a "Local tools" panel on /admin, shown and run only when the app's Supabase URL is localhost (the scripts' guard) and the caller is an admin. Set a day's challenge (open, unstarted days; it takes that challenge's pass target and is marked edited), clear my own attempt today (taking it back out of the counters), reset an open day (no attempts, zero counters, back on the rotation), restore the rotation. A closed day cannot be reset: the world streak already counts it, and undoing that is `npm run db:reset` territory.
+- T117 adds seed fake players (at most 500 a press, since each takes a moment), close a day (past its deadline only; default yesterday) and remove fake players (`seed-…@example.test`; open days are recounted, closed days keep their final counters). The scripts and the panel share `src/lib/devData.ts`.
+- How to change it later: `src/lib/localTools.ts`, `src/lib/devData.ts`, `src/components/LocalTools.tsx`.
+- Confirmed by human: pending (next play-test).
+
+### 2026-11-12 — Swift Sum dots and flash (T114)
+- Choice: 12–30 dots (was 15–45) shown for 1.5 s (was 1 s): one by one, a player counts about 6–8 in that time, so the count stays an estimate, but a closer one. The placeholder pass target stays within 15%.
+- How to change it later: `DOT_COUNT_RANGE` and `FLASH_MS` in `src/challenges/flash-count/engine.ts`. (Superseded by Flash Ladder, T141/T142: see `flashLadder.ts`.)
+- Confirmed by human: pending (NEEDS_HUMAN, next play-test).
+
+### 2026-11-12 — Second Sense clock and targets (T113)
+- Choice: a clock counts up in tenths (rounded down) for the first 1 s (`REVEAL_MS`), then hides and keeps its space; screen readers skip it. Targets are 5–12 s (were 3–9 s), so the timeout reaches 36 s. The placeholder pass target stays within 0.5 s: once 14 days give 50 scores, the percentile sets it (T22), and the admin page can change it.
+- How to change it later: `REVEAL_MS` and `TARGET_RANGE_MS` in `src/challenges/inner-clock/engine.ts`; the placeholder in `game_settings.default_pass_targets`. (Superseded by Time Bank, T139/T140: see `timeBank.ts`.)
+- Confirmed by human: pending (NEEDS_HUMAN, next play-test).
+
+### 2026-11-12 — Share text emojis (T115)
+- Choice: ✅ or ❌ before the outcome, 🔥 before the world streak, and the meter as a 10-square bar (🟩 filled at or above the line, 🟧 filled below it, ⬜ empty) followed by "62% today, 60% needed"; a call for help adds 🆘. The card shows only the Share button; if copying fails, the text appears so it can be copied by hand.
+- How to change it later: `src/lib/share.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, next play-test).
+
+### 2026-11-12 — Share card wording and margin (T32)
+- Choice: a share becomes a call for help when the open meter's pass rate is under the threshold plus `NEAR_THRESHOLD_MARGIN` = 0.05 (also when it is under the threshold itself). The card has the game, the date, the outcome, the world streak, the world's line and the site; no score, target or challenge. If the meter cannot be read, the streak and world lines are left out. The link is `NEXT_PUBLIC_SITE_URL`, else the page's own address.
+- Reason: the backlog's placeholder; the design has no number for "near the threshold".
+- How to change it later: `src/config/share.ts`; the wording in `src/lib/share.ts`.
+- Confirmed by human: yes (Nov 12, 2026).
+
+### 2026-11-12 — Daily rotation (T31)
+- Choice: every day's challenge is `game_settings.rotation[(date - 2027-01-01) mod n]`, default Teetering Tower, Second Sense, Swift Sum in turn (the MVP's three; the Open item "which challenges join the rotation after the first three" stays open). A day nobody has edited or started follows the rotation, so a day created early (by `/admin`) changes with it. Nov 12, 2026 is a Second Sense day.
+- Reason: the backlog's formula; a plain cycle is easy to predict and to change.
+- How to change it later: update `game_settings.rotation` (any known challenge types, at least one); an admin choosing one day's challenge is T111.
+- Confirmed by human: yes (Nov 12, 2026).
+
+### 2026-11-11 — Gauge details (T104)
+- Choice: the pill compares the rounded numbers on screen, but its colour follows the real comparison; a day that rounds to the line while below it says "Just below the line", never "Right on the line". The mint glow is 0.16 (the mockup's 0.22 left muted text at 4.3:1). The home page drops the big title and pitch, as the chosen artboard does (the h1 stays for screen readers).
+- How to change it later: `standing()` in `src/components/Meter.tsx`; `--fs-glow-mint` in `tokens.css` (and `METER_TINTS`); `src/app/page.tsx`.
+- Confirmed by human: yes (Nov 12, 2026).
+
+### 2026-11-12 — A hidden tab during Second Sense and Swift Sum (T110)
+- Choice: Second Sense's clock keeps running while the tab is hidden; if the timeout passed while hidden, the run ends with no tap on return. Swift Sum shows the dots again for the full 1.5 s if the tab was hidden while they were shown.
+- Reason: Second Sense measures real time, and the server's start-to-submit check uses real time too; pausing would let a player stop the clock. Swift Sum's re-show can be repeated by switching tabs over and over (more looks); the cheat checks (T40) can flag that later if it matters.
+- How to change it later: the `visibilitychange` handlers in `src/components/inner-clock/InnerClockGame.tsx` and `src/components/flash-count/FlashCountGame.tsx`.
+- Confirmed by human: yes (Nov 12, 2026).
+
+### 2026-11-12 — The streak and the prize cycle (T34)
+- Choice: the world streak resets at each cycle's first day (a run from before it ends there), so the goal counts only days inside the cycle. Once the goal is reached the cycle runs on to day 60 and entries keep accruing; `goal_reached_on` keeps the first date. Preseason days (before 2027-01-01) count for the streak display but award no entries (T35). A cycle's first day is still prepared with the streak as it stood the day before; with the launch step of 0 that changes nothing.
+- Reason: the backlog's notes (the data model ties the streak to a cycle). The design says the world "can try again while time remains", which this keeps.
+- How to change it later: `close_game_day` in `supabase/migrations/20261113010000_cycle_close.sql` (a new migration).
+- Confirmed by human: yes (Nov 12, 2026).
+
+### 2026-11-12 — A new account's weight is fixed when the attempt starts (T46)
+- Choice: the account-age rule (`new_account_weight` until `full_weight_after_days`, times `profiles.weight`) is applied when the attempt starts and stored in `attempts.counted_weight`, not at submit as the backlog wrote.
+- Reason: attempts are counted when they start and their pass adds the same weight (T17, "Counters use the weight an attempt started with"); a weight computed at submit could differ from the one already counted. The launch values (1.0 after 0 days, approved Nov 10) count every account fully, so nothing changes at launch.
+- How to change it later: `stamp_attempt_weight` in `supabase/migrations/20261113070000_account_weighting.sql`; the values in `/admin/settings`.
+- Confirmed by human: not needed (the values were approved; this is how they apply).
+
+### 2026-11-12 — Ads stay off by default (T44)
+- Choice: ad slots exist on `/`, `/history`, `/rules` and below the `/play` result, but render nothing unless `NEXT_PUBLIC_ADS_ENABLED=true` and a publisher ID are set; a development-only placeholder shows where they go. Never on practice pages or during a run.
+- Reason: the design says "AdSense from launch" but also no ads on Vercel Hobby during the soft launch (non-commercial only); the backlog flags the conflict.
+- How to change it later: the two environment values (T45 wires the real ID).
+- Confirmed by human: yes (Nov 12, 2026).
+
+### 2026-11-12 — Which entries the prize draw counts (T43)
+- Choice: every drawable entry of the cycle counts, including those earned after the goal day, one ticket each; the draw opens only after the cycle's last day. Flagged accounts' entries are out (T41), and an admin draws by hand from `/admin/draw`.
+- Reason: the backlog's judgment call; the cycle keeps running after the goal (T34), so later passes are earned the same way.
+- How to change it later: `admin_draw_tickets` in `supabase/migrations/20261113050000_prize_draw.sql` (a new migration).
+- Confirmed by human: yes (Nov 12, 2026).
+
+### 2026-11-12 — Cheat check thresholds (T40)
+- Choice: the backlog's placeholders (taps under 120 ms apart; 10+ taps with interval SD under 5 ms; Second Sense error under 0.01 s on 3 of the latest 5; Swift Sum answer under 800 ms when reported; a last input more than 2 s behind the server clock beyond a 15 s allowance), except the Tower's perfect run: 12 rows in a row locked without losing a cell, since the 15-row grid Tower (T76) can never reach the backlog's 20. Swift Sum's untimed answer and a Second Sense timeout skip the timing check.
+- Reason: a flag only holds an account's entries for an admin to review (T41, T42); it never changes a result, so a cautious placeholder costs little. Tune with real data before launch.
+- How to change it later: `src/config/cheat.ts`.
+- Confirmed by human: yes (Nov 12, 2026).
+
+### 2026-11-12 — Held major upgrades and remaining dev-only audit findings (T51)
+- Choice: hold ESLint 10 and TypeScript 7 (`eslint-config-next` 16.4.x targets ESLint 9 and TypeScript 5); hold autocannon 9 (the T48 load test's API; its only gain is the `uuid` advisory fix); hold `@types/node` 26 (tracks the Node runtime). `npm audit` keeps 10 moderate findings, all dev-only: `minimatch` under `typescript-eslint` (pinned `^10.2.2` by 8.72.2, the latest) and `uuid` under autocannon 8; neither runs on user input or in the deployed app.
+- Reason: `npm audit fix --force` would make breaking major upgrades; the advisories need attacker-controlled globs or a caller-supplied buffer.
+- When to revisit: when `eslint-config-next` supports ESLint 10 / TypeScript 7, when `typescript-eslint` ships a fixed `minimatch` range, or before the next load test (autocannon 9).
+
+### 2026-11-12 — One Auth round trip per page: asymmetric signing keys (T58)
+- Choice: both options. The proxy calls `getClaims()` (it still refreshes an expiring session), and local Supabase signs with an ES256 key (`npm run db:keys`, git-ignored), so `getClaims()` in the proxy, header and pages verifies against the cached public keys: no Auth round trip on a page render. API routes keep `getUser()`: one round trip, and a signed-out session is refused at once.
+- Trade-off: a locally verified token stays valid until it expires (up to `jwt_expiry`, 1 hour) after sign-out elsewhere; pages only display with it, and every write goes through `getUser()` or row-level security. Production needs the asymmetric key switched on in the dashboard (docs/DEPLOYMENT.md §4); until then `getClaims()` falls back to an Auth call, so a page costs two round trips but stays correct.
+
+### 2026-11-12 — The cheat timing allowance includes the 3-2-1 (T138)
+- Choice: `TIMING_LOAD_ALLOWANCE_MS` becomes 15 s plus `RUN_COUNTDOWN_MS` (2.4 s), as the Tower's and Second Sense's clocks now start after the countdown while the server's starts at the attempt's start.
+- Reason: keeps the same 15 s margin for loading and reading as before; without it an honest run that takes a little longer to load would be flagged.
+- How to change it later: `src/config/cheat.ts`.
+
+### 2026-11-15 — Second Sense: Time Bank rules and placeholders (T139)
+- Choice: rounds keep the current tap (the design says "hold", but forbids new round types). Budget 3 s, 8 rounds, round i's target 3 + i to 3.5 + i s, clock visible 1.5 s shrinking 0.15 s a round, 3x timeouts, 1.5 s between rounds. Budget left is measured when the run ends, so a failed run scores a whole number. A missing tap counts as its round's timeout in the run's timing (`lastInputMs` now receives the params).
+- Reason: a simulated player off by 11% on average survives about 5 rounds; a full run lasts about 62-67 s.
+- How to change it later: the constants in `src/challenges/inner-clock/timeBank.ts`.
+- T140: the default pass target is 4 rounds. Scores from the old single-round game (errors in seconds) stay in `attempts`, so for 14 days they could enter the percentile if 50 or more exist. That only happens on local data, since nothing has launched. Its cheat rule is retired until T164, and a round with no tap now counts in the timing check at its timeout.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
+### 2026-11-15 — Echo Path rules and placeholders (T143)
+- Choice: a 3 x 3 grid, lengths 3 to 12, 3 lives, each tile lit for 450-650 ms. There is no time limit per tap, as the Tower has none (T87). Each length's sequence is drawn fresh, not grown from the last, and never lights the same tile twice in a row. Lives left are counted when the run ends.
+- Reason: the design leaves these details open; this keeps the engine simple and every try fair.
+- How to change it later: the constants in `src/challenges/echo-path/engine.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
+### 2026-11-15 — Swift Sum: Flash Ladder rules and placeholders (T141)
+- Choice: a wrong count costs a life and retries the same level with a new layout. 3 lives, 10 levels, level i has 8 + 3i to 10 + 3i dots, the flash shrinks from 1.8 s by 0.12 s a level, and the tolerance is 10% (at least 1). Lives left are counted when the run ends.
+- Reason: the design does not say whether a wrong count moves on, so this follows Echo Path. A simulated estimator that is off by up to 16% clears about 6 levels.
+- How to change it later: the constants in `src/challenges/flash-count/flashLadder.ts`.
+- T142: the default pass target is 5 levels. As with Second Sense, the old percentage scores could enter the percentile, but only on local data. `flash-count-instant` works out each flash's clear time from the 3-2-1, the reveals and the flashes, which is the earliest it could have cleared. Every challenge is now higher-better.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
+### 2026-11-16 — Fair Split rules and placeholders (T146-T149)
+- Choice: concave shapes (8 to 12 corners, dents deepening over the first 7 shapes), no holes yet. A cut through a concave shape can make several pieces; the share is the total area on each side of the line. 12 shapes, 3 lives, ±1 point of 50% (with a 1e-9 allowance so 49/51 counts despite rounding), time limit 7 s shortening 0.3 s a shape to at least 4 s, 1.2 s between shapes. A miss or timeout costs a life and brings the same shape back (as Swift Sum retries its level). A drag shorter than 24 px, or whose line misses the 100 x 100 box, is ignored rather than costing a life. Default pass target 5 shapes.
+- Reason: the design recommends concave shapes and no holes for the MVP and leaves the rest open. A simulated cutter with an aim error of up to 1 unit averages about 6 shapes.
+- How to change it later: the constants in `src/challenges/fair-split/engine.ts` and `geometry.ts`; the pass target in the admin settings.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
+### 2026-11-16 — Lineup hash and untouched days (T150, T151)
+- Choice: the daily seed is the first 32 bits of the date's MD5; the lineup is number seed mod n(n-1)(n-2) of the pool's ordered lineups, the next number if it repeats the day before. A day nobody has touched (not edited, started or closed) is rebuilt from the rule and settings on each prepare, as the rotation's days were (T102); other lineups are never overwritten. The migration backfills every day as a one-game lineup, then rebuilds untouched open days to three games.
+- Reason: the design asks for the daily seed to pick the lineup and leaves the method open; rebuilding untouched days keeps the T102 rule that coming days follow the settings.
+- How to change it later: `lineup_for` and `ensure_game_day` in `supabase/migrations/20261117*`; the pool in `game_settings.pool` (T162 adds it to /admin/settings).
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
+### 2026-11-16 — Day results (T152, T153)
+- Choice: a day is decided by a majority of its lineup (two of three; one of one for the one-game days from before T151). A player who loses game 1 and never comes back has no completed day and does not count. The database judges each game's pass from that game's target and refuses a caller whose `passed` disagrees (WS005). "Played after the day was decided" is read from the order of games, not the clock: a game is left out of the percentile when the player's earlier games already held a majority of wins or losses, an unsubmitted game counting as a loss. A day decided by recorded results never changes; a day failed only because a game is still open reopens if that game passes, so screens must not treat such a failure as final.
+- Reason: the design's definitions (passed days ÷ completed days; two wins or two losses decide); the order rule needs no timestamps and gives the same answer.
+- How to change it later: `refresh_day_result` and `pass_target_for` in `supabase/migrations/20261117020000_daily_three_attempts.sql`.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
+### 2026-11-16 — /play and the results page (T156, T157)
+- Choice: the results page (`/play/results`) shows the verdict, each game's score and target (a game left unfinished as "Lost", one never started as "Not played"), the share card, the meter and then the ad slot; no percentiles, score distribution or history (the Open item has no recommendation). /play has no ad, meter or share card any more. Before the day's lineup exists (nobody has started yet and the nightly job has not run), /play names only game 1, with no list. Both pages read the day fresh on every load, so a day failed only by an open game shows as failed until that game is submitted.
+- Reason: the acceptance criteria; the lineup is created by the first start, so there is nothing else to list.
+- How to change it later: `src/app/play/results/page.tsx`, `src/app/play/PlayToday.tsx`, wording in `src/app/play/outcomes.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls, items 7 and 13)
+
+### 2026-11-17 — Perfect day and the home lineup (T158, T159, T160)
+- Choice: the incentive to play the remaining game is the design's example: three wins show "Perfect day: all three games won" on the results page and add "⭐ Perfect day" to the share text, derived from the day's games and never stored or counted. The share text's outcome line is plain ("I passed today." / "I didn't make it today."), with the squares on the next line. Before the first start creates today's lineup, the home card lists the three games the lineup rule gives today (as /play's game 1 does), all "To play".
+- Reason: the Open item's suggestion; the rule's lineup is the one the first start will create unless the settings change first.
+- How to change it later: `isPerfectDay` and `buildShareText` in `src/lib/share.ts`, `src/app/play/results/page.tsx`, `todaysLineup` in `src/lib/attempts/today.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls, item 14)
+
+### 2026-11-17 — Cheat checks for the multi-round games (T164)
+- Choice: the backlog's placeholder thresholds. Second Sense is flagged for 5 or more rounds of one run tapped under 10 ms off target. Echo Path is flagged for any tap under 80 ms after the last one, or 10 or more taps whose intervals have a standard deviation under 5 ms. Fair Split is flagged for 6 or more judged cuts within 0.05 points of 50%, or a counted cut under 300 ms after its shape appeared. The timing check now covers every game through each engine's `lastInputMs`, with the same 15 s + 3-2-1 allowance. Cuts the game never judged (in the pause before a shape, or after the run ended) are ignored. As before, a flag only holds prize entries for review.
+- Reason: Open item (thresholds), no recommendation in the design; these are the backlog's numbers.
+- How to change it later: `src/config/cheat.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, Daily Three planning calls)
+
+### 2026-11-18 — Second Sense rounds (T180-T183)
+- Choice: (1) The default pass target stays 4, which now means "survive all four rounds"; admins can set fractions such as 4.5. (2) The balance test models a player's error as 15% of the target (sd), not a flat 1000 ms, and expects 30 to 70% of runs to survive. (3) The cheat check flags 3 or more rounds of one run under 25 ms off target. (4) Old-scale scores are left out of the percentile through a new `challenge_types.scores_since` date, set to the day after the migration runs (UTC). (5) The bank shows seconds to one decimal ("8.8 s").
+- Reason: Open items (targets, thresholds); the backlog proposes these, and a flat 1 s error would make 15 to 25 s targets too easy compared with real counting.
+- How to change it later: `game_settings.default_pass_targets` or /admin; `src/challenges/inner-clock/timeBank.test.ts`; `src/config/cheat.ts`; `challenge_types.scores_since`.
+- Confirmed by human: pending (NEEDS_HUMAN, M6 calls)
+
+### 2026-11-18 — Swift Sum rounds (T184-T186)
+- Choice: (1) Five rounds against a 10-dot bank; round i draws 6+3i to 11+3i dots; the flash goes from 1800 to 1400 ms. (2) Default pass target 5, "survive all five". (3) The reveal ("Right on", "Off by N") shows 1.2 s, then each round has its own 3-2-1. (4) `lastInputMs` stays the last answer's time: answers are timed from the run's start, so it already covers every 3-2-1, flash and reveal. (5) Old-scale scores are left out through `scores_since` (as T183).
+- Reason: Open items (targets, numbers); the backlog proposes (1), (2) and (5).
+- How to change it later: `src/challenges/flash-count/flashLadder.ts` constants; `game_settings.default_pass_targets` or /admin.
+- Confirmed by human: pending (NEEDS_HUMAN, M6 calls)
+
+### 2026-11-18 — Echo Path as one growing path (T187-T191)
+- Choice: (1) A 5 x 10 board; one path per attempt, 12 to 18 tiles from the bottom row to the top, never revisiting a tile, at most 8 sideways steps; a seed with no such walk in 20 tries falls back to a fixed zigzag. (2) Start at 4 tiles, one more per clear; 3 lives; a miss replays the same length; playback 300 to 400 ms a tile. (3) Score = longest path repeated + lives left / 3. (4) Default pass target 10, "a path of 10 tiles" (the board's height). (5) Keyboard: arrows move a ring (the first key only shows it), Space or Enter taps. (6) The `echo-path-robotic` rhythm check now reads only the gaps inside each echo: across a long run, the pause and playback before each echo hid a script's even taps. Thresholds unchanged. (7) Old-scale scores are left out through `scores_since` (as T183).
+- Reason: Open items (board width, minimum length, timing, target); the backlog proposes (1), (2) and (4). (6) came from T191's scripted-run test failing.
+- How to change it later: `src/challenges/echo-path/path.ts` and `engine.ts` constants; `game_settings.default_pass_targets` or /admin; `src/config/cheat.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, M6 calls)
+
+### 2026-11-18 — Fair Split as five rounds against a bank (T192-T196)
+- Choice: (1) Five shapes a run from 13 kinds (9 curved, 4 angular), drawn 75% curved, no kind twice, each seeded so the same kind differs run to run. (2) A 6-point bank; a cut costs its distance from 50% in points (0.01 steps); 25 s a shape, and at the limit the screen cuts the line where it is (a cut past the limit, which only a made-up run sends, costs 50). (3) The pieces show 1.2 s, then a 3-2-1 before every shape, the first included; the clock runs from the game's start, so `lastInputMs` is the run's end. (4) The line starts straight down the middle; no live percentage while placing it; Cut or Enter commits, letting go never does; arrows slide it 0.25 units, [ and ] turn it 1 degree. (5) The 3-2-1s are drawn by the game's own frame loop, not the shared RoundCountdown, so screen and engine share one clock. (6) Default pass target stays 5, now "survive all five"; old-scale scores are left out through `scores_since` (as T183). (7) Cheat checks: 3 cuts within 0.05 points of half, or a surviving cut under 1.5 s after its shape appeared. (8) The balance test reads the backlog's "0.6 aim error" as a 0.6-unit standard deviation of the line's offset: about 90% of such players survive all five.
+- Reason: Open items (shape mix, bank, timing, target, thresholds); the backlog proposes (1), (2), (4) and (6).
+- How to change it later: `src/challenges/fair-split/shapes.ts`, `engine.ts` and `render.ts` constants; `game_settings.default_pass_targets` or /admin; `src/config/cheat.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, M6 calls)
+
+### 2026-11-18 — M6 calls shared by the four games (T197, T198)
+- Choice: (1) "Targets 15 to 25 seconds" is read as each round's interval: round i (from 0) draws 15 + 2.5i to 17.4 + 2.5i s in 0.1 s steps. The clock shows for the first 2 s of every round, and a round with no tap ends at its target plus the 10 s bank. (2) A round whose cost equals what is left of the bank survives; only a cost above it ends the run (all four games). (3) `challenge_types.scores_since`: each reworked game's scores before the rework are on another scale, so they are left out of its pass-target percentile until new scores build up; the Tower has none. (4) The per-player variation the backlog asks for is the per-attempt seed: every attempt gets its own seed, so two players never share a Second Sense target list, a dot layout, a path or a shape set. The e2e test checks this for the day's three lineup games; each engine's own tests cover the rest. (5) Echo Path's path never revisits a tile, so each tile is tapped at most once per echo. (6) The Teetering Tower is unchanged in M6.
+- Reason: Open items; the backlog proposes (1) to (4). (2) keeps "0 left" a survival, as players read a bank reaching zero.
+- How to change it later: `src/challenges/inner-clock/timeBank.ts` (`TARGET_RANGES_MS`, `REVEAL_MS`, `BUDGET_MS`); each engine's bank check; `challenge_types.scores_since` in a migration; `src/challenges/echo-path/path.ts`.
+- Confirmed by human: pending (NEEDS_HUMAN, M6 calls)
+
+### 2026-11-18 — Where M6 departs from DESIGN.md (T198)
+- Choice: the games table and its scoring text no longer describe four games; the backlog's M6 rules win. (1) Second Sense: "budget placeholder 3.0 s; the run ends when the budget runs out; survive N rounds; target length rises, clock fades sooner" became four fixed rounds against a 10 s bank, 15 to 25 s targets, a 2 s clock every round and a 3-2-1 every round. (2) Swift Sum: "a wrong count costs one of 3 lives; more dots, shorter flash" became five rounds against a 10-dot bank, with no lives and no tolerance. (3) Echo Path: "grid size; a mistake gives a new sequence of the same length" became one 5 x 10 path per player, growing a tile a round; a mistake replays the same length. (4) Fair Split: "within plus or minus 1 point counts; a cut outside costs one of 3 lives; a time limit per cut; concave shapes" became five rounds against a 6-point bank, curved and abstract shapes, a movable line with a Cut button and a 25 s limit.
+- Reason: the owner's M6 rework (backlog M6) replaces these rules; agents never edit DESIGN.md.
+- How to change it later: the owner updates DESIGN.md (NEEDS_HUMAN, "Please update DESIGN.md").
+- Confirmed by human: pending (NEEDS_HUMAN, update DESIGN.md)
+
+### 2026-11-18 — M7 play-test tweaks (T201-T213)
+- Choice: (1) Second Sense: a 2 s bank (owner); four rounds whose targets rise 10.0-12.4, 12.5-14.9, 15.0-17.4, 17.5-19.9 s. The simulated player uses a 600 ms spread, not the backlog's 250 ms: at 250 ms nearly everyone survived, and the backlog said to tune the spread, not the 30-70% band. (2) Stopwatch use: no game change (owner); the existing `time-bank-implausible` check stays as it was. (3) Swift Sum: each round draws 10 to 30 dots uniformly from the seed, with no growth by round (owner). The bank stays 10 dots: the simulation gives about 41% survival, above the 15% floor that would have raised it. Swift Sum has no `levels` label to reword, so only the how-to and tagline changed. (4) Trail Trace: a 5 x 8 board (owner); paths of 8 to 12 tiles from the bottom row to the top. "Touch" means sharing an edge (owner), so the rule reads: a path tile shares an edge only with the tiles just before and after it. The backlog's T214 text says "eight neighbours"; that was replaced by the owner's edge-only reading. Over 1 000 seeds, 988 paths are distinct (bound 90%). The fallback is a fixed zigzag, not the backlog's straight climb, which breaks the two-in-a-row rule. (5) Clean Cut: every drawn shape gets a seeded smooth warp, kept only if `asymmetry()` measures at least `MIN_ASYMMETRY` = 0.04 (the least lopsided shape over seeds 0 to 999 measures 0.040) and it still fills 27% of the box; no kind was removed (13 kinds). An 8-point bank (owner): the simulated cutter survives all five shapes 98.7% of the time. (6) Pass targets: Second Sense 4, Swift Sum 5, Trail Trace 8 (was 10; the board's new height), Clean Cut 5. (7) Cheat thresholds: none changed; each game's honest fixture raised no flags. (8) Echo Path and Fair Split are shown as Trail Trace and Clean Cut; the stored keys, routes, folders and flag names stay. (9) Each game's `scores_since` was reset again to the day after its M7 migration ran.
+- Reason: the owner's M7 list (backlog M7, approved Nov 18); the rest are the backlog's proposals, tuned as noted.
+- How to change it later: `src/challenges/inner-clock/timeBank.ts`; `src/challenges/flash-count/flashLadder.ts`; `src/challenges/echo-path/path.ts`; `src/challenges/fair-split/shapes.ts` and `engine.ts`; `game_settings.default_pass_targets` or /admin; `src/config/cheat.ts`; `src/config/challenges.ts` for names.
+- Confirmed by human: (1) bank, (2), (3) count rule, (4) board and touch rule, (5) bank and (8) by the owner; the rest pending (NEEDS_HUMAN, M7 calls)
+
+### 2026-11-18 — Code names follow the stored keys; shared round loop (T199, T200)
+- Choice: (1) Swift Sum and Second Sense code follows the keys `flash-count` and `inner-clock`, as Trail Trace and Clean Cut follow theirs: each engine is `engine.ts` (`flashCount`, `innerClock`), the run components are `FlashCountGame` and `InnerClockGame`, and the single-round ones are `FlashCountShowing` and `InnerClockTap`. Player-facing words ("time bank", "dot bank") are unchanged. (2) Only Swift Sum and Second Sense repeat the countdown, round and reveal loop, so it moved into `useRevealRounds`; Trail Trace and Clean Cut drive their phases from their own frame loops and keep them. (3) The three bank games' practice results share `bankResult`; Trail Trace counts lives and the longest path, so it keeps its own.
+- Reason: names keyed to stored values do not go stale when a game is renamed again; the backlog asks to check first whether all four repeat the loop.
+- How to change it later: `src/components/rounds/useRevealRounds.ts`, `src/components/practice/bankResult.ts`.
+- Confirmed by human: not needed (no behaviour change)
+
+### 2026-11-18 — Where M7 departs from DESIGN.md (T214)
+- Choice: as T198, the backlog's M7 rules win over DESIGN.md's games table: Second Sense targets 10 to 20 s against a 2 s bank; Swift Sum a random 10 to 30 dots each round; Trail Trace paths of at most 12 tiles on a 5 x 8 board that never touch themselves; Clean Cut lopsided shapes only and an 8-point bank; the names Trail Trace and Clean Cut.
+- Reason: agents never edit DESIGN.md.
+- How to change it later: the owner updates DESIGN.md (NEEDS_HUMAN, "Please update DESIGN.md").
+- Confirmed by human: pending (NEEDS_HUMAN, update DESIGN.md)
