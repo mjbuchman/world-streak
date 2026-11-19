@@ -101,12 +101,17 @@ select tests.scored(n, '2033-01-05', 'stacking', 18 + 2 * n) from generate_serie
 select is(public.pass_target_for('stacking', '2033-01-12', 0), 38::numeric, 'other challenges keep every score in the lookback');
 
 -- The T220 migration's re-target, run again on days still holding an old-scale target of 1: only the
--- three changed games on untouched days get their placeholders; an edited day and Clean Cut keep theirs.
-insert into public.game_days (game_date, survival_threshold, edited)
-values ('2034-06-01', 0.6, false), ('2034-06-02', 0.6, true), ('2034-06-03', 0.6, false), ('2034-06-04', 0.6, false), ('2034-06-05', 0.6, false);
+-- three changed games on untouched days get their placeholders; an edited, a closed or a started day
+-- and Clean Cut keep theirs.
+insert into public.game_days (game_date, survival_threshold, edited, closed_at, outcome)
+values ('2034-06-01', 0.6, false, null, null), ('2034-06-02', 0.6, true, null, null), ('2034-06-03', 0.6, false, null, null),
+       ('2034-06-04', 0.6, false, null, null), ('2034-06-05', 0.6, false, null, null), ('2034-06-06', 0.6, false, now(), 'broken'),
+       ('2034-06-07', 0.6, false, null, null);
 insert into public.game_day_games (game_date, position, challenge_type, pass_target)
 values ('2034-06-01', 1, 'inner-clock', 1), ('2034-06-02', 1, 'flash-count', 1), ('2034-06-03', 1, 'echo-path', 1),
-       ('2034-06-04', 1, 'fair-split', 1), ('2034-06-05', 1, 'flash-count', 1);
+       ('2034-06-04', 1, 'fair-split', 1), ('2034-06-05', 1, 'flash-count', 1), ('2034-06-06', 1, 'echo-path', 1),
+       ('2034-06-07', 1, 'inner-clock', 1);
+select tests.scored(4, '2034-06-07', 'inner-clock', 3);
 update public.game_day_games g
    set pass_target = public.pass_target_for(g.challenge_type, g.game_date, (select current from public.world_streak()))
   from public.game_days d
@@ -114,9 +119,10 @@ update public.game_day_games g
    and not d.edited and d.closed_at is null
    and not exists (select 1 from public.attempts a where a.game_date = g.game_date);
 select results_eq(
-  $$select game_date, pass_target from public.game_day_games where game_date between '2034-06-01' and '2034-06-05' order by game_date$$,
-  $$values ('2034-06-01'::date, 4::numeric), ('2034-06-02'::date, 1::numeric), ('2034-06-03'::date, 8::numeric), ('2034-06-04'::date, 1::numeric), ('2034-06-05'::date, 5::numeric)$$,
-  'untouched Second Sense, Swift Sum and Trail Trace days get new-scale targets; an edited day and Clean Cut keep theirs (T220)'
+  $$select game_date, pass_target from public.game_day_games where game_date between '2034-06-01' and '2034-06-07' order by game_date$$,
+  $$values ('2034-06-01'::date, 4::numeric), ('2034-06-02'::date, 1::numeric), ('2034-06-03'::date, 8::numeric), ('2034-06-04'::date, 1::numeric),
+           ('2034-06-05'::date, 5::numeric), ('2034-06-06'::date, 1::numeric), ('2034-06-07'::date, 1::numeric)$$,
+  'untouched Second Sense, Swift Sum and Trail Trace days get new-scale targets; edited, closed and started days and Clean Cut keep theirs (T220)'
 );
 
 select * from finish();
