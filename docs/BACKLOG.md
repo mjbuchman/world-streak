@@ -52,6 +52,13 @@ M7 M6 play-test tweaks (Nov 18, 2026; approved; runs before batch 19):
 - M7-d. Clean Cut (Fair Split) asymmetrical shapes and an 8 point bank: T210, T211, T212 (full: scoring, migration)
 - M7-e. M7 end-to-end checks and docs: T213, T214 (light; T214 is docs only)
 
+M8 M7 play-test tweaks (Nov 19, 2026; approved Nov 19 (2 lives, 25 dots, score hidden everywhere for bank games); runs before batch 19):
+
+- M8-a. Second Sense, Swift Sum and Trail Trace tuning: T217, T218, T219, T220 (full: scoring, migration)
+- M8-b. Clean Cut blobs and irregular polygons: T221, T222, T223 (full: scoring, migration)
+- M8-c. Round counter and results window: T224, T225 (light)
+- M8-d. M8 end-to-end checks and docs: T226, T227 (light; T227 is docs only)
+
 19. Maintenance after M6: T199, T200 (light; after the M6 play-test and M7)
 20. Maintenance after M7: T215 (full: scoring tests), T216 (light); after the M7 play-test
 
@@ -2415,6 +2422,129 @@ Planning notes for M7:
   - [ ] `docs/NEEDS_HUMAN.md` gets a "please update DESIGN.md" entry listing each M7 rule that differs from the spec (the games table: Second Sense 10 to 20 s targets and 2 s bank, Swift Sum random 10 to 30 counts, Trail Trace's 12 tile cap and no-touch rule, Clean Cut asymmetry and 8 point bank, and the two names) and a "please confirm" entry listing the proposed values and where each lives. `docs/DESIGN.md` is not edited.
 - Notes: Docs only; no reviewers needed (CLAUDE.md). Play-test points for the owner: whether the 2 s Second Sense bank is survivable, whether Swift Sum's 10 dot bank is too tight for 30 dots, whether Trail Trace feels too short or too constrained on 8 rows, and whether Clean Cut's asymmetry is obvious.
 
+## M8 M7 play-test tweaks
+
+Planned Nov 19, 2026 from the owner's M7 play-test feedback; overrides the M7 values above where they conflict. Not yet approved.
+
+Goal: play-test again. Second Sense has a 4 s bank; Swift Sum shows 10 to 25 dots; Trail Trace gives one extra life; Clean Cut shapes are irregular blobs and polygons; the round counter is big numbers joined by bars; bank games show no score in the results window.
+
+Planning notes for M8:
+
+- **Values that change:** `BUDGET_MS` (`inner-clock/engine.ts`), `DOT_COUNT_MAX` (`flash-count/engine.ts`), `LIVES` (`echo-path/engine.ts`). Each stays an exported constant, so the owner can edit it.
+- **Bank games** (the games that use the shared bank rule in `challenges/shared/bank.ts`): Second Sense (`inner-clock`), Swift Sum (`flash-count`) and Clean Cut (`fair-split`). Teetering Tower and Trail Trace are not bank games and keep their scores.
+- **One migration task per batch** resets `scores_since` (T183 pattern: a new file, day after it runs, recompute unedited unstarted open days) for the games whose scale changed.
+
+### T217 Second Sense: a 4 second bank
+- Type: feature
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `BUDGET_MS` in `src/challenges/inner-clock/engine.ts` becomes 4 000; `timeoutMs = targetMs + BUDGET_MS` follows. Target ranges, `REVEAL_MS`, `ROUNDS` and the schema are unchanged.
+  - [ ] Tests re-pinned: with targets 10 000, 13 000, 16 000, 19 000 and bank 4 000, perfect taps score 4 + 4 000 ÷ 4 000 = 5; taps `[10 500, 13 000, 16 000, 19 000]` score 4.875; an error of exactly 4 000 on every round scores 4 (the bank is spent but not exceeded); an error above 4 000 busts round 1 and scores 0. Golden scores and `lastInputMs` re-pinned. The simulated-player survival band (spread 250 ms) is re-run, re-set from the simulation and documented.
+  - [ ] `INNER_CLOCK_HOW_TO`, the tagline and `challengeUi` say "a 4 second bank"; the gauge test uses `total=4` (format "0.8 s"). Tests quoting "2 s" are updated without weakening.
+- Notes: Owner: "time bank about 4 s". Full review (scoring).
+
+### T218 Swift Sum: at most 25 dots
+- Type: feature
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `DOT_COUNT_MAX` in `src/challenges/flash-count/engine.ts` becomes 25 (default, owner may edit; the recommended range was 10 to 25). `DOT_COUNT_MIN` (10), the 10 dot bank, `ROUNDS` and flash times are unchanged.
+  - [ ] Tests: over seeds 0 to 999 every count is within 10 to 25 and all 16 values appear in every round position; round 1 and round 5 means differ by less than 1.5; with counts 12, 25, 18, 20, 21 exact answers score 6. Golden scores re-pinned. The simulated estimator (error about 15%) is re-run; the survival band is re-set from the simulation and documented.
+  - [ ] `dots.ts` spacing test covers 10 to 25. `FLASH_COUNT_HOW_TO`, tagline and `levels` label say "10 to 25 dots"; the 30-dot cheat fixture in `detect.test.ts` becomes 25 dots and still has no flags.
+- Notes: Judgment call: 25 chosen as the top of the owner's recommended 10 to 25 band, because the 10 dot bank allows about 1.2 miss per round at 20 dots. Full review (scoring).
+
+### T219 Trail Trace: one extra life
+- Type: feature
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `LIVES` in `src/challenges/echo-path/engine.ts` becomes 2 (the first try plus one extra life); `MAX_TAPS` follows. Scoring formula (longest length cleared + lives left ÷ LIVES, 3 decimals) is unchanged.
+  - [ ] Tests: with an explicit 10-tile path, all correct scores 10 + 1 = 11; clearing 4 to 6 then missing twice scores 6; clearing everything with one miss scores 10.5; a first miss then a clean run to 10 scores 10.5. Golden scores re-pinned.
+  - [ ] The lives display in `EchoPathGame.tsx` shows 2 marks with label "1 of 2 lives left"; `EchoPathPractice` detail, `ECHO_PATH_HOW_TO` and tagline say "one extra life". Tests updated without weakening.
+- Notes: Judgment call: "only one extra life" read as two lives in total, not one. Full review (scoring).
+
+### T220 Migration: scale reset for Second Sense, Swift Sum and Trail Trace
+- Type: infra
+- Status: todo
+- Depends on: T217, T218, T219
+- Acceptance criteria:
+  - [ ] One new migration sets `challenge_types.scores_since` to the day after it runs (UTC) for `inner-clock`, `flash-count` and `echo-path`, keeps `default_pass_targets` (4, 5, 8) and recomputes unedited, unstarted open days of those types. pgTAP: older attempts ignored, newer counted, other types untouched, exact date asserted.
+  - [ ] Cheat thresholds re-checked: `detect.test.ts` keeps its honest and scripted fixtures flag-for-flag for the three games (a 4 s bank widens honest Second Sense errors; change `TIME_BANK_PRECISE_*` only if the honest fixture flags, with a comment).
+  - [ ] `npm run db:types`, `npm run verify`, `npm run test:db` and `npm run test:e2e` pass.
+- Notes: Full review (migration, scoring).
+
+### T221 Clean Cut: irregular blob and polygon generators
+- Type: feature
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `src/challenges/fair-split/shapes.ts` draws every shape from two seeded generators, replacing the named kinds: an irregular blob (a smooth star-shaped outline from 3 to 5 random harmonics with random amplitudes and phases) and an irregular polygon (7 to 12 vertices at sorted random angles with random radii). Both are star-shaped around an interior point, so they are simple by construction. Same seed gives the same shape. Mix: 70% blobs, 30% polygons (keeps the curved share test at 70%).
+  - [ ] Shapes use the box margin and area floor already in `shapes.ts`, and a deterministic fallback still applies when retries fail (this absorbs T215's fallback item, which becomes done by this task and is removed from T215).
+  - [ ] The identifiable-shape helpers (heart, star, plus and the like) and their tests are removed, not left as dead code. The "at least 10 kinds" test is replaced by distinctness: over 1 000 seeds, at least 99% of shapes are distinct, and five shapes in one run all differ.
+- Notes: Owner: "entirely asymmetrical, irregular blobs or polygons, not any identifiable shape". Full review (scoring).
+
+### T222 Clean Cut: asymmetry and validity tests
+- Type: feature
+- Status: todo
+- Depends on: T221
+- Acceptance criteria:
+  - [ ] Over seeds 0 to 999 and all five positions, every shape passes `asymmetry` (mirror and 2 to 5-fold rotation measures both at least `MIN_ASYMMETRY`, raised from 0.04 if the measured minimum allows; record the measured minimum in a comment). A square, circle, regular star and symmetric heart still fail it.
+  - [ ] Validity, checked by an independent brute-force test (not the generator's own code): no two non-adjacent edges intersect (simple), every point inside the box margin, at most 160 points, area 25% to 70% of the box, and a straight halving line exists that splits the area within 1 point of 50% (cuttable).
+  - [ ] "Not identifiable" proxy: radius from the centroid varies by at least 1.3 times (max over min), so no shape is near a circle or regular polygon; asserted for all 1 000 seeds.
+  - [ ] Engine tests keep passing; golden scores re-pinned; the simulated cutter survival band re-run and documented. At least 90% lines and branches.
+- Notes: Full review (scoring).
+
+### T223 Migration: Clean Cut scale reset
+- Type: infra
+- Status: todo
+- Depends on: T222
+- Acceptance criteria:
+  - [ ] A new migration sets `scores_since` for `fair-split` to the day after it runs, keeps `default_pass_targets` at 5, recomputes unedited, unstarted open days. pgTAP with exact-date assertion as in T220.
+  - [ ] `detect.test.ts` honest fixture (distances 0.9, 1.6, 0.4, 2.1, 1.2 points) still has no flags; thresholds change only if it flags, with a comment. `FAIR_SPLIT_HOW_TO`, tagline and `shapes` label say "irregular blobs and polygons".
+  - [ ] `npm run db:types`, `npm run verify` and `npm run test:db` pass.
+- Notes: Full review (migration, scoring).
+
+### T224 Round counter: big numbers joined by progress bars
+- Type: feature
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `src/components/rounds/RoundProgress.tsx` (and its CSS module) renders one large number per round with a bar between each pair, replacing the boxes. Props are unchanged (`total`, `current`, `failedRound`), so all users (Second Sense, Swift Sum, Clean Cut, `useRevealRounds` consumers) keep working.
+  - [ ] A passed round lights its number and the bar after it (mint); the current number is ringed and the bar after it is unlit; a failed round's number is tangerine and its bar stays unlit; later ones are outlined. The last round has no bar. States are exposed as `data-step` and `data-bar` attributes.
+  - [ ] Unit tests (`RoundProgress.test.tsx`): total 4, current 2 gives numbers 1 and 2 lit, bars 1 and 2 lit, bar 3 unlit; failed round 3 gives number 3 failed; `aria-label` stays "Round N of M". A Playwright check at 390 px wide shows a 5-round bar without horizontal scroll and numbers at least 24 px tall. Follows `docs/UI_GUIDELINES.md`; reduced motion respected for bar fill.
+- Notes: Owner: shared UI for all multi-round games. Light review.
+
+### T225 Results window: no score for bank games
+- Type: feature
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `challengeUi` gains a `showScore` flag: false for `inner-clock`, `flash-count` and `fair-split`, true for `stacking` and `echo-path`. `PlayToday` (`between` phase) and `PracticeShell` (via the practice `result`) pass `score` to `ResultHero` only when the flag is true; the big number and the fractional "You scored" text are gone for bank games.
+  - [ ] For bank games the summary shows the whole rounds survived and the pass target (for example "You got through 3 of 4 rounds. Today's target was all 4."), with no decimals. Won or lost heading and the day-so-far note are unchanged.
+  - [ ] The day's results page, history and share text also show only pass or fail (no score) for bank games.
+  - [ ] Unit tests for the three bank games and the two others in every place above (no score shown for bank games, present for the others). Stored server-side scores are not changed.
+- Notes: Owner, Nov 19: hide the score everywhere for bank games, show only pass or fail. Light review.
+
+### T226 End-to-end and phone checks for the M8 changes
+- Type: feature
+- Status: todo
+- Depends on: T220, T223, T224, T225
+- Acceptance criteria:
+  - [ ] Existing e2e specs and `global-setup.ts` fixtures follow the new values without weakening (Second Sense 4 s bank, Swift Sum 10 to 25, Trail Trace 2 lives, Clean Cut blobs); a grep of `tests/e2e` for stale values finds none.
+  - [ ] Practice e2e: Second Sense shows a 4 s gauge; Swift Sum never shows more than 25 dots over ten attempts; Trail Trace shows 2 lives; Clean Cut shapes differ between attempts; the round counter shows numbers and bars and lights round 1 after it is passed; bank games show no big score and Teetering Tower does.
+  - [ ] On both mobile projects: no horizontal scroll, buttons at least 44 x 44 CSS px. The Daily Three flows still pass.
+- Notes: Light review.
+
+### T227 Record the M8 decisions
+- Type: docs
+- Status: todo
+- Depends on: T226
+- Acceptance criteria:
+  - [ ] `docs/DECISIONS.md` gets entries for: the 4 s bank, 25 dot cap, two lives in total, the blob and polygon generators with the 70/30 mix and `MIN_ASYMMETRY`, the bank-game list and where the score is still shown, the new `scores_since` resets.
+  - [ ] `docs/NEEDS_HUMAN.md` gets a "please update DESIGN.md" entry for the M8 rules and a "please confirm" entry for the 70/30 mix (25 dots and 2 lives were confirmed Nov 19) and where each lives. `docs/PROGRESS.md` is updated. `docs/DESIGN.md` is not edited.
+- Notes: Docs only; no reviewers needed.
+
 ## Maintenance after M7 (maintainer, Nov 18)
 
 ### T215 Clean Cut's last-try shape and exact scale-reset checks
@@ -2425,7 +2555,7 @@ Planning notes for M7:
   - [ ] `shapeFor` in `src/challenges/fair-split/shapes.ts` no longer keeps its last try whatever it measures: if every try fails, it falls back to a shape known to be simple, inside the margin, lopsided and above the area floor. A test forces that path.
   - [ ] The pgTAP checks of each game's `scores_since` reset assert the exact date, not `>=`; the copied re-target setup in `fair_split.test.sql` is shared or trimmed.
   - [ ] `npm run verify` and `npm run test:db` pass; no behaviour change for real seeds.
-- Notes: From M7 review notes. About 120 lines. Full review (scoring tests).
+- Notes: From M7 review notes. About 120 lines. If T221 lands first, its fallback covers the first criterion; keep only the test and the pgTAP part. Full review (scoring tests).
 
 ### T216 Admin sign-in e2e tests steady on a cold dev server
 - Type: maintenance
