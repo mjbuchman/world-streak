@@ -35,7 +35,8 @@ describe("placeDots", () => {
     }
   });
 
-  it("lays out every count from 10 to 30 validly over several seeds (T205)", () => {
+  it("lays out every count from 10 to 25 validly over several seeds (T205, T218)", () => {
+    expect([DOT_COUNT_MIN, DOT_COUNT_MAX]).toEqual([10, 25]);
     for (let count = DOT_COUNT_MIN; count <= DOT_COUNT_MAX; count++) {
       for (let seed = 0; seed < 10; seed++) {
         const dots = placeDots(createRng(seed), count);

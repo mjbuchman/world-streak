@@ -93,10 +93,10 @@ describe("submitAttempt", () => {
       const run = (lastErrorMs: number) => ({ tapsMs: [...targets.slice(0, 3), targets[3] + lastErrorMs] });
       // Later than any of these runs could end.
       const later = new Date(startedAt.getTime() + 150_000);
-      // The whole 2 s bank (T202), then one ms more.
-      const pass = await submit({ attemptId, inputs: run(2_000) }, dayOf("inner-clock", 4), later);
+      // The whole 4 s bank (T217), then one ms more.
+      const pass = await submit({ attemptId, inputs: run(4_000) }, dayOf("inner-clock", 4), later);
       expect(pass.body).toMatchObject({ score: 4, passed: true, passTarget: 4 });
-      const fail = await submit({ attemptId, inputs: run(2_001) }, dayOf("inner-clock", 4), later);
+      const fail = await submit({ attemptId, inputs: run(4_001) }, dayOf("inner-clock", 4), later);
       expect(fail.body).toMatchObject({ score: 3, passed: false, passTarget: 4 });
     });
 

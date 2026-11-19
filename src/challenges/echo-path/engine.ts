@@ -9,17 +9,18 @@ import { COLS, MAX_PATH_LENGTH, pathFor, ROWS } from "./path";
  * round adds the path's next tile. A wrong tile costs one of LIVES lives and the same tiles play
  * again. The run ends when the whole path is cleared or the lives run out. There is no time
  * limit per tap, as the Tower has none (DECISIONS, T143). Score = longest length cleared + lives
- * left as a fraction. The start of 4 is the owner's; the lives and step speeds are proposed.
+ * left as a fraction. The start of 4 and the lives (the first try plus one extra life, M8 T219)
+ * are the owner's; the step speeds are proposed.
  */
 
 export { COLS, ROWS };
 export const START_LENGTH = 4;
-export const LIVES = 3;
+export const LIVES = 2;
 /** How long each tile of a playback lights, in a multiple of 50 ms from this range (inclusive). */
 export const STEP_MS_RANGE = { min: 300, max: 400 } as const;
 const STEP_UNIT_MS = 50;
 
-/** The most taps a run can take: every length of the longest path cleared, and two full misses at the last. */
+/** The most taps a run can take: every length of the longest path cleared, and a full miss at the last for each spare life. */
 export const MAX_TAPS = ((START_LENGTH + MAX_PATH_LENGTH) * (MAX_PATH_LENGTH - START_LENGTH + 1)) / 2 + (LIVES - 1) * MAX_PATH_LENGTH;
 
 export type EchoPathParams = { cols: number; rows: number; path: number[]; startLength: number; stepMs: number };

@@ -93,11 +93,11 @@ const sum = (gapsMs = [2_000, 2_000], over: Partial<DetectArgs> = {}): DetectArg
 
 /** A Time Bank run of four 20 s rounds, each tapped `errorsMs[i]` late (null: no tap). */
 const bank = (errorsMs: (number | null)[], over: Partial<DetectArgs> = {}): DetectArgs => {
-  // A 2 s bank on 15 s targets, as the game has since T202.
-  const rounds = Array.from({ length: 4 }, () => ({ targetMs: 15_000, revealMs: 2_000, timeoutMs: 17_000 }));
+  // A 4 s bank on 15 s targets, as the game has since T217.
+  const rounds = Array.from({ length: 4 }, () => ({ targetMs: 15_000, revealMs: 2_000, timeoutMs: 19_000 }));
   const tapsMs = errorsMs.map((error) => (error === null ? null : 15_000 + error));
-  const lastMs = tapsMs.reduce<number>((sum, tap, i) => sum + (i > 0 ? ROUND_GAP_MS + ROUND_COUNTDOWN_MS : 0) + (tap ?? 17_000), 0);
-  return clock(errorsMs.length, { inputs: { tapsMs }, params: { budgetMs: 2_000, rounds }, serverElapsedMs: lastMs + 4_000, ...over });
+  const lastMs = tapsMs.reduce<number>((sum, tap, i) => sum + (i > 0 ? ROUND_GAP_MS + ROUND_COUNTDOWN_MS : 0) + (tap ?? 19_000), 0);
+  return clock(errorsMs.length, { inputs: { tapsMs }, params: { budgetMs: 4_000, rounds }, serverElapsedMs: lastMs + 4_000, ...over });
 };
 
 /** A real Echo Path board: its path is 10 tiles long, played back at 300 ms a tile. */
@@ -242,11 +242,13 @@ describe("stacking-perfect-run", () => {
 });
 
 describe("time-bank-implausible", () => {
-  it("leaves an honest run that survives the 2 s bank alone (T204)", () => {
+  it("leaves honest runs that survive the 4 s bank alone (T204, T220)", () => {
     expect(detectFlags(bank([400, -300, 600, -200]))).toEqual([]);
+    // The wider misses a 4 s bank lets an honest player survive.
+    expect(detectFlags(bank([1_100, -800, 900, -1_200]))).toEqual([]);
   });
 
-  it("flags a scripted run inside the 2 s bank (T204)", () => {
+  it("flags a scripted run inside the 4 s bank (T204, T220)", () => {
     expect(detectFlags(bank([10, -12, 8, 15]))).toEqual(["time-bank-implausible"]);
   });
 
@@ -357,10 +359,10 @@ describe("flash-count-instant", () => {
     expect(detectFlags(sum([800, 800]))).toEqual([]);
   });
 
-  it("leaves an honest 30-dot round answered 2 s after it cleared alone (T206)", () => {
+  it("leaves an honest 25-dot round answered 2 s after it cleared alone (T206, T218)", () => {
     const answerAt = RUN_COUNTDOWN_MS + 1_800 + 2_000;
-    const params = { layoutSeed: 1, bank: 10, levels: [{ dotCount: 30, flashMs: 1_800 }] };
-    const run = sum(undefined, { inputs: { answers: [{ count: 27, atMs: answerAt }] }, params, serverElapsedMs: answerAt + 1_000 });
+    const params = { layoutSeed: 1, bank: 10, levels: [{ dotCount: 25, flashMs: 1_800 }] };
+    const run = sum(undefined, { inputs: { answers: [{ count: 22, atMs: answerAt }] }, params, serverElapsedMs: answerAt + 1_000 });
     expect(detectFlags(run)).toEqual([]);
   });
 

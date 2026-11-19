@@ -39,22 +39,22 @@ const WRONG = 7;
 describe("EchoPathPractice", () => {
   it("explains the path, the keys and the lives before the start", () => {
     render(<EchoPathPractice />);
-    expect(screen.getByText(/a path of 4 tiles lights up from the bottom of the board.*arrow keys.*until it reaches the top: a path of up to 12 tiles.*3 lives/)).toBeTruthy();
+    expect(screen.getByText(/a path of 4 tiles lights up from the bottom of the board.*arrow keys.*until it reaches the top: a path of up to 12 tiles.*one extra life/)).toBeTruthy();
   });
 
   it("shows the longest path against the whole and the lives left, and focuses the result", async () => {
-    await playWith([...sequenceFor(params, 4), WRONG, WRONG, WRONG]);
+    await playWith([...sequenceFor(params, 4), WRONG, WRONG]);
     const heading = screen.getByRole("heading", { name: "Longest path: 4 of 6 tiles" });
     expect(document.activeElement).toBe(heading);
-    expect(screen.getByText("0 of 3 lives left. Score: 4.")).toBeTruthy();
+    expect(screen.getByText("0 of 2 lives left. Score: 4.")).toBeTruthy();
   });
 
   it("says so when the path reaches the top, and when no path is repeated", async () => {
     await playWith([...sequenceFor(params, 4), WRONG, ...sequenceFor(params, 5), ...sequenceFor(params, 6)]);
     expect(screen.getByRole("heading", { name: "You reached the top: 6 tiles" })).toBeTruthy();
-    expect(screen.getByText("2 of 3 lives left. Score: 6.667.")).toBeTruthy();
+    expect(screen.getByText("1 of 2 lives left. Score: 6.5.")).toBeTruthy();
     cleanup();
-    const user = await playWith([WRONG, WRONG, WRONG]);
+    const user = await playWith([WRONG, WRONG]);
     expect(screen.getByRole("heading", { name: "No path repeated" })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Play again" }));
     expect(screen.getByRole("button", { name: "Fake run" })).toBeTruthy();

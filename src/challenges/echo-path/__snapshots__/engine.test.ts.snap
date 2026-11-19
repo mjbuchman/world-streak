@@ -15,7 +15,7 @@ exports[`Echo Path params > golden: seed 0 (changing the PRNG, the path rules or
     30,
     36,
   ],
-  "slips": 6.333,
+  "slips": 6.5,
   "stepMs": 300,
 }
 `;
@@ -34,7 +34,7 @@ exports[`Echo Path params > golden: seed 1 (changing the PRNG, the path rules or
     30,
     36,
   ],
-  "slips": 6.333,
+  "slips": 6.5,
   "stepMs": 350,
 }
 `;
@@ -54,7 +54,7 @@ exports[`Echo Path params > golden: seed 4294967295 (changing the PRNG, the path
     33,
     37,
   ],
-  "slips": 6.333,
+  "slips": 6.5,
   "stepMs": 400,
 }
 `;

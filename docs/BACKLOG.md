@@ -77,7 +77,7 @@ Planning notes for M8:
 
 ### T217 Second Sense: a 4 second bank
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] `BUDGET_MS` in `src/challenges/inner-clock/engine.ts` becomes 4 000; `timeoutMs = targetMs + BUDGET_MS` follows. Target ranges, `REVEAL_MS`, `ROUNDS` and the schema are unchanged.
@@ -87,7 +87,7 @@ Planning notes for M8:
 
 ### T218 Swift Sum: at most 25 dots
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] `DOT_COUNT_MAX` in `src/challenges/flash-count/engine.ts` becomes 25 (default, owner may edit; the recommended range was 10 to 25). `DOT_COUNT_MIN` (10), the 10 dot bank, `ROUNDS` and flash times are unchanged.
@@ -97,7 +97,7 @@ Planning notes for M8:
 
 ### T219 Trail Trace: one extra life
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] `LIVES` in `src/challenges/echo-path/engine.ts` becomes 2 (the first try plus one extra life); `MAX_TAPS` follows. Scoring formula (longest length cleared + lives left ÷ LIVES, 3 decimals) is unchanged.
@@ -107,7 +107,7 @@ Planning notes for M8:
 
 ### T220 Migration: scale reset for Second Sense, Swift Sum and Trail Trace
 - Type: infra
-- Status: todo
+- Status: in-progress
 - Depends on: T217, T218, T219
 - Acceptance criteria:
   - [ ] One new migration sets `challenge_types.scores_since` to the day after it runs (UTC) for `inner-clock`, `flash-count` and `echo-path`, keeps `default_pass_targets` (4, 5, 8) and recomputes unedited, unstarted open days of those types. pgTAP: older attempts ignored, newer counted, other types untouched, exact date asserted.

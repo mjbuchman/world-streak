@@ -55,8 +55,8 @@ describe("challengeUi", () => {
     }
   });
 
-  it("explains Second Sense's four rounds, 10 to 20 second targets and 2-second time bank (T183, T203)", () => {
-    expect(challengeUi("inner-clock").howTo).toMatch(/four rounds.*10 to 20 seconds.*2-second time bank.*Survive all four/);
+  it("explains Second Sense's four rounds, 10 to 20 second targets and 4-second time bank (T183, T217)", () => {
+    expect(challengeUi("inner-clock").howTo).toMatch(/four rounds.*10 to 20 seconds.*4-second time bank.*Survive all four/);
   });
 
   it("calls a Second Sense target of 4 surviving all four rounds, and any other target plain rounds", () => {
@@ -65,11 +65,11 @@ describe("challengeUi", () => {
   });
 
   it("explains Swift Sum's five rounds and its dot bank (T186)", () => {
-    expect(challengeUi("flash-count").howTo).toMatch(/five rounds.*a new count of 10 to 30 dots.*10-dot bank.*Survive all five/);
+    expect(challengeUi("flash-count").howTo).toMatch(/five rounds.*a new count of 10 to 25 dots.*10-dot bank.*Survive all five/);
   });
 
   it("explains Echo Path's climbing path and its arrow keys, and states its target as a path length (T190, T191)", () => {
-    expect(challengeUi("echo-path").howTo).toMatch(/path of 4 tiles.*arrow keys.*Space or Enter.*reaches the top: a path of up to 12 tiles.*3 lives/);
+    expect(challengeUi("echo-path").howTo).toMatch(/path of 4 tiles.*arrow keys.*Space or Enter.*reaches the top: a path of up to 12 tiles.*one extra life.*a second ends the run/);
     expect(challengeUi("echo-path").target(10)).toBe("a path of 10 tiles");
   });
 

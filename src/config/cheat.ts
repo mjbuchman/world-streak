@@ -18,14 +18,15 @@ export const STACKING_PERFECT_RUN_ROWS = 12;
 
 /**
  * Swift Sum: an answer this soon after the dots cleared is faster than typing, when reported.
- * Re-checked for 10 to 30 dots (T206): more dots only make honest answers slower, so it stays.
+ * Re-checked for 10 to 30 dots (T206) and 10 to 25 (T220): the count does not change how fast an
+ * honest answer can be typed, so it stays.
  */
 export const FLASH_COUNT_MIN_ANSWER_MS = 800;
 
 /**
  * Second Sense: this many of the four rounds of one run each tapped under this error (ms) look
- * scripted on 10 to 20 s intervals (T164, T183). Re-checked for the 2 s bank (T204): honest errors
- * that survive it are a few hundred ms, still far above 25 ms, so the values stay.
+ * scripted on 10 to 20 s intervals (T164, T183). Re-checked for the 2 s bank (T204) and the 4 s
+ * bank (T220): a bigger bank only lets honest errors grow, still far above 25 ms, so the values stay.
  */
 export const INNER_CLOCK_PRECISE_ROUNDS = 3;
 export const INNER_CLOCK_PRECISE_ERROR_MS = 25;
