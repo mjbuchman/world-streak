@@ -59,9 +59,23 @@ describe("challengeUi", () => {
     expect(challengeUi("inner-clock").howTo).toMatch(/four rounds.*10 to 20 seconds.*4-second time bank.*Survive all four/);
   });
 
-  it("calls a Second Sense target of 4 surviving all four rounds, and any other target plain rounds", () => {
-    expect(challengeUi("inner-clock").target(4)).toBe("4 rounds: survive all four");
-    expect(challengeUi("inner-clock").target(4.5)).toBe("4.5 rounds");
+  it.each([
+    [4, "all 4"],
+    [4.5, "all 4"],
+    [3, "3 of 4 rounds"],
+    [3.25, "3 of 4 rounds and part of the bank"],
+  ])("states a Second Sense target of %f in whole rounds, with no decimals (T225)", (target, text) => {
+    expect(challengeUi("inner-clock").target(target)).toBe(text);
+  });
+
+  it.each([
+    ["stacking", true],
+    ["echo-path", true],
+    ["inner-clock", false],
+    ["flash-count", false],
+    ["fair-split", false],
+  ] as const)("shows %s's score: %s (T225)", (type, shown) => {
+    expect(challengeUi(type).showScore).toBe(shown);
   });
 
   it("explains Swift Sum's five rounds and its dot bank (T186)", () => {
@@ -88,14 +102,15 @@ describe("challengeUi", () => {
 
   it.each([
     ["stacking", 7, 10, "You reached row 7. Today's target was row 10."],
-    ["inner-clock", 3.9, 4, "You scored 3.9 rounds. Today's target was 4 rounds: survive all four."],
-    ["inner-clock", 1, 4.5, "You scored 1 round. Today's target was 4.5 rounds."],
-    ["flash-count", 5.4, 5, "You scored 5.4 rounds. Today's target was 5 rounds: survive all five."],
-    ["flash-count", 1, 4, "You scored 1 round. Today's target was 4 rounds."],
+    ["inner-clock", 3.9, 4, "You got through 3 of 4 rounds. Today's target was all 4."],
+    ["inner-clock", 4.96, 4, "You got through 4 of 4 rounds. Today's target was all 4."],
+    ["inner-clock", 5, 4, "You got through 4 of 4 rounds. Today's target was all 4."],
+    ["flash-count", 5.4, 5, "You got through 5 of 5 rounds. Today's target was all 5."],
+    ["flash-count", 1, 4, "You got through 1 of 5 rounds. Today's target was 4 of 5 rounds."],
     ["echo-path", 7.667, 10, "You scored 7.667 tiles. Today's target was a path of 10 tiles."],
     ["echo-path", 1, 10, "You scored 1 tile. Today's target was a path of 10 tiles."],
-    ["fair-split", 5.5, 5, "You scored 5.5 shapes. Today's target was 5 shapes: survive all five."],
-    ["fair-split", 1, 4, "You scored 1 shape. Today's target was 4 shapes."],
+    ["fair-split", 5.5, 5, "You got through 5 of 5 shapes. Today's target was all 5."],
+    ["fair-split", 1.875, 4.2, "You got through 1 of 5 shapes. Today's target was 4 of 5 shapes and part of the bank."],
   ] as const)("sums up a %s result against today's target", (type, score, target, line) => {
     expect(challengeUi(type).summary(score, target)).toBe(line);
   });

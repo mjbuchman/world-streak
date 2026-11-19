@@ -1,6 +1,6 @@
 "use client";
 
-import { fairSplit, paramsFromSeed, play, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
+import { paramsFromSeed, play, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
 import { challengeUi } from "@/components/challenges/challengeUi";
 import { FairSplitGame, points } from "@/components/fair-split/FairSplitGame";
 import { bankResult } from "@/components/practice/bankResult";
@@ -19,7 +19,6 @@ function result(params: FairSplitParams, inputs: FairSplitInputs) {
     scoreLabel: ui.scoreLabel,
     format: points,
     bankLabel: `${params.bank}-point bank`,
-    score: fairSplit.score(params, inputs),
   });
 }
 

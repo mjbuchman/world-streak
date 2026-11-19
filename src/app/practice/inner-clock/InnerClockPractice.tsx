@@ -1,6 +1,6 @@
 "use client";
 
-import { paramsFromSeed, play, innerClock, type InnerClockInputs, type InnerClockParams } from "@/challenges/inner-clock/engine";
+import { paramsFromSeed, play, type InnerClockInputs, type InnerClockParams } from "@/challenges/inner-clock/engine";
 import { challengeUi } from "@/components/challenges/challengeUi";
 import { targetLabel } from "@/components/inner-clock/InnerClockTap";
 import { InnerClockGame } from "@/components/inner-clock/InnerClockGame";
@@ -24,7 +24,6 @@ function result(params: InnerClockParams, inputs: InnerClockInputs) {
     scoreLabel: ui.scoreLabel,
     format: seconds,
     bankLabel: `${seconds(params.budgetMs)} time bank`,
-    score: innerClock.score(params, inputs),
   });
 }
 

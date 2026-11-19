@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M8 M7 play-test tweaks (T217–T227), approved Nov 19 (PR #186). T45, T52 and T128 still wait on the owner.
-- Active task: batch M8-b (T221–T223). Next: M8-c, M8-d, then T215 and T216.
+- Active task: batch M8-c (T224–T225). Next: M8-d, then T215 and T216.
 - Blocked tasks: none
 - Waiting on the human: the M6 and M7 please-confirms; updating DESIGN.md for M6 and M7; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: run M8-a to M8-d without play-test stops, then one M8 play-test summary.
@@ -14,6 +14,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/PROGRESS-to-2026-11-19.md`. Search it only when you need history.
 
+- 2026-11-19 T221–T223 done, PR #189: Clean Cut draws irregular blobs (70%) and polygons with MIN_ASYMMETRY 0.08, plus its scale reset; cutter survival 98.3%.
 - 2026-11-19 T217–T220 done, PR #188: Second Sense 4 s bank, Swift Sum 10 to 25 dots, Trail Trace 2 lives, and their scale reset.
 - 2026-11-19 docs: M8 planned (PR #186); BACKLOG, PROGRESS and DECISIONS trimmed to active content, full copies in `docs/archive/`.
 - 2026-11-18 T199–T200 done, PR #184: Swift Sum and Second Sense code names follow their keys; their round loop is one hook (`useRevealRounds`) and the bank games share `bankResult`. M7 maintainer check added T215 and T216.

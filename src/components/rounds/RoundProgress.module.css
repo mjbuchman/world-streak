@@ -1,20 +1,25 @@
-/* One step per round, joined into a bar (T178). */
-.bar {
+/* One big number per round, joined by bars (T178, T224). */
+.counter {
   display: flex;
-  gap: var(--space-1);
+  align-items: center;
   width: 100%;
 }
 
-/* The highlight moves with a short transition; reduced motion sets the duration to 0. */
+/*
+ * The highlight moves with a short transition; reduced motion sets the duration to 0. 30 px keeps the
+ * counter only 2 px taller than the old boxes, so Swift Sum's answer row still fits a phone screen.
+ */
 .step {
-  flex: 1;
+  flex: none;
   display: grid;
   place-items: center;
-  height: 28px;
-  border-radius: var(--fs-radius-cell);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   border: 2px solid var(--fs-color-surface-border);
-  font-size: var(--fs-text-label);
-  font-weight: 700;
+  font-size: var(--fs-text-title);
+  font-weight: 800;
+  line-height: 1;
   color: var(--fs-color-text-muted);
   font-variant-numeric: tabular-nums;
   transition:
@@ -37,6 +42,20 @@
 
 .step[data-step="current"] {
   border-color: var(--fs-color-tangerine);
-  box-shadow: 0 0 0 2px var(--fs-tint-tangerine);
+  box-shadow: 0 0 0 3px var(--fs-tint-tangerine);
   color: var(--fs-color-text);
+}
+
+.bar {
+  flex: 1;
+  min-width: var(--space-1);
+  height: 6px;
+  margin: 0 var(--space-1);
+  border-radius: 3px;
+  background: var(--fs-color-surface-border);
+  transition: background-color var(--fs-duration-medium) var(--fs-ease-out);
+}
+
+.bar[data-bar="lit"] {
+  background: var(--fs-color-mint);
 }

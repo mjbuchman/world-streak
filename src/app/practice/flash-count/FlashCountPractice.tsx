@@ -1,6 +1,6 @@
 "use client";
 
-import { flashCount, paramsFromSeed, play, type FlashCountInputs, type FlashCountParams } from "@/challenges/flash-count/engine";
+import { paramsFromSeed, play, type FlashCountInputs, type FlashCountParams } from "@/challenges/flash-count/engine";
 import { challengeUi } from "@/components/challenges/challengeUi";
 import { dots, FlashCountGame } from "@/components/flash-count/FlashCountGame";
 import { bankResult } from "@/components/practice/bankResult";
@@ -19,7 +19,6 @@ function result(params: FlashCountParams, inputs: FlashCountInputs) {
     scoreLabel: ui.scoreLabel,
     format: dots,
     bankLabel: `${params.bank}-dot bank`,
-    score: flashCount.score(params, inputs),
   });
 }
 

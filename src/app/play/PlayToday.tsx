@@ -148,9 +148,10 @@ export function PlayToday({ firstGame, initial }: { firstGame: ChallengeType; in
       const { position, challengeType, verdict, day: progress } = phase;
       // This game brought its side to two (a game left earlier is already one of the losses).
       const decidedNow = progress.outcome !== null && (verdict.passed ? progress.wins : progress.losses) === 2;
+      const ui = challengeUi(challengeType);
       return (
         <ResultHero
-          score={verdict.score}
+          score={ui.showScore ? verdict.score : undefined}
           heading={`Game ${position} of ${GAMES_PER_DAY}: ${verdict.passed ? "won" : "lost"}`}
           tone={verdict.passed ? "pass" : "plain"}
           // The pass that just decided the day is the one worth celebrating.
@@ -158,7 +159,7 @@ export function PlayToday({ firstGame, initial }: { firstGame: ChallengeType; in
           note={`The day so far: ${daySoFar(progress)}.`}
           actions={progress.nextPosition === null ? seeResults() : continueButton}
         >
-          <p className={styles.summary}>{challengeUi(challengeType).summary(verdict.score, verdict.passTarget)}</p>
+          <p className={styles.summary}>{ui.summary(verdict.score, verdict.passTarget)}</p>
           {decidedNow && <p className={styles.verdict}>{dayVerdict(progress.outcome)}</p>}
         </ResultHero>
       );

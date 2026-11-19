@@ -32,14 +32,36 @@ type ChallengeUi<Params, Inputs> = {
   summary: (score: number, passTarget: number) => string;
   /** Today's target alone ("row 10", "5 levels"), for a game with no score on the results page. */
   target: (passTarget: number) => string;
+  /**
+   * Whether players see the score (T225). The bank games hide it, its fraction being the bank left,
+   * and show only the whole rounds got through and pass or fail.
+   */
+  showScore: boolean;
 };
 
-/** Time Bank: rounds survived plus the budget left as a fraction ("3.9 rounds"). */
-const rounds = (score: number) => `${score} ${score === 1 ? "round" : "rounds"}`;
-/** A bank game's target: a score of all its rounds is surviving every one (T183, T186). */
-const roundsTarget = (all: number, word: string) => (target: number) => (target === all ? `${rounds(target)}: survive all ${word}` : rounds(target));
-const innerClockTarget = roundsTarget(INNER_CLOCK_ROUNDS, "four");
-const flashCountTarget = roundsTarget(FLASH_COUNT_ROUNDS, "five");
+/** Rounds or shapes survived, in words ("1 round", "3 shapes"). */
+const counted = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+/** Rounds survived plus the bank left as a fraction ("3.9 rounds"): practice's heading counts whole ones. */
+const rounds = (score: number) => counted(score, "round", "rounds");
+
+/**
+ * A bank game's target in whole rounds (T225): a score is the rounds survived plus the bank left as
+ * a fraction, so "all 4", "3 of 4", or, for a target between two counts, "3 of 4 and part of the bank".
+ */
+const bankTarget = (all: number, unit: string) => (target: number) => {
+  if (target >= all) return `all ${all}`;
+  const whole = Math.floor(target);
+  return whole === target ? `${whole} of ${all} ${unit}` : `${whole} of ${all} ${unit} and part of the bank`;
+};
+/**
+ * A bank game's line under the verdict: the whole rounds survived against today's target. A perfect
+ * run scores one more than the rounds (the whole bank left), hence the cap.
+ */
+const bankSummary = (all: number, unit: string) => {
+  const target = bankTarget(all, unit);
+  return (score: number, passTarget: number) =>
+    `You got through ${Math.min(Math.floor(score), all)} of ${all} ${unit}. Today's target was ${target(passTarget)}.`;
+};
 
 const stacking: ChallengeUi<StackingParams, StackingInputs> = {
   howTo: STACKING_HOW_TO,
@@ -50,6 +72,7 @@ const stacking: ChallengeUi<StackingParams, StackingInputs> = {
   scoreLabel: reachedRow,
   summary: (score, passTarget) => `${reachedRow(score)}. Today's target was ${targetRow(passTarget)}.`,
   target: targetRow,
+  showScore: true,
 };
 
 const innerClock: ChallengeUi<InnerClockParams, InnerClockInputs> = {
@@ -57,8 +80,9 @@ const innerClock: ChallengeUi<InnerClockParams, InnerClockInputs> = {
   practicePath: practicePath("inner-clock"),
   play: ({ params, onFinish }) => <InnerClockGame params={params} onFinish={onFinish} />,
   scoreLabel: rounds,
-  summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${innerClockTarget(passTarget)}.`,
-  target: innerClockTarget,
+  summary: bankSummary(INNER_CLOCK_ROUNDS, "rounds"),
+  target: bankTarget(INNER_CLOCK_ROUNDS, "rounds"),
+  showScore: false,
 };
 
 const flashCount: ChallengeUi<FlashCountParams, FlashCountInputs> = {
@@ -66,12 +90,13 @@ const flashCount: ChallengeUi<FlashCountParams, FlashCountInputs> = {
   practicePath: practicePath("flash-count"),
   play: ({ params, onFinish }) => <FlashCountGame params={params} onFinish={onFinish} />,
   scoreLabel: rounds,
-  summary: (score, passTarget) => `You scored ${rounds(score)}. Today's target was ${flashCountTarget(passTarget)}.`,
-  target: flashCountTarget,
+  summary: bankSummary(FLASH_COUNT_ROUNDS, "rounds"),
+  target: bankTarget(FLASH_COUNT_ROUNDS, "rounds"),
+  showScore: false,
 };
 
 /** Echo Path: the longest path repeated plus the lives left as a fraction ("7.667 tiles"). */
-const tiles = (score: number) => `${score} ${score === 1 ? "tile" : "tiles"}`;
+const tiles = (score: number) => counted(score, "tile", "tiles");
 const pathOf = (target: number) => `a path of ${tiles(target)}`;
 
 const echoPath: ChallengeUi<EchoPathParams, EchoPathInputs> = {
@@ -81,19 +106,20 @@ const echoPath: ChallengeUi<EchoPathParams, EchoPathInputs> = {
   scoreLabel: tiles,
   summary: (score, passTarget) => `You scored ${tiles(score)}. Today's target was ${pathOf(passTarget)}.`,
   target: pathOf,
+  showScore: true,
 };
 
 /** Fair Split: shapes survived plus the bank left as a fraction ("4.5 shapes", T195). */
-const shapes = (score: number) => `${score} ${score === 1 ? "shape" : "shapes"}`;
-const shapesTarget = (target: number) => (target === FAIR_SPLIT_ROUNDS ? `${shapes(target)}: survive all five` : shapes(target));
+const shapes = (score: number) => counted(score, "shape", "shapes");
 
 const fairSplit: ChallengeUi<FairSplitParams, FairSplitInputs> = {
   howTo: FAIR_SPLIT_HOW_TO,
   practicePath: practicePath("fair-split"),
   play: ({ params, onFinish }) => <FairSplitGame params={params} onFinish={onFinish} />,
   scoreLabel: shapes,
-  summary: (score, passTarget) => `You scored ${shapes(score)}. Today's target was ${shapesTarget(passTarget)}.`,
-  target: shapesTarget,
+  summary: bankSummary(FAIR_SPLIT_ROUNDS, "shapes"),
+  target: bankTarget(FAIR_SPLIT_ROUNDS, "shapes"),
+  showScore: false,
 };
 
 const CHALLENGE_UI = {

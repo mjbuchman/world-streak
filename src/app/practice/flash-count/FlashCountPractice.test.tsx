@@ -44,13 +44,13 @@ describe("FlashCountPractice", () => {
     await playWith(13, 22);
     const heading = screen.getByRole("heading", { name: "1 round survived" });
     expect(document.activeElement).toBe(heading);
-    expect(screen.getByText("0 dots of your 10-dot bank left. Score: 1.")).toBeTruthy();
+    expect(screen.getByText("0 dots of your 10-dot bank left.")).toBeTruthy();
   });
 
   it("says so when every round is survived", async () => {
     await playWith(9, 16);
     expect(screen.getByRole("heading", { name: "Every round survived" })).toBeTruthy();
-    expect(screen.getByText("7 dots of your 10-dot bank left. Score: 2.7.")).toBeTruthy();
+    expect(screen.getByText("7 dots of your 10-dot bank left.")).toBeTruthy();
   });
 
   it("offers another go", async () => {

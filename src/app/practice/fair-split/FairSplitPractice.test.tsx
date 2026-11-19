@@ -55,13 +55,13 @@ describe("FairSplitPractice", () => {
     await playWith({ cuts: [cutAt(FIRST, 51.2), cutAt(FIRST + GAP_MS + 500, 57)], endMs: FIRST + GAP_MS + 500 });
     const heading = screen.getByRole("heading", { name: "1 shape survived" });
     expect(document.activeElement).toBe(heading);
-    expect(screen.getByText("0 points of your 8-point bank left. Score: 1.")).toBeTruthy();
+    expect(screen.getByText("0 points of your 8-point bank left.")).toBeTruthy();
   });
 
   it("says so when every shape survives, and when none does", async () => {
     await playWith({ cuts: [cutAt(FIRST), cutAt(FIRST + GAP_MS + 500, 51)], endMs: FIRST + GAP_MS + 500 });
     expect(screen.getByRole("heading", { name: "Every shape survived" })).toBeTruthy();
-    expect(screen.getByText("7 points of your 8-point bank left. Score: 2.875.")).toBeTruthy();
+    expect(screen.getByText("7 points of your 8-point bank left.")).toBeTruthy();
     cleanup();
     const user = await playWith({ cuts: [], endMs: 60_000 });
     expect(screen.getByRole("heading", { name: "0 shapes survived" })).toBeTruthy();

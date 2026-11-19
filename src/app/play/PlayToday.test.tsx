@@ -237,7 +237,9 @@ describe("PlayToday starting a game", () => {
     await user.click(await screen.findByRole("button", { name: "Answer 20" }));
     expect(await screen.findByRole("heading", { name: "Game 2 of 3: lost" })).toBeTruthy();
     expect(JSON.parse(fetchSpy.mock.calls[1][1]!.body as string)).toEqual({ attemptId, inputs: { answers: [{ count: 20, atMs: 4000 }] } });
-    expect(screen.getByText("You scored 2 rounds. Today's target was 5 rounds: survive all five.")).toBeTruthy();
+    // A bank game shows whole rounds and no big score (T225).
+    expect(screen.getByText("You got through 2 of 5 rounds. Today's target was all 5.")).toBeTruthy();
+    expect(document.querySelector("[data-big-score]")).toBeNull();
   });
 });
 
