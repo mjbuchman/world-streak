@@ -4,16 +4,17 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M8 M7 play-test tweaks (T217–T227), approved Nov 19 (PR #186). T45, T52 and T128 still wait on the owner.
-- Active task: T215–T216 (test upkeep). Next: the maintainer check, then the M8 play-test.
+- Milestone: M8 M7 play-test tweaks (T217–T227) complete; waiting on the owner's M8 play-test. T45, T52 and T128 still wait on the owner.
+- Active task: none. Next: the owner's M8 play-test, then T228 and T229.
 - Blocked tasks: none
-- Waiting on the human: the M6, M7 and M8 please-confirms; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: run M8-a to M8-d without play-test stops, then one M8 play-test summary.
+- Waiting on the human: the M8 play-test; the M6, M7 and M8 please-confirms; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
+- Next: play-test feedback, then T228 and T229.
 
 ## Log
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/PROGRESS-to-2026-11-19.md`. Search it only when you need history.
 
+- 2026-11-19 T215–T216 done, PR #192: exact scale-reset checks and one re-target test in pgTAP; the local warm-up opens every admin page, so the admin e2e passes from a cold server. Also fixed T226's Swift Sum ten-run test (an answer of 1 did not always bust the bank). Maintainer check after M8 added T228 and T229.
 - 2026-11-19 T226–T227 done, PR #191: practice e2e checks for the M8 changes (25-dot cap over ten runs, new shapes each run, counter bars, no big score); M8 decisions recorded.
 - 2026-11-19 T224–T225 done, PR #190: numbered round counter joined by bars; the bank games show rounds got through and pass or fail, no score. CI's first run hit a registry rate limit; the re-run passed.
 - 2026-11-19 T221–T223 done, PR #189: Clean Cut draws irregular blobs (70%) and polygons with MIN_ASYMMETRY 0.08, plus its scale reset; cutter survival 98.3%.

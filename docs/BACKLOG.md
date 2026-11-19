@@ -30,6 +30,8 @@ M8 M7 play-test tweaks (Nov 19, 2026; approved Nov 19 (2 lives, 25 dots, score h
 
 Maintenance after M7: T215 (full: scoring tests), T216 (light); after M8.
 
+Maintenance after M8: T228 then T229 (light), after the M8 play-test.
+
 ## Open tasks waiting on the owner
 
 ### T128 Keep .env.example in step with the code
@@ -190,20 +192,42 @@ Planning notes for M8:
 
 ### T215 Clean Cut's last-try shape and exact scale-reset checks
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [x] The fallback shape and its forced-path test (done by T221).
-  - [ ] The pgTAP checks of each game's `scores_since` reset assert the exact date, not `>=`; the copied re-target setup in `fair_split.test.sql` is shared or trimmed.
-  - [ ] `npm run verify` and `npm run test:db` pass; no behaviour change for real seeds.
+  - [x] The pgTAP checks of each game's `scores_since` reset assert the exact date, not `>=`; the copied re-target setup in `fair_split.test.sql` is shared or trimmed.
+  - [x] `npm run verify` and `npm run test:db` pass; no behaviour change for real seeds.
 - Notes: From M7 review notes. About 120 lines. If T221 lands first, its fallback covers the first criterion; keep only the test and the pgTAP part. Full review (scoring tests).
 
 ### T216 Admin sign-in e2e tests steady on a cold dev server
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
-  - [ ] The admin e2e tests no longer time out on the first run against a cold dev server (for example a warm-up of the admin routes before they run), without raising the global timeout or skipping tests.
-  - [ ] `challengeUi`'s `shapes` formatter is renamed or commented so its job is clear; its tests still pass.
-  - [ ] `npm run verify` and `npm run test:e2e` pass from a cold start.
+  - [x] The admin e2e tests no longer time out on the first run against a cold dev server (for example a warm-up of the admin routes before they run), without raising the global timeout or skipping tests.
+  - [x] `challengeUi`'s `shapes` formatter is renamed or commented so its job is clear; its tests still pass.
+  - [x] `npm run verify` and `npm run test:e2e` pass from a cold start.
 - Notes: Cold starts made the admin sign-in check fail once in three local runs during M7. About 60 lines. Light review.
+
+## Maintenance after M8 (maintainer, Nov 19)
+
+### T228 Room for Swift Sum's Submit button on phones
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] On both mobile projects, Swift Sum's Submit button is fully inside the viewport with at least 16 px below it, asserted in `tests/e2e/mobile/mobile.spec.ts` before the tap.
+  - [ ] The fix tightens vertical spacing (or similar); no change to rules, scoring or the desktop layout.
+  - [ ] `npm run verify` and `npm run test:e2e` pass.
+- Notes: In M8 the 30 px round counter only just fits Submit on pixel-7, and no test checks the margin. About 100 lines. Light review.
+
+### T229 Every game's main button fits the phone screen
+- Type: maintenance
+- Status: todo
+- Depends on: T228
+- Acceptance criteria:
+  - [ ] A shared mobile e2e helper asserts that a game's main action button (Submit, Cut, the tap area and the like) lies fully inside the viewport once a round starts; it is used for all five games on both mobile projects.
+  - [ ] Any game that fails gets a minimal layout fix.
+  - [ ] `npm run verify` and `npm run test:e2e` pass.
+- Notes: Guards against layout changes hiding controls on small screens. About 120 lines. Light review.
