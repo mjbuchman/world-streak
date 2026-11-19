@@ -169,7 +169,7 @@ Planning notes for M8:
 
 ### T226 End-to-end and phone checks for the M8 changes
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T220, T223, T224, T225
 - Acceptance criteria:
   - [ ] Existing e2e specs and `global-setup.ts` fixtures follow the new values without weakening (Second Sense 4 s bank, Swift Sum 10 to 25, Trail Trace 2 lives, Clean Cut blobs); a grep of `tests/e2e` for stale values finds none.
@@ -179,7 +179,7 @@ Planning notes for M8:
 
 ### T227 Record the M8 decisions
 - Type: docs
-- Status: in-progress
+- Status: done
 - Depends on: T226
 - Acceptance criteria:
   - [ ] `docs/DECISIONS.md` gets entries for: the 4 s bank, 25 dot cap, two lives in total, the blob and polygon generators with the 70/30 mix and `MIN_ASYMMETRY`, the bank-game list and where the score is still shown, the new `scores_since` resets.
@@ -190,7 +190,7 @@ Planning notes for M8:
 
 ### T215 Clean Cut's last-try shape and exact scale-reset checks
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [x] The fallback shape and its forced-path test (done by T221).
@@ -200,7 +200,7 @@ Planning notes for M8:
 
 ### T216 Admin sign-in e2e tests steady on a cold dev server
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
   - [ ] The admin e2e tests no longer time out on the first run against a cold dev server (for example a warm-up of the admin routes before they run), without raising the global timeout or skipping tests.

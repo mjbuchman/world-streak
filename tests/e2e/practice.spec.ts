@@ -230,10 +230,10 @@ test("Swift Sum practice: ten runs never flash more than 25 dots in round 1 (T21
   for (let run = 0; run < 10; run++) {
     await page.getByRole("button", { name: run === 0 ? "Start" : "Play again" }).click();
     await expect(board).toHaveAttribute("data-showing", "clear", { timeout: 10_000 });
-    // An answer of 1 is off by one less than the count, and busts the 10-dot bank at once.
-    await page.getByRole("textbox", { name: "How many dots were there?" }).fill("1");
+    // An answer of 99 is off by 99 less the count, and busts the 10-dot bank at once.
+    await page.getByRole("textbox", { name: "How many dots were there?" }).fill("99");
     await page.getByRole("button", { name: "Submit" }).click();
-    const count = Number(/\d+/.exec((await reveal.textContent())!)![0]) + 1;
+    const count = 99 - Number(/\d+/.exec((await reveal.textContent())!)![0]);
     expect(count).toBeGreaterThanOrEqual(10);
     expect(count).toBeLessThanOrEqual(25);
     await expect(page.getByRole("heading", { level: 2 })).toHaveText("0 rounds survived");

@@ -7,6 +7,8 @@ import { adminClient, deleteUsersByEmail } from "./support/supabase";
 export const VISITOR_PATHS = ["/", "/signin", "/signup", "/rules", "/practice", "/practice/stacking", "/practice/inner-clock", "/practice/flash-count", "/practice/echo-path", "/practice/fair-split","/history", "/admin", "/auth/callback?error=warmup"] as const;
 /** Pages a signed-in player opens. */
 export const PLAYER_PATHS = ["/", "/play", "/complete-profile", "/history"] as const;
+/** Pages the admin opens. */
+export const ADMIN_PATHS = ["/admin", "/admin/settings", "/admin/flags", "/admin/draw"] as const;
 
 // The local-only admin from supabase/seed.sql (as in admin.spec.ts). Without the seed, the
 // warm-up fails at this sign-in; apply it with `npx supabase db query -f supabase/seed.sql`.
@@ -99,9 +101,9 @@ async function warmUp(config: FullConfig): Promise<void> {
     await signIn(page, email, E2E_PASSWORD);
     await signOut(page);
 
-    // The admin page and its editor.
+    // The admin pages and their actions (T216): compiled mid-run, they made admin.spec's sign-ins time out.
     await signIn(page, ADMIN.email, ADMIN.password);
-    await warm(page, ["/admin"]);
+    await warm(page, ADMIN_PATHS);
   } finally {
     await browser.close();
     await deleteUsersByEmail([email]);
