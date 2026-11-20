@@ -21,6 +21,16 @@
   margin: 0 auto;
 }
 
+/*
+ * On a phone the counter, bank, answer field and Submit take about 480 px besides the board, so the
+ * board also gives way to the screen's height to keep Submit clear of the bottom edge (T228).
+ */
+@media (max-width: 600px) {
+  .stage {
+    width: min(100%, 420px, max(260px, 100dvh - 510px));
+  }
+}
+
 .answer {
   display: flex;
   flex-direction: column;
