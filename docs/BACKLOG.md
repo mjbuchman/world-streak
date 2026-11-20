@@ -214,20 +214,20 @@ Planning notes for M8:
 
 ### T228 Room for Swift Sum's Submit button on phones
 - Type: maintenance
-- Status: todo
+- Status: done
 - Depends on: none
 - Acceptance criteria:
-  - [ ] On both mobile projects, Swift Sum's Submit button is fully inside the viewport with at least 16 px below it, asserted in `tests/e2e/mobile/mobile.spec.ts` before the tap.
-  - [ ] The fix tightens vertical spacing (or similar); no change to rules, scoring or the desktop layout.
-  - [ ] `npm run verify` and `npm run test:e2e` pass.
+  - [x] On both mobile projects, Swift Sum's Submit button is fully inside the viewport with at least 16 px below it, asserted in `tests/e2e/mobile/mobile.spec.ts` before the tap.
+  - [x] The fix tightens vertical spacing (or similar); no change to rules, scoring or the desktop layout.
+  - [x] `npm run verify` and `npm run test:e2e` pass.
 - Notes: In M8 the 30 px round counter only just fits Submit on pixel-7, and no test checks the margin. About 100 lines. Light review.
 
 ### T229 Every game's main button fits the phone screen
 - Type: maintenance
-- Status: todo
+- Status: done
 - Depends on: T228
 - Acceptance criteria:
-  - [ ] A shared mobile e2e helper asserts that a game's main action button (Submit, Cut, the tap area and the like) lies fully inside the viewport once a round starts; it is used for all five games on both mobile projects.
-  - [ ] Any game that fails gets a minimal layout fix.
-  - [ ] `npm run verify` and `npm run test:e2e` pass.
+  - [x] A shared mobile e2e helper asserts that a game's main action button (Submit, Cut, the tap area and the like) lies fully inside the viewport once a round starts; it is used for all five games on both mobile projects.
+  - [x] Any game that fails gets a minimal layout fix.
+  - [x] `npm run verify` and `npm run test:e2e` pass.
 - Notes: Guards against layout changes hiding controls on small screens. About 120 lines. Light review.

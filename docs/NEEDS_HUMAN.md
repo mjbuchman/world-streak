@@ -18,24 +18,6 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: the design leaves these open or unclear. The tasks are T139–T166 in the backlog.
 - Agent's recommendation: build as listed. Check them at the M5 play-test.
 
-### Please confirm: M6 gameplay calls (blocks nothing)
-- What is needed: say if any of these should change (M7 replaced the Second Sense targets and bank, Swift Sum's counts, Echo Path's board and lengths, and Fair Split's bank; see the M7 entry above). Pass targets live in `game_settings.default_pass_targets` (editable in /admin); cheat thresholds in `src/config/cheat.ts`; everything else is a constant in the file named. (1) Second Sense (`src/challenges/inner-clock/timeBank.ts`): four rounds, a 10 s bank, targets 15-17.4 s rising 2.5 s a round, the clock shown 2 s, no tap ends a round at target + 10 s; target 4 "survive all four"; the cheat check flags 3+ rounds under 25 ms off. (2) Swift Sum (`src/challenges/flash-count/flashLadder.ts`): five rounds, a 10-dot bank, 6-11 dots rising by 3 a round (up to 18-23), a flash from 1800 to 1400 ms; target 5 "survive all five". (3) Echo Path (`src/challenges/echo-path/path.ts`, `engine.ts`): a 5 x 10 board, paths of 12 to 18 tiles that never revisit a tile, start at 4 tiles, 3 lives kept, 300-400 ms a tile; target 10 "a path of 10 tiles". (4) Fair Split (`src/challenges/fair-split/shapes.ts`, `engine.ts`, `render.ts`): five shapes, 75% curved, a 6-point bank, 25 s a shape (cut where the line is at the limit), the line starting straight down the middle, no live percentage; target 5 "survive all five"; cheat checks at 3 cuts within 0.05 of half or a surviving cut under 1.5 s. (5) All games: a cost equal to what is left of the bank survives; scores from before the rework are left out of the pass targets (`challenge_types.scores_since`); each attempt's own seed is the per-player variation. Details in DECISIONS.md (2026-11-18 entries).
-- Where to put it: reply in chat.
-- Why: the design leaves these open.
-- Agent's recommendation: keep them; at the M6 play-test, check Echo Path's run length (9 to 15 rounds, about 2 to 3 minutes), Second Sense's (about 95 s), and whether each bank feels fair.
-
-### Please confirm: M7 tuning calls (blocks nothing)
-- What is needed: say if any of these should change (you set the banks, the 5 x 8 board, the touch rule and the 10-30 dot draw yourself). (1) Second Sense targets rise by round: 10-12.4, 12.5-14.9, 15-17.4, 17.5-19.9 s (`TARGET_RANGES_MS` in `src/challenges/inner-clock/timeBank.ts`). (2) Swift Sum keeps its 10-dot bank: about 41% of simulated players survive all five rounds (`flashLadder.ts`). (3) Trail Trace paths run 8 to 12 tiles, and the target is now 8, "a path of 8 tiles" (`path.ts`; /admin). (4) Clean Cut shapes must measure at least 0.04 lopsided (`MIN_ASYMMETRY` in `shapes.ts`). With the 8-point bank, about 99% of simulated careful cutters survive all five, so the target of 5 may be easy. (5) No cheat threshold changed. Details in DECISIONS.md, "M7 play-test tweaks".
-- Where to put it: reply in chat.
-- Why: these are agent proposals the backlog marked "owner to confirm".
-- Agent's recommendation: keep them, and check at the play-test whether the 2 s bank is survivable, the 10-dot bank too tight for 30 dots, 8 rows too short, and the Clean Cut shapes clearly lopsided.
-
-### Please confirm: M8 Clean Cut shape mix (blocks nothing)
-- What is needed: say if Clean Cut's mix of 70% blobs and 30% polygons, each at least 0.08 lopsided, should change (`src/challenges/fair-split/shapes.ts`).
-- Where to put it: reply in chat.
-- Why: you asked for blobs and polygons; the mix and floor are agent proposals (DECISIONS.md, "M8 play-test tweaks").
-- Agent's recommendation: keep it; check at the play-test that the shapes look varied.
-
 ### Please update DESIGN.md for the M6, M7 and M8 games (blocks nothing)
 - What is needed: update the games table and its scoring text in `docs/DESIGN.md` (agents never edit it). Second Sense: four rounds against a 2 s bank, 10 to 20 s targets, a 2 s clock and a 3-2-1 every round (was a 3.0 s budget, run until it is gone, the clock fading sooner). Swift Sum: five rounds against a 10-dot bank, a random 10 to 30 dots each round, no lives or tolerance (was 3 lives, a life per wrong count, more dots each level). Trail Trace (was Echo Path): one path per player on a 5 x 8 board, at most 12 tiles, never sharing an edge with itself except tile to next tile, a tile longer each round, a mistake replays the same length (was a new sequence after a mistake). Clean Cut (was Fair Split): five lopsided shapes against an 8-point bank, a movable line with a Cut button, 25 s a shape (was within 1 point or lose one of 3 lives). M8 then changed the Second Sense bank to 4 s, capped Swift Sum at 25 dots, gave Trail Trace 2 lives, and made Clean Cut's shapes blobs and polygons; the three bank games show no score.
 - Where to put it: `docs/DESIGN.md`, or tell the agent which wording to use.
@@ -116,6 +98,8 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: do it before the public launch. T52 works without the keys locally (it skips the CAPTCHA and logs a warning).
 
 ## Resolved
+
+- **M8 play-test** (Nov 20, 2026): the gameplay of all five games is solid; small tweaks maybe later. The M6, M7 and M8 gameplay please-confirms are accepted as built.
 
 - **T180–T183 blocked** (Nov 18, 2026): PR #171 failed CI 3 times on a phone ghost click; the owner unblocked it with 3 more attempts.
 - **M4 play-test** (Nov 12, 2026): Second Sense fade and targets good; Swift Sum countdown perfect, so every game gets it (T138). No sponsor yet: T39 dropped. `record_attempt_result_unchecked` stays (checked: only the service role can run it, pgTAP-tested). Turnstile's free plan has no usage charge.

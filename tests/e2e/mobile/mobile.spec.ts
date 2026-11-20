@@ -47,6 +47,19 @@ async function expectReadableBank(page: Page, name: string) {
   await expect(page.getByText(/ left of /)).toBeVisible();
 }
 
+/**
+ * A game's main control lies wholly on screen without scrolling (T229), with `marginBelow` px of
+ * room under it so a thumb does not catch the browser's bottom bar (T228).
+ */
+async function expectControlOnScreen(page: Page, control: Locator, marginBelow = 0) {
+  const box = (await control.boundingBox())!;
+  const viewport = page.viewportSize()!;
+  expect(box.x, "left edge on screen").toBeGreaterThanOrEqual(0);
+  expect(box.y, "top edge on screen").toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width, "right edge on screen").toBeLessThanOrEqual(viewport.width);
+  expect(box.y + box.height, `bottom edge at least ${marginBelow} px above the screen's foot`).toBeLessThanOrEqual(viewport.height - marginBelow);
+}
+
 async function tap(page: Page, target: Locator) {
   const box = (await target.boundingBox())!;
   await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
@@ -97,6 +110,7 @@ test("the Tower can be played to the end with taps, on a board that fits", async
   const board = page.getByRole("img", { name: /game area/ });
   await expect(page.getByRole("status")).toHaveText("Row 1");
   await expectBoardFits(page, board);
+  await expectControlOnScreen(page, board);
 
   await skipCountdown(page);
   let now = 0;
@@ -115,6 +129,7 @@ test("Second Sense can be played with a tap, on an area that fits", async ({ pag
   await tap(page, page.getByRole("button", { name: "Start" }));
   const area = page.getByRole("button", { name: /Tap when you think [\d.]+ seconds have passed/ });
   await expectBoardFits(page, area);
+  await expectControlOnScreen(page, area);
   await expectReadableBank(page, "Time bank");
   await expect(page.locator("[data-clock]")).toHaveAttribute("data-clock", "shown");
   await tap(page, area);
@@ -161,7 +176,9 @@ test("Swift Sum can be answered with taps, on a board that fits", async ({ page 
   await tap(page, answer);
   // 999 busts the 10-dot bank in round 1; the reveal shows before the result, so the tap's click lands on it.
   await page.keyboard.type("999");
-  await tap(page, page.getByRole("button", { name: "Submit" }));
+  const submit = page.getByRole("button", { name: "Submit" });
+  await expectControlOnScreen(page, submit, 16);
+  await tap(page, submit);
   await expect(page.getByRole("heading", { level: 2, name: "0 rounds survived" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Play again" })).toBeVisible();
   await expectPhoneFriendly(page);
@@ -177,6 +194,7 @@ test("Trail Trace can be played to the end with taps, on tiles big enough to tap
   await tap(page, page.getByRole("button", { name: "Start" }));
   const board = page.locator("canvas[data-phase]");
   await expectBoardFits(page, board);
+  await expectControlOnScreen(page, board);
   await expectNoZoom(board);
   const box = (await board.boundingBox())!;
   const layout = boardLayout(box.width, box.height, COLS, ROWS);
@@ -210,7 +228,9 @@ test("Clean Cut moves its line by touch and cuts with the Cut button, on a board
   const middle = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   await touchDrag(page, middle, { x: middle.x - 16, y: middle.y });
   await expect(board).toHaveAttribute("data-phase", "cut");
-  await tap(page, page.getByRole("button", { name: "Cut" }));
+  const cut = page.getByRole("button", { name: "Cut" });
+  await expectControlOnScreen(page, cut);
+  await tap(page, cut);
   await expect(page.getByText(/^\d+\.\d% and \d+\.\d%\./)).toBeVisible();
   await expectPhoneFriendly(page);
 });
