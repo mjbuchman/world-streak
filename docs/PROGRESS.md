@@ -5,15 +5,16 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M9 New games (Bank Shot, Arrow Flip) approved Nov 24. Phase 1 is a practice-only MVP (batches M9-a to M9-c), then stop for the owner's play-test before phase 2 (M9-d, M9-e).
-- Active task: M9-h (T251–T253), Ink game and practice page, Arrow Flip removed.
+- Active task: none. M9-f to M9-h are done; waiting for the owner's play-test of `/practice/bank-shot` and `/practice/ink`.
 - Blocked tasks: none
 - Waiting on the human: the M5 Daily Three please-confirm; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: M9 re-planned after the owner's play-test (Bank Shot retune T247–T248; Arrow Flip replaced by the Stroop game Ink, T249–T253; batches M9-f, M9-g, M9-h, then a practice play-test stop, then M9-d, M9-e). The owner approved the re-plan on Nov 24. M9-f and M9-g merged; M9-h in progress.
+- Next: M9 re-planned after the owner's play-test (Bank Shot retune T247–T248; Arrow Flip replaced by the Stroop game Ink, T249–T253; batches M9-f, M9-g, M9-h, then a practice play-test stop, then M9-d, M9-e). The owner approved the re-plan on Nov 24. M9-f, M9-g and M9-h merged; M9-d and M9-e wait until the owner likes both games.
 
 ## Log
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/PROGRESS-to-2026-11-19.md`. Search it only when you need history.
 
+- 2026-11-24 T251–T253 done, PR #203: Ink game (2 x 2 labelled ink buttons, keys 1 to 4), `/practice/ink` listed as New, Arrow Flip deleted. The e2e checks the board and buttons fit a 390 x 664 screen.
 - 2026-11-24 T249–T250 done, PR #202: Ink engine (five rounds of eight colour words, a 4 s time bank set by the simulation), four inks apart in lightness with a light halo on the dark ones, keys 1 to 4 and the renderer.
 - 2026-11-24 T247–T248 done, PR #201: Bank Shot bank 30 (owner's choice over the sim's ~8), a 3-unit free zone shown as a labelled band, glimpses down to 1 000 ms.
 - 2026-11-24 T236–T238, T246 done, PR #198: Arrow Flip engine (five rounds of six prompts, a 2.2 s time bank set by a simulated careful player, not the plan's 6 s), swipe/button/key input, renderer, game and an unregistered practice page listed as New. Owner to confirm the numbers in T244.

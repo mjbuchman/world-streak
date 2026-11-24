@@ -30,7 +30,7 @@ Phase 1, practice-only MVP (then stop for the owner's play-test):
 - M9-c. Arrow Flip engine, input, renderer, game and practice page: T236, T237, T238, T246 (done, superseded by Ink)
 - M9-f. Bank Shot retune (bank 30, free zone, gentler glimpses): T247, T248 (done)
 - M9-g. Ink engine and renderer: T249, T250 (full: scoring) (done)
-- M9-h. Ink game, practice page and Arrow Flip removal: T251, T252, T253 (full: attempts, scoring files removed)
+- M9-h. Ink game, practice page and Arrow Flip removal: T251, T252, T253 (full: attempts, scoring files removed) (done)
 - STOP: owner play-test of `/practice/bank-shot` and `/practice/ink`.
 
 Phase 2, only after the owner says they like the games (apply their tweaks first):
@@ -342,7 +342,7 @@ Planning notes for M9:
 
 ### T251 Ink game component
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T250, T137, T178, T179
 - Acceptance criteria:
   - [ ] `src/components/ink/InkGame.tsx` (not yet registered; uses `runFrames`): the 3-2-1 before every round, the words in sequence, answered by four large labelled buttons Red, Blue, Yellow, Black (each at least 56 x 56 CSS px, visible focus, a 2 x 2 grid so the canvas and all four fit a 390 x 664 viewport without scrolling) or the keys 1 to 4, all through one answer path; a short feedback beat after each answer; `RoundProgress` (T178), `BankGauge` (T179) in seconds to one decimal ("4.2 s left") and the numbered round counter. A word that times out shows the right colour name as text. Buttons are not coloured with the answer colour only: each shows its text label (and may show a swatch).
@@ -354,7 +354,7 @@ Planning notes for M9:
 
 ### T252 Ink practice page and hub entry (MVP, unregistered)
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T251
 - Acceptance criteria:
   - [ ] `/practice/ink` (`src/app/practice/ink/`) plays `InkGame` with a fresh seed each run and scores it locally with the T249 engine, showing rounds survived and pass or fail, no score, and "Play again"; it works signed out and makes no `/api/attempts` calls; it shows a short how-to ("Tap the colour of the ink, not the word. Keys 1 to 4 also work.").
@@ -364,7 +364,7 @@ Planning notes for M9:
 
 ### T253 Remove Arrow Flip
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T252
 - Acceptance criteria:
   - [ ] `src/challenges/arrow-flip/`, `src/components/arrow-flip/`, `src/app/practice/arrow-flip/`, its canvas tokens, its tests and its `NEW_GAMES` (or equivalent) entry are deleted; `/practice/arrow-flip` is gone (404) and the hub no longer lists it; no import or mention of `arrow-flip`, `ArrowFlip` or `ARROW_FLIP` remains under `src/`, `tests/`, `scripts/` and `supabase/` (grep is empty; docs history in the backlog and `docs/PROGRESS.md` may keep the name).
