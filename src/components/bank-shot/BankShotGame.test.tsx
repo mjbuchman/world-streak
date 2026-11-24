@@ -96,10 +96,10 @@ describe("BankShotGame", () => {
     fireEvent.click(lockButton());
     fireEvent.click(lockButton());
     expect(phase()).toBe("result");
-    expect(screen.getByText("Right on the crossing.")).toBeTruthy();
+    expect(screen.getByText("On target, no cost.")).toBeTruthy();
     expect(screen.getByText("14 left of 14")).toBeTruthy();
     frameAt(GONE + 600);
-    expect(lastFrame()).toMatchObject({ round: 0, marker: 75, reveal: { crossingX: 75, miss: 0 }, missTint: 0 });
+    expect(lastFrame()).toMatchObject({ round: 0, marker: 75, reveal: { crossingX: 75, miss: 0, cost: 0 }, missTint: 0 });
     frameAt(GONE + 500 + SHOW_MS);
     expect(phase()).toBe("countdown");
     expect(screen.getByText("Round 2")).toBeTruthy();
@@ -119,16 +119,32 @@ describe("BankShotGame", () => {
     frameAt(GONE + 100);
     expect(lastFrame().marker).toBe(55);
     fireEvent.keyDown(canvas(), { key: "Enter" });
-    expect(screen.getByText("20 units off. More than the bank had left.")).toBeTruthy();
+    expect(screen.getByText("Missed by 20, cost 17. More than the bank had left.")).toBeTruthy();
     expect(screen.getByText("Bank used up")).toBeTruthy();
     frameAt(GONE + 200);
-    expect(lastFrame()).toMatchObject({ reveal: { crossingX: 75, miss: 20 }, missTint: 0.35 });
+    expect(lastFrame()).toMatchObject({ reveal: { crossingX: 75, miss: 20, cost: 17 }, missTint: 0.35 });
     frameAt(GONE + 100 + SHOW_MS);
     const inputs = { taps: [{ round: 0, atMs: GONE + 100 - START, x: 55 }], endMs: GONE + 100 + SHOW_MS - START };
     expect(onFinish).toHaveBeenCalledExactlyOnceWith(inputs);
     expect(bankShot.score(params, inputs)).toBe(0);
     expect(phase()).toBe("done");
     expect(frames).toHaveLength(0);
+  });
+
+  it("leaves the bank alone for a guess 2.9 off and drops it by 0.5 for one 3.5 off (T248)", () => {
+    startGame();
+    tapAt(77.9);
+    vi.spyOn(performance, "now").mockReturnValue(GONE + 500);
+    fireEvent.click(lockButton());
+    expect(screen.getByText("On target, no cost.")).toBeTruthy();
+    expect(screen.getByText("14 left of 14")).toBeTruthy();
+    const second = GONE + 500 + SHOW_MS + ROUND_COUNTDOWN_MS + shot.glimpseMs;
+    frameAt(second);
+    tapAt(71.5);
+    vi.spyOn(performance, "now").mockReturnValue(second + 500);
+    fireEvent.click(lockButton());
+    expect(screen.getByText("Missed by 3.5, cost 0.5.")).toBeTruthy();
+    expect(screen.getByText("13.5 left of 14")).toBeTruthy();
   });
 
   it("times a round out at the tap limit, shows the real crossing, and reports a run the engine also times out", () => {

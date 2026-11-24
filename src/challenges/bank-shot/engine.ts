@@ -7,17 +7,22 @@ import { BOARD_H, BOARD_W, traceStraight, traceWithBar, unfoldedX, type Rotating
 
 /**
  * Bank Shot (T231): five shots, each glimpsed for a moment before the puck is hidden; the player
- * taps where it will cross the finish line. A tap costs its distance from the real crossing, in
- * board units, against a bank; a tap that does not fit what is left ends the run, and no tap by the
+ * taps where it will cross the finish line. A tap costs its distance from the real crossing past a
+ * small free zone, in board units, against a bank; a tap that does not fit what is left ends the run, and no tap by the
  * limit costs the board's width, which no bank survives. Score = shots survived + bank left as a
  * fraction (T180). Every number below is a proposal, owner to confirm (DECISIONS, T244).
  */
 
 export const ROUNDS = 5;
-/** The bank, in board units, set so about half of simulated careful players survive all five. */
-export const BANK_UNITS = 14;
+/**
+ * The bank, in board units (T247): the owner found 14 too unforgiving and chose 30 over a value
+ * fitted to the simulated player, which underrates how far real taps land (DECISIONS, T247).
+ */
+export const BANK_UNITS = 30;
+/** A tap this close to the real crossing costs nothing; only the distance past it is charged. */
+export const FREE_UNITS = 3;
 export const BOUNCES = [1, 1, 2, 3, 4] as const;
-export const GLIMPSE_MS = [1600, 1400, 1200, 1000, 800] as const;
+export const GLIMPSE_MS = [1600, 1400, 1300, 1150, 1000] as const;
 /** Rounds (from 0) with a spinning bumper. */
 export const BUMPER_ROUNDS: readonly number[] = [3, 4];
 /** The real crossing stays this far inside the side walls. */
@@ -115,11 +120,14 @@ export function paramsFromSeed(seed: number): BankShotParams {
 }
 
 /** A tap's distance from the real crossing, to 0.01 units. */
-export const tapCost = (x: number, crossingX: number) => Math.round(Math.abs(x - crossingX) * 100) / 100;
+export const tapDistance = (x: number, crossingX: number) => Math.round(Math.abs(x - crossingX) * 100) / 100;
 
-/** How a round ended: a tap (where, the real crossing and its cost) or no tap by the limit. */
+/** What a tap costs: its distance past the free zone, to 0.01 units. */
+export const tapCost = (x: number, crossingX: number) => Math.max(0, Math.round((tapDistance(x, crossingX) - FREE_UNITS) * 100) / 100);
+
+/** How a round ended: a tap (where, the real crossing, how far off and its cost) or no tap by the limit. */
 export type BankShotOutcome =
-  | { kind: "tap"; round: number; atMs: number; x: number; crossingX: number; cost: number; survived: boolean }
+  | { kind: "tap"; round: number; atMs: number; x: number; crossingX: number; distance: number; cost: number; survived: boolean }
   | { kind: "timeout"; round: number; atMs: number };
 
 /**
@@ -148,7 +156,7 @@ export function play(params: BankShotParams, { taps, endMs }: BankShotInputs) {
     const round = costs.length;
     const crossingX = flight(params.rounds[round]).crossing.x;
     costs.push(tapCost(tap.x, crossingX));
-    last = { kind: "tap", round, atMs: tap.atMs, x: tap.x, crossingX, cost: costs[round], survived: !playBank(params.bank, costs).failed };
+    last = { kind: "tap", round, atMs: tap.atMs, x: tap.x, crossingX, distance: tapDistance(tap.x, crossingX), cost: costs[round], survived: !playBank(params.bank, costs).failed };
     launchAt = tap.atMs + SHOW_MS + ROUND_COUNTDOWN_MS;
   }
   if (!over() && endMs > deadline()) missed();

@@ -3,7 +3,7 @@
 import { type KeyboardEvent, type PointerEvent, useCallback, useEffect, useRef, useState } from "react";
 import { flight, play, ROUND_COUNTDOWN_MS, SHOW_MS, type BankShotInputs, type BankShotOutcome, type BankShotParams, type BankShotTap } from "@/challenges/bank-shot/engine";
 import { BOARD_W } from "@/challenges/bank-shot/geometry";
-import { boardLayout, drawBankShot, markerX, unitsLabel } from "@/challenges/bank-shot/render";
+import { boardLayout, drawBankShot, markerX, missLabel, oneDecimal } from "@/challenges/bank-shot/render";
 import { fitCanvas, readColorTokens } from "@/components/canvas";
 import { BANK_SHOT_COLOR_TOKENS } from "@/components/canvasTokens";
 import { CountdownNumber, countdownNumber } from "@/components/countdown/CountdownNumber";
@@ -19,14 +19,11 @@ const MISS_TINT = 0.35;
 
 type Phase = "countdown" | "glimpse" | "aim" | "result" | "done";
 
-/** Board units to one decimal ("13.5"): the bank's reading. */
-export const oneDecimal = (value: number) => `${Math.round(value * 10) / 10}`;
-
 /** What the last round's outcome says, for the screen reader and the line under the board. */
 function outcomeText(outcome: BankShotOutcome | null): string {
   if (!outcome) return "";
   if (outcome.kind === "timeout") return "Time's up.";
-  const off = outcome.cost === 0 ? "Right on the crossing." : `${unitsLabel(outcome.cost)} off.`;
+  const off = `${missLabel(outcome.distance, outcome.cost)}.`;
   return outcome.survived ? off : `${off} More than the bank had left.`;
 }
 
@@ -115,7 +112,9 @@ export function BankShotGame({ params, onFinish }: { params: BankShotParams; onF
         setPhase("result");
         setCountdown(null);
         const reveal =
-          last.kind === "tap" ? { crossingX: last.crossingX, miss: last.cost } : { crossingX: flight(params.rounds[last.round]).crossing.x, miss: null };
+          last.kind === "tap"
+            ? { crossingX: last.crossingX, miss: last.distance, cost: last.cost }
+            : { crossingX: flight(params.rounds[last.round]).crossing.x, miss: null, cost: null };
         const busted = last.kind === "timeout" || !last.survived;
         const msSinceLaunch = t - (launches.current[last.round] ?? t);
         drawBankShot(ctx, { ...base, round: last.round, msSinceLaunch, marker: last.kind === "tap" ? last.x : null, reveal, missTint: busted ? MISS_TINT : 0 });

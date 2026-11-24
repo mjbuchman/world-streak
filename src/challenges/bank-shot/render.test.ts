@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { flight, type BankShotParams, type BankShotRound } from "./engine";
+import { FREE_UNITS, flight, type BankShotParams, type BankShotRound } from "./engine";
 import { BOARD_H, BOARD_W } from "./geometry";
-import { LAYOUT_UNITS, STRIP_UNITS, angleLabel, boardLayout, bumperAngle, drawBankShot, markerX, pathOf, puckAt, toBoard, toCanvas, unitsLabel, type BankShotFrame } from "./render";
+import { FREE_BAND_UNITS, LAYOUT_UNITS, STRIP_UNITS, angleLabel, boardLayout, bumperAngle, drawBankShot, markerX, missLabel, oneDecimal, pathOf, puckAt, toBoard, toCanvas, type BankShotFrame } from "./render";
 
 // The hand-worked T230 shot: off the right wall at (100, 50) at 1 000 ms, crossing at x = 75 at 1 500 ms.
 const shot: BankShotRound = { start: { x: 50, y: 150 }, velocity: { x: 0.05, y: -0.1 }, bounces: 1, glimpseMs: 1200 };
 const bumped: BankShotRound = { start: { x: 50, y: 150 }, velocity: { x: 0, y: -0.1 }, bounces: 1, glimpseMs: 1200, bumper: { center: { x: 50, y: 75 }, length: 20, omegaPerMs: 0, phase: Math.PI / 3 } };
-const params: BankShotParams = { bank: 14, rounds: [shot, bumped] };
+const params: BankShotParams = { bank: 30, rounds: [shot, bumped] };
 const colors = { board: "#b", wall: "#w", line: "#l", strip: "#s", puck: "#p", bumper: "#u", marker: "#m", crossing: "#c", path: "#t", miss: "#x", text: "#e" };
 
 /** A 390 px wide canvas at the board's own aspect: a phone. */
@@ -124,8 +124,10 @@ describe("Bank Shot path and puck (T232)", () => {
   it("labels the bar's angle and the miss", () => {
     expect(angleLabel(Math.PI / 3)).toBe("60°");
     expect(angleLabel(-Math.PI / 4)).toBe("135°");
-    expect(unitsLabel(2.44)).toBe("2.4 units");
-    expect(unitsLabel(1)).toBe("1 unit");
+    expect(missLabel(2.9, 0)).toBe("On target, no cost");
+    expect(missLabel(3.5, 0.5)).toBe("Missed by 3.5, cost 0.5");
+    expect(missLabel(4.24, 1.24)).toBe("Missed by 4.2, cost 1.2");
+    expect(oneDecimal(27.5)).toBe("27.5");
   });
 });
 
@@ -152,13 +154,44 @@ describe("drawBankShot (T232)", () => {
     expect(calls.some((c) => c.name === "fill" && c.fillStyle === "#m")).toBe(true);
   });
 
-  it("reveals the real path, the crossing labelled Here and the miss, with a miss tint", () => {
-    const calls = draw({ msSinceLaunch: 1300, marker: 77.5, reveal: { crossingX: 75, miss: 2.5 }, missTint: 0.4 });
-    expect(texts(calls)).toEqual(expect.arrayContaining(["Here", "2.5 units", "You"]));
+  it("reveals the real path, the crossing labelled Here and the miss with its cost, with a miss tint", () => {
+    const calls = draw({ msSinceLaunch: 1300, marker: 78.5, reveal: { crossingX: 75, miss: 3.5, cost: 0.5 }, missTint: 0.4 });
+    expect(texts(calls)).toEqual(expect.arrayContaining(["Here", "Missed by 3.5, cost 0.5", "You", "Free zone"]));
     expect(calls.some((c) => c.name === "stroke" && c.strokeStyle === "#t")).toBe(true);
     expect(calls.some((c) => c.name === "fillRect" && c.fillStyle === "#x")).toBe(true);
     expect(arcsIn(calls, "#p")).toHaveLength(0);
-    expect(texts(draw({ reveal: { crossingX: 75, miss: null } }))).not.toContain("2.5 units");
+    // Only a free-zone guess gets the tick, drawn in the text colour.
+    expect(calls.some((c) => c.name === "stroke" && c.strokeStyle === "#e")).toBe(false);
+    const timeout = texts(draw({ reveal: { crossingX: 75, miss: null, cost: null } }));
+    expect(timeout).toContain("Free zone");
+    expect(timeout.some((t) => /Missed|On target/.test(String(t)))).toBe(false);
+  });
+
+  it("marks a guess inside the free zone with a tick and a no-cost label (T248)", () => {
+    const calls = draw({ msSinceLaunch: 1300, marker: 77.9, reveal: { crossingX: 75, miss: 2.9, cost: 0 }, missTint: 0 });
+    expect(texts(calls)).toContain("On target, no cost");
+    expect(texts(calls).some((t) => /cost \d/.test(String(t)))).toBe(false);
+    expect(calls.some((c) => c.name === "stroke" && c.strokeStyle === "#e")).toBe(true);
+  });
+
+  it("draws the free zone as an outlined band FREE_UNITS each side of the crossing, inside the walls, even with reduced motion", () => {
+    const layout = boardLayout(390, 560);
+    const band = (crossingX: number, reducedMotion = false) => {
+      const { ctx, calls } = recorder();
+      drawBankShot(ctx, frame({ width: 390, height: 560, reducedMotion, reveal: { crossingX, miss: null, cost: null } }));
+      return calls.find((c) => c.name === "strokeRect" && c.strokeStyle === "#c")!.args as number[];
+    };
+    const [x, y, w, h] = band(75);
+    expect(x).toBeCloseTo(toCanvas(layout, 75 - FREE_UNITS, 0).x, 9);
+    expect(x + w).toBeCloseTo(toCanvas(layout, 75 + FREE_UNITS, 0).x, 9);
+    expect(y).toBeCloseTo(layout.top - (FREE_BAND_UNITS / 2) * layout.scale, 9);
+    expect(h).toBeCloseTo(FREE_BAND_UNITS * layout.scale, 9);
+    const [nearLeft, , nearLeftW] = band(1.5);
+    expect(nearLeft).toBeCloseTo(layout.left, 9);
+    expect(nearLeft + nearLeftW).toBeCloseTo(toCanvas(layout, 4.5, 0).x, 9);
+    const [nearRight, , nearRightW] = band(BOARD_W - 1);
+    expect(nearRight + nearRightW).toBeCloseTo(toCanvas(layout, BOARD_W, 0).x, 9);
+    expect(band(75, true)).toEqual([x, y, w, h]);
   });
 
   it("draws the bumper where it stands, and still with its angle under reduced motion", () => {

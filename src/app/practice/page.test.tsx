@@ -20,7 +20,7 @@ describe("/practice", () => {
       ["Swift Sum", "/practice/flash-count", "Five rounds of 10 to 25 dots, a new count every round: say how many. Every dot you miss drains your 10-dot bank."],
       ["Trail Trace", "/practice/echo-path", "A path of up to 12 tiles climbs the board. Tap it back, one tile longer each time, all the way to the top, with one extra life."],
       ["Clean Cut", "/practice/fair-split", "Five irregular blobs and polygons: place one straight line to cut each in half. Every point off 50% drains your 8-point bank."],
-      ["Bank Shot", "/practice/bank-shot", "Five shots: watch a puck bounce off the walls, then mark where it will cross the finish line. Every unit you miss drains your 14-unit bank."],
+      ["Bank Shot", "/practice/bank-shot", "Five shots: watch a puck bounce off the walls, then mark where it will cross the finish line. Close enough costs nothing; every unit further out drains your 30-unit bank."],
       ["Arrow Flip", "/practice/arrow-flip", "Five rounds of six prompts: swipe the way the arrow points or the word says, whichever the cue asks. Slow and wrong answers drain your time bank."],
     ]);
   });

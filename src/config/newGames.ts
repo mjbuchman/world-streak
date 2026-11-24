@@ -7,7 +7,7 @@ export const NEW_GAMES = [
   {
     name: "Bank Shot",
     path: "/practice/bank-shot",
-    tagline: "Five shots: watch a puck bounce off the walls, then mark where it will cross the finish line. Every unit you miss drains your 14-unit bank.",
+    tagline: "Five shots: watch a puck bounce off the walls, then mark where it will cross the finish line. Close enough costs nothing; every unit further out drains your 30-unit bank.",
   },
   {
     name: "Arrow Flip",

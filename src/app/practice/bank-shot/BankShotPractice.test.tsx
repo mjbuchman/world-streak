@@ -4,9 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ROUND_COUNTDOWN_MS, SHOW_MS, type BankShotInputs, type BankShotParams, type BankShotRound, type BankShotTap } from "@/challenges/bank-shot/engine";
 
-// Every run: five copies of the hand-worked shot crossing at x = 75, against a 14-unit bank.
+// Every run: five copies of the hand-worked shot crossing at x = 75, against a 30-unit bank.
 const shot: BankShotRound = { start: { x: 50, y: 150 }, velocity: { x: 0.05, y: -0.1 }, bounces: 1, glimpseMs: 1000 };
-const params: BankShotParams = { bank: 14, rounds: Array.from({ length: 5 }, () => shot) };
+const params: BankShotParams = { bank: 30, rounds: Array.from({ length: 5 }, () => shot) };
 vi.mock("@/challenges/bank-shot/engine", async (importOriginal) => {
   const real = await importOriginal<typeof import("@/challenges/bank-shot/engine")>();
   return { ...real, paramsFromSeed: () => params };
@@ -53,14 +53,15 @@ async function playWith(inputs: BankShotInputs) {
 describe("BankShotPractice (T245)", () => {
   it("explains the glimpse, the marker, Lock in and the bank before the start", () => {
     render(<BankShotPractice />);
-    expect(screen.getByText(/^Press Start for 5 shots.*bounces off the walls.*Lock in or Enter.*one 14-unit bank.*Survive all five\. Practice never counts\.$/)).toBeTruthy();
+    expect(screen.getByText(/^Press Start for 5 shots.*bounces off the walls.*Lock in or Enter.*within 3 units of the crossing costs nothing.*one 30-unit bank.*Survive all five\. Practice never counts\.$/)).toBeTruthy();
   });
 
   it("passes a run that survives every shot, and plays again", async () => {
-    const user = await playWith(run([0, 1, 2, 3.5, 0]));
+    // Costs 0, 1, 2, 3.5 and 0 past the 3-unit free zone.
+    const user = await playWith(run([0, 4, 5, 6.5, 3]));
     const heading = screen.getByRole("heading", { name: "Every shot survived" });
     expect(document.activeElement).toBe(heading);
-    expect(screen.getByText("7.5 units of your 14-unit bank left.")).toBeTruthy();
+    expect(screen.getByText("23.5 units of your 30-unit bank left.")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Play again" }));
     expect(screen.getByRole("button", { name: "Fake run" })).toBeTruthy();
   });
@@ -68,9 +69,9 @@ describe("BankShotPractice (T245)", () => {
   it("fails a run that busts the bank, with no score and no call to the server", async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
-    await playWith(run([4, 11]));
+    await playWith(run([4, -34]));
     expect(screen.getByRole("heading", { name: "1 shot survived" })).toBeTruthy();
-    expect(screen.getByText("0 units of your 14-unit bank left.")).toBeTruthy();
+    expect(screen.getByText("0 units of your 30-unit bank left.")).toBeTruthy();
     expect(screen.queryByText(/score/i)).toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
   });

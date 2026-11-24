@@ -376,12 +376,12 @@ test("Clean Cut practice: each run draws new shapes (T221, T226)", async ({ page
   expect(runs[0]).not.toBe(runs[1]);
 });
 
-test("Bank Shot practice: a 14-unit bank, the puck's glimpse, then a marker locked in reveals the crossing (T245)", async ({ page }) => {
+test("Bank Shot practice: a 30-unit bank, the puck's glimpse, then a marker locked in reveals the crossing (T245, T247)", async ({ page }) => {
   const scored = attemptRequests(page);
   await gotoReady(page, "/practice/bank-shot");
   await page.getByRole("button", { name: "Start" }).click();
   await expect(page.getByRole("img", { name: "Round 1 of 5" })).toBeVisible();
-  await expect(page.getByRole("meter", { name: "Distance bank" })).toHaveAttribute("aria-valuetext", "14 left of 14");
+  await expect(page.getByRole("meter", { name: "Distance bank" })).toHaveAttribute("aria-valuetext", "30 left of 30");
   const board = page.locator("canvas[data-phase]");
   await expect(board).toHaveAttribute("data-phase", "glimpse", { timeout: 10_000 });
   await expect(board).toHaveAttribute("data-phase", "aim");
@@ -389,7 +389,7 @@ test("Bank Shot practice: a 14-unit bank, the puck's glimpse, then a marker lock
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await page.getByRole("button", { name: "Lock in" }).click();
   await expect(board).toHaveAttribute("data-phase", "result");
-  await expect(page.getByText(/^(Right on the crossing\.|[\d.]+ units? off\.)/)).toBeVisible();
+  await expect(page.getByText(/^(On target, no cost\.|Missed by [\d.]+, cost [\d.]+\.)/)).toBeVisible();
   expect(scored).toEqual([]);
 });
 

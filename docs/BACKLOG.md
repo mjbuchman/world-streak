@@ -295,7 +295,7 @@ Planning notes for M9:
 
 ### T247 Bank Shot retune: bigger bank, free zone, gentler glimpses
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T231
 - Acceptance criteria:
   - [ ] In `src/challenges/bank-shot/engine.ts`: `BANK_UNITS` = 30 (was 14; final value set by the simulation test below), new exported `FREE_UNITS` = 3, round cost = `max(0, distance - FREE_UNITS)` (distance still to 0.01; a tap exactly `FREE_UNITS` away costs 0, one at 3.01 costs 0.01); a round with no tap by `TAP_LIMIT_MS` still costs `BOARD_W` (the free zone never forgives a timeout); glimpse ladder 1 600, 1 400, 1 300, 1 150, 1 000 ms (was down to 800).
@@ -307,7 +307,7 @@ Planning notes for M9:
 
 ### T248 Bank Shot retune: show the free zone in play
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T247, T232, T233
 - Acceptance criteria:
   - [ ] The reveal marks a guess inside `FREE_UNITS` with a plain label ("On target, no cost") as well as a shape, and shows other misses as "Missed by 4.2, cost 1.2"; the finish-line reveal draws the free zone as a band of `FREE_UNITS` each side of the real crossing, labelled, distinguishable without colour (outlined band plus text); the bank gauge text is unchanged ("27.5 left").
