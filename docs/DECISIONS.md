@@ -12,6 +12,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/DECISIONS-to-2026-11-19.md`. Search it only when you need history.
 
+### 2026-11-24 — Bank Shot retune (T247, T248)
+- Choice: owner feedback after the MVP play-test was "too unforgiving". The bank goes from 14 to 30 units; a new 3-unit free zone (a tap costs only its distance past 3, to 0.01; a timeout still costs the board's 100); glimpses 1 600, 1 400, 1 300, 1 150, 1 000 ms (were 1 200, 1 000, 800 in rounds 3 to 5). The plan also asked the careful simulated player to survive 65 to 85%, which at 30 needs a bank of about 8; the owner chose 30 (Nov 24, in chat). Simulated survival at 30: perfect 100%, careful 100%, twice the error 93.8%, three times 64.5%. The reveal draws the free zone as an outlined, labelled band and says "On target, no cost" (with a tick) or "Missed by 4.2, cost 1.2".
+- Reason: the simulated player set the old 14, which real play found too hard, so it underrates real error.
+- How to change it later: `BANK_UNITS`, `FREE_UNITS` and `GLIMPSE_MS` in `src/challenges/bank-shot/engine.ts`; re-run `engine.sim.test.ts` and adjust its bands.
+- Confirmed by human: bank 30 yes (Nov 24); the rest pending (M9 play-test, T244)
+
 ### 2026-11-24 — Arrow Flip numbers (T236–T238)
 - Choice: (1) The bank is 2 200 ms, not the plan's 6 000: the plan's careful simulated player (450 to 700 ms plus 100 ms a round; 4% to 14% wrong on mismatches) makes about 1.3 wrong answers and 1.2 s of slow time a run, so with 6 000 it would almost never bust; 2 200 puts it inside 40 to 60% and the distracted player under 15%. (2) Mismatches per round 1, 2, 2, 3, 4 (20% to 60% of six, rounded); WRONG_COST 1 000, TIMEOUT_COST 1 500, PROMPT_GAP 450, FEEDBACK 300 as proposed. (3) An exact diagonal swipe counts as horizontal. (4) The ARROW badge has pointed ends rather than a full diamond, so the word fits at 28 px. (5) The four buttons sit in one row (Left, Up, Down, Right) so they fit under the canvas on a 390 x 664 screen.
 - Reason: Open items (all numbers are proposals); set by `src/challenges/arrow-flip/engine.sim.test.ts`.

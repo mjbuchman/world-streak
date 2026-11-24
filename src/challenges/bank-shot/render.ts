@@ -4,7 +4,7 @@
  * player's marker, and after a tap the real path, the real crossing and the miss. Everything is
  * drawn from the frame alone, so the same elapsed ms always draws the same picture.
  */
-import { flight, type BankShotParams, type BankShotRound } from "./engine";
+import { flight, FREE_UNITS, type BankShotParams, type BankShotRound } from "./engine";
 import { BOARD_H, BOARD_W, rotatingBar, type BarTrace, type RotatingBar, type Vec, type WallHit } from "./geometry";
 
 export type BankShotColors = { board: string; wall: string; line: string; strip: string; puck: string; bumper: string; marker: string; crossing: string; path: string; miss: string; text: string };
@@ -16,6 +16,9 @@ export const STRIP_UNITS = 16;
 export const TRAIL_MS = 240;
 const TRAIL_DOTS = 6;
 const PUCK_RADIUS = 2.4;
+/** The free-zone band's height across the finish line, and where the miss label sits, in board units. */
+export const FREE_BAND_UNITS = 4;
+const MISS_LABEL_Y = 20;
 
 export type BoardLayout = { left: number; top: number; scale: number };
 
@@ -66,11 +69,15 @@ export function angleLabel(radians: number): string {
   return `${Math.round(degrees)}°`;
 }
 
-/** "2.4 units": the miss, to one decimal. */
-export const unitsLabel = (units: number) => {
-  const rounded = Math.round(units * 10) / 10;
-  return `${rounded} ${rounded === 1 ? "unit" : "units"}`;
-};
+/** Board units to one decimal ("13.5"). */
+export const oneDecimal = (value: number) => `${Math.round(value * 10) / 10}`;
+
+/** "On target, no cost" inside the free zone, else "Missed by 4.2, cost 1.2" (T248). */
+export const missLabel = (miss: number, cost: number) =>
+  cost === 0 ? "On target, no cost" : `Missed by ${oneDecimal(miss)}, cost ${cost < 0.05 ? "under 0.1" : oneDecimal(cost)}`;
+
+/** The free zone's ends on the finish line: FREE_UNITS each side of the crossing, inside the walls. */
+export const freeZone = (crossingX: number) => ({ from: Math.max(0, crossingX - FREE_UNITS), to: Math.min(BOARD_W, crossingX + FREE_UNITS) });
 
 export type BankShotFrame = {
   width: number;
@@ -83,8 +90,8 @@ export type BankShotFrame = {
   msSinceLaunch: number;
   /** The player's marker on the finish line, in board units, or null before one is placed. */
   marker: number | null;
-  /** After a tap or a timeout: the real path, its crossing and the miss. */
-  reveal: { crossingX: number; miss: number | null } | null;
+  /** After a tap or a timeout: the real path, its crossing, and the tap's distance and cost (null on a timeout). */
+  reveal: { crossingX: number; miss: number | null; cost: number | null } | null;
   /** How strongly the miss tint shows, 0 (none) to 1. */
   missTint: number;
   reducedMotion: boolean;
@@ -200,7 +207,38 @@ function drawMarker(ctx: CanvasRenderingContext2D, layout: BoardLayout, x: numbe
   label(ctx, layout, "You", { x: tip.x, y: tip.y - 2 * s - layout.scale * 3 }, colors.text);
 }
 
-/** The real path, a ring at the real crossing labelled "Here", and the miss along the line. */
+/**
+ * The free zone: an outlined band across the finish line, labelled, so it never depends on colour
+ * alone. It is still, so reduced motion shows it unchanged.
+ */
+function drawFreeZone(ctx: CanvasRenderingContext2D, layout: BoardLayout, crossingX: number, colors: BankShotColors) {
+  const { from, to } = freeZone(crossingX);
+  const corner = toCanvas(layout, from, -FREE_BAND_UNITS / 2);
+  const w = (to - from) * layout.scale;
+  const h = FREE_BAND_UNITS * layout.scale;
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = colors.crossing;
+  ctx.fillRect(corner.x, corner.y, w, h);
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = colors.crossing;
+  ctx.lineWidth = Math.max(1.5, layout.scale * 0.4);
+  ctx.strokeRect(corner.x, corner.y, w, h);
+  label(ctx, layout, "Free zone", toCanvas(layout, Math.min(BOARD_W - 12, Math.max(12, crossingX)), 11), colors.text);
+}
+
+/** A tick beside the miss label: the free-zone guess is marked by a shape as well as its text. */
+function drawTick(ctx: CanvasRenderingContext2D, layout: BoardLayout, at: Vec, colors: BankShotColors) {
+  const s = layout.scale * 1.6;
+  ctx.strokeStyle = colors.text;
+  ctx.lineWidth = Math.max(2, layout.scale * 0.6);
+  ctx.beginPath();
+  ctx.moveTo(at.x - s, at.y);
+  ctx.lineTo(at.x - s / 3, at.y + s * 0.7);
+  ctx.lineTo(at.x + s, at.y - s * 0.8);
+  ctx.stroke();
+}
+
+/** The real path, the free zone, a ring at the real crossing labelled "Here", and the miss and its cost. */
 function drawReveal(ctx: CanvasRenderingContext2D, layout: BoardLayout, shot: BankShotRound, reveal: NonNullable<BankShotFrame["reveal"]>, colors: BankShotColors) {
   const points = pathOf(shot).map((p) => toCanvas(layout, p.x, p.y));
   ctx.strokeStyle = colors.path;
@@ -208,6 +246,7 @@ function drawReveal(ctx: CanvasRenderingContext2D, layout: BoardLayout, shot: Ba
   ctx.beginPath();
   points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
   ctx.stroke();
+  drawFreeZone(ctx, layout, reveal.crossingX, colors);
   const real = toCanvas(layout, reveal.crossingX, 0);
   ctx.strokeStyle = colors.crossing;
   ctx.lineWidth = Math.max(2, layout.scale * 0.8);
@@ -215,5 +254,8 @@ function drawReveal(ctx: CanvasRenderingContext2D, layout: BoardLayout, shot: Ba
   ctx.arc(real.x, real.y, layout.scale * 2.6, 0, 2 * Math.PI);
   ctx.stroke();
   label(ctx, layout, "Here", { x: real.x, y: real.y + layout.scale * 6 }, colors.text);
-  if (reveal.miss !== null) label(ctx, layout, unitsLabel(reveal.miss), toCanvas(layout, BOARD_W / 2, 12), colors.text);
+  if (reveal.miss === null || reveal.cost === null) return;
+  const at = toCanvas(layout, BOARD_W / 2, MISS_LABEL_Y);
+  label(ctx, layout, missLabel(reveal.miss, reveal.cost), at, colors.text);
+  if (reveal.cost === 0) drawTick(ctx, layout, { x: at.x - layout.scale * 26, y: at.y }, colors);
 }

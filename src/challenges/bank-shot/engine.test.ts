@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createRng } from "../shared/prng";
 import {
+  BANK_UNITS,
   BOUNCES,
+  FREE_UNITS,
   BUMPER_ROUNDS,
   CORNER_MARGIN,
   EDGE_MARGIN,
@@ -17,6 +19,7 @@ import {
   paramsFromSeed,
   play,
   tapCost,
+  tapDistance,
   type BankShotParams,
   type BankShotRound,
   type BankShotTap,
@@ -45,7 +48,9 @@ describe("Bank Shot params (T231)", () => {
 
   it("draws five valid rounds with the bounce and glimpse ladders and bumpers in rounds 4 and 5", () => {
     for (const { rounds, bank } of sample) {
-      expect(bank).toBe(14);
+      expect(bank).toBe(BANK_UNITS);
+      expect(BANK_UNITS).toBe(30);
+      expect(GLIMPSE_MS).toEqual([1600, 1400, 1300, 1150, 1000]);
       expect(rounds.map((r) => r.bounces)).toEqual([...BOUNCES]);
       expect(rounds.map((r) => r.glimpseMs)).toEqual([...GLIMPSE_MS]);
       rounds.forEach((round) => expect(isValidRound(round)).toBe(true));
@@ -94,17 +99,23 @@ describe("Bank Shot params (T231)", () => {
     expect(firsts.size).toBe(500);
   });
 
+  // Re-recorded for T247: the shots are unchanged, the glimpses of rounds 3 to 5 were 1 200, 1 000 and 800 ms.
   it.each([0, 1, 4_294_967_295])("golden: seed %i (changing the PRNG or the draw changes these)", (seed) => {
     const r3 = (n: number) => Math.round(n * 1000) / 1000;
-    const rounds = paramsFromSeed(seed).rounds.map((r) => ({ x0: r3(r.start.x), vx: r3(r.velocity.x * 1000), crossing: r3(flight(r).crossing.x), bumper: r.bumper ? r3(r.bumper.center.x) : null }));
+    const rounds = paramsFromSeed(seed).rounds.map((r) => ({ x0: r3(r.start.x), vx: r3(r.velocity.x * 1000), crossing: r3(flight(r).crossing.x), glimpseMs: r.glimpseMs, bumper: r.bumper ? r3(r.bumper.center.x) : null }));
     expect(rounds).toMatchSnapshot();
   });
 });
 
 describe("Bank Shot score (T231)", () => {
-  it("costs a tap its distance from the crossing, to 0.01", () => {
-    expect(tapCost(77.004, 75)).toBe(2);
-    expect(tapCost(72.456, 75)).toBe(2.54);
+  it("measures a tap's distance to 0.01 and charges only what lies past the free zone", () => {
+    expect(FREE_UNITS).toBe(3);
+    expect(tapDistance(77.004, 75)).toBe(2);
+    expect(tapDistance(72.456, 75)).toBe(2.54);
+    expect(tapCost(72.456, 75)).toBe(0);
+    expect(tapCost(78, 75)).toBe(0);
+    expect(tapCost(78.01, 75)).toBe(0.01);
+    expect(tapCost(69.5, 75)).toBe(2.5);
     expect(tapCost(75, 75)).toBe(0);
   });
 
@@ -112,14 +123,17 @@ describe("Bank Shot score (T231)", () => {
     expect(bankShot.score(params, run([0, 0, 0, 0, 0]))).toBe(6);
   });
 
-  it("scores 5.333 for misses of 2 to 6 on a 30 unit bank", () => {
-    expect(bankShot.score(params, run([2, 3, 4, 5, -6]))).toBe(5.333);
+  it("costs misses of 2, 3, 3.01, 5 and 10 units 0, 0, 0.01, 2 and 7", () => {
+    const misses = [2, -3, 3.01, 5, -10];
+    expect(play(params, run(misses)).costs).toEqual([0, 0, 0.01, 2, 7]);
+    // 30 - 9.01 = 20.99 left of 30.
+    expect(bankShot.score(params, run(misses))).toBe(5.7);
   });
 
-  it("survives a miss of exactly what is left and ends the run 0.01 above it", () => {
-    expect(bankShot.score(params, run([10, 10, 10, 0, 0]))).toBe(5);
-    expect(bankShot.score(params, run([10, 10, 10.01, 0, 0]))).toBe(2);
-    expect(bankShot.finished(params, run([10, 10, 10.01]))).toBe(true);
+  it("survives a cost of exactly what is left and ends the run 0.01 above it", () => {
+    expect(bankShot.score(params, run([13, 13, 13, 0, 0]))).toBe(5);
+    expect(bankShot.score(params, run([13, 13, 13.01, 0, 0]))).toBe(2);
+    expect(bankShot.finished(params, run([13, 13, 13.01]))).toBe(true);
   });
 
   it("scores 0 with no tap in round 1, once the tap limit has passed", () => {
@@ -127,6 +141,8 @@ describe("Bank Shot score (T231)", () => {
     expect(bankShot.finished(params, { taps: [], endMs: limit })).toBe(false);
     expect(bankShot.score(params, { taps: [], endMs: limit + 1 })).toBe(0);
     expect(play(params, { taps: [], endMs: limit + 1 }).last).toEqual({ kind: "timeout", round: 0, atMs: limit });
+    // The free zone never forgives a timeout: it still costs the whole board.
+    expect(play(params, { taps: [], endMs: limit + 1 }).costs).toEqual([BOARD_W]);
   });
 
   it("counts a tap at the limit and treats one after it as no tap", () => {
@@ -148,22 +164,22 @@ describe("Bank Shot score (T231)", () => {
     const glimpseEnd = ROUND_COUNTDOWN_MS + shot.glimpseMs;
     const taps = [
       { round: 0, atMs: glimpseEnd - 1, x: 0 },
-      { round: 0, atMs: glimpseEnd, x: 76 },
+      { round: 0, atMs: glimpseEnd, x: 79 },
     ];
     const state = play(params, { taps, endMs: glimpseEnd });
     expect(state.costs).toEqual([1]);
-    expect(state.last).toMatchObject({ kind: "tap", round: 0, crossingX: 75, cost: 1, survived: true });
+    expect(state.last).toMatchObject({ kind: "tap", round: 0, crossingX: 75, distance: 4, cost: 1, survived: true });
     expect(state.launchAt).toBe(glimpseEnd + SHOW_MS + ROUND_COUNTDOWN_MS);
   });
 
   it("ignores taps meant for another round and taps after the run ended", () => {
-    const { taps, endMs } = run([31, 0, 0]);
+    const { taps, endMs } = run([-34, 0, 0]);
     expect(bankShot.score(params, { taps, endMs })).toBe(0);
     expect(play(params, { taps: [{ ...taps[0], round: 1 }], endMs: taps[0].atMs }).costs).toEqual([]);
   });
 
   it("reports the round on screen and its timings until the run is over", () => {
-    const partial = play(params, run([1, 2]));
+    const partial = play(params, run([4, 5]));
     expect(partial).toMatchObject({ round: 2, survived: 2, left: 27, finished: false });
     expect(partial.deadline).toBe((partial.glimpseEnd ?? 0) + TAP_LIMIT_MS);
     const done = play(params, run([0, 0, 0, 0, 0]));

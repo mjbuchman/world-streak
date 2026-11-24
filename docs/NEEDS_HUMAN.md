@@ -12,6 +12,12 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
+### Please confirm: Bank Shot retune (T247, T248; blocks nothing)
+- What is needed: at the M9 play-test, say if the 3-unit free zone and the glimpses of 1 600 to 1 000 ms feel right (the bank of 30 you chose on Nov 24).
+- Where to put it: reply in chat.
+- Why: proposals from the re-plan; see DECISIONS.md (T247).
+- Agent's recommendation: keep them unless the game now feels too easy.
+
 ### Please confirm: Daily Three planning calls (M5; blocks nothing)
 - What is needed: say if any of these readings of DESIGN.md should change. (1) Second Sense keeps its tap, not a hold. (2) The fraction of lives or budget left is measured when the run ends. (3) A wrong Flash Ladder count retries the same level with a new layout. (4) Fair Split has concave shapes but no holes, and each side of a cut is measured by total area. (5) The pass rate counts only decided days, unlike T17, which counts started attempts. (6) The game played after the day is decided is left out of the pass-target percentile. (7) The results page shows the verdict, each game's score and target, the meter and share; it has no percentiles. (8) The lineup comes from a hash of the date and never repeats the previous day's. (9) Echo Path has no per-tap time limit. (10) A Fair Split miss or timeout brings the same shape back, and a drag that is too short or misses the board is ignored (placeholders in DECISIONS.md, 2026-11-16). (11) A day nobody has touched rebuilds its lineup from the current pool, as coming days followed the settings before (DECISIONS.md, T150). (12) A player who loses game 1 and never returns is not counted in the pass rate (DECISIONS.md, T153; confirmed by the owner 2026-11-16). (13) Before anyone starts a day whose lineup the nightly job has not made yet, /play shows only game 1, with no list (DECISIONS.md, T156). (14) Three wins make a "Perfect day" on the results page and the share text, and nothing else (DECISIONS.md, T159). (15) The placeholder cheat-check thresholds for Second Sense, Echo Path and Fair Split (DECISIONS.md, T164).
 - Where to put it: reply in chat.
