@@ -1,14 +1,14 @@
-/* Arrow Flip: the round steps and the bank above the prompt canvas, four direction buttons below (T238). */
+/* Ink: the round steps and the bank above the word canvas, four colour buttons in a 2 x 2 grid below (T251). */
 .game {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-/* Short enough on a 390 x 664 phone that the four buttons stay on screen. */
+/* Short enough on a 390 x 664 phone that both rows of buttons stay on screen. */
 .stage {
   position: relative;
-  width: min(100%, 360px, calc((100dvh - 380px) * 390 / 480));
+  width: min(100%, 360px, calc((100dvh - 450px) * 390 / 360));
   min-width: 220px;
   margin: 0 auto;
 }
@@ -16,13 +16,10 @@
 .board {
   display: block;
   width: 100%;
-  aspect-ratio: 390 / 480;
-  /* A swipe must not scroll or zoom the page. */
-  touch-action: none;
+  aspect-ratio: 390 / 360;
   border-radius: var(--fs-radius-surface);
 }
 
-.board:focus-visible,
 .pad button:focus-visible {
   outline: 3px solid var(--fs-color-mint);
   outline-offset: 2px;
@@ -43,39 +40,24 @@
   color: var(--fs-color-text-muted);
 }
 
-/* One row of four, so they cost a single 56 px line of height. */
 .pad {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-3);
+  width: min(100%, 360px);
+  margin: 0 auto;
 }
 
+/* Each button is filled with its ink and always carries its name, so colour is never the only cue. */
 .pad button {
-  width: 56px;
-  height: 56px;
-  border: 1px solid var(--fs-color-surface-border);
+  min-width: 56px;
+  min-height: 56px;
+  border: 2px solid var(--fs-color-surface-border);
   border-radius: var(--fs-radius-surface);
-  background: var(--fs-color-surface-strong);
-  color: var(--fs-color-text);
-  font-size: 28px;
+  font-size: 1.125rem;
+  font-weight: 800;
   cursor: pointer;
   touch-action: manipulation;
-}
-
-.glyph {
-  display: inline-block;
-}
-
-.glyph[data-dir="left"] {
-  transform: rotate(180deg);
-}
-
-.glyph[data-dir="up"] {
-  transform: rotate(-90deg);
-}
-
-.glyph[data-dir="down"] {
-  transform: rotate(90deg);
 }
 
 .hint {

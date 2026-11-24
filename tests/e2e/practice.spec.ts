@@ -393,16 +393,25 @@ test("Bank Shot practice: a 30-unit bank, the puck's glimpse, then a marker lock
   expect(scored).toEqual([]);
 });
 
-test("Arrow Flip practice: a time bank, a prompt after the 3-2-1, and an answer by key shows feedback (T246)", async ({ page }) => {
+test("Ink practice: a time bank, a word after the 3-2-1, four buttons on a phone screen, and a tap shows feedback (T252)", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 664 });
   const scored = attemptRequests(page);
-  await gotoReady(page, "/practice/arrow-flip");
+  await gotoReady(page, "/practice/ink");
   await page.getByRole("button", { name: "Start" }).click();
-  await expect(page.getByRole("meter", { name: "Time bank" })).toHaveAttribute("aria-valuetext", /^\d\.\d s left of \d\.\d s$/);
+  await expect(page.getByRole("meter", { name: "Time bank" })).toHaveAttribute("aria-valuetext", "4.0 s left of 4.0 s");
   const board = page.locator("canvas[data-phase]");
-  await expect(board).toHaveAttribute("data-phase", "prompt", { timeout: 10_000 });
-  await expect(page.getByRole("img", { name: "Prompt 1 of 6, round 1" })).toBeVisible();
-  await page.getByRole("button", { name: "Left" }).click();
-  await expect(page.getByText(/^(Right|Wrong\. It was [A-Z]+\.|Too slow\. It was [A-Z]+\.)$/)).toBeVisible();
+  await expect(board).toHaveAttribute("data-phase", "word", { timeout: 10_000 });
+  await expect(page.getByRole("img", { name: "Word 1 of 8, round 1" })).toBeVisible();
+  // The board and all four buttons fit the phone screen without scrolling.
+  for (const name of ["Red", "Blue", "Yellow", "Black"]) {
+    const box = (await page.getByRole("button", { name }).boundingBox())!;
+    expect(box.width).toBeGreaterThanOrEqual(56);
+    expect(box.height).toBeGreaterThanOrEqual(56);
+    expect(box.y + box.height).toBeLessThanOrEqual(664);
+  }
+  expect((await board.boundingBox())!.y).toBeGreaterThanOrEqual(0);
+  await page.getByRole("button", { name: "Red" }).click();
+  await expect(page.getByText(/^(Correct|Wrong\. It was [A-Z]+\.|Too slow\. It was [A-Z]+\.)$/)).toBeVisible();
   expect(scored).toEqual([]);
 });
 
@@ -414,7 +423,7 @@ test("the practice hub opens each challenge's practice page", async ({ page }) =
     ["Trail Trace", "/practice/echo-path", "Practice: Trail Trace"],
     ["Clean Cut", "/practice/fair-split", "Practice: Clean Cut"],
     ["Bank Shot", "/practice/bank-shot", "Practice: Bank Shot"],
-    ["Arrow Flip", "/practice/arrow-flip", "Practice: Arrow Flip"],
+    ["Ink", "/practice/ink", "Practice: Ink"],
   ]) {
     await gotoReady(page, "/practice");
     await page.getByRole("list", { name: "Challenges" }).getByRole("link", { name }).click();
