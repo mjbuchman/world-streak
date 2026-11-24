@@ -96,7 +96,7 @@ Planning notes for M9:
 
 ### T230 Bank Shot: reflection geometry (pure)
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/bank-shot/geometry.ts` exports pure helpers with no engine state: `reflect(direction, normal)` (exact vector reflection), `unfoldedX(x0, vx, t, width)` (a puck's x after bouncing off two vertical walls, by the triangle-wave unfolding, not by stepping), `crossingTime`, and `traceStraight(start, velocity, board)` returning the list of wall hit points (`{ x, y, atMs }`) and the finish-line crossing (`{ x, atMs }`). The board is `BOARD_W` = 100 by `BOARD_H` = 150 units (proposal), the puck starts on the bottom edge, the finish line is the top edge (y = 0).
@@ -108,7 +108,7 @@ Planning notes for M9:
 
 ### T231 Bank Shot engine: five rounds against a bank of distance missed
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T230, T180
 - Acceptance criteria:
   - [ ] `src/challenges/bank-shot/engine.ts` implements `ChallengeModule` with `direction "higher-better"`, `ROUNDS` = 5 and a `BANK_UNITS` bank (proposal: starts at 30, final value set by the simulation test below). `paramsFromSeed(seed)` returns per round `{ start, velocity, bounces, glimpseMs, bumper? }` with bounces 1, 1, 2, 3, 4 (proposal), the glimpse shortening 1 600, 1 400, 1 200, 1 000, 800 ms (proposal), and a spinning bar bumper in rounds 4 and 5 only (proposal); each round's real crossing x is derived by the geometry, never stored in the params the client receives beyond what the render needs (the client could compute it anyway, which is why the server, not the client, decides pass or fail).
@@ -122,7 +122,7 @@ Planning notes for M9:
 
 ### T232 Bank Shot renderer
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T231, T135
 - Acceptance criteria:
   - [ ] `src/challenges/bank-shot/render.ts` draws, from state and elapsed ms alone: the board with its walls, the finish line along the top, the puck and a fading trail during the glimpse, the spinning bumper (visible the whole round, rotating by elapsed ms), the player's marker on the finish line, and the reveal (the real path, the real crossing point and the miss as a labelled distance) after the tap. Colours come from the canvas token helper (T135); the marker, the real crossing and the walls differ by shape and label as well as colour; reduced motion drops the trail fade and the bumper's spin animation for a static bar plus its angle label, never the pass or fail information.
@@ -132,7 +132,7 @@ Planning notes for M9:
 
 ### T233 Bank Shot game component
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T232, T137, T178, T179
 - Acceptance criteria:
   - [ ] `src/components/bank-shot/BankShotGame.tsx` (not yet wired in; uses `runFrames`): the 3-2-1 before every round, the launch and glimpse, a tap or drag on the canvas that places the marker on the finish line (a tap anywhere on the board maps to its x; the marker can be moved again before locking), a 44 px or taller "Lock in" button and the Enter key that commit the guess (proposal: place, then lock, so a fat finger can correct itself), the reveal for `SHOW_MS`, then the next round. The Left and Right arrow keys move the marker by 1 unit (Shift: 5) and Enter locks, so it is playable without a pointer. Taps before the glimpse ends are ignored.
@@ -265,7 +265,7 @@ Planning notes for M9:
 
 ### T245 Bank Shot practice page (MVP, unregistered)
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T233
 - Acceptance criteria:
   - [ ] `/practice/bank-shot` plays `BankShotGame` with a fresh seed each run and scores it locally with the T231 engine (practice never decides anything official), showing rounds survived and pass or fail, no score, and "Play again"; it works signed out and makes no `/api/attempts` calls.

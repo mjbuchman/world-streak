@@ -4,6 +4,7 @@ import { CHALLENGE_TYPES } from "@/challenges/shared/types";
 import { PageShell } from "@/components/ui/PageShell";
 import { Surface } from "@/components/ui/Surface";
 import { CHALLENGE_NAMES, CHALLENGE_TAGLINES, practicePath } from "@/config/challenges";
+import { NEW_GAMES } from "@/config/newGames";
 import styles from "./hub.module.css";
 
 export const metadata: Metadata = { title: "Practice" };
@@ -21,6 +22,17 @@ export default function PracticeHub() {
                 {CHALLENGE_NAMES[type]}
               </Link>
               <p className={styles.tagline}>{CHALLENGE_TAGLINES[type]}</p>
+            </Surface>
+          </li>
+        ))}
+        {NEW_GAMES.map((game) => (
+          <li key={game.path}>
+            <Surface>
+              <Link href={game.path} className={styles.name}>
+                {game.name}
+              </Link>{" "}
+              <span className={styles.badge}>New</span>
+              <p className={styles.tagline}>{game.tagline}</p>
             </Surface>
           </li>
         ))}

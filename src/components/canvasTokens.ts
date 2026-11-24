@@ -1,3 +1,4 @@
+import type { BankShotColors } from "@/challenges/bank-shot/render";
 import type { EchoPathColors } from "@/challenges/echo-path/render";
 import type { FairSplitColors } from "@/challenges/fair-split/render";
 import type { FlashCountFrame } from "@/challenges/flash-count/render";
@@ -32,6 +33,20 @@ export const FAIR_SPLIT_COLOR_TOKENS: Record<keyof FairSplitColors, string> = {
   line: "--fs-color-tangerine",
   ring: "--fs-color-tangerine",
   track: "--fs-color-surface-strong",
+  miss: "--fs-color-tangerine",
+  text: "--fs-color-text",
+};
+
+export const BANK_SHOT_COLOR_TOKENS: Record<keyof BankShotColors, string> = {
+  board: "--fs-color-meter-surface",
+  wall: "--fs-color-text",
+  line: "--fs-color-tangerine",
+  strip: "--fs-color-surface-strong",
+  puck: "--fs-color-mint",
+  bumper: "--fs-color-mint-dark",
+  marker: "--fs-color-tangerine",
+  crossing: "--fs-color-mint-dark",
+  path: "--fs-color-mint",
   miss: "--fs-color-tangerine",
   text: "--fs-color-text",
 };
