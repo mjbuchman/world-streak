@@ -166,7 +166,7 @@ Planning notes for M9:
 
 ### T236 Arrow Flip: prompt generator and engine
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T08, T180
 - Acceptance criteria:
   - [ ] `src/challenges/arrow-flip/engine.ts` implements `ChallengeModule` with `direction "higher-better"`, `ROUNDS` = 5, `PROMPTS_PER_ROUND` = 6 (proposal; about 8 s of prompts a round at human pace so a run is 60 to 80 s) and a time bank `BANK_MS` (proposal 6 000, final value set by the simulation test below). `paramsFromSeed(seed)` returns every prompt of the run: `{ arrow, word, cue }` with `arrow` and `word` each one of LEFT, RIGHT, UP, DOWN (arrow as a direction, word as text) and `cue` either `"word"` or `"arrow"`, plus per-round `allowanceMs` and `limitMs`.
@@ -180,7 +180,7 @@ Planning notes for M9:
 
 ### T237 Arrow Flip: input helpers and renderer
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T236, T135
 - Acceptance criteria:
   - [ ] `src/challenges/arrow-flip/input.ts` (pure): `swipeDirection(dx, dy, minPx)` returns LEFT, RIGHT, UP, DOWN or null (a swipe shorter than `MIN_SWIPE_PX` = 24 is ignored, an exact diagonal resolves by a documented rule, never randomly), `keyDirection(key)` maps the four arrow keys, and the same direction type is used by the four on-screen buttons. Tests at every quadrant boundary, a 23 px and a 24 px swipe, and each key.
@@ -190,7 +190,7 @@ Planning notes for M9:
 
 ### T238 Arrow Flip game component
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T237, T137, T178, T179
 - Acceptance criteria:
   - [ ] `src/components/arrow-flip/ArrowFlipGame.tsx` (not yet wired in; uses `runFrames`): the 3-2-1 before every round, the prompts in sequence, answered by a swipe on the canvas (pointer events from pointerdown to pointerup, `touch-action: none`), by four on-screen direction buttons (each at least 56 x 56 CSS px, with visible focus, laid out so all four and the canvas fit a 390 x 664 viewport without scrolling) or by the arrow keys, all through the same answer path; a short feedback beat (`FEEDBACK_MS`) after each answer; `RoundProgress`, a `BankGauge` in seconds to one decimal ("4.2 s left") and the numbered round counter. A prompt that times out shows the right answer as text.
@@ -275,7 +275,7 @@ Planning notes for M9:
 
 ### T246 Arrow Flip practice page (MVP, unregistered)
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T238
 - Acceptance criteria:
   - [ ] As T245, for `/practice/arrow-flip` with `ArrowFlipGame` and the T236 engine.
