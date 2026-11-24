@@ -1,0 +1,31 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Ink params (T249) > golden: seed 0 (changing the PRNG or the draw changes these) 1`] = `
+[
+  "yellow/yellow blue/blue yellow/yellow red/red blue/blue blue/black blue/yellow black/black",
+  "yellow/yellow blue/black blue/blue yellow/yellow black/red red/yellow red/red blue/blue",
+  "black/yellow black/black yellow/yellow blue/blue blue/yellow red/blue yellow/yellow yellow/red",
+  "blue/black red/red black/black blue/yellow red/black black/red yellow/black red/red",
+  "red/black blue/blue red/black red/red blue/yellow blue/red blue/yellow blue/red",
+]
+`;
+
+exports[`Ink params (T249) > golden: seed 1 (changing the PRNG or the draw changes these) 1`] = `
+[
+  "yellow/yellow black/blue yellow/yellow blue/blue red/red yellow/yellow blue/red yellow/yellow",
+  "blue/blue black/black red/red blue/blue blue/yellow black/black black/red black/yellow",
+  "black/red yellow/yellow blue/red blue/blue black/yellow red/red yellow/black blue/blue",
+  "red/black black/red black/blue yellow/yellow black/black yellow/yellow black/red red/black",
+  "yellow/blue black/red red/black red/red black/blue blue/red blue/yellow red/red",
+]
+`;
+
+exports[`Ink params (T249) > golden: seed 4294967295 (changing the PRNG or the draw changes these) 1`] = `
+[
+  "red/blue black/black yellow/yellow red/red yellow/yellow black/black black/blue black/black",
+  "red/red blue/blue yellow/yellow red/red blue/blue yellow/red yellow/blue red/yellow",
+  "red/red blue/blue black/red black/yellow black/red black/black yellow/yellow yellow/blue",
+  "black/red blue/blue black/red blue/yellow red/black blue/blue black/black yellow/red",
+  "blue/yellow yellow/blue blue/red red/black black/red blue/blue yellow/red blue/blue",
+]
+`;

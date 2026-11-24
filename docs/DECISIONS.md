@@ -12,6 +12,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/DECISIONS-to-2026-11-19.md`. Search it only when you need history.
 
+### 2026-11-24 — Ink numbers and inks (T249, T250)
+- Choice: time bank 4 000 ms (plan placeholder 6 000) with a 1 000 ms wrong cost, so 60.5% of simulated careful players and 3.6% of distracted ones survive all five. Inks red #D42A2A, blue #5AA9FF, yellow #FFD21F, black #141414 (luminance at least 0.15 apart). On the dark board, red and black are drawn inside a light halo; blue and yellow sit on the board directly.
+- Reason: the plan asked every ink, yellow and black included, to reach 4.5:1 on the canvas background. No single background allows that for both yellow and near-black, so each ink meets 4.5:1 against what is right around it (halo or board).
+- How to change it later: `BANK_MS`, `WRONG_COST_MS` in `src/challenges/ink/engine.ts` (re-run `engine.sim.test.ts`); the inks in `src/lib/theme/palette.ts` and `tokens.css`, the halo choice in `src/challenges/ink/palette.ts`.
+- Confirmed by human: pending (M9 play-test, T244)
+
 ### 2026-11-24 — Bank Shot retune (T247, T248)
 - Choice: owner feedback after the MVP play-test was "too unforgiving". The bank goes from 14 to 30 units; a new 3-unit free zone (a tap costs only its distance past 3, to 0.01; a timeout still costs the board's 100); glimpses 1 600, 1 400, 1 300, 1 150, 1 000 ms (were 1 200, 1 000, 800 in rounds 3 to 5). The plan also asked the careful simulated player to survive 65 to 85%, which at 30 needs a bank of about 8; the owner chose 30 (Nov 24, in chat). Simulated survival at 30: perfect 100%, careful 100%, twice the error 93.8%, three times 64.5%. The reveal draws the free zone as an outlined, labelled band and says "On target, no cost" (with a tick) or "Missed by 4.2, cost 1.2".
 - Reason: the simulated player set the old 14, which real play found too hard, so it underrates real error.

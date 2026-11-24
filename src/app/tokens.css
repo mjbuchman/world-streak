@@ -26,6 +26,11 @@
   --fs-color-error-surface: rgba(255,120,100,0.14);
   --fs-color-meter-surface: #052E30;
   --fs-color-tangerine-pale: #FFC27A;
+  /* Ink's inks (T250), set apart by lightness as well as hue. */
+  --fs-color-ink-red: #D42A2A;
+  --fs-color-ink-blue: #5AA9FF;
+  --fs-color-ink-yellow: #FFD21F;
+  --fs-color-ink-black: #141414;
 
   /* The gauge meter's state tints (T104): mint at or above the line, tangerine below it. */
   --fs-tint-mint: rgba(52,245,181,0.14);

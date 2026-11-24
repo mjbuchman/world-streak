@@ -28,7 +28,7 @@ Phase 1, practice-only MVP (then stop for the owner's play-test):
 - M9-a. Bank Shot geometry and engine: T230, T231 (done)
 - M9-b. Bank Shot renderer, game and practice page: T232, T233, T245 (done)
 - M9-c. Arrow Flip engine, input, renderer, game and practice page: T236, T237, T238, T246 (done, superseded by Ink)
-- M9-f. Bank Shot retune (bank 30, free zone, gentler glimpses): T247, T248 (full: scoring)
+- M9-f. Bank Shot retune (bank 30, free zone, gentler glimpses): T247, T248 (done)
 - M9-g. Ink engine and renderer: T249, T250 (full: scoring)
 - M9-h. Ink game, practice page and Arrow Flip removal: T251, T252, T253 (full: attempts, scoring files removed)
 - STOP: owner play-test of `/practice/bank-shot` and `/practice/ink`.
@@ -295,7 +295,7 @@ Planning notes for M9:
 
 ### T247 Bank Shot retune: bigger bank, free zone, gentler glimpses
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T231
 - Acceptance criteria:
   - [ ] In `src/challenges/bank-shot/engine.ts`: `BANK_UNITS` = 30 (was 14; final value set by the simulation test below), new exported `FREE_UNITS` = 3, round cost = `max(0, distance - FREE_UNITS)` (distance still to 0.01; a tap exactly `FREE_UNITS` away costs 0, one at 3.01 costs 0.01); a round with no tap by `TAP_LIMIT_MS` still costs `BOARD_W` (the free zone never forgives a timeout); glimpse ladder 1 600, 1 400, 1 300, 1 150, 1 000 ms (was down to 800).
@@ -307,7 +307,7 @@ Planning notes for M9:
 
 ### T248 Bank Shot retune: show the free zone in play
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T247, T232, T233
 - Acceptance criteria:
   - [ ] The reveal marks a guess inside `FREE_UNITS` with a plain label ("On target, no cost") as well as a shape, and shows other misses as "Missed by 4.2, cost 1.2"; the finish-line reveal draws the free zone as a band of `FREE_UNITS` each side of the real crossing, labelled, distinguishable without colour (outlined band plus text); the bank gauge text is unchanged ("27.5 left").
@@ -317,7 +317,7 @@ Planning notes for M9:
 
 ### T249 Ink engine: prompt generator, time bank and simulation
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T08, T180
 - Acceptance criteria:
   - [ ] `src/challenges/ink/engine.ts` implements `ChallengeModule` with `direction "higher-better"`, `ROUNDS` = 5, `WORDS_PER_ROUND` = 8 and a time bank `BANK_MS` (placeholder 6 000, final value set by the simulation test). Four colours `red`, `blue`, `yellow`, `black` (no green). `paramsFromSeed(seed)` returns every word of the run `{ word, ink }` (each one of the four) plus per-round `allowanceMs` and `limitMs`.
@@ -331,7 +331,7 @@ Planning notes for M9:
 
 ### T250 Ink renderer, palette and answer helpers
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T249, T135
 - Acceptance criteria:
   - [ ] `src/challenges/ink/palette.ts` (pure) maps the four colours to canvas tokens (T135) with clearly different lightness (for example a dark red, a mid blue, a light yellow, near-black) and each paired with a text label; tests assert pairwise lightness differences of at least a documented minimum (for example 0.15 relative luminance) and a contrast ratio of at least 4.5:1 of each ink on the canvas background and of each button label on its button; no green anywhere. Yellow and black are checked on both light and dark backgrounds the canvas uses.
