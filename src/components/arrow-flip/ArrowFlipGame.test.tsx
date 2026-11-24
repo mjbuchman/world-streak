@@ -162,7 +162,8 @@ describe("ArrowFlipGame (T238)", () => {
     frameAt(ROUND_COUNTDOWN_MS + LIMIT_MS[0] + 1);
     expect(phase()).toBe("feedback");
     expect(drawn.frames.at(-1)!.feedback).toEqual({ result: "timeout", answer: "left" });
-    expect(canvas().getAttribute("aria-label")).toBe("Too slow. It was LEFT.");
+    expect(hint()).toBe("Too slow. It was LEFT.");
+    expect(canvas().getAttribute("aria-label")).toBe("Next prompt coming.");
     expect(screen.getByText(/4\.5 s left of 6\.0 s/)).toBeTruthy();
   });
 
@@ -180,6 +181,10 @@ describe("ArrowFlipGame (T238)", () => {
     expect(hint()).toBe("Right");
     answerNext(log, "right", "key");
     expect(hint()).toBe("Right");
+    // A held key's repeats never answer the next prompt.
+    frameAt(nextAppears());
+    fireEvent.keyDown(canvas(), { key: "ArrowLeft", repeat: true });
+    expect(phase()).toBe("prompt");
     answerNext(log, "left", "swipe");
     expect(hint()).toBe("Right");
   });

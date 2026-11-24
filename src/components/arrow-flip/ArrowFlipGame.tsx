@@ -164,6 +164,8 @@ export function ArrowFlipGame({ params, onFinish }: { params: ArrowFlipParams; o
     const dir = keyDirection(event.key);
     if (!dir) return;
     event.preventDefault();
+    // A held key must not answer the next prompt the moment it appears.
+    if (event.repeat) return;
     answer(dir);
   };
 
@@ -175,7 +177,8 @@ export function ArrowFlipGame({ params, onFinish }: { params: ArrowFlipParams; o
         ? `Prompt ${(prompt % PROMPTS_PER_ROUND) + 1} of ${PROMPTS_PER_ROUND}, round ${round + 1}`
         : phase === "done"
           ? "Done."
-          : status;
+          : // The live status below announces the feedback, so the label does not repeat it.
+            "Next prompt coming.";
   return (
     <div className={styles.game} onKeyDown={onKeyDown}>
       {/* A failed run stays on the round that failed; later rounds were never played. */}

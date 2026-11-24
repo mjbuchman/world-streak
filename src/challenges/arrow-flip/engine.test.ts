@@ -159,6 +159,16 @@ describe("Arrow Flip score (T236)", () => {
     expect(next.costs).toEqual([TIMEOUT_COST_MS, 0]);
   });
 
+  it("takes an answer at exactly the limit, and ends a run of misses once they bust the bank", () => {
+    const limit = ROUND_COUNTDOWN_MS + LIMIT_MS[0];
+    const atLimit = play(params, { answers: [{ prompt: 0, atMs: limit, dir: answerOf(PROMPTS[0]) }], endMs: limit });
+    expect(atLimit.last).toMatchObject({ kind: "answer", cost: LIMIT_MS[0] - ALLOWANCE_MS[0] });
+    // Four misses cost 6 000, exactly the bank; the fifth busts it.
+    const misses = play(params, { answers: [], endMs: 60_000 });
+    expect(misses.costs).toEqual(Array.from({ length: 5 }, () => TIMEOUT_COST_MS));
+    expect([misses.finished, misses.failed, misses.roundsSurvived]).toEqual([true, true, 0]);
+  });
+
   it("ignores an answer before the prompt appeared, or for another prompt", () => {
     const early = { prompt: 0, atMs: ROUND_COUNTDOWN_MS - 1, dir: answerOf(PROMPTS[0]) };
     const otherPrompt = { prompt: 3, atMs: ROUND_COUNTDOWN_MS + 100, dir: answerOf(PROMPTS[3]) };

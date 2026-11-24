@@ -7,7 +7,8 @@ import { PROMPTS_PER_ROUND, PROMPT_GAP_MS, ROUNDS, ROUND_COUNTDOWN_MS, answerOf,
  * (uniform) plus 100 ms per round after the first, and answers a mismatched prompt with its other
  * direction (the one the cue did not ask for) with a chance rising evenly from 4% in round 1 to
  * 14% in round 5; matched prompts are always right. A distracted player has three times the wrong
- * rate. A proxy until real play-test numbers replace it (owner to confirm).
+ * rate. Its slowest answer (1 100 ms in round 5) is inside every limit, so it never misses a
+ * prompt; the bank is drained by slow and wrong answers alone. A proxy until real play-test numbers replace it (owner to confirm).
  */
 function survivesAll(seed: number, params: ArrowFlipParams, wrongScale: number): boolean {
   const rng = createRng(seed ^ 0xa770);
