@@ -139,6 +139,8 @@ export function BankShotGame({ params, onFinish }: { params: BankShotParams; onF
         return true;
       }
       setCountdown(null);
+      // Lock in follows this round's own marker, so it never carries over from a round before.
+      setPlaced(markerFor(state.round) !== null);
       setPhase(state.glimpseEnd !== null && t < state.glimpseEnd ? "glimpse" : "aim");
       drawBankShot(ctx, { ...base, round: state.round, msSinceLaunch, marker: markerFor(state.round), reveal: null, missTint: 0 });
       return true;
