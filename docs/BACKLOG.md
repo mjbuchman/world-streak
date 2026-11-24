@@ -21,12 +21,17 @@ Older entries (everything up to Nov 19, 2026) are in `docs/archive/BACKLOG-to-20
 
 One branch, review round and PR per batch, in this order (dependencies still apply).
 
-M9 New games: Bank Shot and Arrow Flip (planned Nov 22, 2026; owner chose the two games, the rule details are proposals awaiting approval; runs after the M8 play-test and T228, T229; the MVP is complete after it):
+M9 New games: Bank Shot and Arrow Flip (planned Nov 22, 2026; approved Nov 24, all proposals as written; the daily lineup stays 3 games, now drawn from a pool of 7). The owner wants an MVP first: build each game playable on its practice page only, then stop for the owner's play-test before any registration, migration, cheat check or pool work.
 
-- M9-a. Bank Shot geometry, engine and renderer: T230, T231, T232 (full: scoring)
-- M9-b. Bank Shot game, practice page, registration and cheat checks: T233, T234, T235 (full: migration, scoring)
-- M9-c. Arrow Flip engine, input helpers and renderer: T236, T237 (full: scoring)
-- M9-d. Arrow Flip game, practice page, registration and cheat checks: T238, T239, T240 (full: migration, scoring)
+Phase 1, practice-only MVP (then stop for the owner's play-test):
+
+- M9-a. Bank Shot geometry and engine: T230, T231 (full: scoring)
+- M9-b. Bank Shot renderer, game and practice page: T232, T233, T245 (light)
+- M9-c. Arrow Flip engine, input, renderer, game and practice page: T236, T237, T238, T246 (full: scoring)
+
+Phase 2, only after the owner says they like the games (apply their tweaks first):
+
+- M9-d. Registration, migrations and cheat checks: T234, T235, T239, T240 (full: migration, scoring)
 - M9-e. Pool, admin, end-to-end and phone checks, docs: T241, T242, T243, T244 (full: migration; T244 is docs only)
 
 M8 M7 play-test tweaks (Nov 19, 2026; approved Nov 19 (2 lives, 25 dots, score hidden everywhere for bank games); runs before batch 19):
@@ -257,6 +262,24 @@ Planning notes for M9:
   - [ ] `docs/NEEDS_HUMAN.md` gets a "please confirm" entry for the M9 numbers and a "please update DESIGN.md" entry (the pool table lists five games, and the "45 to 90 seconds" run length is checked against the new games' measured run times). Owner-to-confirm list: the shown names "Bank Shot" and "Arrow Flip" (no clash with an existing game); Bank Shot's five rounds, bounces 1, 1, 2, 3, 4, glimpses 1 600 to 800 ms, the spinning bar in rounds 4 and 5 (and the simplification that the bar's surface speed is ignored in a bounce), the 10 s tap limit, the final `BANK_UNITS` from the simulation, the place-then-lock-in control, and the 40 to 60% survival target; Arrow Flip's five rounds of six prompts, the mismatch ladder 20% to 60%, the half-and-half cue split, allowances and limits, `WRONG_COST_MS`, `TIMEOUT_COST_MS`, the final `BANK_MS`, the swipe threshold of 24 px, the cue shapes (rounded rectangle for WORD, diamond for ARROW), and the 40 to 60% survival target; both default pass targets of 5; the placeholder cheat thresholds; the pool of seven games.
   - [ ] `docs/PROGRESS.md` is updated, the run-time of one honest Bank Shot and one honest Arrow Flip attempt (measured in practice, written down) is recorded, and `README.md` lists the two new practice routes. `docs/DESIGN.md` is not edited.
 - Notes: Docs only; no reviewers needed. After the batch, run the maintainer subagent (milestone end) and then stop for the M9 play-test: `npm run dev`, open `/practice/bank-shot` and `/practice/arrow-flip` on a phone and a desktop; in the admin local tools set today's lineup to include each new game and play the Daily Three.
+
+### T245 Bank Shot practice page (MVP, unregistered)
+- Type: feature
+- Status: todo
+- Depends on: T233
+- Acceptance criteria:
+  - [ ] `/practice/bank-shot` plays `BankShotGame` with a fresh seed each run and scores it locally with the T231 engine (practice never decides anything official), showing rounds survived and pass or fail, no score, and "Play again"; it works signed out and makes no `/api/attempts` calls.
+  - [ ] The game is not added to `CHALLENGE_TYPES`, the registry, migrations or the daily pool (that is T234, phase 2). The practice hub links to it marked "New" (or similar plain label) so the owner can find it.
+  - [ ] A unit test for the page (a bust and a full pass with mocked inputs) and one smoke e2e that the page loads and starts a run; `npm run verify` passes.
+- Notes: About 120 lines. Phase 1 MVP so the owner can judge the game before the full wiring. Light review. If `PracticeShell` needs a registered type, use a minimal local wrapper rather than registering early.
+
+### T246 Arrow Flip practice page (MVP, unregistered)
+- Type: feature
+- Status: todo
+- Depends on: T238
+- Acceptance criteria:
+  - [ ] As T245, for `/practice/arrow-flip` with `ArrowFlipGame` and the T236 engine.
+- Notes: About 120 lines. Light review (it shares batch M9-c with the full-review engine).
 
 ## M8 M7 play-test tweaks
 

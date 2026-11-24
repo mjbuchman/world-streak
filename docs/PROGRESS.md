@@ -4,11 +4,11 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M8 play-tested and accepted (Nov 20); T228 and T229 done. Only owner-blocked work remains (T45, T52, T128).
-- Active task: none.
+- Milestone: M9 New games (Bank Shot, Arrow Flip) approved Nov 24. Phase 1 is a practice-only MVP (batches M9-a to M9-c), then stop for the owner's play-test before phase 2 (M9-d, M9-e).
+- Active task: none. Next: batch M9-a (T230, T231).
 - Blocked tasks: none
 - Waiting on the human: the M5 Daily Three please-confirm; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: owner input on the items above.
+- Next: M9-a, M9-b, M9-c, then the M9 MVP play-test.
 
 ## Log
 
