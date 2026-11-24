@@ -135,6 +135,15 @@ describe("Bank Shot geometry: the spinning bumper (T230)", () => {
     expect(hit?.velocity.y).toBeCloseTo(1, 12);
   });
 
+  it("hits a spinning bar only where it stands at the given ms", () => {
+    const spinning = { ...flat, omegaPerMs: Math.PI / 2 / 1000 };
+    expect(barHit({ x: 49.5, y: 50 }, { x: 50.5, y: 50 }, spinning, 0)).toBeNull();
+    const hit = barHit({ x: 49.5, y: 50 }, { x: 50.5, y: 50 }, spinning, 1000);
+    expect(hit?.point.x).toBeCloseTo(50, 9);
+    expect(hit?.velocity.x).toBeCloseTo(-1, 9);
+    expect(hit?.velocity.y).toBeCloseTo(0, 9);
+  });
+
   it("reflects off a bar at 45 degrees exactly", () => {
     const hit = barHit({ x: 50, y: 50.5 }, { x: 50, y: 49.5 }, { ...flat, phase: Math.PI / 4 }, 0);
     expect(hit?.velocity.x).toBeCloseTo(-1, 12);

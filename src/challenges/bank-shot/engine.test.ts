@@ -59,7 +59,10 @@ describe("Bank Shot params (T231)", () => {
         expect(crossing.x).toBeGreaterThanOrEqual(EDGE_MARGIN);
         expect(crossing.x).toBeLessThanOrEqual(BOARD_W - EDGE_MARGIN);
         expect(hits).toHaveLength(round.bounces);
-        hits.forEach((h) => expect(h.y).toBeGreaterThanOrEqual(CORNER_MARGIN));
+        hits.forEach((h) => {
+          expect(h.y).toBeGreaterThanOrEqual(CORNER_MARGIN);
+          expect(h.y).toBeLessThanOrEqual(150 - CORNER_MARGIN);
+        });
       }
     }
   }, 60_000);
@@ -126,9 +129,19 @@ describe("Bank Shot score (T231)", () => {
     expect(play(params, { taps: [], endMs: limit + 1 }).last).toEqual({ kind: "timeout", round: 0, atMs: limit });
   });
 
-  it("treats a tap after the limit as no tap", () => {
-    const late = ROUND_COUNTDOWN_MS + shot.glimpseMs + TAP_LIMIT_MS + 1;
-    expect(bankShot.score(params, { taps: [{ round: 0, atMs: late, x: 75 }], endMs: late })).toBe(0);
+  it("counts a tap at the limit and treats one after it as no tap", () => {
+    const limit = ROUND_COUNTDOWN_MS + shot.glimpseMs + TAP_LIMIT_MS;
+    expect(play(params, { taps: [{ round: 0, atMs: limit, x: 75 }], endMs: limit }).costs).toEqual([0]);
+    expect(bankShot.score(params, { taps: [{ round: 0, atMs: limit + 1, x: 75 }], endMs: limit + 1 })).toBe(0);
+  });
+
+  it("times out a later round from that round's own launch", () => {
+    const { taps } = run([1, 2]);
+    const { deadline } = play(params, { taps, endMs: taps[1].atMs });
+    expect(deadline).toBe(taps[1].atMs + SHOW_MS + ROUND_COUNTDOWN_MS + shot.glimpseMs + TAP_LIMIT_MS);
+    const out = play(params, { taps, endMs: (deadline ?? 0) + 1 });
+    expect(out.last).toEqual({ kind: "timeout", round: 2, atMs: deadline });
+    expect(bankShot.score(params, { taps, endMs: (deadline ?? 0) + 1 })).toBe(2);
   });
 
   it("ignores a tap before the glimpse ends and counts a later one", () => {

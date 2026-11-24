@@ -29,6 +29,8 @@ export const FLIGHT_MS = { min: 2400, max: 3200 } as const;
 /** A shot past a bumper must cross by then. */
 export const MAX_FLIGHT_MS = 6000;
 export const BUMPER_LENGTH = 24;
+/** The bumper's centre stays this far inside the side walls. */
+export const BUMPER_MARGIN = 12;
 /** How long after the glimpse ends the player has to tap. */
 export const TAP_LIMIT_MS = 10_000;
 /** How long the real path stays on screen after a tap. */
@@ -94,7 +96,7 @@ export function isValidRound(round: BankShotRound): boolean {
     crossing.x <= BOARD_W - EDGE_MARGIN &&
     crossing.atMs <= MAX_FLIGHT_MS &&
     hits.every((h) => h.y >= CORNER_MARGIN && h.y <= BOARD_H - CORNER_MARGIN) &&
-    (!round.bumper || (round.bumper.center.x >= 12 && round.bumper.center.x <= BOARD_W - 12))
+    (!round.bumper || (round.bumper.center.x >= BUMPER_MARGIN && round.bumper.center.x <= BOARD_W - BUMPER_MARGIN))
   );
 }
 

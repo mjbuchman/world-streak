@@ -118,6 +118,7 @@ export function traceWithBar(start: Vec, velocity: Vec, bar: RotatingBar, maxMs:
     justHit = contact !== null;
     if (contact) {
       barHits.push({ ...contact.point, atMs: t });
+      // The rest of this tick's move is dropped: a small, deterministic loss the server shares.
       pos = contact.point;
       v = contact.velocity;
       continue;
