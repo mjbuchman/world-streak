@@ -8,7 +8,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Active task: none. Phase 1 is done; waiting for the owner's M9 MVP play-test.
 - Blocked tasks: none
 - Waiting on the human: the M5 Daily Three please-confirm; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: the owner play-tests Bank Shot and Arrow Flip at /practice and confirms their numbers (T244); then phase 2 (M9-d, M9-e).
+- Next: M9 re-planned after the owner's play-test (Bank Shot retune T247–T248; Arrow Flip replaced by the Stroop game Ink, T249–T253; batches M9-f, M9-g, M9-h, then a practice play-test stop, then M9-d, M9-e). The re-plan awaits the owner's approval; once approved, merge branch `docs/m9-replan` through a docs PR and start M9-f.
 
 ## Log
 
