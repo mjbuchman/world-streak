@@ -96,7 +96,7 @@ Planning notes for M9:
 
 ### T230 Bank Shot: reflection geometry (pure)
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T08
 - Acceptance criteria:
   - [ ] `src/challenges/bank-shot/geometry.ts` exports pure helpers with no engine state: `reflect(direction, normal)` (exact vector reflection), `unfoldedX(x0, vx, t, width)` (a puck's x after bouncing off two vertical walls, by the triangle-wave unfolding, not by stepping), `crossingTime`, and `traceStraight(start, velocity, board)` returning the list of wall hit points (`{ x, y, atMs }`) and the finish-line crossing (`{ x, atMs }`). The board is `BOARD_W` = 100 by `BOARD_H` = 150 units (proposal), the puck starts on the bottom edge, the finish line is the top edge (y = 0).
@@ -108,7 +108,7 @@ Planning notes for M9:
 
 ### T231 Bank Shot engine: five rounds against a bank of distance missed
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T230, T180
 - Acceptance criteria:
   - [ ] `src/challenges/bank-shot/engine.ts` implements `ChallengeModule` with `direction "higher-better"`, `ROUNDS` = 5 and a `BANK_UNITS` bank (proposal: starts at 30, final value set by the simulation test below). `paramsFromSeed(seed)` returns per round `{ start, velocity, bounces, glimpseMs, bumper? }` with bounces 1, 1, 2, 3, 4 (proposal), the glimpse shortening 1 600, 1 400, 1 200, 1 000, 800 ms (proposal), and a spinning bar bumper in rounds 4 and 5 only (proposal); each round's real crossing x is derived by the geometry, never stored in the params the client receives beyond what the render needs (the client could compute it anyway, which is why the server, not the client, decides pass or fail).

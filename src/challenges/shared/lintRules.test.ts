@@ -35,6 +35,11 @@ describe("challenge purity lint rules", () => {
     expect(await ruleIds("src/challenges/stacking/render.ts", code)).toEqual([]);
   }, 30_000);
 
+  it("finds nothing impure in the Bank Shot engine and geometry (T231)", async () => {
+    const results = await eslint.lintFiles(["src/challenges/bank-shot/engine.ts", "src/challenges/bank-shot/geometry.ts"]);
+    expect(results.flatMap((r) => r.messages)).toEqual([]);
+  }, 30_000);
+
   it("does not apply outside src/challenges", async () => {
     expect(await ruleIds("src/lib/clock.ts", "export const x = Date.now();")).toEqual([]);
   }, 30_000);
