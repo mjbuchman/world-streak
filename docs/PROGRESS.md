@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M9 New games (Bank Shot, Arrow Flip) approved Nov 24. Phase 1 is a practice-only MVP (batches M9-a to M9-c), then stop for the owner's play-test before phase 2 (M9-d, M9-e).
-- Active task: none. Next: batch M9-a (T230, T231).
+- Active task: batch M9-b (T232, T233, T245).
 - Blocked tasks: none
 - Waiting on the human: the M5 Daily Three please-confirm; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M9-a, M9-b, M9-c, then the M9 MVP play-test.
@@ -14,6 +14,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/PROGRESS-to-2026-11-19.md`. Search it only when you need history.
 
+- 2026-11-24 T230–T231 done, PR #196: Bank Shot geometry (closed-form wall bounces, a 1 ms stepped trace past the spinning bumper) and the five-round engine. The bank is 14 units, not the plan's 30, set by a simulated careful player; owner to confirm in T244.
 - 2026-11-20 T228–T229 done: a shared phone check that each game's main control is wholly on screen; Swift Sum's board now also shrinks with the screen's height on phones, so Submit sits at least 16 px clear of the bottom (it was 10 to 36 px off screen). Owner accepted the M8 play-test.
 - 2026-11-19 T215–T216 done, PR #192: exact scale-reset checks and one re-target test in pgTAP; the local warm-up opens every admin page, so the admin e2e passes from a cold server. Also fixed T226's Swift Sum ten-run test (an answer of 1 did not always bust the bank). Maintainer check after M8 added T228 and T229.
 - 2026-11-19 T226–T227 done, PR #191: practice e2e checks for the M8 changes (25-dot cap over ten runs, new shapes each run, counter bars, no big score); M8 decisions recorded.

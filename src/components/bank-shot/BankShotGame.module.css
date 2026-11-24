@@ -1,0 +1,57 @@
+/* Bank Shot: the round steps and the bank above a tall board, the Lock in button below (T233). */
+.game {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* The board at its own 108 x 174 aspect, short enough that Lock in stays on a phone's screen. */
+.stage {
+  position: relative;
+  width: min(100%, 360px, calc((100dvh - 300px) * 108 / 174));
+  min-width: 240px;
+  margin: 0 auto;
+}
+
+.board {
+  display: block;
+  width: 100%;
+  aspect-ratio: 108 / 174;
+  /* Placing the marker must not scroll or zoom the page. */
+  touch-action: none;
+  border-radius: var(--fs-radius-surface);
+  cursor: crosshair;
+}
+
+.board:focus-visible {
+  outline: 3px solid var(--fs-color-mint);
+  outline-offset: 2px;
+}
+
+/* "Round N" above the 3-2-1 numbers. */
+.caption {
+  position: absolute;
+  top: var(--space-4);
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-text-label);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fs-color-text-muted);
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+}
+
+.hint {
+  margin: 0;
+  min-height: 1.5em;
+  text-align: center;
+  font-size: var(--fs-text-small);
+  color: var(--fs-color-text-muted);
+}

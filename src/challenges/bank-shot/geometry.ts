@@ -97,7 +97,8 @@ export function barHit(prev: Vec, next: Vec, bar: RotatingBar, atMs: number): Ba
   return { point: { x: prev.x + s * move.x, y: prev.y + s * move.y }, velocity };
 }
 
-export type BarTrace = Trace & { barHits: WallHit[] };
+/** `turns` is every change of direction in order (side walls, the bottom edge and the bar), for drawing the path. */
+export type BarTrace = Trace & { barHits: WallHit[]; turns: WallHit[] };
 
 /**
  * A shot past a spinning bumper, stepped in 1 ms ticks: side walls and the bottom edge reflect, the
@@ -108,6 +109,7 @@ export function traceWithBar(start: Vec, velocity: Vec, bar: RotatingBar, maxMs:
   const { width } = board;
   const hits: WallHit[] = []; // side walls only; the bottom edge reflects but is not a bounce
   const barHits: WallHit[] = [];
+  const turns: WallHit[] = [];
   let pos = start;
   let v = velocity;
   let justHit = false;
@@ -118,6 +120,7 @@ export function traceWithBar(start: Vec, velocity: Vec, bar: RotatingBar, maxMs:
     justHit = contact !== null;
     if (contact) {
       barHits.push({ ...contact.point, atMs: t });
+      turns.push({ ...contact.point, atMs: t });
       // The rest of this tick's move is dropped: a small, deterministic loss the server shares.
       pos = contact.point;
       v = contact.velocity;
@@ -125,24 +128,27 @@ export function traceWithBar(start: Vec, velocity: Vec, bar: RotatingBar, maxMs:
     }
     if (next.y <= 0) {
       const f = pos.y / (pos.y - next.y);
-      return { hits, barHits, crossing: { x: Math.min(width, Math.max(0, pos.x + f * (next.x - pos.x))), atMs: t + f * TICK_MS } };
+      return { hits, barHits, turns, crossing: { x: Math.min(width, Math.max(0, pos.x + f * (next.x - pos.x))), atMs: t + f * TICK_MS } };
     }
-    pos = bounceOffEdges(pos, next, t, board, hits, (wall) => (v = reflect(v, wall)));
+    pos = bounceOffEdges(pos, next, t, board, hits, turns, (wall) => (v = reflect(v, wall)));
   }
   return null;
 }
 
 /** Folds a tick's move back inside the side walls and the bottom edge, logging each hit. */
-function bounceOffEdges(pos: Vec, next: Vec, t: number, { width, height }: Board, hits: WallHit[], turn: (normal: Vec) => void): Vec {
+function bounceOffEdges(pos: Vec, next: Vec, t: number, { width, height }: Board, hits: WallHit[], turns: WallHit[], turn: (normal: Vec) => void): Vec {
   let { x, y } = next;
-  const at = (f: number) => ({ y: pos.y + f * (next.y - pos.y), atMs: t + f * TICK_MS });
+  const at = (f: number) => ({ x: pos.x + f * (next.x - pos.x), y: pos.y + f * (next.y - pos.y), atMs: t + f * TICK_MS });
   if (x < 0 || x > width) {
     const wall = x < 0 ? 0 : width;
-    hits.push({ x: wall, ...at((wall - pos.x) / (next.x - pos.x)) });
+    const hit = { ...at((wall - pos.x) / (next.x - pos.x)), x: wall };
+    hits.push(hit);
+    turns.push(hit);
     x = 2 * wall - x;
     turn({ x: 1, y: 0 });
   }
   if (y > height) {
+    turns.push({ ...at((height - pos.y) / (next.y - pos.y)), y: height });
     y = 2 * height - y;
     turn({ x: 0, y: 1 });
   }

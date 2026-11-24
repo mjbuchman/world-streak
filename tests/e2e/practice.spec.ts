@@ -376,6 +376,23 @@ test("Clean Cut practice: each run draws new shapes (T221, T226)", async ({ page
   expect(runs[0]).not.toBe(runs[1]);
 });
 
+test("Bank Shot practice: a 14-unit bank, the puck's glimpse, then a marker locked in reveals the crossing (T245)", async ({ page }) => {
+  const scored = attemptRequests(page);
+  await gotoReady(page, "/practice/bank-shot");
+  await page.getByRole("button", { name: "Start" }).click();
+  await expect(page.getByRole("img", { name: "Round 1 of 5" })).toBeVisible();
+  await expect(page.getByRole("meter", { name: "Distance bank" })).toHaveAttribute("aria-valuetext", "14 left of 14");
+  const board = page.locator("canvas[data-phase]");
+  await expect(board).toHaveAttribute("data-phase", "glimpse", { timeout: 10_000 });
+  await expect(board).toHaveAttribute("data-phase", "aim");
+  const box = (await board.boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await page.getByRole("button", { name: "Lock in" }).click();
+  await expect(board).toHaveAttribute("data-phase", "result");
+  await expect(page.getByText(/^(Right on the crossing\.|[\d.]+ units? off\.)/)).toBeVisible();
+  expect(scored).toEqual([]);
+});
+
 test("the practice hub opens each challenge's practice page", async ({ page }) => {
   for (const [name, path, heading] of [
     ["Teetering Tower", "/practice/stacking", "Practice: Teetering Tower"],
@@ -383,6 +400,7 @@ test("the practice hub opens each challenge's practice page", async ({ page }) =
     ["Swift Sum", "/practice/flash-count", "Practice: Swift Sum"],
     ["Trail Trace", "/practice/echo-path", "Practice: Trail Trace"],
     ["Clean Cut", "/practice/fair-split", "Practice: Clean Cut"],
+    ["Bank Shot", "/practice/bank-shot", "Practice: Bank Shot"],
   ]) {
     await gotoReady(page, "/practice");
     await page.getByRole("list", { name: "Challenges" }).getByRole("link", { name }).click();
