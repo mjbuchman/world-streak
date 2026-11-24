@@ -118,6 +118,7 @@ export function InkGame({ params, onFinish }: { params: InkParams; onFinish: (in
         if (!done.current && last !== null) {
           done.current = true;
           setPhase("done");
+          // The run ends when the last feedback beat does; the engine's lastInputMs is this endMs.
           finishRef.current({ answers: answers.current, endMs: last.atMs + FEEDBACK_MS });
         }
         return false;
@@ -184,7 +185,7 @@ export function InkGame({ params, onFinish }: { params: InkParams; onFinish: (in
       <RoundProgress total={params.rounds.length} current={round} failedRound={failed ? round : undefined} />
       <BankGauge total={params.bank} spent={roundCosts(costs)} format={seconds} label="Time bank" />
       <div className={styles.stage}>
-        <canvas ref={canvasRef} className={styles.board} data-phase={phase} role="img" tabIndex={0} aria-label={label} />
+        <canvas ref={canvasRef} className={styles.board} data-phase={phase} role="img" aria-label={label} />
         {countdown !== null && (
           <>
             <p className={styles.caption}>Round {round + 1}</p>

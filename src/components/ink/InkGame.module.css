@@ -20,7 +20,6 @@
   border-radius: var(--fs-radius-surface);
 }
 
-.board:focus-visible,
 .pad button:focus-visible {
   outline: 3px solid var(--fs-color-mint);
   outline-offset: 2px;
