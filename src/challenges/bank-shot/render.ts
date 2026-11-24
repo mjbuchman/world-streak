@@ -73,7 +73,8 @@ export function angleLabel(radians: number): string {
 export const oneDecimal = (value: number) => `${Math.round(value * 10) / 10}`;
 
 /** "On target, no cost" inside the free zone, else "Missed by 4.2, cost 1.2" (T248). */
-export const missLabel = (miss: number, cost: number) => (cost === 0 ? "On target, no cost" : `Missed by ${oneDecimal(miss)}, cost ${oneDecimal(cost)}`);
+export const missLabel = (miss: number, cost: number) =>
+  cost === 0 ? "On target, no cost" : `Missed by ${oneDecimal(miss)}, cost ${cost < 0.05 ? "under 0.1" : oneDecimal(cost)}`;
 
 /** The free zone's ends on the finish line: FREE_UNITS each side of the crossing, inside the walls. */
 export const freeZone = (crossingX: number) => ({ from: Math.max(0, crossingX - FREE_UNITS), to: Math.min(BOARD_W, crossingX + FREE_UNITS) });

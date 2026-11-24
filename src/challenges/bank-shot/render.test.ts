@@ -127,6 +127,8 @@ describe("Bank Shot path and puck (T232)", () => {
     expect(missLabel(2.9, 0)).toBe("On target, no cost");
     expect(missLabel(3.5, 0.5)).toBe("Missed by 3.5, cost 0.5");
     expect(missLabel(4.24, 1.24)).toBe("Missed by 4.2, cost 1.2");
+    // A cost too small to show at one decimal never reads as "cost 0".
+    expect(missLabel(3.04, 0.04)).toBe("Missed by 3, cost under 0.1");
     expect(oneDecimal(27.5)).toBe("27.5");
   });
 });
