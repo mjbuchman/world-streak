@@ -12,6 +12,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/DECISIONS-to-2026-11-19.md`. Search it only when you need history.
 
+### 2026-11-24 — Arrow Flip numbers (T236–T238)
+- Choice: (1) The bank is 2 200 ms, not the plan's 6 000: the plan's careful simulated player (450 to 700 ms plus 100 ms a round; 4% to 14% wrong on mismatches) makes about 1.3 wrong answers and 1.2 s of slow time a run, so with 6 000 it would almost never bust; 2 200 puts it inside 40 to 60% and the distracted player under 15%. (2) Mismatches per round 1, 2, 2, 3, 4 (20% to 60% of six, rounded); WRONG_COST 1 000, TIMEOUT_COST 1 500, PROMPT_GAP 450, FEEDBACK 300 as proposed. (3) An exact diagonal swipe counts as horizontal. (4) The ARROW badge has pointed ends rather than a full diamond, so the word fits at 28 px. (5) The four buttons sit in one row (Left, Up, Down, Right) so they fit under the canvas on a 390 x 664 screen.
+- Reason: Open items (all numbers are proposals); set by `src/challenges/arrow-flip/engine.sim.test.ts`.
+- How to change it later: the constants at the top of `src/challenges/arrow-flip/engine.ts`; re-run the simulation test.
+- Confirmed by human: pending (M9 play-test, T244)
+
 ### 2026-11-18 — Second Sense rounds (T180-T183)
 - Choice: (1) The default pass target stays 4, which now means "survive all four rounds"; admins can set fractions such as 4.5. (2) The balance test models a player's error as 15% of the target (sd), not a flat 1000 ms, and expects 30 to 70% of runs to survive. (3) The cheat check flags 3 or more rounds of one run under 25 ms off target. (4) Old-scale scores are left out of the percentile through a new `challenge_types.scores_since` date, set to the day after the migration runs (UTC). (5) The bank shows seconds to one decimal ("8.8 s").
 - Reason: Open items (targets, thresholds); the backlog proposes these, and a flat 1 s error would make 15 to 25 s targets too easy compared with real counting.

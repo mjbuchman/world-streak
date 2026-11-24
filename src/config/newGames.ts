@@ -9,6 +9,12 @@ export const NEW_GAMES = [
     path: "/practice/bank-shot",
     tagline: "Five shots: watch a puck bounce off the walls, then mark where it will cross the finish line. Every unit you miss drains your 14-unit bank.",
   },
+  {
+    name: "Arrow Flip",
+    path: "/practice/arrow-flip",
+    tagline: "Five rounds of six prompts: swipe the way the arrow points or the word says, whichever the cue asks. Slow and wrong answers drain your time bank.",
+  },
 ] as const;
 
 export const BANK_SHOT = NEW_GAMES[0];
+export const ARROW_FLIP = NEW_GAMES[1];

@@ -1,0 +1,87 @@
+/* Arrow Flip: the round steps and the bank above the prompt canvas, four direction buttons below (T238). */
+.game {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Short enough on a 390 x 664 phone that the four buttons stay on screen. */
+.stage {
+  position: relative;
+  width: min(100%, 360px, calc((100dvh - 380px) * 390 / 480));
+  min-width: 220px;
+  margin: 0 auto;
+}
+
+.board {
+  display: block;
+  width: 100%;
+  aspect-ratio: 390 / 480;
+  /* A swipe must not scroll or zoom the page. */
+  touch-action: none;
+  border-radius: var(--fs-radius-surface);
+}
+
+.board:focus-visible,
+.pad button:focus-visible {
+  outline: 3px solid var(--fs-color-mint);
+  outline-offset: 2px;
+}
+
+/* "Round N" above the 3-2-1 numbers. */
+.caption {
+  position: absolute;
+  top: var(--space-4);
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-text-label);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fs-color-text-muted);
+}
+
+/* One row of four, so they cost a single 56 px line of height. */
+.pad {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.pad button {
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--fs-color-surface-border);
+  border-radius: var(--fs-radius-surface);
+  background: var(--fs-color-surface-strong);
+  color: var(--fs-color-text);
+  font-size: 28px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.glyph {
+  display: inline-block;
+}
+
+.glyph[data-dir="left"] {
+  transform: rotate(180deg);
+}
+
+.glyph[data-dir="up"] {
+  transform: rotate(-90deg);
+}
+
+.glyph[data-dir="down"] {
+  transform: rotate(90deg);
+}
+
+.hint {
+  margin: 0;
+  min-height: 1.5em;
+  text-align: center;
+  font-size: var(--fs-text-small);
+  color: var(--fs-color-text-muted);
+}

@@ -1,0 +1,31 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Arrow Flip params (T236) > golden: seed 0 (changing the PRNG or the draw changes these) 1`] = `
+[
+  "word:left/left arrow:right/right word:down/down word:right/right arrow:down/right arrow:up/up",
+  "arrow:right/right arrow:up/left word:down/down arrow:right/left word:left/left word:right/right",
+  "word:down/down arrow:right/right arrow:up/right word:right/right word:left/left arrow:up/left",
+  "word:left/left arrow:down/up word:right/right arrow:down/left arrow:left/left word:up/down",
+  "arrow:left/up word:left/down word:up/left arrow:up/up arrow:left/right word:up/up",
+]
+`;
+
+exports[`Arrow Flip params (T236) > golden: seed 1 (changing the PRNG or the draw changes these) 1`] = `
+[
+  "word:right/right arrow:up/up arrow:left/left word:up/up arrow:left/right word:up/up",
+  "word:left/left arrow:up/up arrow:right/right arrow:down/down word:down/left word:down/up",
+  "arrow:left/left arrow:right/right arrow:left/up word:down/down word:down/left word:down/down",
+  "word:down/left word:right/right word:down/down arrow:right/right arrow:down/up arrow:left/down",
+  "arrow:up/left arrow:down/up arrow:left/left word:left/right word:left/down word:left/left",
+]
+`;
+
+exports[`Arrow Flip params (T236) > golden: seed 4294967295 (changing the PRNG or the draw changes these) 1`] = `
+[
+  "word:down/down arrow:left/left word:up/up word:down/down arrow:right/down arrow:down/down",
+  "word:left/left word:right/right arrow:left/left word:left/up arrow:right/right arrow:up/left",
+  "word:right/down word:up/up arrow:left/down word:down/down arrow:up/up arrow:right/right",
+  "arrow:left/left word:down/right word:up/up arrow:right/right word:left/down arrow:right/down",
+  "word:up/up word:right/right arrow:up/left arrow:left/down arrow:right/left word:left/down",
+]
+`;

@@ -122,7 +122,7 @@ Planning notes for M9:
 
 ### T232 Bank Shot renderer
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T231, T135
 - Acceptance criteria:
   - [ ] `src/challenges/bank-shot/render.ts` draws, from state and elapsed ms alone: the board with its walls, the finish line along the top, the puck and a fading trail during the glimpse, the spinning bumper (visible the whole round, rotating by elapsed ms), the player's marker on the finish line, and the reveal (the real path, the real crossing point and the miss as a labelled distance) after the tap. Colours come from the canvas token helper (T135); the marker, the real crossing and the walls differ by shape and label as well as colour; reduced motion drops the trail fade and the bumper's spin animation for a static bar plus its angle label, never the pass or fail information.
@@ -132,7 +132,7 @@ Planning notes for M9:
 
 ### T233 Bank Shot game component
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T232, T137, T178, T179
 - Acceptance criteria:
   - [ ] `src/components/bank-shot/BankShotGame.tsx` (not yet wired in; uses `runFrames`): the 3-2-1 before every round, the launch and glimpse, a tap or drag on the canvas that places the marker on the finish line (a tap anywhere on the board maps to its x; the marker can be moved again before locking), a 44 px or taller "Lock in" button and the Enter key that commit the guess (proposal: place, then lock, so a fat finger can correct itself), the reveal for `SHOW_MS`, then the next round. The Left and Right arrow keys move the marker by 1 unit (Shift: 5) and Enter locks, so it is playable without a pointer. Taps before the glimpse ends are ignored.
@@ -166,7 +166,7 @@ Planning notes for M9:
 
 ### T236 Arrow Flip: prompt generator and engine
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T08, T180
 - Acceptance criteria:
   - [ ] `src/challenges/arrow-flip/engine.ts` implements `ChallengeModule` with `direction "higher-better"`, `ROUNDS` = 5, `PROMPTS_PER_ROUND` = 6 (proposal; about 8 s of prompts a round at human pace so a run is 60 to 80 s) and a time bank `BANK_MS` (proposal 6 000, final value set by the simulation test below). `paramsFromSeed(seed)` returns every prompt of the run: `{ arrow, word, cue }` with `arrow` and `word` each one of LEFT, RIGHT, UP, DOWN (arrow as a direction, word as text) and `cue` either `"word"` or `"arrow"`, plus per-round `allowanceMs` and `limitMs`.
@@ -180,7 +180,7 @@ Planning notes for M9:
 
 ### T237 Arrow Flip: input helpers and renderer
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T236, T135
 - Acceptance criteria:
   - [ ] `src/challenges/arrow-flip/input.ts` (pure): `swipeDirection(dx, dy, minPx)` returns LEFT, RIGHT, UP, DOWN or null (a swipe shorter than `MIN_SWIPE_PX` = 24 is ignored, an exact diagonal resolves by a documented rule, never randomly), `keyDirection(key)` maps the four arrow keys, and the same direction type is used by the four on-screen buttons. Tests at every quadrant boundary, a 23 px and a 24 px swipe, and each key.
@@ -190,7 +190,7 @@ Planning notes for M9:
 
 ### T238 Arrow Flip game component
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T237, T137, T178, T179
 - Acceptance criteria:
   - [ ] `src/components/arrow-flip/ArrowFlipGame.tsx` (not yet wired in; uses `runFrames`): the 3-2-1 before every round, the prompts in sequence, answered by a swipe on the canvas (pointer events from pointerdown to pointerup, `touch-action: none`), by four on-screen direction buttons (each at least 56 x 56 CSS px, with visible focus, laid out so all four and the canvas fit a 390 x 664 viewport without scrolling) or by the arrow keys, all through the same answer path; a short feedback beat (`FEEDBACK_MS`) after each answer; `RoundProgress`, a `BankGauge` in seconds to one decimal ("4.2 s left") and the numbered round counter. A prompt that times out shows the right answer as text.
@@ -265,7 +265,7 @@ Planning notes for M9:
 
 ### T245 Bank Shot practice page (MVP, unregistered)
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T233
 - Acceptance criteria:
   - [ ] `/practice/bank-shot` plays `BankShotGame` with a fresh seed each run and scores it locally with the T231 engine (practice never decides anything official), showing rounds survived and pass or fail, no score, and "Play again"; it works signed out and makes no `/api/attempts` calls.
@@ -275,7 +275,7 @@ Planning notes for M9:
 
 ### T246 Arrow Flip practice page (MVP, unregistered)
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T238
 - Acceptance criteria:
   - [ ] As T245, for `/practice/arrow-flip` with `ArrowFlipGame` and the T236 engine.
