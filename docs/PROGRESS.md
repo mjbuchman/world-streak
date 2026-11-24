@@ -8,12 +8,13 @@ Agents update this file after every task, newest entries first. A fresh session 
 - Active task: none. Phase 1 is done; waiting for the owner's M9 MVP play-test.
 - Blocked tasks: none
 - Waiting on the human: the M5 Daily Three please-confirm; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: M9 re-planned after the owner's play-test (Bank Shot retune T247–T248; Arrow Flip replaced by the Stroop game Ink, T249–T253; batches M9-f, M9-g, M9-h, then a practice play-test stop, then M9-d, M9-e). The owner approved the re-plan on Nov 24; start M9-f.
+- Next: M9 re-planned after the owner's play-test (Bank Shot retune T247–T248; Arrow Flip replaced by the Stroop game Ink, T249–T253; batches M9-f, M9-g, M9-h, then a practice play-test stop, then M9-d, M9-e). The owner approved the re-plan on Nov 24. M9-f merged; M9-g in progress.
 
 ## Log
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/PROGRESS-to-2026-11-19.md`. Search it only when you need history.
 
+- 2026-11-24 T247–T248 done, PR #201: Bank Shot bank 30 (owner's choice over the sim's ~8), a 3-unit free zone shown as a labelled band, glimpses down to 1 000 ms.
 - 2026-11-24 T236–T238, T246 done, PR #198: Arrow Flip engine (five rounds of six prompts, a 2.2 s time bank set by a simulated careful player, not the plan's 6 s), swipe/button/key input, renderer, game and an unregistered practice page listed as New. Owner to confirm the numbers in T244.
 - 2026-11-24 T232–T233, T245 done, PR #197: Bank Shot renderer, game (glimpse, marker, Lock in, reveal) and an unregistered practice page, listed on the hub as New.
 - 2026-11-24 T230–T231 done, PR #196: Bank Shot geometry (closed-form wall bounces, a 1 ms stepped trace past the spinning bumper) and the five-round engine. The bank is 14 units, not the plan's 30, set by a simulated careful player; owner to confirm in T244.

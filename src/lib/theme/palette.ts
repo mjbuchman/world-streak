@@ -22,6 +22,11 @@ export const PALETTE = {
   errorSurface: "rgba(255,120,100,0.14)",
   meterSurface: "#052E30",
   tangerinePale: "#FFC27A",
+  // Ink's four inks (T250): luminance about 0.16, 0.38, 0.68 and 0.01, so they differ in lightness too.
+  inkRed: "#D42A2A",
+  inkBlue: "#5AA9FF",
+  inkYellow: "#FFD21F",
+  inkBlack: "#141414",
 } as const;
 
 /** The mint tint at the bright end of the highlight surface's gradient (`--fs-gradient-highlight`). */
@@ -59,7 +64,8 @@ export function composite(top: string, bottom: string): string {
   return toHex({ r: mix(t.r, b.r), g: mix(t.g, b.g), b: mix(t.b, b.b), a: 1 });
 }
 
-function luminance(color: string): number {
+/** The WCAG 2 relative luminance of an opaque colour, 0 (black) to 1 (white). */
+export function luminance(color: string): number {
   const { r, g, b } = parse(color);
   const channel = (v: number) => {
     const s = v / 255;
