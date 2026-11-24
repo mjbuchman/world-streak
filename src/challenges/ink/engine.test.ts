@@ -242,6 +242,8 @@ describe("Ink module (T249)", () => {
     expect(bad([{ word: 0, atMs: 5, colour: "red" }, { word: 1, atMs: 5, colour: "blue" }])).toBe(false);
     expect(bad(Array.from({ length: TOTAL_WORDS + 1 }, (_, i) => ({ word: 0, atMs: i + 1, colour: "red" })))).toBe(false);
     expect(bad([{ word: 0, atMs: 500, colour: "red" }], 400)).toBe(false);
+    expect(bad([{ word: 0, atMs: Number.NaN, colour: "red" }])).toBe(false);
+    expect(bad([], Number.POSITIVE_INFINITY)).toBe(false);
     expect(bad([], 0)).toBe(true);
   });
 });
