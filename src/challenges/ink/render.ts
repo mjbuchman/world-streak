@@ -40,7 +40,9 @@ const PAD = 16;
 export function wordLayout(width: number, height: number) {
   const fontPx = Math.max(MIN_WORD_PX, Math.min(72, Math.floor((width - 2 * PAD) / (LONGEST * EM_PER_LETTER))));
   const word = { cx: width / 2, cy: height * 0.45, w: LONGEST * EM_PER_LETTER * fontPx, h: fontPx };
-  const mark = { cx: width / 2, cy: height * 0.32, size: Math.min(width, height) * 0.25 };
+  // The mark sits just above the feedback title, so it never overlaps it on a short canvas.
+  const size = Math.min(width, height) * 0.2;
+  const mark = { cx: width / 2, cy: word.cy - FEEDBACK_PX - size / 2, size };
   const bar = { x: PAD, y: height - PAD - 8, w: width - 2 * PAD, h: 8 };
   return { word, mark, bar, fontPx };
 }

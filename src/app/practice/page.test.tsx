@@ -21,14 +21,14 @@ describe("/practice", () => {
       ["Trail Trace", "/practice/echo-path", "A path of up to 12 tiles climbs the board. Tap it back, one tile longer each time, all the way to the top, with one extra life."],
       ["Clean Cut", "/practice/fair-split", "Five irregular blobs and polygons: place one straight line to cut each in half. Every point off 50% drains your 8-point bank."],
       ["Bank Shot", "/practice/bank-shot", "Five shots: watch a puck bounce off the walls, then mark where it will cross the finish line. Close enough costs nothing; every unit further out drains your 30-unit bank."],
-      ["Arrow Flip", "/practice/arrow-flip", "Five rounds of six prompts: swipe the way the arrow points or the word says, whichever the cue asks. Slow and wrong answers drain your time bank."],
+      ["Ink", "/practice/ink", "Five rounds of eight colour words: tap the colour of the ink, not the word. Slow and wrong answers drain your time bank."],
     ]);
   });
 
-  it("marks the games still on trial as New, and only those (T245, T246)", () => {
+  it("marks the games still on trial as New, and only those (T245, T252)", () => {
     render(<PracticeHub />);
     const badges = screen.getAllByText("New");
-    expect(badges.map((badge) => badge.closest("li")?.textContent)).toEqual([expect.stringMatching(/^Bank Shot/), expect.stringMatching(/^Arrow Flip/)]);
+    expect(badges.map((badge) => badge.closest("li")?.textContent)).toEqual([expect.stringMatching(/^Bank Shot/), expect.stringMatching(/^Ink/)]);
   });
 
   it("says practice never counts, under a page title with a way back home", () => {

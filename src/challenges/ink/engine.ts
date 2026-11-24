@@ -29,6 +29,8 @@ export const ALLOWANCE_MS = [1200, 1050, 950, 850, 800] as const;
 export const LIMIT_MS = [2500, 2250, 2000, 1750, 1500] as const;
 /** From one word's answer (or its limit) to the next word; the feedback beat is its start. */
 export const WORD_GAP_MS = 400;
+/** The feedback beat after each word, inside WORD_GAP_MS. */
+export const FEEDBACK_MS = 300;
 export const WRONG_COST_MS = 1000;
 export const TIMEOUT_COST_MS = 1500;
 /** The 3-2-1 before every round. */

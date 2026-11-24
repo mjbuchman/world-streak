@@ -1,4 +1,3 @@
-import type { ArrowFlipColors } from "@/challenges/arrow-flip/render";
 import type { BankShotColors } from "@/challenges/bank-shot/render";
 import type { EchoPathColors } from "@/challenges/echo-path/render";
 import type { FairSplitColors } from "@/challenges/fair-split/render";
@@ -51,18 +50,6 @@ export const BANK_SHOT_COLOR_TOKENS: Record<keyof BankShotColors, string> = {
   crossing: "--fs-color-mint-dark",
   path: "--fs-color-mint",
   miss: "--fs-color-tangerine",
-  text: "--fs-color-text",
-};
-
-export const ARROW_FLIP_COLOR_TOKENS: Record<keyof ArrowFlipColors, string> = {
-  board: "--fs-color-meter-surface",
-  arrow: "--fs-color-mint",
-  word: "--fs-color-text",
-  badge: "--fs-color-tangerine",
-  right: "--fs-color-mint",
-  wrong: "--fs-color-tangerine",
-  bar: "--fs-color-mint",
-  track: "--fs-color-surface-strong",
   text: "--fs-color-text",
 };
 

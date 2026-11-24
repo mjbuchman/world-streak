@@ -43,6 +43,8 @@ const fontPx = (call: Call) => Number(/(\d+)px/.exec(String(call.font))![1]);
 
 describe("Ink layout (T250)", () => {
   it.each([
+    [220, 203],
+    [232, 214],
     [320, 480],
     [390, 560],
   ])("keeps the word centred and inside a %i x %i canvas, above the bar", (w, h) => {
