@@ -84,7 +84,7 @@ Maintenance after M8: T228 then T229 (light), after the M8 play-test.
 
 ## M9 New games: Bank Shot and Ink
 
-Re-plan awaiting owner approval (M9 re-plan, 2026-11-24): T247 to T253 are new, T236 to T238 and T246 are superseded, and T234, T235, T239 to T244 were rewritten for Ink. Build nothing from this section until the owner approves. (Older text below that still says "Arrow Flip" or lists the original Bank Shot numbers is superseded by the re-plan notes and by T247, T249 to T253.)
+Re-plan approved by the owner (M9 re-plan, 2026-11-24): T247 to T253 are new, T236 to T238 and T246 are superseded, and T234, T235, T239 to T244 were rewritten for Ink. (Older text below that still says "Arrow Flip" or lists the original Bank Shot numbers is superseded by the re-plan notes and by T247, T249 to T253.)
 
 Planned Nov 22, 2026 from the owner's request to add two games to the daily pool, after which the MVP is done. The owner chose the two games and their one-line ideas; every number and rule detail below marked "proposal" is an agent proposal, recorded as "owner to confirm" (T244).
 
