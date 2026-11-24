@@ -21,13 +21,17 @@ Older entries (everything up to Nov 19, 2026) are in `docs/archive/BACKLOG-to-20
 
 One branch, review round and PR per batch, in this order (dependencies still apply).
 
-M9 New games: Bank Shot and Arrow Flip (planned Nov 22, 2026; approved Nov 24, all proposals as written; the daily lineup stays 3 games, now drawn from a pool of 7). The owner wants an MVP first: build each game playable on its practice page only, then stop for the owner's play-test before any registration, migration, cheat check or pool work.
+M9 New games: Bank Shot and Ink (planned Nov 22, 2026; approved Nov 24, all proposals as written; re-planned Nov 24 after the owner's MVP play-test: Bank Shot retuned, Arrow Flip dropped and replaced by the Stroop game Ink; the daily lineup stays 3 games, drawn from a pool of 7). The owner wants an MVP first: each game playable on its practice page only, then a stop for the owner's play-test before any registration, migration, cheat check or pool work.
 
 Phase 1, practice-only MVP (then stop for the owner's play-test):
 
-- M9-a. Bank Shot geometry and engine: T230, T231 (full: scoring)
-- M9-b. Bank Shot renderer, game and practice page: T232, T233, T245 (light)
-- M9-c. Arrow Flip engine, input, renderer, game and practice page: T236, T237, T238, T246 (full: scoring)
+- M9-a. Bank Shot geometry and engine: T230, T231 (done)
+- M9-b. Bank Shot renderer, game and practice page: T232, T233, T245 (done)
+- M9-c. Arrow Flip engine, input, renderer, game and practice page: T236, T237, T238, T246 (done, superseded by Ink)
+- M9-f. Bank Shot retune (bank 30, free zone, gentler glimpses): T247, T248 (full: scoring)
+- M9-g. Ink engine and renderer: T249, T250 (full: scoring)
+- M9-h. Ink game, practice page and Arrow Flip removal: T251, T252, T253 (full: attempts, scoring files removed)
+- STOP: owner play-test of `/practice/bank-shot` and `/practice/ink`.
 
 Phase 2, only after the owner says they like the games (apply their tweaks first):
 
@@ -78,16 +82,20 @@ Maintenance after M8: T228 then T229 (light), after the M8 play-test.
 - Notes: Raised in the T05 quality review. Sign-up uses the service-role `auth.admin.createUser`, so Supabase's built-in sign-up rate limit does not apply, and a prize game attracts bulk account creation. Should land before the public launch (M4 at the latest).
 - needs-human: a free Cloudflare account and a Turnstile widget for the production domain; put the site key and secret key in `.env.local` and Vercel as `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`.
 
-## M9 New games: Bank Shot and Arrow Flip
+## M9 New games: Bank Shot and Ink
+
+Re-plan approved by the owner (M9 re-plan, 2026-11-24): T247 to T253 are new, T236 to T238 and T246 are superseded, and T234, T235, T239 to T244 were rewritten for Ink. (Older text below that still says "Arrow Flip" or lists the original Bank Shot numbers is superseded by the re-plan notes and by T247, T249 to T253.)
 
 Planned Nov 22, 2026 from the owner's request to add two games to the daily pool, after which the MVP is done. The owner chose the two games and their one-line ideas; every number and rule detail below marked "proposal" is an agent proposal, recorded as "owner to confirm" (T244).
 
-Goal: play-test two new games. Practice Bank Shot (watch a puck bounce, then tap where it will cross the finish line) and Arrow Flip (swipe the direction the cue asks for, the word or the arrow) at `/practice/bank-shot` and `/practice/arrow-flip`, on a phone and on a desktop; both turn up in the daily lineup rotation with the five existing games, are scored by the server, and hide their score like the other bank games.
+Re-plan after the Nov 24 play-test: Bank Shot is good but too unforgiving, so it is retuned (T247). Arrow Flip was confusing and too fast, so it is dropped and replaced by Ink, a basic Stroop game (T249 to T253).
+
+Goal: play-test two new games. Practice Bank Shot (watch a puck bounce, then tap where it will cross the finish line) and Ink (a colour word is drawn in an ink colour; tap the ink's colour, not the word) at `/practice/bank-shot` and `/practice/ink`, on a phone and on a desktop; after phase 2 both turn up in the daily lineup rotation with the five existing games, are scored by the server, and hide their score like the other bank games.
 
 Planning notes for M9:
 
-- **Stored keys and names:** `bank-shot` and `arrow-flip` (folders, routes, flag names and `challenge_types` values follow them, as T199 set). Shown names "Bank Shot" and "Arrow Flip" are the owner's; the "original names, not those of existing games" rule in `src/config/challenges.ts` means the owner should confirm neither clashes with a known game (T244).
-- **Both are bank games** (the rule in `src/challenges/shared/bank.ts`): `playBank` and `bankScore`, score = whole rounds survived plus the bank left as a fraction, `direction "higher-better"`, `challengeUi.showScore` false, default pass target 5 ("survive all five"), editable in `/admin`. No `scores_since` reset is needed: a new type has no old-scale scores.
+- **Stored keys and names:** `bank-shot` and `ink` (folders, routes, flag names and `challenge_types` values follow them, as T199 set). Shown names "Bank Shot" and "Ink" are the owner's or the working name; the "original names, not those of existing games" rule in `src/config/challenges.ts` means the owner should confirm neither clashes with a known game (T244).
+- **Both are bank games** (Ink drains a time bank in ms, Bank Shot a distance bank in units; the rule in `src/challenges/shared/bank.ts`): `playBank` and `bankScore`, score = whole rounds survived plus the bank left as a fraction, `direction "higher-better"`, `challengeUi.showScore` false, default pass target 5 ("survive all five"), editable in `/admin`. No `scores_since` reset is needed: a new type has no old-scale scores.
 - **Same rules as every game:** pure deterministic engine (`createRng` only; no `Math.random`, `Date.now`, DOM, network), simulation driven by elapsed ms, the server re-runs the engine on the submitted inputs and the client never decides pass or fail, the 3-2-1 before every round (`RUN_COUNTDOWN_MS`), `RoundProgress` numbered counter, `BankGauge`, `useRevealRounds` or the game's own frame loop (`runFrames`) as the model needs, `lastInputMs` and a schema bound on every input array, `finished`, practice page through `PracticeShell`, Fresh Sport look per `docs/UI_GUIDELINES.md` (no emojis, no em dashes, real buttons with visible focus, no colour as the only cue), and rule 8 (no back button during a run).
 - **Models to copy:** `src/challenges/fair-split/` (bank, per-round countdown, outcome type, canvas, keyboard fallback), `src/challenges/flash-count/` (round reveal), `src/components/fair-split/FairSplitGame.tsx`, `src/app/practice/fair-split/`, `supabase/migrations/20261116030000_fair_split.sql` and `supabase/tests/fair_split.test.sql`.
 - **Every place that lists the games** must learn the two new keys; a grep for `fair-split` and `FairSplit` under `src/`, `supabase/`, `scripts/` and `tests/` is part of each registration task (the `ChallengeType` union and `satisfies Record<ChallengeType, ...>` checks catch most at typecheck: `CHALLENGE_TYPES`, `CHALLENGES`, `CHALLENGE_UI`, `CHALLENGE_NAMES`, `CHALLENGE_TAGLINES`, `detect.ts`, `adminSettings`, `localTools`, the `gameSettings.fixture.json` drift guard, `seed:dev`, `simulate:days`).
@@ -144,7 +152,7 @@ Planning notes for M9:
 ### T234 Bank Shot: registration, practice page and migration
 - Type: feature
 - Status: todo
-- Depends on: T233, T109
+- Depends on: T248, T109
 - Acceptance criteria:
   - [ ] `CHALLENGE_TYPES`, the registry, `challengeUi` (`showScore: false`, `bankSummary(ROUNDS, "rounds")`, `bankTarget`), `CHALLENGE_NAMES` ("Bank Shot"), `CHALLENGE_TAGLINES`, `BANK_SHOT_HOW_TO` and the how-to / `challengeUi` wording gain `bank-shot` (for example "Watch the puck bounce. It vanishes. Tap where it will cross the finish line, then lock in. Every unit you miss by comes out of one bank; survive all five rounds to pass."). Every other place that lists the games is updated (the grep in the planning notes); all tests for them are extended without being weakened.
   - [ ] A migration adds `challenge_types` `bank-shot` / `higher-better` and `default_pass_targets` `"bank-shot": 5` (both the existing row's value and the column default), with the `game_settings` pool left unchanged (T241). pgTAP: the type row exists with direction `higher-better`, the settings default holds 5, `ensure_game_day` still creates three games from the unchanged pool, an admin can hand-place `bank-shot` into an unstarted day's lineup, and RLS on `challenge_types` is unchanged (still readable by everyone, no client writes).
@@ -156,9 +164,9 @@ Planning notes for M9:
 ### T235 Bank Shot: cheat checks
 - Type: feature
 - Status: todo
-- Depends on: T231, T234
+- Depends on: T247, T234
 - Acceptance criteria:
-  - [ ] `src/config/cheat.ts` gains placeholder thresholds (proposal, judgment call to record): `BANK_SHOT_PRECISE_ROUNDS` = 3 rounds of one run each within `BANK_SHOT_PRECISE_UNITS` = 0.25 units of the real crossing (a thumb on a phone cannot place a marker that close, and a script can), and `BANK_SHOT_MIN_TAP_AFTER_GLIMPSE_MS` = 250 (a counted tap sooner than this after the puck vanished is faster than a person can read the path and place a guess).
+  - [ ] `src/config/cheat.ts` gains placeholder thresholds (proposal, judgment call to record; with the T247 free zone of about 3 units, "precise" must be re-judged: count rounds within `BANK_SHOT_PRECISE_UNITS` of the crossing, a much tighter distance than `FREE_UNITS`): `BANK_SHOT_PRECISE_ROUNDS` = 3 rounds of one run each within `BANK_SHOT_PRECISE_UNITS` = 0.25 units of the real crossing (a thumb on a phone cannot place a marker that close, and a script can), and `BANK_SHOT_MIN_TAP_AFTER_GLIMPSE_MS` = 250 (a counted tap sooner than this after the puck vanished is faster than a person can read the path and place a guess).
   - [ ] `detectFlags` gains `bank-shot-precise` and `bank-shot-instant`; the generic `timing-mismatch` already covers the new game with the countdown allowance (a test shows it does).
   - [ ] An honest-looking fixture (misses of 3.1, 1.4, 4.8, 2.2, 0.9 units, taps 1.5 to 4 s after the glimpse) has no flags; each rule has a positive and a negative test asserting the whole flag list; the rules never fire for another game's attempts and the other games' fixtures stay flag-free. Thresholds are checked against the T231 simulated careful player: it raises no flag in at least 99% of 2 000 simulated runs.
   - [ ] The submit response shape is unchanged with and without flags; at least 90% lines and branches in `detect.ts`.
@@ -177,6 +185,7 @@ Planning notes for M9:
   - [ ] Simulation test: a careful simulated player reacts in 450 to 700 ms plus 100 ms per round of difficulty (documented), and gets a mismatched prompt wrong with probability 4% rising to 14% by round 5 (proposal; the builder documents the model). Over 2 000 seeds, 40 to 60% survive all five; `BANK_MS` and `WRONG_COST_MS` are set from this and the band asserted. A distracted player (three times the wrong rate) survives under 15%.
   - [ ] At least 90% lines and branches.
 - Notes: About 400 lines (split the simulation test out if it grows). Proposal: bank drained by wrong and slow answers, rounds of six prompts speeding up with rising mismatches, target "survive all five" (owner to confirm all numbers). Full review (scoring).
+- SUPERSEDED (2026-11-24): done and merged (#198), but the owner found Arrow Flip confusing and too fast. It is replaced by Ink (T249 to T253); the code is removed in T253. Criteria above are kept as history only.
 
 ### T237 Arrow Flip: input helpers and renderer
 - Type: feature
@@ -187,6 +196,7 @@ Planning notes for M9:
   - [ ] `src/challenges/arrow-flip/render.ts` draws, from the prompt and elapsed ms: a large arrow, the direction word in large type under or over it, and the cue as a labelled badge, a text "WORD" or "ARROW" in a differently shaped frame (a rounded rectangle for WORD, a diamond for ARROW, proposal) so the cue is never told apart by colour alone; a feedback mark after each answer (a tick or cross shape plus the right direction as text on a wrong answer); a draining limit bar. Colours come from the canvas token helper; reduced motion drops the slide-in of a prompt, not the content; text is at least 28 CSS px at 390 px wide.
   - [ ] Tests: swipe and key tests above; a recording canvas mock shows the arrow, word and badge each drawn once per prompt and the badge text equals the cue; the limit bar's fraction at 0, half and the limit; the layout puts the arrow, word and badge inside the canvas at 320 x 480 and 390 x 560 and keeps the contrast ratio of text over its background at least 4.5:1 for the palette tokens used (asserted with a contrast helper, as the other games' tests do if one exists, or a small pure one added here).
 - Notes: About 320 lines. Colour-blind safety: cue and feedback are shapes and text, the arrow's direction is its shape. Fresh Sport look per `docs/UI_GUIDELINES.md`. Full review in batch M9-c (scoring neighbours).
+- SUPERSEDED (2026-11-24): done, replaced by Ink (T250); removed in T253. History only.
 
 ### T238 Arrow Flip game component
 - Type: feature
@@ -198,26 +208,27 @@ Planning notes for M9:
   - [ ] Unit test with mocked time and pointer events: a correct swipe on a matching prompt, a correct swipe on a mismatched "arrow" cue, a wrong answer, a timeout; a button press and a key press give the same answer as a swipe; the run ends on a bust and after the last prompt.
   - [ ] Accessibility: the buttons have names "Left", "Right", "Up" and "Down"; the canvas has a `role="img"` label that does not reveal the answer ahead of the visual cue (for example "Prompt 3 of 6, round 2"); a live status announces "Right" or "Wrong" after an answer, never the colour alone.
 - Notes: About 380 lines. Full review (attempts, since it produces the submitted inputs). Part of batch M9-d.
+- SUPERSEDED (2026-11-24): done, replaced by Ink (T251); removed in T253. History only.
 
-### T239 Arrow Flip: registration, practice page and migration
+### T239 Ink: registration, practice page and migration
 - Type: feature
 - Status: todo
-- Depends on: T238, T109
+- Depends on: T252, T253, T109
 - Acceptance criteria:
-  - [ ] `CHALLENGE_TYPES`, the registry, `challengeUi` (`showScore: false`, `bankSummary(ROUNDS, "rounds")`, `bankTarget`), `CHALLENGE_NAMES` ("Arrow Flip"), `CHALLENGE_TAGLINES` and `ARROW_FLIP_HOW_TO` gain `arrow-flip` (for example "Each prompt shows an arrow and a word that may disagree. A badge tells you which to follow, the WORD or the ARROW. Swipe that direction, or press the buttons or arrow keys. Wrong and slow answers come out of one time bank. Survive all five rounds to pass."). Every other place that lists the games is updated as in T234, tests extended without being weakened.
-  - [ ] A migration adds `challenge_types` `arrow-flip` / `higher-better` and `"arrow-flip": 5` to `default_pass_targets` (existing row and column default); the pool stays unchanged until T241. pgTAP as T234 (type row, default 5, hand placing into an unstarted lineup, RLS unchanged).
-  - [ ] `/practice/arrow-flip` uses `PracticeShell`, works signed out with no `/api/attempts` calls, shows rounds survived and pass or fail with no score, and is listed on the practice hub. `npm run db:types`, `npm run verify` and `npm run test:db` pass.
-  - [ ] Unit tests for `ArrowFlipPractice`, `challengeUi`, the hub list; `seed:dev`, `simulate:days` and the local-tools lineup setter accept `arrow-flip`.
-- Notes: About 330 lines. Full review (migration, attempts).
+  - [ ] `CHALLENGE_TYPES`, the registry, `challengeUi` (`showScore: false`, `bankSummary(ROUNDS, "rounds")`, `bankTarget`), `CHALLENGE_NAMES` ("Ink"), `CHALLENGE_TAGLINES` and `INK_HOW_TO` gain `ink` (for example "A colour word appears in a coloured ink. Tap the colour of the ink, not the word. Slow and wrong answers come out of one time bank. Survive all five rounds to pass."). Every other place that lists the games is updated as in T234, tests extended without being weakened.
+  - [ ] A migration adds `challenge_types` `ink` / `higher-better` and `"ink": 5` to `default_pass_targets` (existing row and column default); the pool stays unchanged until T241. pgTAP as T234 (type row, default 5, hand placing into an unstarted lineup, RLS unchanged).
+  - [ ] The existing `/practice/ink` page (T252) moves onto the registered type (`PracticeShell` with the registry), still works signed out with no `/api/attempts` calls, shows rounds survived and pass or fail with no score, and stays on the practice hub (no longer marked "New"). `npm run db:types`, `npm run verify` and `npm run test:db` pass.
+  - [ ] Unit tests for `InkPractice`, `challengeUi`, the hub list; `seed:dev`, `simulate:days` and the local-tools lineup setter accept `ink`.
+- Notes: About 330 lines. Full review (migration, attempts). Phase 2: waits for the owner's play-test.
 
-### T240 Arrow Flip: cheat checks
+### T240 Ink: cheat checks
 - Type: feature
 - Status: todo
-- Depends on: T236, T239
+- Depends on: T249, T239
 - Acceptance criteria:
-  - [ ] `src/config/cheat.ts` gains placeholder thresholds (proposal, judgment call to record): `ARROW_FLIP_MIN_REACTION_MS` = 180 (a correct answer sooner than this after the prompt appeared is faster than a person can read the cue and swipe; `ARROW_FLIP_FAST_ANSWERS` = 3 such answers in one run to flag, since one lucky anticipation is human) and `ARROW_FLIP_RHYTHM_MIN_ANSWERS` = 12 with `ARROW_FLIP_RHYTHM_MAX_SD_MS` = 12 (reaction times that even over 12 or more answers look scripted; reaction times, not gaps, so the countdowns do not hide a script, the lesson of M6's echo-path rule).
-  - [ ] `detectFlags` gains `arrow-flip-too-fast` and `arrow-flip-robotic`; `timing-mismatch` covers the game with the countdown allowance (tested).
-  - [ ] Honest-looking fixture (reactions 420 to 900 ms, two wrong answers, a miss) has no flags; each rule has a positive and a negative test asserting the whole flag list; no rule fires for another game's attempts; the simulated careful player from T236 raises no flag in at least 99% of 2 000 runs.
+  - [ ] `src/config/cheat.ts` gains placeholder thresholds (proposal, judgment call to record): `INK_MIN_REACTION_MS` = 180 (a correct answer sooner than this after the word appeared is faster than a person can read and tap; `INK_FAST_ANSWERS` = 3 such answers in one run to flag, since one lucky anticipation is human) and `INK_RHYTHM_MIN_ANSWERS` = 12 with `INK_RHYTHM_MAX_SD_MS` = 12 (reaction times that even over 12 or more answers look scripted; reaction times, not gaps, so the countdowns do not hide a script, the lesson of M6's echo-path rule).
+  - [ ] `detectFlags` gains `ink-too-fast` and `ink-robotic`; `timing-mismatch` covers the game with the countdown allowance (tested).
+  - [ ] Honest-looking fixture (reactions 450 to 1 100 ms, two wrong answers, a miss) has no flags; each rule has a positive and a negative test asserting the whole flag list; no rule fires for another game's attempts; the simulated careful player from T249 raises no flag in at least 99% of 2 000 runs.
   - [ ] Submit response shape unchanged; at least 90% lines and branches in `detect.ts`.
 - Notes: About 160 lines. Light review in a full-review batch.
 
@@ -226,7 +237,7 @@ Planning notes for M9:
 - Status: todo
 - Depends on: T234, T239
 - Acceptance criteria:
-  - [ ] A migration sets the `game_settings.pool` default to the seven games and appends `bank-shot` and `arrow-flip` to the existing settings row's pool (keeping any pool the admin already edited: it only appends the two when absent), each entry still checked against `challenge_types`, at least three distinct entries. Days already created keep their lineups; days not yet created draw from seven games.
+  - [ ] A migration sets the `game_settings.pool` default to the seven games and appends `bank-shot` and `ink` to the existing settings row's pool (keeping any pool the admin already edited: it only appends the two when absent), each entry still checked against `challenge_types`, at least three distinct entries. Days already created keep their lineups; days not yet created draw from seven games.
   - [ ] `supabase/tests/lineups.test.sql` committed fixed-date lineups are re-pinned for the seven-game pool (the expected lists are recomputed with the SQL function and checked by hand for being valid lineups, not just copied from the output); over 365 consecutive days no lineup has a repeated game and no day repeats the previous day's exact lineup; every one of the seven games appears at least once; a pool of exactly three games still changes order daily; a pool the admin already narrowed to five is left alone by the migration (tested).
   - [ ] `/admin/settings` edits the pool and a default pass target for all seven games (the drift guard against `gameSettings.fixture.json` is updated); the lineup editor lists the two new games; unit tests for the action's validation (a pool with an unknown game refused, pool of two refused, the two new games accepted, a default target of 5 shown for each).
   - [ ] `npm run db:types`, `npm run verify` and `npm run test:db` pass.
@@ -235,9 +246,9 @@ Planning notes for M9:
 ### T242 End-to-end checks for the two new games
 - Type: feature
 - Status: todo
-- Depends on: T240, T241
+- Depends on: T235, T240, T241
 - Acceptance criteria:
-  - [ ] Practice e2e for both games signed out, with no `/api/attempts` calls: Bank Shot shows the 3-2-1, the puck and then nothing after the glimpse, the marker, the "Lock in" button and the reveal, and the bank gauge drops by the missed distance; a deliberately bad run busts the bank and shows "rounds survived" with no big score; Arrow Flip shows the arrow, the word and the cue badge, a correct arrow-key answer keeps the gauge, a wrong one drains it by about the wrong cost, the numbered round counter lights round 1 after it is passed; neither game shows a score number; Teetering Tower and Trail Trace still do.
+  - [ ] Practice e2e for both games signed out, with no `/api/attempts` calls: Bank Shot shows the 3-2-1, the puck and then nothing after the glimpse, the marker, the "Lock in" button and the reveal, and the bank gauge drops by the missed distance beyond the free zone (a guess inside it costs nothing); a deliberately bad run busts the bank and shows "rounds survived" with no big score; Ink shows the colour word in its ink and four labelled buttons, a correct key press (1 to 4) keeps the gauge, a wrong one drains it by about the wrong cost, the numbered round counter lights round 1 after it is passed; neither game shows a score number; Teetering Tower and Trail Trace still do.
   - [ ] Daily flow e2e: with today's lineup set by the SQL fixture so one of the new games is in it (as `tests/e2e/after/daily-three.spec.ts` and `global-setup.ts` do), a new user starts, plays and submits the game, the server re-runs the engine on the inputs (assert the response's `passed` follows the server's score and that submitting a score field or a `passed` field is ignored), the one-attempt-per-game rule returns 409 for a second start, and the results page and share text show pass or fail with no game name, score or target. The two games appear in the `/play` lineup names and in `/history`.
   - [ ] A grep of `tests/e2e` and the `global-setup.ts` fixtures for lists of the five games finds none left that should say seven; `look.spec.ts` and the no-emoji, no-em-dash tests cover the new text; the practice hub e2e lists seven games.
   - [ ] `npm run test:e2e` passes from a cold start.
@@ -248,8 +259,8 @@ Planning notes for M9:
 - Status: todo
 - Depends on: T242
 - Acceptance criteria:
-  - [ ] On both mobile projects in `tests/e2e/mobile/mobile.spec.ts`: `/practice/bank-shot` and `/practice/arrow-flip` have no horizontal scroll (`expectBoardFits`), and the canvas, "Lock in" button, and all four Arrow Flip direction buttons lie wholly on screen once a round starts, asserted with `expectControlOnScreen` (the Lock in button and the lowest direction button with a 16 px margin below, as T228); every button and the Bank Shot finish-line strip are at least 44 x 44 CSS px.
-  - [ ] Bank Shot completes a round with `page.touchscreen.tap` on the finish line and the Lock in button; Arrow Flip completes a prompt with a touch swipe and with a button tap; both canvases have a computed `touch-action` that stops pinch and double-tap zoom (`expectNoZoom`); Arrow Flip text is at least 28 CSS px (computed from the layout).
+  - [ ] On both mobile projects in `tests/e2e/mobile/mobile.spec.ts`: `/practice/bank-shot` and `/practice/ink` have no horizontal scroll (`expectBoardFits`), and the canvas, "Lock in" button, and all four Ink colour buttons lie wholly on screen once a round starts, asserted with `expectControlOnScreen` (the Lock in button and the lowest colour button with a 16 px margin below, as T228); every button and the Bank Shot finish-line strip are at least 44 x 44 CSS px.
+  - [ ] Bank Shot completes a round with `page.touchscreen.tap` on the finish line and the Lock in button; Ink completes a word with a touch tap on a colour button; the Bank Shot canvas has a computed `touch-action` that stops pinch and double-tap zoom (`expectNoZoom`), and so do the Ink buttons; Ink's word is at least 36 CSS px (computed from the layout).
   - [ ] Any layout fix needed (spacing, canvas height) is included, or split into a follow-up if it passes about 150 lines; `npm run verify` and `npm run test:e2e` pass on both projects.
 - Notes: About 200 lines. Light review.
 
@@ -258,10 +269,10 @@ Planning notes for M9:
 - Status: todo
 - Depends on: T243
 - Acceptance criteria:
-  - [ ] `docs/DECISIONS.md` gets one entry for Bank Shot (T230 to T235) and one for Arrow Flip (T236 to T240), plus one for the pool (T241), each in the existing format, listing every proposal below as "owner to confirm" and where to change it.
-  - [ ] `docs/NEEDS_HUMAN.md` gets a "please confirm" entry for the M9 numbers and a "please update DESIGN.md" entry (the pool table lists five games, and the "45 to 90 seconds" run length is checked against the new games' measured run times). Owner-to-confirm list: the shown names "Bank Shot" and "Arrow Flip" (no clash with an existing game); Bank Shot's five rounds, bounces 1, 1, 2, 3, 4, glimpses 1 600 to 800 ms, the spinning bar in rounds 4 and 5 (and the simplification that the bar's surface speed is ignored in a bounce), the 10 s tap limit, the final `BANK_UNITS` from the simulation, the place-then-lock-in control, and the 40 to 60% survival target; Arrow Flip's five rounds of six prompts, the mismatch ladder 20% to 60%, the half-and-half cue split, allowances and limits, `WRONG_COST_MS`, `TIMEOUT_COST_MS`, the final `BANK_MS`, the swipe threshold of 24 px, the cue shapes (rounded rectangle for WORD, diamond for ARROW), and the 40 to 60% survival target; both default pass targets of 5; the placeholder cheat thresholds; the pool of seven games.
-  - [ ] `docs/PROGRESS.md` is updated, the run-time of one honest Bank Shot and one honest Arrow Flip attempt (measured in practice, written down) is recorded, and `README.md` lists the two new practice routes. `docs/DESIGN.md` is not edited.
-- Notes: Docs only; no reviewers needed. After the batch, run the maintainer subagent (milestone end) and then stop for the M9 play-test: `npm run dev`, open `/practice/bank-shot` and `/practice/arrow-flip` on a phone and a desktop; in the admin local tools set today's lineup to include each new game and play the Daily Three.
+  - [ ] `docs/DECISIONS.md` gets one entry for Bank Shot (T230 to T235, T247, T248, including the retune) and one for Ink (T249 to T253, T239, T240, including why Arrow Flip was dropped), plus one for the pool (T241), each in the existing format, listing every proposal below as "owner to confirm" and where to change it.
+  - [ ] `docs/NEEDS_HUMAN.md` gets a "please confirm" entry for the M9 numbers and a "please update DESIGN.md" entry (the pool table lists five games, and the "45 to 90 seconds" run length is checked against the new games' measured run times). Owner-to-confirm list: the shown names "Bank Shot" and "Ink" (no clash with an existing game); Bank Shot's five rounds, bounces 1, 1, 2, 3, 4, glimpses 1 600, 1 400, 1 300, 1 150, 1 000 ms, `BANK_UNITS` about 30, `FREE_UNITS` about 3, the spinning bar in rounds 4 and 5 (and the simplification that the bar's surface speed is ignored in a bounce), the 10 s tap limit, the place-then-lock-in control, and the 65 to 85% careful-player survival target (about 75%); Ink's four words and colours (no green, for colour-blind players), five rounds of 8 words, the mismatch counts 2, 3, 4, 5, 6 of 8, per-word limits about 2 500 down to 1 500 ms, allowances about 1 200 down to 800 ms, `WRONG_COST_MS`, `TIMEOUT_COST_MS`, the final `BANK_MS` from the simulation (careful player survives all five 50 to 70%), keys 1 to 4; both default pass targets of 5; the placeholder cheat thresholds; the pool of seven games.
+  - [ ] `docs/PROGRESS.md` is updated, the run-time of one honest Bank Shot and one honest Ink attempt (measured in practice, written down) is recorded, and `README.md` lists the two new practice routes (`/practice/bank-shot`, `/practice/ink`). `docs/DESIGN.md` is not edited.
+- Notes: Docs only; no reviewers needed. After the batch, run the maintainer subagent (milestone end) and then stop for the M9 play-test: `npm run dev`, open `/practice/bank-shot` and `/practice/ink` on a phone and a desktop; in the admin local tools set today's lineup to include each new game and play the Daily Three.
 
 ### T245 Bank Shot practice page (MVP, unregistered)
 - Type: feature
@@ -280,6 +291,86 @@ Planning notes for M9:
 - Acceptance criteria:
   - [ ] As T245, for `/practice/arrow-flip` with `ArrowFlipGame` and the T236 engine.
 - Notes: About 120 lines. Light review (it shares batch M9-c with the full-review engine).
+- SUPERSEDED (2026-11-24): done, replaced by T252; removed in T253. History only.
+
+### T247 Bank Shot retune: bigger bank, free zone, gentler glimpses
+- Type: feature
+- Status: todo
+- Depends on: T231
+- Acceptance criteria:
+  - [ ] In `src/challenges/bank-shot/engine.ts`: `BANK_UNITS` = 30 (was 14; final value set by the simulation test below), new exported `FREE_UNITS` = 3, round cost = `max(0, distance - FREE_UNITS)` (distance still to 0.01; a tap exactly `FREE_UNITS` away costs 0, one at 3.01 costs 0.01); a round with no tap by `TAP_LIMIT_MS` still costs `BOARD_W` (the free zone never forgives a timeout); glimpse ladder 1 600, 1 400, 1 300, 1 150, 1 000 ms (was down to 800).
+  - [ ] Exact tests rewritten with explicit params and the new constants: taps on every crossing score 6; misses of 2, 3, 3.01, 5, 10 units cost 0, 0, 0.01, 2, 7 and score 5 + 22.99 / 30 accordingly (worked by hand); a cost equal to what is left survives and 0.01 more ends the run; no tap in round 1 scores 0; goldens re-recorded for 3 seeds with the old values noted as superseded in a test comment; the schema, determinism, range and no-`Math.random` tests still pass unweakened.
+  - [ ] Simulation test re-targeted: the careful simulated player (same Gaussian error model, taps 3 s after the glimpse) survives all five in 65 to 85% of 2 000 seeds (aim about 75%; `BANK_UNITS` is tuned to land there and the band is asserted); a distracted player (twice the error) survives well under that (under 35%); a perfect one 100%.
+  - [ ] Other code that reads the old numbers (renderer tests, game component tests, practice page tests, any text saying the bank or glimpse values) is updated without weakening; `npm run verify` passes.
+  - [ ] `docs/DECISIONS.md` records the retune (date, owner feedback "too unforgiving", old and new values, the simulated survival rates) as "owner to confirm" (T244 lists it).
+- Notes: About 250 lines mostly tests. Full review (scoring). Part of batch M9-f. The M9 text in T231 and T230 that quotes old numbers is superseded by this task.
+
+### T248 Bank Shot retune: show the free zone in play
+- Type: feature
+- Status: todo
+- Depends on: T247, T232, T233
+- Acceptance criteria:
+  - [ ] The reveal marks a guess inside `FREE_UNITS` with a plain label ("On target, no cost") as well as a shape, and shows other misses as "Missed by 4.2, cost 1.2"; the finish-line reveal draws the free zone as a band of `FREE_UNITS` each side of the real crossing, labelled, distinguishable without colour (outlined band plus text); the bank gauge text is unchanged ("27.5 left").
+  - [ ] Renderer tests with a recording canvas mock: a guess 2.9 units off shows the free label and no cost; one 3.5 off shows the cost 0.5; band edges map to the correct canvas x at 390 x 560 and stay inside the finish line; game component test: a free-zone round leaves the gauge unchanged and a 3.5 miss drops it by 0.5.
+  - [ ] The how-to text on the practice page mentions that a guess close enough costs nothing; contrast of the new label at least 4.5:1; reduced motion still shows the band.
+- Notes: About 150 lines. Light review in the full-review batch M9-f. Not wired into the registry (T234).
+
+### T249 Ink engine: prompt generator, time bank and simulation
+- Type: feature
+- Status: todo
+- Depends on: T08, T180
+- Acceptance criteria:
+  - [ ] `src/challenges/ink/engine.ts` implements `ChallengeModule` with `direction "higher-better"`, `ROUNDS` = 5, `WORDS_PER_ROUND` = 8 and a time bank `BANK_MS` (placeholder 6 000, final value set by the simulation test). Four colours `red`, `blue`, `yellow`, `black` (no green). `paramsFromSeed(seed)` returns every word of the run `{ word, ink }` (each one of the four) plus per-round `allowanceMs` and `limitMs`.
+  - [ ] Ladder (exported constants, proposals): mismatches (ink differs from word) per round exactly 2, 3, 4, 5, 6 of 8 for every seed, positions shuffled by the seeded `createRng` (tests over seeds 0 to 999); no word's answer (its ink) equals the previous word's ink, including across a round boundary; `limitMs` 2 500, 2 250, 2 000, 1 750, 1 500 and `allowanceMs` 1 200, 1 050, 950, 850, 800 (about 2 500 down to 1 500 and about 1 200 down to 800).
+  - [ ] Inputs `{ answers: { word, atMs, colour }[], endMs }`. Timing: the run opens with the 3-2-1 and each round with its own (`RUN_COUNTDOWN_MS`); word k+1 appears `WORD_GAP_MS` (proposal 400, includes the feedback beat) after word k was answered or timed out. The correct answer is the word's `ink`. Cost: correct answer `max(0, reactionMs - allowanceMs)`; wrong answer `WRONG_COST_MS` (placeholder 1 000) plus the same slow part; no answer by `limitMs` costs `TIMEOUT_COST_MS` (placeholder 1 500); an answer before the word appeared is ignored. All costs go through `playBank`; rounds survived = whole rounds fully survived (`floor(wordsSurvived / WORDS_PER_ROUND)`, at most `ROUNDS`); score = `bankScore(roundsSurvived, left, BANK_MS)`.
+  - [ ] Exact tests with explicit params: 40 correct answers inside the allowance score 5 + 1 = 6; one wrong answer at the allowance costs exactly 1 000 (score 5 + 5 000 / 6 000); a correct answer 300 ms over the allowance costs 300; a cost equal to what is left survives and 1 ms more ends the run; a bust in round 3 after 2 whole rounds scores 2; a missed word costs 1 500; answering with the word's own name (the word, not the ink) when they differ counts as wrong; an answer before the word appeared is ignored.
+  - [ ] `finished`, `lastInputMs` (`endMs`) and a schema bound (`answers.max(ROUNDS * WORDS_PER_ROUND)`, `word` an integer in range, `colour` one of four values, rising `atMs`, `endMs` not before the last answer). Determinism, range (seeds 0 to 999: 0 to ROUNDS + 1), golden test for 3 seeds, no `Math.random`, `Date.now` or DOM in the source.
+  - [ ] Simulation test (documented model): a careful player reacts in 550 to 900 ms plus 60 ms per round of difficulty, and gets a mismatched word wrong with probability 4% rising to 12% by round 5; over 2 000 seeds 50 to 70% survive all five (owner to confirm), `BANK_MS` and `WRONG_COST_MS` set from this and the band asserted; a distracted player (three times the wrong rate) survives under 15%.
+  - [ ] At least 90% lines and branches.
+- Notes: About 380 lines (put the simulation test in its own file). Reuse the structure of `src/challenges/arrow-flip/engine.ts` (copy and adapt; it is deleted in T253, so do not import from it). Full review (scoring). Part of batch M9-g.
+
+### T250 Ink renderer, palette and answer helpers
+- Type: feature
+- Status: todo
+- Depends on: T249, T135
+- Acceptance criteria:
+  - [ ] `src/challenges/ink/palette.ts` (pure) maps the four colours to canvas tokens (T135) with clearly different lightness (for example a dark red, a mid blue, a light yellow, near-black) and each paired with a text label; tests assert pairwise lightness differences of at least a documented minimum (for example 0.15 relative luminance) and a contrast ratio of at least 4.5:1 of each ink on the canvas background and of each button label on its button; no green anywhere. Yellow and black are checked on both light and dark backgrounds the canvas uses.
+  - [ ] `src/challenges/ink/input.ts` (pure): `keyColour(key)` maps `1` to `4` (Red, Blue, Yellow, Black, in that order, same as the buttons), anything else null; tests for each key and for other keys.
+  - [ ] `src/challenges/ink/render.ts` draws, from the word, elapsed ms and feedback state: the colour word in large type (at least 36 CSS px at 390 px wide) drawn in its ink, centred and inside the canvas at 320 x 480 and 390 x 560; a draining limit bar; a feedback mark after an answer (tick or cross shape plus, on a wrong answer or a timeout, the right colour's name as text). Reduced motion drops the slide-in, never the content. A recording canvas mock shows the word drawn once per word with the ink fill and the word text; the limit bar fraction at 0, half and the limit.
+  - [ ] Reuse the layout and feedback ideas of `src/challenges/arrow-flip/render.ts` without importing from it.
+- Notes: About 300 lines. Colour-blind safety: the answer buttons carry text labels, ink choice never depends on hue alone (lightness differs), feedback is shape plus text. Fresh Sport look per `docs/UI_GUIDELINES.md`. Full review in batch M9-g (scoring neighbours).
+
+### T251 Ink game component
+- Type: feature
+- Status: todo
+- Depends on: T250, T137, T178, T179
+- Acceptance criteria:
+  - [ ] `src/components/ink/InkGame.tsx` (not yet registered; uses `runFrames`): the 3-2-1 before every round, the words in sequence, answered by four large labelled buttons Red, Blue, Yellow, Black (each at least 56 x 56 CSS px, visible focus, a 2 x 2 grid so the canvas and all four fit a 390 x 664 viewport without scrolling) or the keys 1 to 4, all through one answer path; a short feedback beat after each answer; `RoundProgress` (T178), `BankGauge` (T179) in seconds to one decimal ("4.2 s left") and the numbered round counter. A word that times out shows the right colour name as text. Buttons are not coloured with the answer colour only: each shows its text label (and may show a swatch).
+  - [ ] It reports `{ answers, endMs }` (each `atMs` from the game's start, so the 3-2-1s are inside it) when the run ends. Presses before a word appeared, or during the 3-2-1, are ignored.
+  - [ ] Unit test with mocked time: a correct tap, a tap of the word's name on a mismatched word (wrong), a timeout; a key press gives the same answer as a button; the run ends on a bust and after the last word.
+  - [ ] Accessibility: buttons named "Red", "Blue", "Yellow", "Black"; the canvas has a `role="img"` label that does not reveal the answer (for example "Word 3 of 8, round 2"); a live status announces "Correct" or "Wrong" after an answer.
+  - [ ] Reuses the bank, rounds, feedback beat, `RoundProgress`, `BankGauge`, the round 3-2-1 and the practice shell as the other bank games do; no import from `arrow-flip` (copy and adapt).
+- Notes: About 350 lines. Full review (attempts, since it produces the submitted inputs). Part of batch M9-h.
+
+### T252 Ink practice page and hub entry (MVP, unregistered)
+- Type: feature
+- Status: todo
+- Depends on: T251
+- Acceptance criteria:
+  - [ ] `/practice/ink` (`src/app/practice/ink/`) plays `InkGame` with a fresh seed each run and scores it locally with the T249 engine, showing rounds survived and pass or fail, no score, and "Play again"; it works signed out and makes no `/api/attempts` calls; it shows a short how-to ("Tap the colour of the ink, not the word. Keys 1 to 4 also work.").
+  - [ ] Not added to `CHALLENGE_TYPES`, the registry, migrations or the daily pool (T239). The practice hub lists Ink marked "New", in place of Arrow Flip.
+  - [ ] A unit test for the page (a bust and a full pass with mocked inputs) and one smoke e2e that the page loads, shows the four buttons and starts a run; `npm run verify` and `npm run test:e2e` pass.
+- Notes: About 140 lines. Use the same local wrapper as the Bank Shot practice page (T245). Light review in the full-review batch M9-h.
+
+### T253 Remove Arrow Flip
+- Type: maintenance
+- Status: todo
+- Depends on: T252
+- Acceptance criteria:
+  - [ ] `src/challenges/arrow-flip/`, `src/components/arrow-flip/`, `src/app/practice/arrow-flip/`, its canvas tokens, its tests and its `NEW_GAMES` (or equivalent) entry are deleted; `/practice/arrow-flip` is gone (404) and the hub no longer lists it; no import or mention of `arrow-flip`, `ArrowFlip` or `ARROW_FLIP` remains under `src/`, `tests/`, `scripts/` and `supabase/` (grep is empty; docs history in the backlog and `docs/PROGRESS.md` may keep the name).
+  - [ ] Shared pieces Arrow Flip introduced that Ink or Bank Shot still use are kept and moved to shared locations if needed; nothing else loses coverage (overall and engine thresholds still met, none lowered).
+  - [ ] `npm run verify` and `npm run test:e2e` pass; the e2e that referenced Arrow Flip now covers Ink.
+- Notes: About 100 lines added and many deleted. Do it after the Ink pieces exist so they can be copied from. Light review in batch M9-h.
 
 ## M8 M7 play-test tweaks
 
