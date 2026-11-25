@@ -2,13 +2,11 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  ALLOWANCE_MS,
   FEEDBACK_MS,
   LIMIT_MS,
-  ROUND_COUNTDOWN_MS,
-  TOTAL_WORDS,
+  RUN_COUNTDOWN_MS,
+  WORDS,
   WORD_GAP_MS,
-  WORDS_PER_ROUND,
   ink,
   play,
   type Colour,
@@ -25,10 +23,10 @@ vi.mock("@/challenges/ink/render", async (importOriginal) => {
   return { ...real, drawInk: (_ctx: unknown, frame: InkFrame) => drawn.frames.push(frame) };
 });
 
-import { HINT, InkGame, roundCosts, seconds } from "./InkGame";
+import { HINT, InkGame, seconds } from "./InkGame";
 
-// Word 0 matches (RED in red); word 1 is BLUE in yellow, word 3 YELLOW in black. Every round repeats them.
-const WORDS: InkWord[] = [
+// Word 0 matches (RED in red); word 1 is BLUE in yellow, word 3 YELLOW in black. The eight repeat to 40.
+const EIGHT: InkWord[] = [
   { word: "red", ink: "red" },
   { word: "blue", ink: "yellow" },
   { word: "black", ink: "blue" },
@@ -38,7 +36,7 @@ const WORDS: InkWord[] = [
   { word: "black", ink: "black" },
   { word: "blue", ink: "red" },
 ];
-const paramsWith = (bank: number): InkParams => ({ bank, rounds: ALLOWANCE_MS.map((allowanceMs, k) => ({ allowanceMs, limitMs: LIMIT_MS[k], words: WORDS })) });
+const paramsWith = (bank: number): InkParams => ({ bank, words: Array.from({ length: WORDS }, (_, w) => EIGHT[w % 8]) });
 const START = 1000;
 
 let frames: FrameRequestCallback[];
@@ -107,7 +105,7 @@ function answerNext(colour: Colour, via: Via = "button", reaction = 400) {
   clock = START + appears + reaction;
 }
 
-describe("InkGame (T251)", () => {
+describe("InkGame (T251, T256)", () => {
   it("shows four named buttons in key order, each with its label, in a beat shorter than the gap", () => {
     startGame();
     const buttons = within(document.querySelector("div")!).getAllByRole("button");
@@ -121,27 +119,43 @@ describe("InkGame (T251)", () => {
     expect(hint()).toBe(HINT);
   });
 
-  it("counts 3-2-1 with a Round 1 caption and ignores answers until the word appears", () => {
+  it("counts one 3-2-1 with no round caption and ignores answers until the first word appears", () => {
     startGame();
     expect(phase()).toBe("countdown");
-    expect(screen.getByText("Round 1")).toBeTruthy();
-    expect(canvas().getAttribute("aria-label")).toBe("Round 1. Get ready.");
+    expect(screen.queryByText(/Round/)).toBeNull();
+    expect(screen.getByText("3")).toBeTruthy();
+    expect(canvas().getAttribute("aria-label")).toBe("Get ready.");
+    expect(screen.getByText("Word 1 of 40")).toBeTruthy();
     at(500);
     give("red", "key");
     give("red", "button");
     expect(phase()).toBe("countdown");
     expect(hint()).toBe(HINT);
-    frameAt(ROUND_COUNTDOWN_MS);
+    frameAt(RUN_COUNTDOWN_MS);
     expect(phase()).toBe("word");
-    expect(drawn.frames.at(-1)!.word).toEqual(WORDS[0]);
+    expect(drawn.frames.at(-1)!.word).toEqual(EIGHT[0]);
     // The label never gives the answer away.
-    expect(canvas().getAttribute("aria-label")).toBe("Word 1 of 8, round 1");
-    expect(drawn.frames.at(-1)!.limitMs).toBe(LIMIT_MS[0]);
+    expect(canvas().getAttribute("aria-label")).toBe("Word 1 of 40");
+    expect(drawn.frames.at(-1)!.limitMs).toBe(LIMIT_MS);
     // The early presses were never recorded: the first real answer is still word 0's.
     answerNext("red");
     frameAt(log[0].atMs + FEEDBACK_MS);
     expect(onFinish).not.toHaveBeenCalled();
     expect(hint()).toBe(HINT);
+  });
+
+  it("goes from word to word with no countdown between, counting the words", () => {
+    startGame();
+    for (let w = 0; w < 12; w++) {
+      answerNext(EIGHT[w % 8].ink);
+      frameAt(log[w].atMs + FEEDBACK_MS);
+      expect(phase()).toBe("gap");
+      expect(screen.queryByText(/^[123]$/)).toBeNull();
+    }
+    frameAt(nextAppears());
+    expect(screen.getByText("Word 13 of 40")).toBeTruthy();
+    expect(canvas().getAttribute("aria-label")).toBe("Word 13 of 40");
+    expect(drawn.frames.at(-1)!.word).toEqual(EIGHT[12 % 8]);
   });
 
   it("takes a correct tap on a matching and on a mismatched word, and shows a feedback beat", () => {
@@ -171,12 +185,23 @@ describe("InkGame (T251)", () => {
 
   it("times a word out and shows the right colour as text", () => {
     startGame();
-    frameAt(ROUND_COUNTDOWN_MS);
-    frameAt(ROUND_COUNTDOWN_MS + LIMIT_MS[0] + 1);
+    frameAt(RUN_COUNTDOWN_MS);
+    frameAt(RUN_COUNTDOWN_MS + LIMIT_MS + 1);
     expect(phase()).toBe("feedback");
     expect(drawn.frames.at(-1)!.feedback).toEqual({ result: "timeout", answer: "red" });
     expect(hint()).toBe("Too slow. It was RED.");
     expect(screen.getByText(/4\.5 s left of 6\.0 s/)).toBeTruthy();
+  });
+
+  it("drains one bank with no round divisions as the costs add up", () => {
+    startGame(4000);
+    answerNext("blue"); // Wrong: 1 000.
+    answerNext("blue"); // Wrong again: 1 000 more.
+    const costs = document.querySelectorAll("[data-bank-cost]");
+    expect(costs).toHaveLength(1);
+    expect((costs[0] as HTMLElement).style.width).toBe("50%");
+    expect(screen.getByText("2.0 s left of 4.0 s")).toBeTruthy();
+    expect(screen.queryByText(/Round/)).toBeNull();
   });
 
   it("gives the same answer from a key as from a button, and ignores held and modified keys", () => {
@@ -204,7 +229,7 @@ describe("InkGame (T251)", () => {
     frameAt(log[1].atMs + FEEDBACK_MS);
     expect(phase()).toBe("done");
     expect(onFinish).toHaveBeenCalledWith({ answers: log, endMs: log[1].atMs + FEEDBACK_MS });
-    expect(ink.score(current, onFinish.mock.calls[0][0])).toBe(0);
+    expect(ink.score(current, onFinish.mock.calls[0][0])).toBe(1);
     expect(frames).toHaveLength(0);
     // A late press does nothing more.
     give("red", "key");
@@ -212,16 +237,17 @@ describe("InkGame (T251)", () => {
     expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
-  it("ends the run after the last word", () => {
+  it("ends the run after the 40th word, with the inputs timed from the game's start", () => {
     startGame();
-    for (let w = 0; w < TOTAL_WORDS; w++) {
-      answerNext(WORDS[w % WORDS_PER_ROUND].ink, w % 2 ? "key" : "button");
+    for (let w = 0; w < WORDS; w++) {
+      answerNext(EIGHT[w % 8].ink, w % 2 ? "key" : "button");
       frameAt(log[w].atMs + FEEDBACK_MS);
     }
     expect(phase()).toBe("done");
     const inputs = onFinish.mock.calls[0][0];
-    expect(inputs.answers).toEqual(log);
-    expect(ink.score(current, inputs)).toBe(6);
+    expect(inputs).toEqual({ answers: log, endMs: log[WORDS - 1].atMs + FEEDBACK_MS });
+    expect(inputs.answers[0].atMs).toBe(RUN_COUNTDOWN_MS + 400);
+    expect(ink.score(current, inputs)).toBe(41);
   });
 
   it("stops its frame loop and its key listener on unmount", () => {
@@ -234,8 +260,7 @@ describe("InkGame (T251)", () => {
 });
 
 describe("Ink readings", () => {
-  it("shows seconds to one decimal and sums costs per round", () => {
+  it("shows seconds to one decimal", () => {
     expect([seconds(4200), seconds(4249), seconds(0)]).toEqual(["4.2 s", "4.2 s", "0.0 s"]);
-    expect(roundCosts([100, 0, 0, 0, 0, 0, 0, 200, 300])).toEqual([300, 300]);
   });
 });

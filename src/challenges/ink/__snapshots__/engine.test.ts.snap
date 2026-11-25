@@ -1,31 +1,31 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Ink params (T249) > golden: seed 0 (changing the PRNG or the draw changes these) 1`] = `
+exports[`Ink params (T254) > golden: seed 0 (changing the PRNG or the draw changes these) 1`] = `
 [
-  "yellow/yellow blue/blue yellow/yellow red/red blue/blue blue/black blue/yellow black/black",
-  "yellow/yellow blue/black blue/blue yellow/yellow black/red red/yellow red/red blue/blue",
-  "black/yellow black/black yellow/yellow blue/blue blue/yellow red/blue yellow/yellow yellow/red",
-  "blue/black red/red black/black blue/yellow red/black black/red yellow/black red/red",
-  "red/black blue/blue red/black red/red blue/yellow blue/red blue/yellow blue/red",
+  "blue/blue yellow/yellow blue/red yellow/yellow black/black yellow/blue yellow/black blue/yellow",
+  "yellow/blue yellow/yellow yellow/red yellow/blue blue/black blue/blue blue/red blue/blue",
+  "black/red yellow/yellow black/red blue/black red/yellow red/red yellow/black red/yellow",
+  "red/red blue/yellow black/red blue/black red/yellow black/blue blue/red blue/yellow",
+  "blue/red blue/yellow blue/red blue/black red/red blue/black yellow/blue blue/yellow",
 ]
 `;
 
-exports[`Ink params (T249) > golden: seed 1 (changing the PRNG or the draw changes these) 1`] = `
+exports[`Ink params (T254) > golden: seed 1 (changing the PRNG or the draw changes these) 1`] = `
 [
-  "yellow/yellow black/blue yellow/yellow blue/blue red/red yellow/yellow blue/red yellow/yellow",
-  "blue/blue black/black red/red blue/blue blue/yellow black/black black/red black/yellow",
-  "black/red yellow/yellow blue/red blue/blue black/yellow red/red yellow/black blue/blue",
-  "red/black black/red black/blue yellow/yellow black/black yellow/yellow black/red red/black",
-  "yellow/blue black/red red/black red/red black/blue blue/red blue/yellow red/red",
+  "red/black red/yellow red/red yellow/yellow red/red black/blue red/yellow red/red",
+  "yellow/blue red/black black/yellow red/blue black/black yellow/yellow yellow/black yellow/yellow",
+  "yellow/black blue/red red/black yellow/yellow black/blue red/black yellow/yellow red/black",
+  "yellow/yellow yellow/red yellow/blue yellow/red blue/yellow black/red red/black blue/red",
+  "black/black blue/red blue/yellow blue/red red/blue black/red red/yellow yellow/blue",
 ]
 `;
 
-exports[`Ink params (T249) > golden: seed 4294967295 (changing the PRNG or the draw changes these) 1`] = `
+exports[`Ink params (T254) > golden: seed 4294967295 (changing the PRNG or the draw changes these) 1`] = `
 [
-  "red/blue black/black yellow/yellow red/red yellow/yellow black/black black/blue black/black",
-  "red/red blue/blue yellow/yellow red/red blue/blue yellow/red yellow/blue red/yellow",
-  "red/red blue/blue black/red black/yellow black/red black/black yellow/yellow yellow/blue",
-  "black/red blue/blue black/red blue/yellow red/black blue/blue black/black yellow/red",
-  "blue/yellow yellow/blue blue/red red/black black/red blue/blue yellow/red blue/blue",
+  "yellow/blue red/yellow red/red yellow/black red/red blue/blue black/red yellow/yellow",
+  "black/black black/red yellow/black blue/blue blue/yellow blue/blue red/black yellow/blue",
+  "black/black black/red red/blue blue/black black/blue red/red black/yellow yellow/red",
+  "red/black yellow/blue yellow/black blue/yellow yellow/blue red/yellow black/red blue/blue",
+  "black/red red/blue red/yellow yellow/red blue/yellow black/black red/yellow blue/red",
 ]
 `;

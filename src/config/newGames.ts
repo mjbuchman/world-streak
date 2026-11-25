@@ -12,7 +12,7 @@ export const NEW_GAMES = [
   {
     name: "Ink",
     path: "/practice/ink",
-    tagline: "Five rounds of eight colour words: tap the colour of the ink, not the word. Slow and wrong answers drain your time bank.",
+    tagline: "40 colour words in a row: tap the colour of the ink, not the word. Slow and wrong answers drain your time bank.",
   },
 ] as const;
 

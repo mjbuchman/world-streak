@@ -386,7 +386,7 @@ Owner play-test of 2026-11-25, all decisions final: Bank Shot was "nearly imposs
 
 ### T254 Ink as one run: engine, mismatch ramp and new score
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T249
 - Acceptance criteria:
   - [ ] `src/challenges/ink/engine.ts` has no rounds: `ROUNDS`, `WORDS_PER_ROUND`, the per-round ladders and the per-round countdown are gone. One exported `WORDS` = 40 (kept unless the simulation shows otherwise), one `ALLOWANCE_MS` and one `LIMIT_MS` for every word (proposal: 1 000 and 2 000, the middle of the old 1 200 to 800 and 2 500 to 1 500 ladders; the final pair is set by the simulation and recorded). One 3-2-1 opens the run (`RUN_COUNTDOWN_MS`); word k+1 appears `WORD_GAP_MS` after word k was answered or timed out, at one steady pace. `paramsFromSeed(seed)` returns the 40 words `{ word, ink }` only.
@@ -400,7 +400,7 @@ Owner play-test of 2026-11-25, all decisions final: Bank Shot was "nearly imposs
 
 ### T255 Ink thin outline on all four inks
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T254
 - Acceptance criteria:
   - [ ] `src/challenges/ink/palette.ts`: the per-ink `halo` flag is removed; a single exported outline colour (light, pure) and `OUTLINE_CSS_PX` (1.5, inside the 1 to 2 range) are added. `render.ts` strokes every word, in all four inks, with a thin outline of that colour, line width `OUTLINE_CSS_PX * devicePixelRatio` in canvas pixels (stroke before fill so the ink fill stays whole); the old thick halo is gone for red and black.
@@ -410,7 +410,7 @@ Owner play-test of 2026-11-25, all decisions final: Bank Shot was "nearly imposs
 
 ### T256 Ink game and practice page for one run
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T254, T255, T251, T252
 - Acceptance criteria:
   - [ ] `InkGame` drops the round counter and the per-round 3-2-1: one 3-2-1 at the start, then all 40 words at the steady pace; no `RoundProgress` is shown for Ink; the gauge text is unchanged ("4.2 s left"); a word counter ("Word 12 of 40") replaces the round counter, and the canvas `role="img"` label becomes "Word 12 of 40" without the answer. Reported inputs are still `{ answers, endMs }` with `atMs` from the game start.

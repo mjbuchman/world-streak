@@ -1,13 +1,13 @@
 import type { Colour, InkWord } from "./engine";
-import { INK_SWATCHES } from "./palette";
+import { INK_SWATCHES, OUTLINE_CSS_PX } from "./palette";
 
 /**
- * Ink's canvas (T250): the colour word in large type, drawn in its ink (dark inks inside a light
- * halo, see palette.ts), a draining limit bar, and after an answer a tick or a cross with text. The
+ * Ink's canvas (T250): the colour word in large type, drawn in its ink inside a thin light outline
+ * (T255, see palette.ts), a draining limit bar, and after an answer a tick or a cross with text. The
  * feedback never relies on colour alone.
  */
 
-export type InkColors = Record<Colour, string> & { board: string; halo: string; right: string; wrong: string; bar: string; track: string; text: string };
+export type InkColors = Record<Colour, string> & { board: string; outline: string; right: string; wrong: string; bar: string; track: string; text: string };
 
 /** What the last answer showed: right, wrong or too slow, and the ink that was right. */
 export type InkFeedback = { result: "right" | "wrong" | "timeout"; answer: Colour };
@@ -105,12 +105,12 @@ export function drawInk(ctx: CanvasRenderingContext2D, frame: InkFrame): void {
   const x = layout.word.cx + slideOffset(frame.msSinceWord, width, frame.reducedMotion);
   const label = word.word.toUpperCase();
   setFont(ctx, layout.fontPx);
-  if (INK_SWATCHES[word.ink].halo) {
-    ctx.strokeStyle = colors.halo;
-    ctx.lineWidth = Math.round(layout.fontPx * 0.2);
-    ctx.lineJoin = "round";
-    ctx.strokeText(label, x, layout.word.cy);
-  }
+  // Stroked first so the fill covers the stroke's inner half and every letter keeps its whole ink.
+  // The transform already scales by devicePixelRatio, so this is OUTLINE_CSS_PX x DPR canvas pixels.
+  ctx.strokeStyle = colors.outline;
+  ctx.lineWidth = OUTLINE_CSS_PX;
+  ctx.lineJoin = "round";
+  ctx.strokeText(label, x, layout.word.cy);
   ctx.fillStyle = colors[word.ink];
   ctx.fillText(label, x, layout.word.cy);
   const { bar } = layout;

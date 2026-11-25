@@ -1,24 +1,26 @@
 import { describe, expect, it } from "vitest";
 import { INK_COLOR_TOKENS } from "@/components/canvasTokens";
 import { PALETTE, contrastRatio } from "@/lib/theme/palette";
-import type { InkWord } from "./engine";
+import { COLOURS, type InkWord } from "./engine";
 import { INK_SWATCHES } from "./palette";
 import { FEEDBACK_PX, MIN_WORD_PX, SLIDE_MS, drawInk, limitFraction, slideOffset, wordLayout, type InkFrame } from "./render";
 
-type Call = { name: string; args: unknown[]; fillStyle: unknown; strokeStyle: unknown; font: unknown };
+type Call = { name: string; args: unknown[]; fillStyle: unknown; strokeStyle: unknown; font: unknown; lineWidth: unknown };
 
 function recorder() {
   const calls: Call[] = [];
   const state: Record<string, unknown> = {};
   const ctx = new Proxy(state, {
     get: (target, name: string) =>
-      name in target ? target[name] : (...args: unknown[]) => calls.push({ name, args, fillStyle: target.fillStyle, strokeStyle: target.strokeStyle, font: target.font }),
+      name in target
+        ? target[name]
+        : (...args: unknown[]) => calls.push({ name, args, fillStyle: target.fillStyle, strokeStyle: target.strokeStyle, font: target.font, lineWidth: target.lineWidth }),
     set: (target, name: string, value) => ((target[name] = value), true),
   });
   return { ctx: ctx as unknown as CanvasRenderingContext2D, calls };
 }
 
-const colors = { board: "#b", halo: "#h", red: "#red", blue: "#blue", yellow: "#yel", black: "#blk", right: "#r", wrong: "#x", bar: "#l", track: "#t", text: "#txt" };
+const colors = { board: "#b", outline: "#o", red: "#red", blue: "#blue", yellow: "#yel", black: "#blk", right: "#r", wrong: "#x", bar: "#l", track: "#t", text: "#txt" };
 const mismatch: InkWord = { word: "blue", ink: "yellow" };
 const frame = (over: Partial<InkFrame> = {}): InkFrame => ({
   width: 390,
@@ -85,23 +87,32 @@ describe("Ink layout (T250)", () => {
 });
 
 describe("drawInk (T250)", () => {
-  it("draws the word once, in its ink, with no halo for a light ink", () => {
+  it("draws the word once, in its ink, at the layout's size", () => {
     const calls = draw();
     expect(calls[0]).toMatchObject({ name: "setTransform", args: [2, 0, 0, 2, 0, 0] });
     const words = named(calls, "fillText");
     expect(words).toHaveLength(1);
     expect(words[0]).toMatchObject({ args: ["BLUE", expect.any(Number), expect.any(Number)], fillStyle: "#yel" });
     expect(fontPx(words[0])).toBe(wordLayout(390, 560).fontPx);
-    expect(named(calls, "strokeText")).toHaveLength(0);
   });
 
-  it("puts a dark ink inside the light halo, drawn under the fill", () => {
-    const calls = draw({ word: { word: "red", ink: "black" } });
-    const halo = named(calls, "strokeText");
-    expect(halo).toHaveLength(1);
-    expect(halo[0]).toMatchObject({ args: ["RED", expect.any(Number), expect.any(Number)], strokeStyle: "#h" });
-    expect(named(calls, "fillText")[0]).toMatchObject({ args: ["RED", expect.any(Number), expect.any(Number)], fillStyle: "#blk" });
-    expect(calls.indexOf(halo[0])).toBeLessThan(calls.indexOf(named(calls, "fillText")[0]));
+  /** The outline's width in canvas pixels: the line width times the transform's scale. */
+  const canvasWidth = (calls: Call[], stroke: Call) => Number(stroke.lineWidth) * Number(calls[0].args[0]);
+
+  it.each(COLOURS)("outlines a %s word thinly in the light outline, one stroke then one fill in the same place", (c) => {
+    for (const [dpr, px] of [
+      [1, 1.5],
+      [2, 3],
+    ]) {
+      const calls = draw({ word: { word: "red", ink: c }, devicePixelRatio: dpr });
+      const strokes = named(calls, "strokeText");
+      const fills = named(calls, "fillText");
+      expect([strokes.length, fills.length]).toEqual([1, 1]);
+      expect(strokes[0]).toMatchObject({ args: fills[0].args, strokeStyle: "#o" });
+      expect(fills[0]).toMatchObject({ args: ["RED", wordLayout(390, 560).word.cx + slideOffset(500, 390, false), wordLayout(390, 560).word.cy], fillStyle: colors[c] });
+      expect(canvasWidth(calls, strokes[0])).toBe(px);
+      expect(calls.indexOf(strokes[0])).toBeLessThan(calls.indexOf(fills[0]));
+    }
   });
 
   it("slides the word in from the right, and centres it at once with reduced motion", () => {

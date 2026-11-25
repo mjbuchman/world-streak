@@ -1,17 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  FEEDBACK_MS,
-  play,
-  ROUND_COUNTDOWN_MS,
-  WORDS_PER_ROUND,
-  type Colour,
-  type InkAnswer,
-  type InkInputs,
-  type InkOutcome,
-  type InkParams,
-} from "@/challenges/ink/engine";
+import { FEEDBACK_MS, play, RUN_COUNTDOWN_MS, type Colour, type InkAnswer, type InkInputs, type InkOutcome, type InkParams } from "@/challenges/ink/engine";
 import { BUTTON_ORDER, keyColour } from "@/challenges/ink/input";
 import { INK_SWATCHES } from "@/challenges/ink/palette";
 import { drawInk, type InkFeedback } from "@/challenges/ink/render";
@@ -20,7 +10,6 @@ import { INK_COLOR_TOKENS } from "@/components/canvasTokens";
 import { CountdownNumber, countdownNumber } from "@/components/countdown/CountdownNumber";
 import { runFrames } from "@/components/frameLoop";
 import { BankGauge } from "@/components/rounds/BankGauge";
-import { RoundProgress } from "@/components/rounds/RoundProgress";
 import { usePrefersReducedMotion } from "@/components/ui/useReducedMotion";
 import styles from "./InkGame.module.css";
 
@@ -31,19 +20,10 @@ export const HINT = "Tap the colour of the ink, not the word. Keys 1 to 4 also w
 /** Milliseconds as seconds to one decimal ("4.2 s"): the bank's reading. */
 export const seconds = (ms: number) => `${(Math.round(ms / 100) / 10).toFixed(1)} s`;
 
-/** Each round's word costs summed, so the gauge's segments and captions are per round. */
-export const roundCosts = (costs: readonly number[]) =>
-  costs.reduce<number[]>((sums, cost, w) => {
-    const k = Math.floor(w / WORDS_PER_ROUND);
-    sums[k] = (sums[k] ?? 0) + cost;
-    return sums;
-  }, []);
-
 /** The feedback a settled word shows on the canvas. */
 function feedbackOf(params: InkParams, outcome: InkOutcome): InkFeedback {
-  const word = params.rounds[Math.floor(outcome.word / WORDS_PER_ROUND)].words[outcome.word % WORDS_PER_ROUND];
   const result = outcome.kind === "timeout" ? "timeout" : outcome.correct ? "right" : "wrong";
-  return { result, answer: word.ink };
+  return { result, answer: params.words[outcome.word].ink };
 }
 
 /** What the live status says after an answer: in words, never by colour. */
@@ -55,9 +35,9 @@ function statusText(feedback: InkFeedback | null): string {
 }
 
 /**
- * An Ink run (T251): a "Round N" 3-2-1 before every round, then its eight words one after another.
- * One of the four buttons or the keys 1 to 4 answers, through the same path; after each answer a
- * short feedback beat. One frame loop on one clock from the game's start draws all of it, so the
+ * An Ink run (T251, one run since T256): one 3-2-1, then all 40 words one after another at a steady
+ * pace. One of the four buttons or the keys 1 to 4 answers, through the same path; after each answer
+ * a short feedback beat. One frame loop on one clock from the game's start draws all of it, so the
  * screen and the engine agree on every timing.
  */
 export function InkGame({ params, onFinish }: { params: InkParams; onFinish: (inputs: InkInputs) => void }) {
@@ -79,7 +59,6 @@ export function InkGame({ params, onFinish }: { params: InkParams; onFinish: (in
   const [countdown, setCountdown] = useState<number | null>(null);
   const [word, setWord] = useState(0);
   const [costs, setCosts] = useState<number[]>([]);
-  const [failed, setFailed] = useState(false);
   const [status, setStatus] = useState("");
 
   const stateAt = useCallback((t: number) => play(params, { answers: answers.current, endMs: t }), [params]);
@@ -90,7 +69,6 @@ export function InkGame({ params, onFinish }: { params: InkParams; onFinish: (in
       const state = stateAt(t);
       setWord(state.word);
       setCosts((previous) => (previous.length === state.costs.length ? previous : state.costs));
-      setFailed(state.failed);
       setStatus(statusText(state.last && feedbackOf(params, state.last)));
       return state;
     },
@@ -123,18 +101,17 @@ export function InkGame({ params, onFinish }: { params: InkParams; onFinish: (in
         }
         return false;
       }
-      const roundStart = state.appearsAt - ROUND_COUNTDOWN_MS;
       if (t < state.appearsAt) {
-        const counting = state.word % WORDS_PER_ROUND === 0 && t >= roundStart;
+        // Only the first word has a 3-2-1; every later one follows the gap.
+        const counting = last === null;
         setPhase(counting ? "countdown" : "gap");
-        setCountdown(counting ? countdownNumber(t - roundStart, ROUND_COUNTDOWN_MS) : null);
+        setCountdown(counting ? countdownNumber(t, RUN_COUNTDOWN_MS) : null);
         drawInk(ctx, { ...base, word: null, feedback: null });
         return true;
       }
       setPhase("word");
       setCountdown(null);
-      const shown = params.rounds[state.round].words[state.word % WORDS_PER_ROUND];
-      drawInk(ctx, { ...base, word: shown, msSinceWord: t - state.appearsAt, limitMs: state.deadline - state.appearsAt, feedback: null });
+      drawInk(ctx, { ...base, word: params.words[state.word], msSinceWord: t - state.appearsAt, limitMs: state.deadline - state.appearsAt, feedback: null });
       return true;
     };
     return runFrames(tick);
@@ -169,29 +146,23 @@ export function InkGame({ params, onFinish }: { params: InkParams; onFinish: (in
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const round = Math.floor(word / WORDS_PER_ROUND);
+  const counter = `Word ${word + 1} of ${params.words.length}`;
   const label =
     phase === "countdown"
-      ? `Round ${round + 1}. Get ready.`
+      ? "Get ready."
       : phase === "word"
-        ? `Word ${(word % WORDS_PER_ROUND) + 1} of ${WORDS_PER_ROUND}, round ${round + 1}`
+        ? counter
         : phase === "done"
           ? "Done."
           : // The live status below announces the feedback, so the label does not repeat it.
             "Next word coming.";
   return (
     <div className={styles.game}>
-      {/* A failed run stays on the round that failed; later rounds were never played. */}
-      <RoundProgress total={params.rounds.length} current={round} failedRound={failed ? round : undefined} />
-      <BankGauge total={params.bank} spent={roundCosts(costs)} format={seconds} label="Time bank" />
+      <p className={styles.counter}>{counter}</p>
+      <BankGauge total={params.bank} spent={costs} format={seconds} label="Time bank" perRound={false} />
       <div className={styles.stage}>
         <canvas ref={canvasRef} className={styles.board} data-phase={phase} role="img" aria-label={label} />
-        {countdown !== null && (
-          <>
-            <p className={styles.caption}>Round {round + 1}</p>
-            <CountdownNumber key={countdown} value={countdown} />
-          </>
-        )}
+        {countdown !== null && <CountdownNumber key={countdown} value={countdown} />}
       </div>
       <div className={styles.pad}>
         {BUTTON_ORDER.map((colour) => {

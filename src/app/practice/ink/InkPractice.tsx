@@ -1,6 +1,6 @@
 "use client";
 
-import { BANK_MS, paramsFromSeed, play, ROUNDS, WORDS_PER_ROUND, type InkInputs, type InkParams } from "@/challenges/ink/engine";
+import { BANK_MS, paramsFromSeed, play, WORDS, type InkInputs, type InkParams } from "@/challenges/ink/engine";
 import { HINT, InkGame, seconds } from "@/components/ink/InkGame";
 import { bankResult } from "@/components/practice/bankResult";
 import { PracticeShell } from "@/components/practice/PracticeShell";
@@ -8,22 +8,22 @@ import { secureRandomSeed } from "@/lib/random";
 
 /** The how-to lives here until Ink is registered as a challenge (phase 2). */
 const INK_HOW_TO =
-  `${HINT} Press Start for ${ROUNDS} rounds of ${WORDS_PER_ROUND} colour words. ` +
-  `Wrong, slow and missed answers drain one ${seconds(BANK_MS)} time bank; each round is faster and more words disagree with their ink. ` +
-  "Survive all five.";
+  `${HINT} Press Start for ${WORDS} colour words in a row. ` +
+  `Wrong, slow and missed answers drain one ${seconds(BANK_MS)} time bank; more and more words disagree with their ink. ` +
+  `Survive all ${WORDS} words.`;
 
-const rounds = (n: number) => `${n} ${n === 1 ? "round" : "rounds"}`;
+const words = (n: number) => `${n} of ${WORDS} words`;
 const newRun = () => paramsFromSeed(secureRandomSeed());
 
-/** The result: whole rounds survived and the bank left, as the engine counts them (T252). */
+/** The result: words survived and the bank left, as the engine counts them (T252, T256). */
 function result(params: InkParams, inputs: InkInputs) {
-  const { roundsSurvived, left } = play(params, inputs);
+  const { wordsSurvived, left } = play(params, inputs);
   return bankResult({
-    survived: roundsSurvived,
+    survived: wordsSurvived,
     left,
-    total: params.rounds.length,
-    everyLabel: "Every round survived",
-    scoreLabel: rounds,
+    total: params.words.length,
+    everyLabel: `All ${WORDS} words survived`,
+    scoreLabel: words,
     format: seconds,
     bankLabel: `${seconds(params.bank)} bank`,
   });

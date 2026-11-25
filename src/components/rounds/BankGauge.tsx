@@ -24,13 +24,24 @@ export function bankLayout(total: number, spent: readonly number[]): BankLayout 
   return { left, busted: used > total, fillPct: round3((left / total) * 100), segments };
 }
 
+type BankGaugeProps = {
+  total: number;
+  spent: readonly number[];
+  format: (value: number) => string;
+  label: string;
+  /** False draws all the costs as one drain, with no round marks or round announcements (Ink, T256). */
+  perRound?: boolean;
+};
+
 /**
  * A bank as a horizontal bar (T179): the fill is what is left, and every round's cost is its own
  * tangerine segment, the latest one draining out of the fill with a "-2.4 s" caption.
  */
-export function BankGauge({ total, spent, format, label }: { total: number; spent: readonly number[]; format: (value: number) => string; label: string }) {
-  const { left, busted, fillPct, segments } = bankLayout(total, spent);
-  const latest = segments.at(-1);
+export function BankGauge({ total, spent, format, label, perRound = true }: BankGaugeProps) {
+  const used = spent.reduce((sum, cost) => sum + cost, 0);
+  const { left, busted, fillPct, segments } = bankLayout(total, perRound || spent.length === 0 ? spent : [used]);
+  const latest = perRound ? segments.at(-1) : undefined;
+  const lastCost = spent.at(-1);
   const status = busted ? "Bank used up" : `${format(left)} left of ${format(total)}`;
   return (
     <div className={styles.gauge}>
@@ -58,7 +69,7 @@ export function BankGauge({ total, spent, format, label }: { total: number; spen
       </div>
       <div className={styles.lines}>
         <p className={styles.status}>{status}</p>
-        {latest && <p className={styles.latest}>-{format(latest.cost)}</p>}
+        {lastCost !== undefined && <p className={styles.latest}>-{format(lastCost)}</p>}
       </div>
       <p className={styles.announce} aria-live="polite">
         {latest ? `Round ${latest.round} cost ${format(latest.cost)}${busted ? ". Bank used up" : ""}` : ""}
