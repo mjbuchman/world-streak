@@ -31,12 +31,18 @@ Phase 1, practice-only MVP (then stop for the owner's play-test):
 - M9-f. Bank Shot retune (bank 30, free zone, gentler glimpses): T247, T248 (done)
 - M9-g. Ink engine and renderer: T249, T250 (full: scoring) (done)
 - M9-h. Ink game, practice page and Arrow Flip removal: T251, T252, T253 (full: attempts, scoring files removed) (done)
-- STOP: owner play-test of `/practice/bank-shot` and `/practice/ink`.
+- STOP (done Nov 25): owner play-test of `/practice/bank-shot` and `/practice/ink`. Outcome: Bank Shot removed, Ink becomes one round (see "M9 play-test tweaks, Nov 25" below).
+
+Phase 1b, play-test tweaks of Nov 25 (then stop for the owner's play-test of `/practice/ink`):
+
+- M9-i. Ink as one round: single run, new score, 50% to 90% mismatches, thin outline: T254, T255, T256 (full: scoring, attempts)
+- M9-j. Remove Bank Shot: T257 (light)
+- STOP: owner play-test of `/practice/ink`. Do not start M9-d or M9-e before the owner says they like it.
 
 Phase 2, only after the owner says they like the games (apply their tweaks first):
 
-- M9-d. Registration, migrations and cheat checks: T234, T235, T239, T240 (full: migration, scoring)
-- M9-e. Pool, admin, end-to-end and phone checks, docs: T241, T242, T243, T244 (full: migration; T244 is docs only)
+- M9-d. Ink registration, migration and cheat checks: T239, T240 (full: migration, scoring); T234 and T235 (Bank Shot) are dropped
+- M9-e. Pool (six games), admin, end-to-end and phone checks, docs: T241, T242, T243, T244 (full: migration; T244 is docs only)
 
 M8 M7 play-test tweaks (Nov 19, 2026; approved Nov 19 (2 lives, 25 dots, score hidden everywhere for bank games); runs before batch 19):
 
@@ -151,7 +157,7 @@ Planning notes for M9:
 
 ### T234 Bank Shot: registration, practice page and migration
 - Type: feature
-- Status: todo
+- Status: done
 - Depends on: T248, T109
 - Acceptance criteria:
   - [ ] `CHALLENGE_TYPES`, the registry, `challengeUi` (`showScore: false`, `bankSummary(ROUNDS, "rounds")`, `bankTarget`), `CHALLENGE_NAMES` ("Bank Shot"), `CHALLENGE_TAGLINES`, `BANK_SHOT_HOW_TO` and the how-to / `challengeUi` wording gain `bank-shot` (for example "Watch the puck bounce. It vanishes. Tap where it will cross the finish line, then lock in. Every unit you miss by comes out of one bank; survive all five rounds to pass."). Every other place that lists the games is updated (the grep in the planning notes); all tests for them are extended without being weakened.
@@ -160,10 +166,11 @@ Planning notes for M9:
   - [ ] Unit tests for `BankShotPractice` (a bust and a full pass with mocked inputs), `challengeUi` (no score shown for `bank-shot`), the hub list and `isChallengeType`.
   - [ ] `seed:dev` and `simulate:days` can record a `bank-shot` attempt with a valid score; the local-tools lineup setter accepts it.
 - Notes: About 350 lines. Full review (migration, attempts). Not in the daily rotation until T241. A new type needs no `scores_since`.
+- SUPERSEDED (2026-11-25): dropped, never built. The owner removed Bank Shot after the play-test ("nearly impossible", not fun); T257 deletes the code. Status set to `done` only so it is not picked up. History only.
 
 ### T235 Bank Shot: cheat checks
 - Type: feature
-- Status: todo
+- Status: done
 - Depends on: T247, T234
 - Acceptance criteria:
   - [ ] `src/config/cheat.ts` gains placeholder thresholds (proposal, judgment call to record; with the T247 free zone of about 3 units, "precise" must be re-judged: count rounds within `BANK_SHOT_PRECISE_UNITS` of the crossing, a much tighter distance than `FREE_UNITS`): `BANK_SHOT_PRECISE_ROUNDS` = 3 rounds of one run each within `BANK_SHOT_PRECISE_UNITS` = 0.25 units of the real crossing (a thumb on a phone cannot place a marker that close, and a script can), and `BANK_SHOT_MIN_TAP_AFTER_GLIMPSE_MS` = 250 (a counted tap sooner than this after the puck vanished is faster than a person can read the path and place a guess).
@@ -171,6 +178,7 @@ Planning notes for M9:
   - [ ] An honest-looking fixture (misses of 3.1, 1.4, 4.8, 2.2, 0.9 units, taps 1.5 to 4 s after the glimpse) has no flags; each rule has a positive and a negative test asserting the whole flag list; the rules never fire for another game's attempts and the other games' fixtures stay flag-free. Thresholds are checked against the T231 simulated careful player: it raises no flag in at least 99% of 2 000 simulated runs.
   - [ ] The submit response shape is unchanged with and without flags; at least 90% lines and branches in `detect.ts`.
 - Notes: About 160 lines. Flags only hold prize entries for review; they never change a result or the meter. Light review (the cheat checks do not touch scoring) in a full-review batch.
+- SUPERSEDED (2026-11-25): dropped, never built (Bank Shot removed, see T257). Status set to `done` only so it is not picked up. History only.
 
 ### T236 Arrow Flip: prompt generator and engine
 - Type: feature
@@ -213,66 +221,66 @@ Planning notes for M9:
 ### T239 Ink: registration, practice page and migration
 - Type: feature
 - Status: todo
-- Depends on: T252, T253, T109
+- Depends on: T256, T257, T109
 - Acceptance criteria:
-  - [ ] `CHALLENGE_TYPES`, the registry, `challengeUi` (`showScore: false`, `bankSummary(ROUNDS, "rounds")`, `bankTarget`), `CHALLENGE_NAMES` ("Ink"), `CHALLENGE_TAGLINES` and `INK_HOW_TO` gain `ink` (for example "A colour word appears in a coloured ink. Tap the colour of the ink, not the word. Slow and wrong answers come out of one time bank. Survive all five rounds to pass."). Every other place that lists the games is updated as in T234, tests extended without being weakened.
-  - [ ] A migration adds `challenge_types` `ink` / `higher-better` and `"ink": 5` to `default_pass_targets` (existing row and column default); the pool stays unchanged until T241. pgTAP as T234 (type row, default 5, hand placing into an unstarted lineup, RLS unchanged).
-  - [ ] The existing `/practice/ink` page (T252) moves onto the registered type (`PracticeShell` with the registry), still works signed out with no `/api/attempts` calls, shows rounds survived and pass or fail with no score, and stays on the practice hub (no longer marked "New"). `npm run db:types`, `npm run verify` and `npm run test:db` pass.
+  - [ ] `CHALLENGE_TYPES`, the registry, `challengeUi` (`showScore: false`, a words-survived summary such as "words survived, of 40" built on the bank helpers, `bankTarget`), `CHALLENGE_NAMES` ("Ink"), `CHALLENGE_TAGLINES` and `INK_HOW_TO` gain `ink` (for example "A colour word appears in a coloured ink. Tap the colour of the ink, not the word. Slow and wrong answers come out of one time bank. Survive all 40 words to pass."). Every other place that lists the games is updated (the grep in the planning notes), tests extended without being weakened.
+  - [ ] A migration adds `challenge_types` `ink` / `higher-better` and `"ink": 40` (the T254 default target) to `default_pass_targets` (existing row and column default); the pool stays unchanged until T241. pgTAP: the type row exists, the settings default holds 40, `ensure_game_day` still creates three games from the unchanged pool, an admin can hand-place `ink` into an unstarted lineup, RLS on `challenge_types` unchanged.
+  - [ ] The existing `/practice/ink` page (T252, T256) moves onto the registered type (`PracticeShell` with the registry), still works signed out with no `/api/attempts` calls, shows words survived and pass or fail with no score, and stays on the practice hub (no longer marked "New"). `npm run db:types`, `npm run verify` and `npm run test:db` pass.
   - [ ] Unit tests for `InkPractice`, `challengeUi`, the hub list; `seed:dev`, `simulate:days` and the local-tools lineup setter accept `ink`.
 - Notes: About 330 lines. Full review (migration, attempts). Phase 2: waits for the owner's play-test.
 
 ### T240 Ink: cheat checks
 - Type: feature
 - Status: todo
-- Depends on: T249, T239
+- Depends on: T254, T239
 - Acceptance criteria:
-  - [ ] `src/config/cheat.ts` gains placeholder thresholds (proposal, judgment call to record): `INK_MIN_REACTION_MS` = 180 (a correct answer sooner than this after the word appeared is faster than a person can read and tap; `INK_FAST_ANSWERS` = 3 such answers in one run to flag, since one lucky anticipation is human) and `INK_RHYTHM_MIN_ANSWERS` = 12 with `INK_RHYTHM_MAX_SD_MS` = 12 (reaction times that even over 12 or more answers look scripted; reaction times, not gaps, so the countdowns do not hide a script, the lesson of M6's echo-path rule).
-  - [ ] `detectFlags` gains `ink-too-fast` and `ink-robotic`; `timing-mismatch` covers the game with the countdown allowance (tested).
-  - [ ] Honest-looking fixture (reactions 450 to 1 100 ms, two wrong answers, a miss) has no flags; each rule has a positive and a negative test asserting the whole flag list; no rule fires for another game's attempts; the simulated careful player from T249 raises no flag in at least 99% of 2 000 runs.
+  - [ ] `src/config/cheat.ts` gains placeholder thresholds (proposal, judgment call to record): `INK_MIN_REACTION_MS` = 180 (a correct answer sooner than this after the word appeared is faster than a person can read and tap; `INK_FAST_ANSWERS` = 3 such answers in one run to flag, since one lucky anticipation is human) and `INK_RHYTHM_MIN_ANSWERS` = 12 with `INK_RHYTHM_MAX_SD_MS` = 12 (reaction times that even over 12 or more answers look scripted; reaction times, not gaps, so the single opening 3-2-1 does not hide a script, the lesson of M6's echo-path rule).
+  - [ ] `detectFlags` gains `ink-too-fast` and `ink-robotic`; `timing-mismatch` covers the game with the one opening countdown allowance (tested).
+  - [ ] Honest-looking fixture (reactions 450 to 1 100 ms, two wrong answers, a miss) has no flags; each rule has a positive and a negative test asserting the whole flag list; no rule fires for another game's attempts; the simulated careful player from T254 raises no flag in at least 99% of 2 000 runs.
   - [ ] Submit response shape unchanged; at least 90% lines and branches in `detect.ts`.
 - Notes: About 160 lines. Light review in a full-review batch.
 
-### T241 Add both games to the daily pool and the admin controls
+### T241 Add Ink to the daily pool and the admin controls
 - Type: feature
 - Status: todo
-- Depends on: T234, T239
+- Depends on: T239
 - Acceptance criteria:
-  - [ ] A migration sets the `game_settings.pool` default to the seven games and appends `bank-shot` and `ink` to the existing settings row's pool (keeping any pool the admin already edited: it only appends the two when absent), each entry still checked against `challenge_types`, at least three distinct entries. Days already created keep their lineups; days not yet created draw from seven games.
-  - [ ] `supabase/tests/lineups.test.sql` committed fixed-date lineups are re-pinned for the seven-game pool (the expected lists are recomputed with the SQL function and checked by hand for being valid lineups, not just copied from the output); over 365 consecutive days no lineup has a repeated game and no day repeats the previous day's exact lineup; every one of the seven games appears at least once; a pool of exactly three games still changes order daily; a pool the admin already narrowed to five is left alone by the migration (tested).
-  - [ ] `/admin/settings` edits the pool and a default pass target for all seven games (the drift guard against `gameSettings.fixture.json` is updated); the lineup editor lists the two new games; unit tests for the action's validation (a pool with an unknown game refused, pool of two refused, the two new games accepted, a default target of 5 shown for each).
+  - [ ] A migration sets the `game_settings.pool` default to the six games and appends `ink` to the existing settings row's pool (keeping any pool the admin already edited: it only appends `ink` when absent), each entry still checked against `challenge_types`, at least three distinct entries. Days already created keep their lineups; days not yet created draw from six games.
+  - [ ] `supabase/tests/lineups.test.sql` committed fixed-date lineups are re-pinned for the six-game pool (the expected lists are recomputed with the SQL function and checked by hand for being valid lineups, not just copied from the output); over 365 consecutive days no lineup has a repeated game and no day repeats the previous day's exact lineup; every one of the six games appears at least once; a pool of exactly three games still changes order daily; a pool the admin already narrowed to five is left alone by the migration (tested).
+  - [ ] `/admin/settings` edits the pool and a default pass target for all six games (the drift guard against `gameSettings.fixture.json` is updated); the lineup editor lists Ink; unit tests for the action's validation (a pool with an unknown game refused, pool of two refused, `ink` accepted, a default target of 40 shown for Ink).
   - [ ] `npm run db:types`, `npm run verify` and `npm run test:db` pass.
-- Notes: About 250 lines. Full review (migration, streak). Last migration of M9, so the lineup fixtures are re-pinned only once.
+- Notes: About 220 lines. Full review (migration, streak). Last migration of M9, so the lineup fixtures are re-pinned only once. Bank Shot is gone (2026-11-25), so the pool grows from five to six games.
 
-### T242 End-to-end checks for the two new games
+### T242 End-to-end checks for Ink
 - Type: feature
 - Status: todo
-- Depends on: T235, T240, T241
+- Depends on: T240, T241
 - Acceptance criteria:
-  - [ ] Practice e2e for both games signed out, with no `/api/attempts` calls: Bank Shot shows the 3-2-1, the puck and then nothing after the glimpse, the marker, the "Lock in" button and the reveal, and the bank gauge drops by the missed distance beyond the free zone (a guess inside it costs nothing); a deliberately bad run busts the bank and shows "rounds survived" with no big score; Ink shows the colour word in its ink and four labelled buttons, a correct key press (1 to 4) keeps the gauge, a wrong one drains it by about the wrong cost, the numbered round counter lights round 1 after it is passed; neither game shows a score number; Teetering Tower and Trail Trace still do.
-  - [ ] Daily flow e2e: with today's lineup set by the SQL fixture so one of the new games is in it (as `tests/e2e/after/daily-three.spec.ts` and `global-setup.ts` do), a new user starts, plays and submits the game, the server re-runs the engine on the inputs (assert the response's `passed` follows the server's score and that submitting a score field or a `passed` field is ignored), the one-attempt-per-game rule returns 409 for a second start, and the results page and share text show pass or fail with no game name, score or target. The two games appear in the `/play` lineup names and in `/history`.
-  - [ ] A grep of `tests/e2e` and the `global-setup.ts` fixtures for lists of the five games finds none left that should say seven; `look.spec.ts` and the no-emoji, no-em-dash tests cover the new text; the practice hub e2e lists seven games.
+  - [ ] Practice e2e signed out, with no `/api/attempts` calls: Ink shows the colour word in its ink and four labelled buttons, one 3-2-1 for the whole run (none between words), no round counter, a correct key press (1 to 4) keeps the gauge, a wrong one drains it by about the wrong cost; a deliberately bad run busts the bank and shows "words survived" with no big score; Ink shows no score number; Teetering Tower and Trail Trace still do.
+  - [ ] Daily flow e2e: with today's lineup set by the SQL fixture so Ink is in it (as `tests/e2e/after/daily-three.spec.ts` and `global-setup.ts` do), a new user starts, plays and submits the game, the server re-runs the engine on the inputs (assert the response's `passed` follows the server's score and that submitting a score field or a `passed` field is ignored), the one-attempt-per-game rule returns 409 for a second start, and the results page and share text show pass or fail with no game name, score or target. Ink appears in the `/play` lineup names and in `/history`.
+  - [ ] A grep of `tests/e2e` and the `global-setup.ts` fixtures for lists of the five games finds none left that should say six; `look.spec.ts` and the no-emoji, no-em-dash tests cover the new text; the practice hub e2e lists six games.
   - [ ] `npm run test:e2e` passes from a cold start.
-- Notes: About 350 lines. Light review. The daily-flow games are chosen by the fixture, never by the rotation, so the test does not depend on which games a date draws.
+- Notes: About 280 lines. Light review. The daily-flow game is chosen by the fixture, never by the rotation, so the test does not depend on which games a date draws.
 
-### T243 Phone checks for the two new games
+### T243 Phone checks for Ink
 - Type: feature
 - Status: todo
 - Depends on: T242
 - Acceptance criteria:
-  - [ ] On both mobile projects in `tests/e2e/mobile/mobile.spec.ts`: `/practice/bank-shot` and `/practice/ink` have no horizontal scroll (`expectBoardFits`), and the canvas, "Lock in" button, and all four Ink colour buttons lie wholly on screen once a round starts, asserted with `expectControlOnScreen` (the Lock in button and the lowest colour button with a 16 px margin below, as T228); every button and the Bank Shot finish-line strip are at least 44 x 44 CSS px.
-  - [ ] Bank Shot completes a round with `page.touchscreen.tap` on the finish line and the Lock in button; Ink completes a word with a touch tap on a colour button; the Bank Shot canvas has a computed `touch-action` that stops pinch and double-tap zoom (`expectNoZoom`), and so do the Ink buttons; Ink's word is at least 36 CSS px (computed from the layout).
+  - [ ] On both mobile projects in `tests/e2e/mobile/mobile.spec.ts`: `/practice/ink` has no horizontal scroll (`expectBoardFits`), and the canvas and all four Ink colour buttons lie wholly on screen once the run starts, asserted with `expectControlOnScreen` (the lowest colour button with a 16 px margin below, as T228); every button is at least 44 x 44 CSS px.
+  - [ ] Ink completes a word with a touch tap on a colour button; the Ink buttons have a computed `touch-action` that stops pinch and double-tap zoom (`expectNoZoom`); Ink's word is at least 36 CSS px (computed from the layout).
   - [ ] Any layout fix needed (spacing, canvas height) is included, or split into a follow-up if it passes about 150 lines; `npm run verify` and `npm run test:e2e` pass on both projects.
-- Notes: About 200 lines. Light review.
+- Notes: About 150 lines. Light review.
 
 ### T244 Record the M9 decisions and update the docs
 - Type: docs
 - Status: todo
 - Depends on: T243
 - Acceptance criteria:
-  - [ ] `docs/DECISIONS.md` gets one entry for Bank Shot (T230 to T235, T247, T248, including the retune) and one for Ink (T249 to T253, T239, T240, including why Arrow Flip was dropped), plus one for the pool (T241), each in the existing format, listing every proposal below as "owner to confirm" and where to change it.
-  - [ ] `docs/NEEDS_HUMAN.md` gets a "please confirm" entry for the M9 numbers and a "please update DESIGN.md" entry (the pool table lists five games, and the "45 to 90 seconds" run length is checked against the new games' measured run times). Owner-to-confirm list: the shown names "Bank Shot" and "Ink" (no clash with an existing game); Bank Shot's five rounds, bounces 1, 1, 2, 3, 4, glimpses 1 600, 1 400, 1 300, 1 150, 1 000 ms, `BANK_UNITS` about 30, `FREE_UNITS` about 3, the spinning bar in rounds 4 and 5 (and the simplification that the bar's surface speed is ignored in a bounce), the 10 s tap limit, the place-then-lock-in control, and the 65 to 85% careful-player survival target (about 75%); Ink's four words and colours (no green, for colour-blind players), five rounds of 8 words, the mismatch counts 2, 3, 4, 5, 6 of 8, per-word limits about 2 500 down to 1 500 ms, allowances about 1 200 down to 800 ms, `WRONG_COST_MS`, `TIMEOUT_COST_MS`, the final `BANK_MS` from the simulation (careful player survives all five 50 to 70%), keys 1 to 4; both default pass targets of 5; the placeholder cheat thresholds; the pool of seven games.
-  - [ ] `docs/PROGRESS.md` is updated, the run-time of one honest Bank Shot and one honest Ink attempt (measured in practice, written down) is recorded, and `README.md` lists the two new practice routes (`/practice/bank-shot`, `/practice/ink`). `docs/DESIGN.md` is not edited.
-- Notes: Docs only; no reviewers needed. After the batch, run the maintainer subagent (milestone end) and then stop for the M9 play-test: `npm run dev`, open `/practice/bank-shot` and `/practice/ink` on a phone and a desktop; in the admin local tools set today's lineup to include each new game and play the Daily Three.
+  - [ ] `docs/DECISIONS.md` gets one entry for Ink (T249 to T256, T239, T240, including why Arrow Flip and Bank Shot were dropped and the single-round redesign; the entries T254 and T255 wrote are consolidated, not duplicated), plus one for the pool (T241), each in the existing format, listing every proposal below as "owner to confirm" and where to change it.
+  - [ ] `docs/NEEDS_HUMAN.md` gets a "please confirm" entry for the M9 numbers and a "please update DESIGN.md" entry (the pool table lists five games, and the "45 to 90 seconds" run length is checked against the new games' measured run times). Owner-to-confirm list: the shown name "Ink" (no clash with an existing game); Ink's four words and colours (no green, for colour-blind players), one run of 40 words at one steady pace, the mismatch counts per stretch (50% rising to about 90%), the one allowance and one limit, `WRONG_COST_MS`, `TIMEOUT_COST_MS`, the final `BANK_MS` from the simulation (careful player finishes 50 to 70%), the score formula (words survived plus bank left as a fraction, maximum 41), the thin outline on all four inks and the contrast trade-off, keys 1 to 4; the default pass target of 40; the placeholder cheat thresholds; the pool of six games.
+  - [ ] `docs/PROGRESS.md` is updated, the run-time of one honest Ink attempt (measured in practice, written down) is recorded, and `README.md` lists the new practice route (`/practice/ink`; Bank Shot and Arrow Flip are not listed). `docs/DESIGN.md` is not edited.
+- Notes: Docs only; no reviewers needed. After the batch, run the maintainer subagent (milestone end) and then stop for the M9 play-test: `npm run dev`, open `/practice/ink` on a phone and a desktop; in the admin local tools set today's lineup to include Ink and play the Daily Three.
 
 ### T245 Bank Shot practice page (MVP, unregistered)
 - Type: feature
@@ -371,6 +379,54 @@ Planning notes for M9:
   - [ ] Shared pieces Arrow Flip introduced that Ink or Bank Shot still use are kept and moved to shared locations if needed; nothing else loses coverage (overall and engine thresholds still met, none lowered).
   - [ ] `npm run verify` and `npm run test:e2e` pass; the e2e that referenced Arrow Flip now covers Ink.
 - Notes: About 100 lines added and many deleted. Do it after the Ink pieces exist so they can be copied from. Light review in batch M9-h.
+
+## M9 play-test tweaks, Nov 25
+
+Owner play-test of 2026-11-25, all decisions final: Bank Shot was "nearly impossible" and not fun, so it is removed entirely (T257), and the daily pool becomes six games (T241), with Ink the only new game. Ink becomes one round (T254 to T256). Anything above that still says "Bank Shot", "five rounds", "rounds survived" or "seven games" for Ink or the pool is superseded by this section and by the edited T239 to T244.
+
+### T254 Ink as one run: engine, mismatch ramp and new score
+- Type: feature
+- Status: todo
+- Depends on: T249
+- Acceptance criteria:
+  - [ ] `src/challenges/ink/engine.ts` has no rounds: `ROUNDS`, `WORDS_PER_ROUND`, the per-round ladders and the per-round countdown are gone. One exported `WORDS` = 40 (kept unless the simulation shows otherwise), one `ALLOWANCE_MS` and one `LIMIT_MS` for every word (proposal: 1 000 and 2 000, the middle of the old 1 200 to 800 and 2 500 to 1 500 ladders; the final pair is set by the simulation and recorded). One 3-2-1 opens the run (`RUN_COUNTDOWN_MS`); word k+1 appears `WORD_GAP_MS` after word k was answered or timed out, at one steady pace. `paramsFromSeed(seed)` returns the 40 words `{ word, ink }` only.
+  - [ ] Mismatches (ink differs from word) follow exact counts per stretch of 8 words, exported as `MISMATCHES_PER_STRETCH` = `[4, 5, 6, 7, 7]` (50%, 62.5%, 75%, 87.5%, 87.5%; 90% of 8 is not a whole number, so 7 of 8 is the nearest and the ramp ends at 87.5%). For every seed 0 to 999 each stretch has exactly that many, 29 of 40 in total, positions shuffled by the seeded `createRng`; no word's ink equals the previous word's ink, including across stretch boundaries (kept rule).
+  - [ ] Cost rules unchanged (correct: `max(0, reactionMs - ALLOWANCE_MS)`; wrong: `WRONG_COST_MS` plus the slow part; no answer by `LIMIT_MS`: `TIMEOUT_COST_MS`; early presses ignored), all through `playBank`. New score: `bankScore(wordsSurvived, bankLeftMs, BANK_MS)` = words survived plus bank left / `BANK_MS`, so 0 to 41, higher-better, deterministic; a run that survives all 40 words with the bank full scores 41; bust after n whole words scores n (bank left 0). Default pass target 40 ("survive all 40 words") replaces 5 (T239 migration uses it).
+  - [ ] Exact tests with explicit params: 40 correct answers inside the allowance score 41; one wrong answer at the allowance costs exactly `WRONG_COST_MS` (score 40 + (`BANK_MS` - `WRONG_COST_MS`) / `BANK_MS`); a correct answer 300 ms over costs 300; a cost equal to what is left survives and 1 ms more ends the run; a bust after 12 words scores 12; a timeout costs `TIMEOUT_COST_MS`; the word's own name when it differs from the ink counts as wrong; early press ignored. Schema bound `answers.max(WORDS)`, determinism, range (seeds 0 to 999: 0 to 41), goldens re-recorded for 3 seeds (old values noted superseded in a comment), no `Math.random`, `Date.now` or DOM in the source; at least 90% lines and branches.
+  - [ ] Simulation test re-set with the same targets: `BANK_MS` (and, if needed, `WRONG_COST_MS`) tuned so 50 to 70% of 2 000 simulated careful players survive all 40 words and under 15% of distracted players (three times the wrong rate); the careful model keeps its documented form with the per-round difficulty term replaced by the stretch (reaction 550 to 900 ms plus a difficulty step per stretch, wrong rate on mismatched words rising 4% to 12% across the stretches); bands asserted.
+  - [ ] Every other reader of the old numbers is updated without weakening (`challengeUi` summary "words survived, of 40", `bankTarget`, the practice page text, cheat-check notes in T240 are not built yet); `npm run verify` passes.
+  - [ ] `docs/DECISIONS.md` records (date, owner feedback, old and new values, simulated rates, "owner to confirm"): the score replacement (words survived plus bank fraction, max 41, why: it stays higher-better and deterministic and needs no rounds), the mismatch ramp (and why 87.5% rather than 90%), and the chosen allowance, limit and `BANK_MS`.
+- Notes: About 350 lines mostly tests (simulation in its own file). Full review (scoring). Part of batch M9-i. Search the repo for `ROUNDS` and `WORDS_PER_ROUND` users first.
+
+### T255 Ink thin outline on all four inks
+- Type: feature
+- Status: todo
+- Depends on: T254
+- Acceptance criteria:
+  - [ ] `src/challenges/ink/palette.ts`: the per-ink `halo` flag is removed; a single exported outline colour (light, pure) and `OUTLINE_CSS_PX` (1.5, inside the 1 to 2 range) are added. `render.ts` strokes every word, in all four inks, with a thin outline of that colour, line width `OUTLINE_CSS_PX * devicePixelRatio` in canvas pixels (stroke before fill so the ink fill stays whole); the old thick halo is gone for red and black.
+  - [ ] Palette tests rewritten, not weakened elsewhere: no `halo` anywhere; the pairwise lightness differences of the inks and the 4.5:1 ratio of each button label on its button stay as they were; the contrast rule is re-stated in the test comment: the outline is decorative, ink-on-background contrast is no longer asserted for the red and black words (they were guaranteed by the halo), while yellow and black stay checked on the light and dark backgrounds. Renderer test with a recording canvas mock: one stroke and one fill per word for each of the four inks, stroke width 1.5 at DPR 1 and 3 at DPR 2, stroke called before fill, same positions as before.
+  - [ ] `docs/DECISIONS.md` records the trade-off (red and black lose some contrast on the canvas without the halo; consistency across the four inks gained), as "owner to confirm". `docs/NEEDS_HUMAN.md` gets a "please confirm" entry: check red and black words are still easy to read on a phone and on a desktop in `/practice/ink`, and say if the outline should be thicker or the halo restored.
+- Notes: About 120 lines. Full review in batch M9-i (the batch touches scoring files). Colour-blind safety is unchanged: lightness differs and buttons carry text.
+
+### T256 Ink game and practice page for one run
+- Type: feature
+- Status: todo
+- Depends on: T254, T255, T251, T252
+- Acceptance criteria:
+  - [ ] `InkGame` drops the round counter and the per-round 3-2-1: one 3-2-1 at the start, then all 40 words at the steady pace; no `RoundProgress` is shown for Ink; the gauge text is unchanged ("4.2 s left"); a word counter ("Word 12 of 40") replaces the round counter, and the canvas `role="img"` label becomes "Word 12 of 40" without the answer. Reported inputs are still `{ answers, endMs }` with `atMs` from the game start.
+  - [ ] `BankGauge` `spent` segments: read how `spent` works today (it is split per round for the bank games) and give Ink one unsplit bank: the spending shown is one drain of the whole bank, with no per-round marks. Other games' gauges keep their behaviour and tests; if `spent` has to become optional, the other callers' tests still pass unchanged; a new test shows the Ink gauge with a single bar and no round divisions.
+  - [ ] `/practice/ink` shows "words survived" (of 40) and pass or fail, no score, and "Play again"; the how-to text says "Survive all 40 words" in place of "five rounds". Unit tests with mocked time: a full pass (40 correct), a bust part way, a timeout, a key press equal to a button, no countdown between words; one smoke e2e that the page loads, shows the four buttons and a single 3-2-1; `npm run verify` and `npm run test:e2e` pass.
+- Notes: About 250 lines. Full review (attempts, since it produces submitted inputs). Part of batch M9-i. `RoundProgress` and `BankGauge` stay in the codebase; leave unused-code cleanup of `RoundProgress` to T257 only if nothing else uses it.
+
+### T257 Remove Bank Shot
+- Type: maintenance
+- Status: todo
+- Depends on: T256
+- Acceptance criteria:
+  - [ ] `src/challenges/bank-shot/`, its component directory under `src/components/`, `src/app/practice/bank-shot/`, its canvas tokens, its tests and its `NEW_GAMES` entry are deleted; `/practice/bank-shot` returns 404 and the hub no longer lists it; a grep for `bank-shot`, `BankShot` and `BANK_SHOT` under `src/`, `tests/`, `scripts/` and `supabase/` comes back empty (docs history may keep the name).
+  - [ ] Shared pieces Ink or other games still use are kept: the bank helpers (`src/challenges/shared/bank.ts`, `playBank`, `bankScore`), `BankGauge`, `PracticeShell`, `bankResult`, and `RoundProgress` if any other game uses it (grep; delete it with its tests only if nothing does). Anything Bank Shot introduced that only it used (geometry, free-zone helpers) is deleted with it. Coverage thresholds still met, none lowered.
+  - [ ] The e2e and mobile tests that referenced Bank Shot now cover Ink or are removed with it; `npm run verify` and `npm run test:e2e` pass.
+- Notes: About 80 lines added, many deleted. Light review. Part of batch M9-j. After it, STOP for the owner's play-test of `/practice/ink` (`npm run dev`, play it on a phone and a desktop: one 3-2-1, 40 words, one bank, mostly mismatched words, thin outline on all four inks).
 
 ## M8 M7 play-test tweaks
 
