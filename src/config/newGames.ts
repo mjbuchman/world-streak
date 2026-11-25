@@ -5,16 +5,10 @@
  */
 export const NEW_GAMES = [
   {
-    name: "Bank Shot",
-    path: "/practice/bank-shot",
-    tagline: "Five shots: watch a puck bounce off the walls, then mark where it will cross the finish line. Close enough costs nothing; every unit further out drains your 30-unit bank.",
-  },
-  {
     name: "Ink",
     path: "/practice/ink",
     tagline: "40 colour words in a row: tap the colour of the ink, not the word. Slow and wrong answers drain your time bank.",
   },
 ] as const;
 
-export const BANK_SHOT = NEW_GAMES[0];
-export const INK = NEW_GAMES[1];
+export const INK = NEW_GAMES[0];

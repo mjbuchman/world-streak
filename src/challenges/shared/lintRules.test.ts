@@ -35,8 +35,8 @@ describe("challenge purity lint rules", () => {
     expect(await ruleIds("src/challenges/stacking/render.ts", code)).toEqual([]);
   }, 30_000);
 
-  it("finds nothing impure in the Bank Shot engine and geometry (T231)", async () => {
-    const results = await eslint.lintFiles(["src/challenges/bank-shot/engine.ts", "src/challenges/bank-shot/geometry.ts"]);
+  it("finds nothing impure in the Ink engine (T249, T257)", async () => {
+    const results = await eslint.lintFiles(["src/challenges/ink/engine.ts"]);
     expect(results.flatMap((r) => r.messages)).toEqual([]);
   }, 30_000);
 
