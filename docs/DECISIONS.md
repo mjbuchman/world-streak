@@ -12,6 +12,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/DECISIONS-to-2026-11-19.md`. Search it only when you need history.
 
+### 2026-11-25 — Ink as one run, with a thin outline (T254–T256)
+- Choice: one 3-2-1, then 40 words against one 3 200 ms bank; mismatched words per stretch of 8 ramp 4, 5, 6, 7, 7 (about 72% overall, 87.5% in the last two stretches, short of the 90% asked so a matching word still turns up and the rule stays tested). Allowance 1 000 ms, limit 2 000 ms, 400 ms gap. Score `bankScore(wordsSurvived, left, bank)`, 0 to 41, replacing the five-round score. All four inks get the same 1.5 CSS px outline in the text colour (no halo).
+- Reason: the owner's Nov 25 play-test asked for one run, a steady pace, more mismatches and a thin outline on every ink. Simulated pass rates: careful 59.6%, distracted 1.7% (3 000 ms gave 54.9%, 3 500 ms 75.4%). Trade-off of the outline: red and black lose some contrast on the dark board without the halo (no longer asserted), in return for one look across all four inks.
+- How to change it later: `BANK_MS`, `MISMATCHES_PER_STRETCH`, `ALLOWANCE_MS`, `LIMIT_MS` in `src/challenges/ink/engine.ts` (re-run `engine.sim.test.ts`); `OUTLINE_CSS_PX` in `src/challenges/ink/palette.ts`.
+- Confirmed by human: pending (Ink play-test)
+
 ### 2026-11-24 — Ink numbers and inks (T249, T250)
 - Choice: time bank 4 000 ms (plan placeholder 6 000) with a 1 000 ms wrong cost, so 60.5% of simulated careful players and 3.6% of distracted ones survive all five. Inks red #D42A2A, blue #5AA9FF, yellow #FFD21F, black #141414 (luminance at least 0.15 apart). On the dark board, red and black are drawn inside a light halo; blue and yellow sit on the board directly.
 - Reason: the plan asked every ink, yellow and black included, to reach 4.5:1 on the canvas background. No single background allows that for both yellow and near-black, so each ink meets 4.5:1 against what is right around it (halo or board).

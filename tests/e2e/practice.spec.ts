@@ -393,15 +393,16 @@ test("Bank Shot practice: a 30-unit bank, the puck's glimpse, then a marker lock
   expect(scored).toEqual([]);
 });
 
-test("Ink practice: a time bank, a word after the 3-2-1, four buttons on a phone screen, and a tap shows feedback (T252)", async ({ page }) => {
+test("Ink practice: one time bank, a word after a single 3-2-1, four buttons on a phone screen, and a tap shows feedback (T252, T256)", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 664 });
   const scored = attemptRequests(page);
   await gotoReady(page, "/practice/ink");
   await page.getByRole("button", { name: "Start" }).click();
-  await expect(page.getByRole("meter", { name: "Time bank" })).toHaveAttribute("aria-valuetext", "4.0 s left of 4.0 s");
+  await expect(page.getByRole("meter", { name: "Time bank" })).toHaveAttribute("aria-valuetext", "3.2 s left of 3.2 s");
   const board = page.locator("canvas[data-phase]");
+  await expect(page.getByRole("img", { name: "Get ready." })).toBeVisible();
   await expect(board).toHaveAttribute("data-phase", "word", { timeout: 10_000 });
-  await expect(page.getByRole("img", { name: "Word 1 of 8, round 1" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Word 1 of 40" })).toBeVisible();
   // The board and all four buttons fit the phone screen without scrolling.
   for (const name of ["Red", "Blue", "Yellow", "Black"]) {
     const box = (await page.getByRole("button", { name }).boundingBox())!;
@@ -412,6 +413,9 @@ test("Ink practice: a time bank, a word after the 3-2-1, four buttons on a phone
   expect((await board.boundingBox())!.y).toBeGreaterThanOrEqual(0);
   await page.getByRole("button", { name: "Red" }).click();
   await expect(page.getByText(/^(Correct|Wrong\. It was [A-Z]+\.|Too slow\. It was [A-Z]+\.)$/)).toBeVisible();
+  // The next word follows the 400 ms gap with no second 3-2-1 (that alone would take 3 s).
+  await expect(page.getByRole("img", { name: "Word 2 of 40" })).toBeVisible({ timeout: 2_500 });
+  await expect(page.getByRole("img", { name: "Get ready." })).toHaveCount(0);
   expect(scored).toEqual([]);
 });
 

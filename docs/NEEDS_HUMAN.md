@@ -12,11 +12,11 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
-### Please confirm: Ink bank and inks (T249, T250; blocks nothing)
-- What is needed: at the M9 play-test, say if the 4 s time bank and the four inks (red and black inside a light outline) look and feel right.
+### Please confirm: Ink as one run (T254–T256; blocks nothing)
+- What is needed: at the Ink play-test, say if the 3.2 s bank, the mismatch ramp (up to 7 of 8 words, not 9 of 10) and the thin outline on all four inks (red and black still readable) feel right.
 - Where to put it: reply in chat.
-- Why: the plan's contrast rule cannot hold for yellow and black on one background; see DECISIONS.md (T249, T250).
-- Agent's recommendation: keep them unless the outline looks odd in play.
+- Why: numbers chosen from the simulation; see DECISIONS.md (T254–T256).
+- Agent's recommendation: keep them unless the run feels too hard; if red or black words are hard to read on a phone or desktop, say whether to thicken the outline or bring the halo back.
 
 ### Please confirm: Bank Shot retune (T247, T248; blocks nothing)
 - What is needed: at the M9 play-test, say if the 3-unit free zone and the glimpses of 1 600 to 1 000 ms feel right (the bank of 30 you chose on Nov 24).

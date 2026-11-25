@@ -5,41 +5,43 @@ import { createRng, type Rng } from "../shared/prng";
 import type { ChallengeModule } from "../shared/types";
 
 /**
- * Ink (T249): five rounds of eight colour words, each drawn in an ink that may differ from the word.
- * The answer is always the ink. Slow answers (past the round's allowance), wrong answers and missed
- * words drain one time bank; a word whose cost does not fit what is left ends the run. Score = whole
- * rounds survived + bank left as a fraction (T180). Every number below is a proposal, owner to
- * confirm (DECISIONS, T244).
+ * Ink (T249, one run since T254): 40 colour words in a row at one steady pace, each drawn in an ink
+ * that may differ from the word. The answer is always the ink. Slow answers (past the allowance),
+ * wrong answers and missed words drain one time bank; a word whose cost does not fit what is left
+ * ends the run. Score = words survived + bank left as a fraction, 0 to 41. Every number below is a
+ * proposal, owner to confirm (DECISIONS, T254).
  */
 
 /** No green: red and green are the pair most colour-blind players confuse. */
 export const COLOURS = ["red", "blue", "yellow", "black"] as const;
 export type Colour = (typeof COLOURS)[number];
 
-export const ROUNDS = 5;
-export const WORDS_PER_ROUND = 8;
-export const TOTAL_WORDS = ROUNDS * WORDS_PER_ROUND;
-/** The time bank, set so 50 to 70% of simulated careful players survive all five (engine.sim.test.ts). */
-export const BANK_MS = 4000;
-/** Words per round whose ink differs from the word. */
-export const MISMATCHES = [2, 3, 4, 5, 6] as const;
+export const WORDS = 40;
+/** The run is drawn in stretches of this many words, each with an exact number of mismatches. */
+export const STRETCH = 8;
+/** Mismatched words per stretch: 50% rising to 87.5% (90% of 8 is not whole, so 7 is the nearest). */
+export const MISMATCHES_PER_STRETCH = [4, 5, 6, 7, 7] as const;
+/** The time bank, set so 50 to 70% of simulated careful players survive all 40 (engine.sim.test.ts). */
+export const BANK_MS = 3200;
 /** How long a correct answer may take before the bank starts to drain. */
-export const ALLOWANCE_MS = [1200, 1050, 950, 850, 800] as const;
+export const ALLOWANCE_MS = 1000;
 /** No answer by then is a missed word. */
-export const LIMIT_MS = [2500, 2250, 2000, 1750, 1500] as const;
+export const LIMIT_MS = 2000;
 /** From one word's answer (or its limit) to the next word; the feedback beat is its start. */
 export const WORD_GAP_MS = 400;
 /** The feedback beat after each word, inside WORD_GAP_MS. */
 export const FEEDBACK_MS = 300;
 export const WRONG_COST_MS = 1000;
 export const TIMEOUT_COST_MS = 1500;
-/** The 3-2-1 before every round. */
-export const ROUND_COUNTDOWN_MS = RUN_COUNTDOWN_MS;
+/** The one 3-2-1 before the first word. */
+export { RUN_COUNTDOWN_MS };
+
+/** The pass target the T239 migration will store: survive all 40 words. */
+export const DEFAULT_PASS_TARGET = WORDS;
 
 export type InkWord = { word: Colour; ink: Colour };
-export type InkRound = { allowanceMs: number; limitMs: number; words: InkWord[] };
-export type InkParams = { bank: number; rounds: InkRound[] };
-/** An answer for word `word` (0 to 39, across the run), `atMs` from the game's start. */
+export type InkParams = { bank: number; words: InkWord[] };
+/** An answer for word `word` (0 to 39), `atMs` from the game's start. */
 export type InkAnswer = { word: number; atMs: number; colour: Colour };
 export type InkInputs = { answers: InkAnswer[]; endMs: number };
 
@@ -55,30 +57,24 @@ function shuffle<T>(rng: Rng, items: T[]): T[] {
 const other = (rng: Rng, not: Colour) => rng.pick(COLOURS.filter((c) => c !== not));
 
 /**
- * One round: exactly MISMATCHES[k] mismatched words in shuffled places, and no ink the same as the
- * one before it (across rounds too), so repeating a tap never pays.
+ * The 40 words: each stretch has exactly its share of mismatches in shuffled places, and no ink is
+ * the same as the one before it, so repeating a tap never pays.
  */
-function drawRound(rng: Rng, k: number, previous: Colour | null): InkRound {
-  const mismatch = shuffle(rng, Array.from({ length: WORDS_PER_ROUND }, (_, i) => i < MISMATCHES[k]));
-  let last = previous;
+export function paramsFromSeed(seed: number): InkParams {
+  const rng = createRng(seed);
+  const mismatch = MISMATCHES_PER_STRETCH.flatMap((n) => shuffle(rng, Array.from({ length: STRETCH }, (_, i) => i < n)));
+  let last: Colour | null = null;
   const words = mismatch.map((differs) => {
-    const ink = last === null ? rng.pick(COLOURS) : other(rng, last);
+    const ink: Colour = last === null ? rng.pick(COLOURS) : other(rng, last);
     last = ink;
     return { word: differs ? other(rng, ink) : ink, ink };
   });
-  return { allowanceMs: ALLOWANCE_MS[k], limitMs: LIMIT_MS[k], words };
-}
-
-export function paramsFromSeed(seed: number): InkParams {
-  const rng = createRng(seed);
-  const rounds: InkRound[] = [];
-  for (let k = 0; k < ROUNDS; k++) rounds.push(drawRound(rng, k, rounds.at(-1)?.words.at(-1)?.ink ?? null));
-  return { bank: BANK_MS, rounds };
+  return { bank: BANK_MS, words };
 }
 
 /** What an answer costs: the slow part past the allowance, plus WRONG_COST_MS if it is wrong. */
-export function answerCost(correct: boolean, reactionMs: number, allowanceMs: number): number {
-  const slow = Math.max(0, reactionMs - allowanceMs);
+export function answerCost(correct: boolean, reactionMs: number): number {
+  const slow = Math.max(0, reactionMs - ALLOWANCE_MS);
   return correct ? slow : WRONG_COST_MS + slow;
 }
 
@@ -93,18 +89,16 @@ export type InkOutcome = Settled & { survived: boolean };
  */
 export function play(params: InkParams, { answers, endMs }: InkInputs) {
   const costs: number[] = [];
-  const total = params.rounds.length * WORDS_PER_ROUND;
-  let appearsAt = ROUND_COUNTDOWN_MS;
+  const total = params.words.length;
+  let appearsAt = RUN_COUNTDOWN_MS;
   let last: InkOutcome | null = null;
-  const roundOf = (w: number) => params.rounds[Math.floor(w / WORDS_PER_ROUND)];
-  const wordAt = (w: number) => roundOf(w).words[w % WORDS_PER_ROUND];
   const over = () => costs.length === total || playBank(params.bank, costs).failed;
-  const deadline = () => appearsAt + roundOf(costs.length).limitMs;
-  /** Settles the word on screen and brings up the next, after a 3-2-1 if it starts a round. */
+  const deadline = () => appearsAt + LIMIT_MS;
+  /** Settles the word on screen and brings up the next one after the gap. */
   const settle = (outcome: Settled) => {
     costs.push(outcome.cost);
     last = { ...outcome, survived: !playBank(params.bank, costs).failed };
-    appearsAt = outcome.atMs + WORD_GAP_MS + (costs.length % WORDS_PER_ROUND === 0 ? ROUND_COUNTDOWN_MS : 0);
+    appearsAt = outcome.atMs + WORD_GAP_MS;
   };
   const missed = () => settle({ kind: "timeout", word: costs.length, atMs: deadline(), cost: TIMEOUT_COST_MS });
   for (const answer of answers) {
@@ -112,19 +106,16 @@ export function play(params: InkParams, { answers, endMs }: InkInputs) {
     if (over()) break;
     if (answer.word !== costs.length || answer.atMs < appearsAt) continue;
     const w = costs.length;
-    const correct = answer.colour === wordAt(w).ink;
-    settle({ kind: "answer", word: w, atMs: answer.atMs, colour: answer.colour, correct, cost: answerCost(correct, answer.atMs - appearsAt, roundOf(w).allowanceMs) });
+    const correct = answer.colour === params.words[w].ink;
+    settle({ kind: "answer", word: w, atMs: answer.atMs, colour: answer.colour, correct, cost: answerCost(correct, answer.atMs - appearsAt) });
   }
   while (!over() && endMs > deadline()) missed();
   const finished = over();
   const bank = playBank(params.bank, costs);
-  const word = Math.min(costs.length, total - 1);
   return {
-    word,
-    round: Math.floor(word / WORDS_PER_ROUND),
+    word: Math.min(costs.length, total - 1),
     costs,
     wordsSurvived: bank.survived,
-    roundsSurvived: Math.min(params.rounds.length, Math.floor(bank.survived / WORDS_PER_ROUND)),
     left: bank.left,
     failed: bank.failed,
     appearsAt: finished ? null : appearsAt,
@@ -138,8 +129,8 @@ export function play(params: InkParams, { answers, endMs }: InkInputs) {
 const inputsSchema: z.ZodType<InkInputs> = z
   .object({
     answers: z
-      .array(z.object({ word: z.number().int().min(0).max(TOTAL_WORDS - 1), atMs: z.number().nonnegative().finite(), colour: z.enum(COLOURS) }))
-      .max(TOTAL_WORDS)
+      .array(z.object({ word: z.number().int().min(0).max(WORDS - 1), atMs: z.number().nonnegative().finite(), colour: z.enum(COLOURS) }))
+      .max(WORDS)
       .refine((answers) => answers.every((a, i) => i === 0 || a.atMs > answers[i - 1].atMs), "answer times must rise"),
     endMs: z.number().nonnegative().finite(),
   })
@@ -148,12 +139,12 @@ const inputsSchema: z.ZodType<InkInputs> = z
 export const ink: ChallengeModule<InkParams, InkInputs> = {
   paramsFromSeed,
   score: (params, inputs) => {
-    const { roundsSurvived, left } = play(params, inputs);
-    return bankScore(roundsSurvived, left, params.bank);
+    const { wordsSurvived, left } = play(params, inputs);
+    return bankScore(wordsSurvived, left, params.bank);
   },
   finished: (params, inputs) => play(params, inputs).finished,
   inputsSchema,
   direction: "higher-better",
-  // The game's clock runs through every 3-2-1 and feedback beat, so the run's end already holds them.
+  // The game's clock runs through the 3-2-1 and every feedback beat, so the run's end already holds them.
   lastInputMs: ({ endMs }) => endMs,
 };

@@ -21,7 +21,7 @@ describe("/practice", () => {
       ["Trail Trace", "/practice/echo-path", "A path of up to 12 tiles climbs the board. Tap it back, one tile longer each time, all the way to the top, with one extra life."],
       ["Clean Cut", "/practice/fair-split", "Five irregular blobs and polygons: place one straight line to cut each in half. Every point off 50% drains your 8-point bank."],
       ["Bank Shot", "/practice/bank-shot", "Five shots: watch a puck bounce off the walls, then mark where it will cross the finish line. Close enough costs nothing; every unit further out drains your 30-unit bank."],
-      ["Ink", "/practice/ink", "Five rounds of eight colour words: tap the colour of the ink, not the word. Slow and wrong answers drain your time bank."],
+      ["Ink", "/practice/ink", "40 colour words in a row: tap the colour of the ink, not the word. Slow and wrong answers drain your time bank."],
     ]);
   });
 

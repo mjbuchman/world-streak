@@ -2,7 +2,7 @@ import type { BankShotColors } from "@/challenges/bank-shot/render";
 import type { EchoPathColors } from "@/challenges/echo-path/render";
 import type { FairSplitColors } from "@/challenges/fair-split/render";
 import type { FlashCountFrame } from "@/challenges/flash-count/render";
-import { BOARD_TOKEN as INK_BOARD_TOKEN, HALO_TOKEN as INK_HALO_TOKEN, INK_SWATCHES } from "@/challenges/ink/palette";
+import { BOARD_TOKEN as INK_BOARD_TOKEN, OUTLINE_TOKEN as INK_OUTLINE_TOKEN, INK_SWATCHES } from "@/challenges/ink/palette";
 import type { InkColors } from "@/challenges/ink/render";
 import type { StackingColors } from "@/challenges/stacking/render";
 
@@ -55,7 +55,7 @@ export const BANK_SHOT_COLOR_TOKENS: Record<keyof BankShotColors, string> = {
 
 export const INK_COLOR_TOKENS: Record<keyof InkColors, string> = {
   board: INK_BOARD_TOKEN,
-  halo: INK_HALO_TOKEN,
+  outline: INK_OUTLINE_TOKEN,
   red: INK_SWATCHES.red.token,
   blue: INK_SWATCHES.blue.token,
   yellow: INK_SWATCHES.yellow.token,

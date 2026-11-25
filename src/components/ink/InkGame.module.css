@@ -1,4 +1,4 @@
-/* Ink: the round steps and the bank above the word canvas, four colour buttons in a 2 x 2 grid below (T251). */
+/* Ink: the word counter and the bank above the word canvas, four colour buttons in a 2 x 2 grid below (T251). */
 .game {
   display: flex;
   flex-direction: column;
@@ -25,13 +25,10 @@
   outline-offset: 2px;
 }
 
-/* "Round N" above the 3-2-1 numbers. */
-.caption {
-  position: absolute;
-  top: var(--space-4);
-  left: 0;
-  right: 0;
+/* "Word 12 of 40" above the bank (T256). */
+.counter {
   margin: 0;
+  font-variant-numeric: tabular-nums;
   text-align: center;
   font-size: var(--fs-text-label);
   font-weight: 700;

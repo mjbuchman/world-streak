@@ -94,6 +94,21 @@ describe("BankGauge", () => {
     expect(screen.getByText("Round 1 cost 0.8 points")).toBeTruthy();
   });
 
+  it("draws one drain with no round divisions or round announcements when not per round (Ink, T256)", () => {
+    const { container } = render(<BankGauge total={4} spent={[0.5, 0, 1]} format={seconds} label="Time bank" perRound={false} />);
+    const costs = container.querySelectorAll("[data-bank-cost]");
+    expect(costs).toHaveLength(1);
+    expect((costs[0] as HTMLElement).style.width).toBe("37.5%");
+    expect((costs[0] as HTMLElement).dataset.latest).toBeUndefined();
+    expect((container.querySelector("[data-bank-fill]") as HTMLElement).style.width).toBe("62.5%");
+    expect(screen.getByText("2.5 s left of 4 s")).toBeTruthy();
+    expect(screen.getByText("-1 s")).toBeTruthy();
+    expect(screen.queryByText(/Round/)).toBeNull();
+    cleanup();
+    const { container: fresh } = render(<BankGauge total={4} spent={[]} format={seconds} label="Time bank" perRound={false} />);
+    expect(fresh.querySelectorAll("[data-bank-cost]")).toHaveLength(0);
+  });
+
   it("has no cost caption before the first round", () => {
     render(<BankGauge total={3} spent={[]} format={(v) => `${v} dots`} label="Dot bank" />);
     expect(screen.getByText("3 dots left of 3 dots")).toBeTruthy();
