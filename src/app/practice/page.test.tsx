@@ -9,7 +9,7 @@ describe("/practice", () => {
   it("lists every challenge with one line each, linking to each practice page", () => {
     render(<PracticeHub />);
     const items = within(screen.getByRole("list", { name: "Challenges" })).getAllByRole("listitem");
-    expect(items).toHaveLength(7);
+    expect(items).toHaveLength(6);
     const entries = items.map((item) => {
       const link = within(item).getByRole("link");
       return [link.textContent, link.getAttribute("href"), within(item).getByRole("paragraph").textContent];
@@ -20,15 +20,14 @@ describe("/practice", () => {
       ["Swift Sum", "/practice/flash-count", "Five rounds of 10 to 25 dots, a new count every round: say how many. Every dot you miss drains your 10-dot bank."],
       ["Trail Trace", "/practice/echo-path", "A path of up to 12 tiles climbs the board. Tap it back, one tile longer each time, all the way to the top, with one extra life."],
       ["Clean Cut", "/practice/fair-split", "Five irregular blobs and polygons: place one straight line to cut each in half. Every point off 50% drains your 8-point bank."],
-      ["Bank Shot", "/practice/bank-shot", "Five shots: watch a puck bounce off the walls, then mark where it will cross the finish line. Close enough costs nothing; every unit further out drains your 30-unit bank."],
       ["Ink", "/practice/ink", "40 colour words in a row: tap the colour of the ink, not the word. Slow and wrong answers drain your time bank."],
     ]);
   });
 
-  it("marks the games still on trial as New, and only those (T245, T252)", () => {
+  it("marks the games still on trial as New, and only those (T245, T252, T257)", () => {
     render(<PracticeHub />);
     const badges = screen.getAllByText("New");
-    expect(badges.map((badge) => badge.closest("li")?.textContent)).toEqual([expect.stringMatching(/^Bank Shot/), expect.stringMatching(/^Ink/)]);
+    expect(badges.map((badge) => badge.closest("li")?.textContent)).toEqual([expect.stringMatching(/^Ink/)]);
   });
 
   it("says practice never counts, under a page title with a way back home", () => {
