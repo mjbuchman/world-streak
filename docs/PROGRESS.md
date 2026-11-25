@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M9 New games (Bank Shot, Arrow Flip) approved Nov 24. Phase 1 is a practice-only MVP (batches M9-a to M9-c), then stop for the owner's play-test before phase 2 (M9-d, M9-e).
-- Active task: none. M9-f to M9-h are done; waiting for the owner's play-test of `/practice/bank-shot` and `/practice/ink`.
+- Active task: none. Next is batch M9-i (T254–T256, Ink as one run), then M9-j (T257, remove Bank Shot), then STOP for the owner's Ink play-test. The owner approved this re-plan on Nov 25 after play-testing (Bank Shot dropped as not fun).
 - Blocked tasks: none
 - Waiting on the human: the M5 Daily Three please-confirm; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M9 re-planned after the owner's play-test (Bank Shot retune T247–T248; Arrow Flip replaced by the Stroop game Ink, T249–T253; batches M9-f, M9-g, M9-h, then a practice play-test stop, then M9-d, M9-e). The owner approved the re-plan on Nov 24. M9-f, M9-g and M9-h merged; M9-d and M9-e wait until the owner likes both games.
