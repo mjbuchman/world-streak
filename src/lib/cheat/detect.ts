@@ -5,6 +5,7 @@ import { play as playEchoPath, type EchoPathInputs, type EchoPathParams } from "
 import { play as playFairSplit, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
 import { splitShare } from "@/challenges/fair-split/geometry";
 import { play, REVEAL_MS, type FlashCountInputs, type FlashCountParams } from "@/challenges/flash-count/engine";
+import { play as playInk, type InkInputs, type InkParams } from "@/challenges/ink/engine";
 import { roundErrorMs, type InnerClockInputs, type InnerClockParams } from "@/challenges/inner-clock/engine";
 import { challengeForGameDay, isChallengeType } from "@/challenges/registry";
 import { simulate, type StackingParams } from "@/challenges/stacking/engine";
@@ -16,6 +17,10 @@ import {
   FAIR_SPLIT_PRECISE_CUTS,
   FAIR_SPLIT_PRECISE_POINTS,
   FLASH_COUNT_MIN_ANSWER_MS,
+  INK_FAST_ANSWERS,
+  INK_MIN_REACTION_MS,
+  INK_RHYTHM_MAX_SD_MS,
+  INK_RHYTHM_MIN_ANSWERS,
   STACKING_MIN_TAP_INTERVAL_MS,
   STACKING_PERFECT_RUN_ROWS,
   STACKING_RHYTHM_MAX_SD_MS,
@@ -38,6 +43,8 @@ export type FlagReason =
   | "echo-path-robotic"
   | "fair-split-implausible"
   | "fair-split-instant"
+  | "ink-too-fast"
+  | "ink-robotic"
   | "timing-mismatch";
 
 export type DetectArgs = {
@@ -134,6 +141,28 @@ function fairSplitFlags(params: FairSplitParams, inputs: FairSplitInputs): FlagR
 }
 
 /**
+ * Each Confusing Colors answer the game counted: how long after its word appeared, and whether it
+ * was right. Answers the game ignored (for another word, before the word, after the run) are left out.
+ */
+function inkReactions(params: InkParams, { answers }: InkInputs) {
+  return answers.flatMap((answer, i) => {
+    const before = playInk(params, { answers: answers.slice(0, i), endMs: answer.atMs });
+    if (before.appearsAt === null || answer.word !== before.costs.length || answer.atMs < before.appearsAt) return [];
+    return [{ reactionMs: answer.atMs - before.appearsAt, correct: answer.colour === params.words[answer.word].ink }];
+  });
+}
+
+function inkFlags(params: InkParams, inputs: InkInputs): FlagReason[] {
+  const reactions = inkReactions(params, inputs);
+  const flags: FlagReason[] = [];
+  if (reactions.filter((r) => r.correct && r.reactionMs < INK_MIN_REACTION_MS).length >= INK_FAST_ANSWERS) flags.push("ink-too-fast");
+  if (reactions.length >= INK_RHYTHM_MIN_ANSWERS && standardDeviation(reactions.map((r) => r.reactionMs)) < INK_RHYTHM_MAX_SD_MS) {
+    flags.push("ink-robotic");
+  }
+  return flags;
+}
+
+/**
  * The game's clock starts after loading and the how-to, which the server's clock includes; past
  * that allowance, a last input far behind the server's clock suggests inputs made up offline.
  * Null for an unknown game, or a run with no timed input yet (the engines report 0).
@@ -175,6 +204,8 @@ function gameFlags({ challengeType, inputs, params }: DetectArgs): FlagReason[] 
       return echoPathRobotic(params as EchoPathParams, inputs as EchoPathInputs) ? ["echo-path-robotic"] : [];
     case "fair-split":
       return fairSplitFlags(params as FairSplitParams, inputs as FairSplitInputs);
+    case "ink":
+      return inkFlags(params as InkParams, inputs as InkInputs);
     default:
       return [];
   }

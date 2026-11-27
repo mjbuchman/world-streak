@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/ui/PageShell";
-import { INK } from "@/config/newGames";
+import { CHALLENGE_NAMES } from "@/config/challenges";
 import { InkPractice } from "./InkPractice";
 
-export const metadata: Metadata = { title: `Practice ${INK.name}` };
+export const metadata: Metadata = { title: `Practice ${CHALLENGE_NAMES.ink}` };
 
-/** Practice only for now (T252): open to everyone, nothing sent to the server, not in the daily pool. */
+/** Open to everyone, signed in or not; nothing here is sent to the server. */
 export default function InkPracticePage() {
   return (
-    <PageShell title={`Practice: ${INK.name}`} backHref="/">
+    <PageShell title={`Practice: ${CHALLENGE_NAMES.ink}`} backHref="/">
       <InkPractice />
     </PageShell>
   );

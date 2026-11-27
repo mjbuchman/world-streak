@@ -71,6 +71,7 @@ describe("GameDayEditRow", () => {
       ["flash-count", "Swift Sum"],
       ["echo-path", "Trail Trace"],
       ["fair-split", "Clean Cut"],
+      ["ink", "Confusing Colors"],
     ]);
     await user.selectOptions(picker(1), "inner-clock");
     await user.selectOptions(picker(2), "stacking");

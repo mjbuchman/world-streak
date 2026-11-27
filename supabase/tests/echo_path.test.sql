@@ -12,7 +12,7 @@ select is(
   'its placeholder pass target is a path of 8 tiles, the 5 x 8 board''s height (T191, T209)'
 );
 select col_default_is(
-  'public', 'game_settings', 'default_pass_targets', '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 8, "fair-split": 5}',
+  'public', 'game_settings', 'default_pass_targets', '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 8, "fair-split": 5, "ink": 30}',
   'a fresh settings row has its placeholder (and those added since)'
 );
 select ok(
@@ -46,7 +46,7 @@ select results_eq(
 -- The placeholder was merged in, not swapped for the whole object.
 select is(
   (select default_pass_targets from public.game_settings) - 'echo-path',
-  '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "fair-split": 5}'::jsonb,
+  '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "fair-split": 5, "ink": 30}'::jsonb,
   'the other challenges keep their placeholders'
 );
 

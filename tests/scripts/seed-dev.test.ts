@@ -154,6 +154,20 @@ describe("runSeed", () => {
     );
   });
 
+  it("seeds a lineup with Confusing Colors in it, under its shown name (T239)", async () => {
+    const lineup = [
+      { position: 1, challenge: "ink", target: 30, higherBetter: true },
+      { position: 2, challenge: "stacking", target: 10, higherBetter: true },
+      { position: 3, challenge: "fair-split", target: 5, higherBetter: true },
+    ];
+    const deps = fakeDeps({ lineup: vi.fn(async () => lineup) });
+    await runSeed({ players: 2, passRate: 0.5, date: "2026-11-07" }, "run9", deps);
+    expect(deps.calls.filter((call) => call.startsWith("past "))).toHaveLength(6);
+    expect(deps.log).toHaveBeenLastCalledWith(
+      "Seeded 2 players for 2026-11-07 (Confusing Colors, Teetering Tower, Clean Cut): 1 passed the day, 1 did not.",
+    );
+  });
+
   it("stops with a clear error if a past result is refused", async () => {
     const deps = fakeDeps({ recordPastResult: vi.fn(async () => "not-found") });
     await expect(runSeed({ players: 1, passRate: 1, date: "2026-11-07" }, "run8", deps)).rejects.toThrow(

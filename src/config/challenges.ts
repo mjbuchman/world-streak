@@ -10,6 +10,8 @@ export const CHALLENGE_NAMES: Record<ChallengeType, string> = {
   "flash-count": "Swift Sum",
   "echo-path": "Trail Trace",
   "fair-split": "Clean Cut",
+  // The owner named it (T258); the code name stays `ink`.
+  ink: "Confusing Colors",
 };
 
 /** One line on each challenge, for the home card and the practice hub. */
@@ -19,6 +21,7 @@ export const CHALLENGE_TAGLINES: Record<ChallengeType, string> = {
   "flash-count": "Five rounds of 10 to 25 dots, a new count every round: say how many. Every dot you miss drains your 10-dot bank.",
   "echo-path": "A path of up to 12 tiles climbs the board. Tap it back, one tile longer each time, all the way to the top, with one extra life.",
   "fair-split": "Five irregular blobs and polygons: place one straight line to cut each in half. Every point off 50% drains your 8-point bank.",
+  ink: "30 colour words in a row: tap the colour of the ink, not the word. Slow and wrong answers drain your time bank.",
 };
 
 /** Each challenge's practice page (the route folders are named after the types). */
@@ -41,6 +44,10 @@ export const ECHO_PATH_HOW_TO =
 /** How to play Fair Split: shown before a practice run and before a scored attempt. */
 export const FAIR_SPLIT_HOW_TO =
   "Press Start for five shapes, irregular blobs and polygons, each one lopsided, with no mirror to guide you. A line crosses each one: drag its ends or the line itself (or use the arrow keys, and [ and ] to turn it) until you think it cuts the shape in half, then press Cut or Enter. You have 25 seconds a shape, shown by the ring; when it runs out, the line is cut where it is. Every point a cut is off 50% comes out of one 8-point bank; the run ends when a cut is off by more than what is left. Survive all five to pass.";
+
+/** How to play Confusing Colors: shown before a practice run and before a scored attempt. */
+export const INK_HOW_TO =
+  "Tap the colour of the ink, not the word. Keys 1 to 4 also work. Press Start for 30 colour words in a row. Wrong, slow and missed answers drain one 3.2 s time bank; more and more words disagree with their ink. Survive all 30 words.";
 
 /** How to play the Tower: shown before a practice run and before today's scored attempt. */
 export const STACKING_HOW_TO =

@@ -2,14 +2,6 @@
  * Games playable in practice before they are registered as challenges (M9 phase 1, T245): not in
  * CHALLENGE_TYPES, the registry or the daily pool. The practice hub lists them marked "New" so the
  * owner can try them. Each moves to `src/config/challenges.ts` when it is registered (phase 2).
+ * Empty since Confusing Colors was registered (T239).
  */
-export const NEW_GAMES = [
-  {
-    // Code name `ink` (paths, files and engine); the owner named it Confusing Colors (T258).
-    name: "Confusing Colors",
-    path: "/practice/ink",
-    tagline: "30 colour words in a row: tap the colour of the ink, not the word. Slow and wrong answers drain your time bank.",
-  },
-] as const;
-
-export const INK = NEW_GAMES[0];
+export const NEW_GAMES: readonly { name: string; path: string; tagline: string }[] = [];

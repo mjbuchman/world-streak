@@ -4,16 +4,18 @@ import type { ReactNode } from "react";
 import type { EchoPathInputs, EchoPathParams } from "@/challenges/echo-path/engine";
 import { ROUNDS as FAIR_SPLIT_ROUNDS, type FairSplitInputs, type FairSplitParams } from "@/challenges/fair-split/engine";
 import { ROUNDS as FLASH_COUNT_ROUNDS, type FlashCountInputs, type FlashCountParams } from "@/challenges/flash-count/engine";
+import { WORDS as INK_WORDS, type InkInputs, type InkParams } from "@/challenges/ink/engine";
 import { ROUNDS as INNER_CLOCK_ROUNDS, type InnerClockInputs, type InnerClockParams } from "@/challenges/inner-clock/engine";
 import type { ChallengeType } from "@/challenges/shared/types";
 import type { StackingInputs, StackingParams } from "@/challenges/stacking/engine";
 import { EchoPathGame } from "@/components/echo-path/EchoPathGame";
 import { FairSplitGame } from "@/components/fair-split/FairSplitGame";
 import { FlashCountGame } from "@/components/flash-count/FlashCountGame";
+import { InkGame } from "@/components/ink/InkGame";
 import { InnerClockGame } from "@/components/inner-clock/InnerClockGame";
 import { reachedRow, targetRow } from "@/components/stacking/rows";
 import { StackingGame } from "@/components/stacking/StackingGame";
-import { ECHO_PATH_HOW_TO, FAIR_SPLIT_HOW_TO, FLASH_COUNT_HOW_TO, INNER_CLOCK_HOW_TO, practicePath, STACKING_HOW_TO } from "@/config/challenges";
+import { ECHO_PATH_HOW_TO, FAIR_SPLIT_HOW_TO, FLASH_COUNT_HOW_TO, INK_HOW_TO, INNER_CLOCK_HOW_TO, practicePath, STACKING_HOW_TO } from "@/config/challenges";
 
 /**
  * A scored run of today's challenge. `params` come from the start endpoint for this challenge
@@ -122,12 +124,26 @@ const fairSplit: ChallengeUi<FairSplitParams, FairSplitInputs> = {
   showScore: false,
 };
 
+/** Confusing Colors: words survived, of all 30 ("12 of 30 words"); one run, so no rounds. */
+const words = (score: number) => `${Math.min(Math.floor(score), INK_WORDS)} of ${counted(INK_WORDS, "word", "words")}`;
+
+const ink: ChallengeUi<InkParams, InkInputs> = {
+  howTo: INK_HOW_TO,
+  practicePath: practicePath("ink"),
+  play: ({ params, onFinish }) => <InkGame params={params} onFinish={onFinish} />,
+  scoreLabel: words,
+  summary: bankSummary(INK_WORDS, "words"),
+  target: bankTarget(INK_WORDS, "words"),
+  showScore: false,
+};
+
 const CHALLENGE_UI = {
   stacking,
   "inner-clock": innerClock,
   "flash-count": flashCount,
   "echo-path": echoPath,
   "fair-split": fairSplit,
+  ink,
 } satisfies Record<ChallengeType, unknown>;
 
 /**

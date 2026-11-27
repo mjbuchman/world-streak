@@ -47,7 +47,7 @@ select results_eq(
 -- The placeholder was merged in, not swapped for the whole object.
 select is(
   (select default_pass_targets from public.game_settings) - 'inner-clock',
-  '{"stacking": 10, "flash-count": 5, "echo-path": 8, "fair-split": 5}'::jsonb,
+  '{"stacking": 10, "flash-count": 5, "echo-path": 8, "fair-split": 5, "ink": 30}'::jsonb,
   'the other challenges keep their placeholders'
 );
 
