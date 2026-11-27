@@ -66,6 +66,9 @@ describe("ink-too-fast", () => {
     // A repeat for word 2 right after the real one, while word 3 is not up yet.
     const repeat = { word: 2, atMs: endMs + 10, colour: PARAMS.words[2].ink };
     expect(detectFlags({ ...run, inputs: { answers: [...answers, repeat], endMs: endMs + 10 } })).toEqual([]);
+    // An answer for word 3 before it appeared (it shows WORD_GAP_MS after word 2's answer).
+    const early = { word: 3, atMs: endMs + 10, colour: PARAMS.words[3].ink };
+    expect(detectFlags({ ...run, inputs: { answers: [...answers, early], endMs: endMs + 10 } })).toEqual([]);
   });
 });
 
