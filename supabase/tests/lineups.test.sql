@@ -1,11 +1,32 @@
 begin;
-select plan(34);
+select plan(39);
 
--- The pool (T150).
+-- The pool (T150), six games since Confusing Colors (T241).
 select col_default_is(
-  'public', 'game_settings', 'pool', '{stacking,inner-clock,flash-count,echo-path,fair-split}'::text,
-  'the pool starts with the five games'
+  'public', 'game_settings', 'pool', '{stacking,inner-clock,flash-count,echo-path,fair-split,ink}'::text,
+  'the pool starts with the six games'
 );
+select is((select pool from public.game_settings), '{stacking,inner-clock,flash-count,echo-path,fair-split,ink}'::text[],
+  'the T241 migration appended Confusing Colors to the launch pool');
+-- The migration's update, run again on pools it must leave alone or extend.
+create function pg_temp.add_ink(p text[]) returns text[]
+language plpgsql as $$
+begin
+  update public.game_settings set pool = p;
+  update public.game_settings set pool = pool || '{ink}'
+   where not 'ink' = any(pool)
+     and pool @> '{stacking,inner-clock,flash-count,echo-path,fair-split}' and cardinality(pool) = 5;
+  return (select pool from public.game_settings);
+end;
+$$;
+select is(pg_temp.add_ink('{echo-path,stacking,fair-split,inner-clock,flash-count}'),
+  '{echo-path,stacking,fair-split,inner-clock,flash-count,ink}'::text[], 'the launch pool in another order still gains it');
+select is(pg_temp.add_ink('{stacking,inner-clock,flash-count,echo-path}'),
+  '{stacking,inner-clock,flash-count,echo-path}'::text[], 'a pool the admin narrowed is left alone');
+select is(pg_temp.add_ink('{ink,stacking,fair-split}'), '{ink,stacking,fair-split}'::text[], 'a pool already holding it is left alone');
+select is(pg_temp.add_ink('{stacking,inner-clock,flash-count,echo-path,fair-split,ink}'),
+  '{stacking,inner-clock,flash-count,echo-path,fair-split,ink}'::text[], 'running it twice adds it once');
+update public.game_settings set pool = default;
 select throws_ok($$update public.game_settings set pool = '{stacking,inner-clock,chess}'$$,
   'P0001', 'unknown challenge type chess in the pool', 'an unknown game is refused');
 select throws_ok($$update public.game_settings set pool = '{stacking,inner-clock}'$$,
@@ -18,16 +39,20 @@ select throws_ok($$update public.game_settings set pool = '{stacking,inner-clock
 -- The daily seed: the first 32 bits of md5('2027-01-01') = e84e2bae...
 select is(public.daily_seed('2027-01-01'), 3897437102::bigint, 'the daily seed is the date''s MD5, first 32 bits');
 
--- The rule. 3897437102 mod 60 = 2: lineup 2 of the default pool. Lineup 3 is the next one.
+-- The rule. 3897437102 mod 120 = 62: with 20 lineups per first game, 62 = 3 × 20 + 2, so the
+-- first game is pool[4] (echo-path); of the five left, 2 / 4 = 0 picks stacking; of the four
+-- left (inner-clock, flash-count, fair-split, ink), 62 mod 4 = 2 picks fair-split. Lineup 63 ends in ink.
+-- 2027-01-02: seed 2327945647 mod 120 = 7 (stacking; 1 of 5 left: flash-count; 3 of 4: ink).
+-- 2027-01-03: seed 2050612755 mod 120 = 75 (echo-path; 18 mod 5 = 3: fair-split; 3 of 4: ink).
 select results_eq(
   $$select public.lineup_for(d, null) from (values ('2027-01-01'::date), ('2027-01-02'), ('2027-01-03')) as days(d)$$,
-  $$values ('{stacking,inner-clock,fair-split}'::text[]), ('{stacking,echo-path,flash-count}'), ('{inner-clock,flash-count,stacking}')$$,
+  $$values ('{echo-path,stacking,fair-split}'::text[]), ('{stacking,flash-count,ink}'), ('{echo-path,fair-split,ink}')$$,
   'fixed dates give these lineups'
 );
-select is(public.lineup_for('2027-01-01', '{stacking,inner-clock,fair-split}'),
-  '{stacking,flash-count,inner-clock}'::text[], 'the previous day''s exact lineup gives way to the next one');
-select is(public.lineup_for('2027-01-01', '{inner-clock,stacking,fair-split}'),
-  '{stacking,inner-clock,fair-split}'::text[], 'the same games in another order do not count as a repeat');
+select is(public.lineup_for('2027-01-01', '{echo-path,stacking,fair-split}'),
+  '{echo-path,stacking,ink}'::text[], 'the previous day''s exact lineup gives way to the next one');
+select is(public.lineup_for('2027-01-01', '{stacking,echo-path,fair-split}'),
+  '{echo-path,stacking,fair-split}'::text[], 'the same games in another order do not count as a repeat');
 select results_eq(
   $$select public.lineup_at('{a,b,c,d,e}', i) from (values (0::bigint), (1), (3), (59)) as n(i)$$,
   $$values ('{a,b,c}'::text[]), ('{a,b,d}'), ('{a,c,b}'), ('{e,d,c}')$$,
@@ -46,8 +71,8 @@ select is((select count(*) from chain), 365::bigint, 'setup: 365 days');
 select is((select count(*) from chain where (select count(distinct g) from unnest(lineup) g) <> 3 or cardinality(lineup) <> 3),
   0::bigint, 'every lineup has three different games');
 select is((select count(*) from chain where lineup = previous), 0::bigint, 'no day repeats the day before''s lineup');
-select is((select count(distinct g) from chain, unnest(lineup) g), 5::bigint, 'every pool game appears');
-select cmp_ok((select count(distinct lineup) from chain), '>', 40::bigint, 'the lineups vary (most of the 60 appear)');
+select is((select count(distinct g) from chain, unnest(lineup) g), 6::bigint, 'every pool game appears');
+select cmp_ok((select count(distinct lineup) from chain), '>', 80::bigint, 'the lineups vary (most of the 120 appear)');
 
 -- A pool of exactly three: six lineups, consecutive days still differ (in order at least).
 update public.game_settings set pool = '{stacking,inner-clock,flash-count}';
@@ -64,8 +89,8 @@ update public.game_settings set pool = default;
 
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
 set local role anon;
-select is(public.lineup_for('2027-01-01', null), '{stacking,inner-clock,fair-split}'::text[], 'a visitor can read the lineup rule');
-select is(public.challenge_for('2027-01-01'), 'stacking', 'challenge_for is the rule''s first game');
+select is(public.lineup_for('2027-01-01', null), '{echo-path,stacking,fair-split}'::text[], 'a visitor can read the lineup rule');
+select is(public.challenge_for('2027-01-01'), 'echo-path', 'challenge_for is the rule''s first game');
 select throws_ok($$insert into public.game_day_games values ('2027-01-01', 1, 'stacking', 1)$$,
   '42501', null, 'a visitor cannot write a lineup');
 reset role;
@@ -79,7 +104,7 @@ select policies_are('public', 'game_day_games', array['game_day_games_select_all
 delete from public.streak_runs;
 update public.game_settings set percentile_min_sample = 3, percentile_lookback_days = 14, pass_target_percentile = 0.8,
   pass_target_streak_step = 0, threshold_streak_step = 0,
-  default_pass_targets = '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 6, "fair-split": 5}';
+  default_pass_targets = '{"stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 6, "fair-split": 5, "ink": 30}';
 delete from public.game_days where game_date >= '2031-03-01';
 
 -- Each game's target follows its own percentile: Tower scores 1, 2, 3 on the day before. With a

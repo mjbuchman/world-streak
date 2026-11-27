@@ -110,9 +110,12 @@ describe("saveGameSettings", () => {
       "target-stacking": "1",
       // Past Trail Trace's longest path of 12, as T209 allows.
       "target-echo-path": "13",
-      pool: "flash-count, echo-path, fair-split, stacking, inner-clock",
+      pool: "flash-count, echo-path, fair-split, stacking, inner-clock, ink",
     };
     expect(await saveGameSettings(db, form(edges))).toEqual({ ok: true, message: "Settings saved." });
+    const ink = fakeDb([ADMIN, { data: [{ id: true }], error: null }]);
+    expect(await saveGameSettings(ink.db, form({ pool: "ink, stacking, fair-split" }))).toMatchObject({ ok: true });
+    expect(JSON.stringify(ink.calls)).toContain('"pool":["ink","stacking","fair-split"]');
   });
 
   it("says so when the update changed no row (the policy refused it), and throws on a database error", async () => {

@@ -1,6 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { COLS, ROWS } from "../../../src/challenges/echo-path/engine";
 import { boardLayout } from "../../../src/challenges/echo-path/render";
+import { MIN_WORD_PX, wordLayout } from "../../../src/challenges/ink/render";
 import { paramsFromSeed, type StackingParams } from "../../../src/challenges/stacking/engine";
 import { FALL_MS } from "../../../src/challenges/stacking/render";
 import { expect, test } from "../support/fixtures";
@@ -84,6 +85,7 @@ for (const path of [
   "/practice/flash-count",
   "/practice/echo-path",
   "/practice/fair-split",
+  "/practice/ink",
   "/rules",
 ]) {
   test(`${path} fits the phone and every control is big enough to tap`, async ({ page }) => {
@@ -232,6 +234,34 @@ test("Clean Cut moves its line by touch and cuts with the Cut button, on a board
   await expectControlOnScreen(page, cut);
   await tap(page, cut);
   await expect(page.getByText(/^\d+\.\d% and \d+\.\d%\./)).toBeVisible();
+  await expectPhoneFriendly(page);
+});
+
+test("Confusing Colors fits the phone: the word, the bank and all four buttons on screen, and a tap answers (T243)", async ({ page }) => {
+  await gotoReady(page, "/practice/ink");
+  await tap(page, page.getByRole("button", { name: "Start" }));
+  const board = page.locator("canvas[data-phase]");
+  await expectBoardFits(page, board);
+  await expectNoZoom(board);
+  await expectControlOnScreen(page, board);
+  await expectReadableBank(page, "Time bank");
+  const buttons = ["Red", "Blue", "Yellow", "Black"].map((name) => page.getByRole("button", { name }));
+  for (const button of buttons) {
+    // The lower row also keeps 16 px clear of the screen's foot, out of the browser's bottom bar.
+    await expectControlOnScreen(page, button, 16);
+    const box = (await button.boundingBox())!;
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+  }
+  // The word is drawn at least MIN_WORD_PX tall and, at that size, still fits across the board.
+  const box = (await board.boundingBox())!;
+  const { fontPx, word } = wordLayout(box.width, box.height);
+  expect(fontPx).toBeGreaterThanOrEqual(MIN_WORD_PX);
+  expect(word.w).toBeLessThanOrEqual(box.width);
+  await expect(page.getByRole("img", { name: "Word 1 of 30" })).toBeVisible({ timeout: 10_000 });
+  await tap(page, buttons[0]);
+  await expect(page.getByText(/^(Correct|Wrong\. It was [A-Z]+\.)$/)).toBeVisible();
+  await expect(page.getByRole("img", { name: "Word 2 of 30" })).toBeVisible({ timeout: 2_500 });
   await expectPhoneFriendly(page);
 });
 

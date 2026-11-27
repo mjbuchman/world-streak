@@ -4,7 +4,7 @@ import { E2E_PASSWORD, gotoReady, signUpViaForm, submitAndWait } from "./support
 import { adminClient, deleteUsersByEmail } from "./support/supabase";
 
 /** Pages a visitor opens. */
-export const VISITOR_PATHS = ["/", "/signin", "/signup", "/rules", "/practice", "/practice/stacking", "/practice/inner-clock", "/practice/flash-count", "/practice/echo-path", "/practice/fair-split","/history", "/admin", "/auth/callback?error=warmup"] as const;
+export const VISITOR_PATHS = ["/", "/signin", "/signup", "/rules", "/practice", "/practice/stacking", "/practice/inner-clock", "/practice/flash-count", "/practice/echo-path", "/practice/fair-split", "/practice/ink", "/history", "/admin", "/auth/callback?error=warmup"] as const;
 /** Pages a signed-in player opens. */
 export const PLAYER_PATHS = ["/", "/play", "/complete-profile", "/history"] as const;
 /** Pages the admin opens. */

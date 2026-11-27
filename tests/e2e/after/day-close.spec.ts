@@ -56,6 +56,8 @@ test.afterAll(async () => {
 
 test("a day survives: 7 of 10 pass, the close adds a day to the streak and the history says survived", async ({ page }) => {
   const day = await reopenYesterday();
+  // Confusing Colors leads the lineup, so the history must name it (T242).
+  await must(db.rpc("save_game_day", { d: day, games: ["ink", "inner-clock", "flash-count"], targets: [30, 4, 5], threshold: 0.6 }));
   await runSeed({ players: 10, passRate: 0.7, date: day }, run("survive"), seedDeps());
   expect(await closeDay(day)).toBe("survived");
 
@@ -66,6 +68,7 @@ test("a day survives: 7 of 10 pass, the close adds a day to the streak and the h
   await expect(first).toContainText(dayLabel(day));
   await expect(first).toContainText("70%");
   await expect(first).toContainText("Survived");
+  await expect(first).toContainText("Confusing Colors");
 });
 
 test("a day breaks: half pass, under the 60% threshold, so the streak is 0 days", async ({ page }) => {

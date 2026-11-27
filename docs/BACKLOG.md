@@ -222,7 +222,7 @@ Planning notes for M9:
 
 ### T239 Ink: registration, practice page and migration
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T256, T257, T109
 - Acceptance criteria:
   - [ ] `CHALLENGE_TYPES`, the registry, `challengeUi` (`showScore: false`, a words-survived summary such as "words survived, of 40" built on the bank helpers, `bankTarget`), `CHALLENGE_NAMES` ("Ink"), `CHALLENGE_TAGLINES` and `INK_HOW_TO` gain `ink` (for example "A colour word appears in a coloured ink. Tap the colour of the ink, not the word. Slow and wrong answers come out of one time bank. Survive all 40 words to pass."). Every other place that lists the games is updated (the grep in the planning notes), tests extended without being weakened.
@@ -233,7 +233,7 @@ Planning notes for M9:
 
 ### T240 Ink: cheat checks
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T254, T239
 - Acceptance criteria:
   - [ ] `src/config/cheat.ts` gains placeholder thresholds (proposal, judgment call to record): `INK_MIN_REACTION_MS` = 180 (a correct answer sooner than this after the word appeared is faster than a person can read and tap; `INK_FAST_ANSWERS` = 3 such answers in one run to flag, since one lucky anticipation is human) and `INK_RHYTHM_MIN_ANSWERS` = 12 with `INK_RHYTHM_MAX_SD_MS` = 12 (reaction times that even over 12 or more answers look scripted; reaction times, not gaps, so the single opening 3-2-1 does not hide a script, the lesson of M6's echo-path rule).
@@ -244,7 +244,7 @@ Planning notes for M9:
 
 ### T241 Add Ink to the daily pool and the admin controls
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T239
 - Acceptance criteria:
   - [ ] A migration sets the `game_settings.pool` default to the six games and appends `ink` to the existing settings row's pool (keeping any pool the admin already edited: it only appends `ink` when absent), each entry still checked against `challenge_types`, at least three distinct entries. Days already created keep their lineups; days not yet created draw from six games.
@@ -255,7 +255,7 @@ Planning notes for M9:
 
 ### T242 End-to-end checks for Ink
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T240, T241
 - Acceptance criteria:
   - [ ] Practice e2e signed out, with no `/api/attempts` calls: Ink shows the colour word in its ink and four labelled buttons, one 3-2-1 for the whole run (none between words), no round counter, a correct key press (1 to 4) keeps the gauge, a wrong one drains it by about the wrong cost; a deliberately bad run busts the bank and shows "words survived" with no big score; Ink shows no score number; Teetering Tower and Trail Trace still do.
@@ -266,7 +266,7 @@ Planning notes for M9:
 
 ### T243 Phone checks for Ink
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T242
 - Acceptance criteria:
   - [ ] On both mobile projects in `tests/e2e/mobile/mobile.spec.ts`: `/practice/ink` has no horizontal scroll (`expectBoardFits`), and the canvas and all four Ink colour buttons lie wholly on screen once the run starts, asserted with `expectControlOnScreen` (the lowest colour button with a 16 px margin below, as T228); every button is at least 44 x 44 CSS px.
@@ -276,7 +276,7 @@ Planning notes for M9:
 
 ### T244 Record the M9 decisions and update the docs
 - Type: docs
-- Status: todo
+- Status: in-progress
 - Depends on: T243
 - Acceptance criteria:
   - [ ] `docs/DECISIONS.md` gets one entry for Ink (T249 to T256, T239, T240, including why Arrow Flip and Bank Shot were dropped and the single-round redesign; the entries T254 and T255 wrote are consolidated, not duplicated), plus one for the pool (T241), each in the existing format, listing every proposal below as "owner to confirm" and where to change it.

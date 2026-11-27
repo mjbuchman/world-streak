@@ -12,6 +12,12 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/DECISIONS-to-2026-11-19.md`. Search it only when you need history.
 
+### 2026-11-27 — Confusing Colors joins the daily pool (T239–T244)
+- Choice: (1) Of the three M9 candidates only Confusing Colors ships: Arrow Flip was dropped before the play-test and Bank Shot after it (Nov 25, owner). (2) The five-round design became one run of 30 words against one 3 200 ms bank (DECISIONS Nov 25 and Nov 27). (3) Scored like the bank games: score 0 to 31 is `bankScore`, default pass target 30 (survive every word), recomputed by the server; the player sees words survived, never a score. (4) Cheat checks flag 3 or more answers under 180 ms, or 12 or more answers whose times have a standard deviation under 12 ms. (5) The default pool is all six games; the settings row gains `ink` only while it is still the untouched five-game launch pool, so an admin's own pool is left alone. Days already created keep their lineups.
+- Reason: owner play-tests Nov 24 to 27 and "start phase 2" (Nov 27). The thresholds are placeholders in line with the other games' checks (T164).
+- How to change it later: the pool and targets on `/admin/settings`; the `INK_*` thresholds in `src/config/cheat.ts` and the engine constants in `src/challenges/ink/engine.ts`.
+- Confirmed by human: pending (M9 play-test)
+
 ### 2026-11-27 — Confusing Colors: 30 words, same bank (T258)
 - Choice (owner, play-test Nov 27): the game Ink is renamed "Confusing Colors" (code name, path and files stay `ink`) and the run is 30 words with the 3 200 ms bank kept. With 30 words the stretches become 10 long, ramping 5, 7, 9 mismatches (50%, 70%, 90%, the original target, now exact). Score 0 to 31, pass target 30. Simulated survival: careful 87.3%, distracted 15.1% (it was 59.6% and 1.7% at 40).
 - How to change it later: `WORDS`, `STRETCH`, `MISMATCHES_PER_STRETCH` and `BANK_MS` in `src/challenges/ink/engine.ts`; the name in `src/config/newGames.ts`.
@@ -21,25 +27,25 @@ Older entries (everything up to Nov 19, 2026) are in `docs/archive/DECISIONS-to-
 - Choice: one 3-2-1, then 40 words against one 3 200 ms bank; mismatched words per stretch of 8 ramp 4, 5, 6, 7, 7 (about 72% overall, 87.5% in the last two stretches, short of the 90% asked so a matching word still turns up and the rule stays tested). Allowance 1 000 ms, limit 2 000 ms, 400 ms gap. Score `bankScore(wordsSurvived, left, bank)`, 0 to 41, replacing the five-round score. All four inks get the same 1.5 CSS px outline in the text colour (no halo).
 - Reason: the owner's Nov 25 play-test asked for one run, a steady pace, more mismatches and a thin outline on every ink. Simulated pass rates: careful 59.6%, distracted 1.7% (3 000 ms gave 54.9%, 3 500 ms 75.4%). Trade-off of the outline: red and black lose some contrast on the dark board without the halo (no longer asserted), in return for one look across all four inks.
 - How to change it later: `BANK_MS`, `MISMATCHES_PER_STRETCH`, `ALLOWANCE_MS`, `LIMIT_MS` in `src/challenges/ink/engine.ts` (re-run `engine.sim.test.ts`); `OUTLINE_CSS_PX` in `src/challenges/ink/palette.ts`.
-- Confirmed by human: pending (Ink play-test)
+- Confirmed by human: one run and outline yes (Nov 27); the numbers changed by T258 below; the rest is in "Confusing Colors joins the daily pool".
 
 ### 2026-11-24 — Ink numbers and inks (T249, T250)
 - Choice: time bank 4 000 ms (plan placeholder 6 000) with a 1 000 ms wrong cost, so 60.5% of simulated careful players and 3.6% of distracted ones survive all five. Inks red #D42A2A, blue #5AA9FF, yellow #FFD21F, black #141414 (luminance at least 0.15 apart). On the dark board, red and black are drawn inside a light halo; blue and yellow sit on the board directly.
 - Reason: the plan asked every ink, yellow and black included, to reach 4.5:1 on the canvas background. No single background allows that for both yellow and near-black, so each ink meets 4.5:1 against what is right around it (halo or board).
 - How to change it later: `BANK_MS`, `WRONG_COST_MS` in `src/challenges/ink/engine.ts` (re-run `engine.sim.test.ts`); the inks in `src/lib/theme/palette.ts` and `tokens.css`, the halo choice in `src/challenges/ink/palette.ts`.
-- Confirmed by human: pending (M9 play-test, T244)
+- Confirmed by human: superseded (the bank by T254 and T258, the halo by the outline, T255); the inks stand, to confirm under "Confusing Colors joins the daily pool".
 
 ### 2026-11-24 — Bank Shot retune (T247, T248)
 - Choice: owner feedback after the MVP play-test was "too unforgiving". The bank goes from 14 to 30 units; a new 3-unit free zone (a tap costs only its distance past 3, to 0.01; a timeout still costs the board's 100); glimpses 1 600, 1 400, 1 300, 1 150, 1 000 ms (were 1 200, 1 000, 800 in rounds 3 to 5). The plan also asked the careful simulated player to survive 65 to 85%, which at 30 needs a bank of about 8; the owner chose 30 (Nov 24, in chat). Simulated survival at 30: perfect 100%, careful 100%, twice the error 93.8%, three times 64.5%. The reveal draws the free zone as an outlined, labelled band and says "On target, no cost" (with a tick) or "Missed by 4.2, cost 1.2".
 - Reason: the simulated player set the old 14, which real play found too hard, so it underrates real error.
 - How to change it later: `BANK_UNITS`, `FREE_UNITS` and `GLIMPSE_MS` in `src/challenges/bank-shot/engine.ts`; re-run `engine.sim.test.ts` and adjust its bands.
-- Confirmed by human: bank 30 yes (Nov 24); the rest pending (M9 play-test, T244)
+- Confirmed by human: void, Bank Shot removed (owner, Nov 25; T257)
 
 ### 2026-11-24 — Arrow Flip numbers (T236–T238)
 - Choice: (1) The bank is 2 200 ms, not the plan's 6 000: the plan's careful simulated player (450 to 700 ms plus 100 ms a round; 4% to 14% wrong on mismatches) makes about 1.3 wrong answers and 1.2 s of slow time a run, so with 6 000 it would almost never bust; 2 200 puts it inside 40 to 60% and the distracted player under 15%. (2) Mismatches per round 1, 2, 2, 3, 4 (20% to 60% of six, rounded); WRONG_COST 1 000, TIMEOUT_COST 1 500, PROMPT_GAP 450, FEEDBACK 300 as proposed. (3) An exact diagonal swipe counts as horizontal. (4) The ARROW badge has pointed ends rather than a full diamond, so the word fits at 28 px. (5) The four buttons sit in one row (Left, Up, Down, Right) so they fit under the canvas on a 390 x 664 screen.
 - Reason: Open items (all numbers are proposals); set by `src/challenges/arrow-flip/engine.sim.test.ts`.
 - How to change it later: the constants at the top of `src/challenges/arrow-flip/engine.ts`; re-run the simulation test.
-- Confirmed by human: pending (M9 play-test, T244)
+- Confirmed by human: void, Arrow Flip dropped in the M9 re-plan (owner, Nov 24)
 
 ### 2026-11-18 — Second Sense rounds (T180-T183)
 - Choice: (1) The default pass target stays 4, which now means "survive all four rounds"; admins can set fractions such as 4.5. (2) The balance test models a player's error as 15% of the target (sd), not a flat 1000 ms, and expects 30 to 70% of runs to survive. (3) The cheat check flags 3 or more rounds of one run under 25 ms off target. (4) Old-scale scores are left out of the percentile through a new `challenge_types.scores_since` date, set to the day after the migration runs (UTC). (5) The bank shows seconds to one decimal ("8.8 s").

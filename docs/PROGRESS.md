@@ -4,16 +4,17 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 ## Current status
 
-- Milestone: M9 New games (Bank Shot, Arrow Flip) approved Nov 24. Phase 1 is a practice-only MVP (batches M9-a to M9-c), then stop for the owner's play-test before phase 2 (M9-d, M9-e).
-- Active task: M9-d (T239, T240), Confusing Colors registration and cheat checks. The owner said start phase 2 on Nov 27; then M9-e.
+- Milestone: M9, one new game. Confusing Colors (`ink`) is the only one shipped (Arrow Flip and Bank Shot dropped); the owner started phase 2 on Nov 27.
+- Active task: M9-e (T241 to T244), Confusing Colors in the daily pool of six, e2e and phone checks, docs; then the maintainer and the M9 play-test stop.
 - Blocked tasks: none
-- Waiting on the human: the M5 Daily Three please-confirm; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: M9 re-planned after the owner's play-test (Bank Shot retune T247–T248; Arrow Flip replaced by the Stroop game Ink, T249–T253; batches M9-f, M9-g, M9-h, then a practice play-test stop, then M9-d, M9-e). The owner approved the re-plan on Nov 24. M9-f, M9-g and M9-h merged; M9-d and M9-e wait until the owner likes both games.
+- Waiting on the human: the Confusing Colors please-confirm and DESIGN.md update; the M5 Daily Three please-confirm; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
+- Next: the M9 play-test. A full honest Confusing Colors run takes about 45 s (worked out from the engine timings: 3-2-1, then 30 words at about 1.4 s each).
 
 ## Log
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/PROGRESS-to-2026-11-19.md`. Search it only when you need history.
 
+- 2026-11-27 T239, T240 done, PR #209: Confusing Colors registered (migration: type, target 30; not yet in the pool), cheat checks `ink-too-fast` and `ink-robotic`. CI e2e "two simultaneous starts" failed once (race in the test, unrelated), passed on rerun.
 - 2026-11-27 T258 done: owner play-test "pretty good"; Ink renamed Confusing Colors, 30 words, bank 3.2 s kept, mismatches 5-7-9 per 10, score 0 to 31. Simulated careful survival 87%.
 - 2026-11-25 T257 done, PR #207: Bank Shot deleted (engine, geometry, game, practice page, tokens, hub entry); `/practice/bank-shot` is a 404. Shared bank helpers, `BankGauge` and `RoundProgress` stay (other games use them).
 - 2026-11-25 T254–T256 done, PR #206: Ink is one run of 40 words (one 3-2-1, one 3.2 s bank, mismatches ramp 4 to 7 of 8, score 0 to 41, target 40) with a thin outline on all four inks; single-bar `BankGauge`. Unrelated local e2e flakes (admin sign-in, stale streak data); CI green.

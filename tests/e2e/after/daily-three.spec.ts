@@ -1,5 +1,7 @@
 import type { Page } from "@playwright/test";
 import { COLS, MAX_PATH_LENGTH, ROWS } from "../../../src/challenges/echo-path/path";
+import type { Colour } from "../../../src/challenges/ink/engine";
+import { BUTTON_ORDER } from "../../../src/challenges/ink/input";
 import { METER_CACHE_SECONDS } from "../../../src/config/meter";
 import { check } from "../../../src/lib/devData";
 import { gameDateAt } from "../../../src/lib/gameDay";
@@ -174,6 +176,58 @@ test("two losses: the day fails after game 2, and the third game is still offere
   await expect(heading(page, "Not today: two losses")).toBeVisible();
   await expect(heading(page, "Game 3 of 3: Trail Trace")).toBeVisible();
   await expect(page.getByRole("button", { name: "Play it anyway" })).toBeVisible();
+});
+
+test("Confusing Colors in the lineup: the server scores the words, ignores a claimed pass, and nothing shared names the game or a score (T242)", async ({ page, accounts }) => {
+  test.setTimeout(120_000);
+  await saveDay(["ink", "inner-clock", "flash-count"], [30, LOSE, LOSE]);
+  await stubShare(page);
+  await signUpViaForm(page, { email: accounts.uniqueEmail() });
+  await expect(page).toHaveURL("/");
+  // The browser's submission claims a full score and a pass; only the answers should count.
+  await page.route("**/api/attempts/submit", (route) =>
+    route.continue({ postData: JSON.stringify({ ...route.request().postDataJSON(), score: 31, passed: true }) }),
+  );
+
+  await gotoReady(page, "/play");
+  await expect(heading(page, "Game 1 of 3: Confusing Colors")).toBeVisible();
+  const started = page.waitForResponse("**/api/attempts/start");
+  await page.getByRole("button", { name: "Start" }).click();
+  const { params } = (await (await started).json()) as { params: { words: { ink: Colour }[] } };
+  // A wrong key for each of the first four words: four seconds of cost bust the 3.2 s bank.
+  const submitted = page.waitForResponse("**/api/attempts/submit");
+  for (let n = 1; n <= 4; n++) {
+    await expect(page.getByRole("img", { name: `Word ${n} of 30` })).toBeVisible({ timeout: n === 1 ? 10_000 : 2_500 });
+    const wrong = BUTTON_ORDER.find((colour) => colour !== params.words[n - 1].ink)!;
+    await page.keyboard.press(String(BUTTON_ORDER.indexOf(wrong) + 1));
+  }
+  const result = (await (await submitted).json()) as { score: number; passed: boolean; passTarget: number };
+  expect(result).toMatchObject({ passed: false, passTarget: 30 });
+  expect(result.score).toBeGreaterThanOrEqual(3);
+  expect(result.score).toBeLessThan(4);
+  await expect(heading(page, "Game 1 of 3: lost")).toBeVisible();
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await page.getByRole("button", { name: "Start" }).click();
+  await rushSecondSense(page);
+  await expect(heading(page, "Game 2 of 3: lost")).toBeVisible();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(heading(page, "Not today: two losses")).toBeVisible();
+  await page.getByRole("link", { name: "See results" }).click();
+  await expect(page).toHaveURL("/play/results");
+  const shared = await shareFromResults(page);
+  expect(shared).not.toContain("Confusing Colors");
+  expect(shared).not.toMatch(/\b3\.\d|\bscore/i);
+  // The results show words survived, never the score with its bank fraction.
+  await expect(page.getByRole("main")).toContainText(`You got through ${Math.floor(result.score)} of 30 words.`);
+  await expect(page.getByRole("main")).not.toContainText(/\b\d+\.\d+ ?(points|score)|\bscore\b/i);
+
+  // The game's name shows in today's list (the history, which lists closed days, is day-close.spec's).
+  await gotoReady(page, "/play");
+  await expect(page.getByRole("list", { name: "Today's games" }).getByRole("listitem").first()).toContainText("Confusing Colors");
+  // Game 3 starts once; no start after it, and Confusing Colors never again today.
+  expect((await page.request.post("/api/attempts/start")).status()).toBe(200);
+  expect((await page.request.post("/api/attempts/start")).status()).toBe(409);
 });
 
 /** Pairs of tiles in the path, not next to each other in it, that share an edge (row by row from the bottom). */

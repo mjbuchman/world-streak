@@ -241,6 +241,8 @@ test("an admin opens the settings from /admin and saves them as they are", async
   await page.getByRole("link", { name: "Game settings" }).click();
   await expect(page).toHaveURL("/admin/settings");
   await expect(page.getByRole("textbox", { name: "Pool" })).not.toHaveValue("");
+  // Six games since T241: Confusing Colors has its own target field, holding the placeholder.
+  await expect(page.getByLabel("Confusing Colors default pass target")).toHaveValue("30");
   // Saving the values unchanged leaves the shared local settings as other tests expect them.
   await submitAndWait(page, page.getByRole("button", { name: "Save settings" }));
   await expect(page.getByRole("status")).toHaveText("Settings saved.");

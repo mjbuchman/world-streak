@@ -6,7 +6,7 @@ select plan(19);
 \ir fixtures/fixtures.psql
 delete from public.streak_runs;
 update public.game_settings set percentile_min_sample = 2147483647, pass_target_streak_step = 0,
-  default_pass_targets = '{"stacking": 10, "inner-clock": 0.5, "flash-count": 20, "echo-path": 6, "fair-split": 5}';
+  default_pass_targets = '{"stacking": 10, "inner-clock": 0.5, "flash-count": 20, "echo-path": 6, "fair-split": 5, "ink": 30}';
 select tests.make_player('00000000-0000-0000-0000-0000000000ad');
 update public.profiles set is_admin = true where id = '00000000-0000-0000-0000-0000000000ad';
 select tests.make_player('00000000-0000-0000-0000-0000000000b0');
