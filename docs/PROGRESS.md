@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M9, one new game. Confusing Colors (`ink`) is the only one shipped (Arrow Flip and Bank Shot dropped); the owner started phase 2 on Nov 27.
-- Active task: M9-e (T241 to T244), Confusing Colors in the daily pool of six, e2e and phone checks, docs; then the maintainer and the M9 play-test stop.
+- Active task: none. M9 is complete; stopped for the owner's M9 play-test.
 - Blocked tasks: none
 - Waiting on the human: the Confusing Colors please-confirm and DESIGN.md update; the M5 Daily Three please-confirm; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: the M9 play-test. A full honest Confusing Colors run takes about 45 s (worked out from the engine timings: 3-2-1, then 30 words at about 1.4 s each).
@@ -13,6 +13,8 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Log
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/PROGRESS-to-2026-11-19.md`. Search it only when you need history.
+
+- T241–T244 (PR #210): Confusing Colors joins the daily pool of six (the untouched launch pool gains it; edited pools and created days are left alone), with practice, Daily Three, history and phone e2e, and the M9 docs. Full review, all approved first round. The word canvas got `touch-action: none` for the no-zoom check. Admin sign-ins and "two simultaneous starts" flake under local load.
 
 - 2026-11-27 T239, T240 done, PR #209: Confusing Colors registered (migration: type, target 30; not yet in the pool), cheat checks `ink-too-fast` and `ink-robotic`. CI e2e "two simultaneous starts" failed once (race in the test, unrelated), passed on rerun.
 - 2026-11-27 T258 done: owner play-test "pretty good"; Ink renamed Confusing Colors, 30 words, bank 3.2 s kept, mismatches 5-7-9 per 10, score 0 to 31. Simulated careful survival 87%.
