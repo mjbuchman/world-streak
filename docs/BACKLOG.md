@@ -44,7 +44,8 @@ Phase 1b, play-test tweaks of Nov 25 (then stop for the owner's play-test of `/p
 Phase 2, only after the owner says they like the games (apply their tweaks first):
 
 - M9-d. Ink registration, migration and cheat checks: T239, T240 (full: migration, scoring); T234 and T235 (Bank Shot) are dropped
-- M9-e. Pool (six games), admin, end-to-end and phone checks, docs: T241, T242, T243, T244 (full: migration; T244 is docs only)
+- M9-e. Pool (six games), admin, end-to-end and phone checks, docs: T241, T242, T243, T244 (full: migration; T244 is docs only) (done, #210)
+- STOP: M9 play-test (Confusing Colors in the Daily Three).
 
 M8 M7 play-test tweaks (Nov 19, 2026; approved Nov 19 (2 lives, 25 dots, score hidden everywhere for bank games); runs before batch 19):
 
@@ -244,7 +245,7 @@ Planning notes for M9:
 
 ### T241 Add Ink to the daily pool and the admin controls
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T239
 - Acceptance criteria:
   - [ ] A migration sets the `game_settings.pool` default to the six games and appends `ink` to the existing settings row's pool (keeping any pool the admin already edited: it only appends `ink` when absent), each entry still checked against `challenge_types`, at least three distinct entries. Days already created keep their lineups; days not yet created draw from six games.
@@ -255,7 +256,7 @@ Planning notes for M9:
 
 ### T242 End-to-end checks for Ink
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T240, T241
 - Acceptance criteria:
   - [ ] Practice e2e signed out, with no `/api/attempts` calls: Ink shows the colour word in its ink and four labelled buttons, one 3-2-1 for the whole run (none between words), no round counter, a correct key press (1 to 4) keeps the gauge, a wrong one drains it by about the wrong cost; a deliberately bad run busts the bank and shows "words survived" with no big score; Ink shows no score number; Teetering Tower and Trail Trace still do.
@@ -266,7 +267,7 @@ Planning notes for M9:
 
 ### T243 Phone checks for Ink
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T242
 - Acceptance criteria:
   - [ ] On both mobile projects in `tests/e2e/mobile/mobile.spec.ts`: `/practice/ink` has no horizontal scroll (`expectBoardFits`), and the canvas and all four Ink colour buttons lie wholly on screen once the run starts, asserted with `expectControlOnScreen` (the lowest colour button with a 16 px margin below, as T228); every button is at least 44 x 44 CSS px.
@@ -276,7 +277,7 @@ Planning notes for M9:
 
 ### T244 Record the M9 decisions and update the docs
 - Type: docs
-- Status: in-progress
+- Status: done
 - Depends on: T243
 - Acceptance criteria:
   - [ ] `docs/DECISIONS.md` gets one entry for Ink (T249 to T256, T239, T240, including why Arrow Flip and Bank Shot were dropped and the single-round redesign; the entries T254 and T255 wrote are consolidated, not duplicated), plus one for the pool (T241), each in the existing format, listing every proposal below as "owner to confirm" and where to change it.
@@ -440,6 +441,26 @@ Owner play-test of 2026-11-25, all decisions final: Bank Shot was "nearly imposs
   - [ ] The hub, page title, how-to and results say "Confusing Colors" and 30 words; unit and e2e tests updated; `npm run verify` passes.
   - [ ] `docs/DECISIONS.md` records the change.
 - Notes: Full review (scoring). Batch M9-k. Then STOP for the owner's next decision (phase 2 or more tweaks).
+
+### T259 Fix the e2e flakes under load
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `tests/e2e/attempts.spec.ts` "two simultaneous starts" accepts [200, 409] or [200, 200] (the second request may legitimately start position 2 after the first commits, `src/lib/attempts/start.ts`), and asserts no duplicate (user, game_date, position) rows and as many attempts as 200s.
+  - [ ] The admin sign-in helpers in `tests/e2e/` wait at least 15 s for the redirect (cold dev server under parallel load), not the 5 s default. No test, rule or threshold is weakened.
+  - [ ] `npm run test:e2e:local` passes 3 times in a row with the default workers; `npm run verify` passes.
+- Notes: Maintainer, M9 end. Light review.
+
+### T260 Remove the empty new-games list and the copied pool update
+- Type: maintenance
+- Status: todo
+- Depends on: none
+- Acceptance criteria:
+  - [ ] `src/config/newGames.ts` (empty since T239) and its use in `src/app/practice/page.tsx` are removed; the practice hub renders the same; the DECISIONS reference to it points at the game registry instead.
+  - [ ] `supabase/tests/lineups.test.sql` no longer keeps its own copy of the T241 pool update: the update lives in one named SQL function the migration path and the test both call (new migration if needed), or a test fails when the two diverge. All lineup assertions still pass.
+  - [ ] `npm run verify` and `npm run test:db` pass.
+- Notes: Maintainer, M9 end. Full review if a migration is added, otherwise light.
 
 ## M8 M7 play-test tweaks
 
