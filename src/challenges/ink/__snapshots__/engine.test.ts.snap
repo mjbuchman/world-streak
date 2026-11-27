@@ -2,30 +2,24 @@
 
 exports[`Ink params (T254) > golden: seed 0 (changing the PRNG or the draw changes these) 1`] = `
 [
-  "blue/blue yellow/yellow blue/red yellow/yellow black/black yellow/blue yellow/black blue/yellow",
-  "yellow/blue yellow/yellow yellow/red yellow/blue blue/black blue/blue blue/red blue/blue",
-  "black/red yellow/yellow black/red blue/black red/yellow red/red yellow/black red/yellow",
-  "red/red blue/yellow black/red blue/black red/yellow black/blue blue/red blue/yellow",
-  "blue/red blue/yellow blue/red blue/black red/red blue/black yellow/blue blue/yellow",
+  "yellow/blue red/red black/black red/blue red/red blue/blue red/red red/yellow yellow/red blue/black",
+  "blue/blue yellow/black blue/yellow blue/blue blue/yellow red/red red/yellow black/blue blue/yellow blue/red",
+  "red/blue blue/black black/red blue/black red/yellow black/red black/black red/yellow yellow/red red/yellow",
 ]
 `;
 
 exports[`Ink params (T254) > golden: seed 1 (changing the PRNG or the draw changes these) 1`] = `
 [
-  "red/black red/yellow red/red yellow/yellow red/red black/blue red/yellow red/red",
-  "yellow/blue red/black black/yellow red/blue black/black yellow/yellow yellow/black yellow/yellow",
-  "yellow/black blue/red red/black yellow/yellow black/blue red/black yellow/yellow red/black",
-  "yellow/yellow yellow/red yellow/blue yellow/red blue/yellow black/red red/black blue/red",
-  "black/black blue/red blue/yellow blue/red red/blue black/red red/yellow yellow/blue",
+  "red/red yellow/yellow black/blue black/red black/yellow black/black red/red red/black yellow/red blue/blue",
+  "black/red yellow/yellow red/red red/blue black/yellow black/red blue/black black/red yellow/black yellow/yellow",
+  "yellow/black red/yellow red/red red/black blue/yellow yellow/black black/red red/black red/yellow red/blue",
 ]
 `;
 
 exports[`Ink params (T254) > golden: seed 4294967295 (changing the PRNG or the draw changes these) 1`] = `
 [
-  "yellow/blue red/yellow red/red yellow/black red/red blue/blue black/red yellow/yellow",
-  "black/black black/red yellow/black blue/blue blue/yellow blue/blue red/black yellow/blue",
-  "black/black black/red red/blue blue/black black/blue red/red black/yellow yellow/red",
-  "red/black yellow/blue yellow/black blue/yellow yellow/blue red/yellow black/red blue/blue",
-  "black/red red/blue red/yellow yellow/red blue/yellow black/black red/yellow blue/red",
+  "red/blue yellow/red blue/blue blue/yellow yellow/red yellow/yellow blue/blue red/red black/blue black/black",
+  "red/red red/blue blue/black red/yellow yellow/black blue/yellow yellow/blue black/yellow red/red yellow/yellow",
+  "black/blue red/red red/black black/red blue/yellow red/black black/blue yellow/red red/black yellow/blue",
 ]
 `;

@@ -5,7 +5,7 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M9 New games (Bank Shot, Arrow Flip) approved Nov 24. Phase 1 is a practice-only MVP (batches M9-a to M9-c), then stop for the owner's play-test before phase 2 (M9-d, M9-e).
-- Active task: none. M9-i and M9-j merged; STOP for the owner's Ink play-test of `/practice/ink`. The owner approved this re-plan on Nov 25 after play-testing (Bank Shot dropped as not fun).
+- Active task: none. M9-k (T258, Confusing Colors at 30 words) merged; STOP until the owner says phase 2 or more tweaks.
 - Blocked tasks: none
 - Waiting on the human: the M5 Daily Three please-confirm; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
 - Next: M9 re-planned after the owner's play-test (Bank Shot retune T247–T248; Arrow Flip replaced by the Stroop game Ink, T249–T253; batches M9-f, M9-g, M9-h, then a practice play-test stop, then M9-d, M9-e). The owner approved the re-plan on Nov 24. M9-f, M9-g and M9-h merged; M9-d and M9-e wait until the owner likes both games.
@@ -14,7 +14,8 @@ Agents update this file after every task, newest entries first. A fresh session 
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/PROGRESS-to-2026-11-19.md`. Search it only when you need history.
 
-- 2026-11-25 T257 done: Bank Shot deleted (engine, geometry, game, practice page, tokens, hub entry); `/practice/bank-shot` is a 404. Shared bank helpers, `BankGauge` and `RoundProgress` stay (other games use them).
+- 2026-11-27 T258 done: owner play-test "pretty good"; Ink renamed Confusing Colors, 30 words, bank 3.2 s kept, mismatches 5-7-9 per 10, score 0 to 31. Simulated careful survival 87%.
+- 2026-11-25 T257 done, PR #207: Bank Shot deleted (engine, geometry, game, practice page, tokens, hub entry); `/practice/bank-shot` is a 404. Shared bank helpers, `BankGauge` and `RoundProgress` stay (other games use them).
 - 2026-11-25 T254–T256 done, PR #206: Ink is one run of 40 words (one 3-2-1, one 3.2 s bank, mismatches ramp 4 to 7 of 8, score 0 to 41, target 40) with a thin outline on all four inks; single-bar `BankGauge`. Unrelated local e2e flakes (admin sign-in, stale streak data); CI green.
 - 2026-11-24 T251–T253 done, PR #203: Ink game (2 x 2 labelled ink buttons, keys 1 to 4), `/practice/ink` listed as New, Arrow Flip deleted. The e2e checks the board and buttons fit a 390 x 664 screen.
 - 2026-11-24 T249–T250 done, PR #202: Ink engine (five rounds of eight colour words, a 4 s time bank set by the simulation), four inks apart in lightness with a light halo on the dark ones, keys 1 to 4 and the renderer.

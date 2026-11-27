@@ -35,7 +35,7 @@ function statusText(feedback: InkFeedback | null): string {
 }
 
 /**
- * An Ink run (T251, one run since T256): one 3-2-1, then all 40 words one after another at a steady
+ * A Confusing Colors run (T251, one run since T256): one 3-2-1, then every word one after another at a steady
  * pace. One of the four buttons or the keys 1 to 4 answers, through the same path; after each answer
  * a short feedback beat. One frame loop on one clock from the game's start draws all of it, so the
  * screen and the engine agree on every timing.

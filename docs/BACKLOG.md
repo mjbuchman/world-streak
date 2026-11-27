@@ -36,8 +36,10 @@ Phase 1, practice-only MVP (then stop for the owner's play-test):
 Phase 1b, play-test tweaks of Nov 25 (then stop for the owner's play-test of `/practice/ink`):
 
 - M9-i. Ink as one round: single run, new score, 50% to 90% mismatches, thin outline: T254, T255, T256 (full: scoring, attempts)
-- M9-j. Remove Bank Shot: T257 (light)
-- STOP: owner play-test of `/practice/ink`. Do not start M9-d or M9-e before the owner says they like it.
+- M9-j. Remove Bank Shot: T257 (light) (done)
+- STOP (done Nov 27): owner play-test of `/practice/ink`: "pretty good", 30 words and the name Confusing Colors (T258).
+- M9-k. Confusing Colors, 30 words: T258 (full: scoring)
+- STOP: tell the owner; do not start M9-d or M9-e before the owner says to.
 
 Phase 2, only after the owner says they like the games (apply their tweaks first):
 
@@ -420,13 +422,24 @@ Owner play-test of 2026-11-25, all decisions final: Bank Shot was "nearly imposs
 
 ### T257 Remove Bank Shot
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: T256
 - Acceptance criteria:
   - [ ] `src/challenges/bank-shot/`, its component directory under `src/components/`, `src/app/practice/bank-shot/`, its canvas tokens, its tests and its `NEW_GAMES` entry are deleted; `/practice/bank-shot` returns 404 and the hub no longer lists it; a grep for `bank-shot`, `BankShot` and `BANK_SHOT` under `src/`, `tests/`, `scripts/` and `supabase/` comes back empty (docs history may keep the name).
   - [ ] Shared pieces Ink or other games still use are kept: the bank helpers (`src/challenges/shared/bank.ts`, `playBank`, `bankScore`), `BankGauge`, `PracticeShell`, `bankResult`, and `RoundProgress` if any other game uses it (grep; delete it with its tests only if nothing does). Anything Bank Shot introduced that only it used (geometry, free-zone helpers) is deleted with it. Coverage thresholds still met, none lowered.
   - [ ] The e2e and mobile tests that referenced Bank Shot now cover Ink or are removed with it; `npm run verify` and `npm run test:e2e` pass.
 - Notes: About 80 lines added, many deleted. Light review. Part of batch M9-j. After it, STOP for the owner's play-test of `/practice/ink` (`npm run dev`, play it on a phone and a desktop: one 3-2-1, 40 words, one bank, mostly mismatched words, thin outline on all four inks).
+
+### T258 Confusing Colors: 30 words and the new name
+- Type: feature
+- Status: in-progress
+- Depends on: T257
+- Owner play-test of 2026-11-27: "pretty good"; decrease the total to 30 words, keep the bank as is (3.2 s), rename the game "Confusing Colors". Code name, paths and files stay `ink`.
+- Acceptance criteria:
+  - [ ] `WORDS` = 30, `BANK_MS` = 3 200 unchanged; stretches of 10 with `MISMATCHES_PER_STRETCH` = `[5, 7, 9]` (50%, 70%, 90%, the original 50% to 90% target, now exact); score 0 to 31; `DEFAULT_PASS_TARGET` 30. Engine tests, goldens and the simulation (rates recorded, bounds asserted) updated.
+  - [ ] The hub, page title, how-to and results say "Confusing Colors" and 30 words; unit and e2e tests updated; `npm run verify` passes.
+  - [ ] `docs/DECISIONS.md` records the change.
+- Notes: Full review (scoring). Batch M9-k. Then STOP for the owner's next decision (phase 2 or more tweaks).
 
 ## M8 M7 play-test tweaks
 

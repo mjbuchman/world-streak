@@ -25,7 +25,7 @@
   outline-offset: 2px;
 }
 
-/* "Word 12 of 40" above the bank (T256). */
+/* "Word 12 of 30" above the bank (T256). */
 .counter {
   margin: 0;
   font-variant-numeric: tabular-nums;

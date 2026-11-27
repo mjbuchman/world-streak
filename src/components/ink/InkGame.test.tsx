@@ -25,7 +25,7 @@ vi.mock("@/challenges/ink/render", async (importOriginal) => {
 
 import { HINT, InkGame, seconds } from "./InkGame";
 
-// Word 0 matches (RED in red); word 1 is BLUE in yellow, word 3 YELLOW in black. The eight repeat to 40.
+// Word 0 matches (RED in red); word 1 is BLUE in yellow, word 3 YELLOW in black. The eight repeat to WORDS.
 const EIGHT: InkWord[] = [
   { word: "red", ink: "red" },
   { word: "blue", ink: "yellow" },
@@ -125,7 +125,7 @@ describe("InkGame (T251, T256)", () => {
     expect(screen.queryByText(/Round/)).toBeNull();
     expect(screen.getByText("3")).toBeTruthy();
     expect(canvas().getAttribute("aria-label")).toBe("Get ready.");
-    expect(screen.getByText("Word 1 of 40")).toBeTruthy();
+    expect(screen.getByText("Word 1 of 30")).toBeTruthy();
     at(500);
     give("red", "key");
     give("red", "button");
@@ -135,7 +135,7 @@ describe("InkGame (T251, T256)", () => {
     expect(phase()).toBe("word");
     expect(drawn.frames.at(-1)!.word).toEqual(EIGHT[0]);
     // The label never gives the answer away.
-    expect(canvas().getAttribute("aria-label")).toBe("Word 1 of 40");
+    expect(canvas().getAttribute("aria-label")).toBe("Word 1 of 30");
     expect(drawn.frames.at(-1)!.limitMs).toBe(LIMIT_MS);
     // The early presses were never recorded: the first real answer is still word 0's.
     answerNext("red");
@@ -153,8 +153,8 @@ describe("InkGame (T251, T256)", () => {
       expect(screen.queryByText(/^[123]$/)).toBeNull();
     }
     frameAt(nextAppears());
-    expect(screen.getByText("Word 13 of 40")).toBeTruthy();
-    expect(canvas().getAttribute("aria-label")).toBe("Word 13 of 40");
+    expect(screen.getByText("Word 13 of 30")).toBeTruthy();
+    expect(canvas().getAttribute("aria-label")).toBe("Word 13 of 30");
     expect(drawn.frames.at(-1)!.word).toEqual(EIGHT[12 % 8]);
   });
 
@@ -237,7 +237,7 @@ describe("InkGame (T251, T256)", () => {
     expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
-  it("ends the run after the 40th word, with the inputs timed from the game's start", () => {
+  it("ends the run after the 30th word, with the inputs timed from the game's start (T258)", () => {
     startGame();
     for (let w = 0; w < WORDS; w++) {
       answerNext(EIGHT[w % 8].ink, w % 2 ? "key" : "button");
@@ -247,7 +247,7 @@ describe("InkGame (T251, T256)", () => {
     const inputs = onFinish.mock.calls[0][0];
     expect(inputs).toEqual({ answers: log, endMs: log[WORDS - 1].atMs + FEEDBACK_MS });
     expect(inputs.answers[0].atMs).toBe(RUN_COUNTDOWN_MS + 400);
-    expect(ink.score(current, inputs)).toBe(41);
+    expect(ink.score(current, inputs)).toBe(31);
   });
 
   it("stops its frame loop and its key listener on unmount", () => {

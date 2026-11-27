@@ -50,18 +50,18 @@ async function playWith(inputs: InkInputs) {
   return user;
 }
 
-describe("InkPractice (T252, T256)", () => {
+describe("InkPractice (T252, T256, T258)", () => {
   it("explains the ink rule, the keys and the one bank before the start", () => {
     render(<InkPractice />);
     expect(
-      screen.getByText(/^Tap the colour of the ink, not the word\. Keys 1 to 4 also work\. Press Start for 40 colour words in a row\..*3\.2 s time bank.*Survive all 40 words\. Practice never counts\.$/),
+      screen.getByText(/^Tap the colour of the ink, not the word\. Keys 1 to 4 also work\. Press Start for 30 colour words in a row\..*3\.2 s time bank.*Survive all 30 words\. Practice never counts\.$/),
     ).toBeTruthy();
     expect(screen.queryByText(/round/i)).toBeNull();
   });
 
-  it("passes a run that survives all 40 words, and plays again", async () => {
-    const user = await playWith(run(40, { 3: 500, 20: 300 }));
-    const heading = screen.getByRole("heading", { name: "All 40 words survived" });
+  it("passes a run that survives all 30 words, and plays again", async () => {
+    const user = await playWith(run(30, { 3: 500, 20: 300 }));
+    const heading = screen.getByRole("heading", { name: "All 30 words survived" });
     expect(document.activeElement).toBe(heading);
     expect(screen.getByText("1.2 s of your 2.0 s bank left.")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Play again" }));
@@ -72,7 +72,7 @@ describe("InkPractice (T252, T256)", () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
     await playWith(run(15, { 12: 800, 13: 800, 14: 800 }));
-    expect(screen.getByRole("heading", { name: "14 of 40 words survived" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "14 of 30 words survived" })).toBeTruthy();
     expect(screen.getByText("0.0 s of your 2.0 s bank left.")).toBeTruthy();
     expect(screen.queryByText(/score/i)).toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
@@ -81,6 +81,6 @@ describe("InkPractice (T252, T256)", () => {
   it("counts a missed word against the bank", async () => {
     // Two misses (1 500 each) bust the 2 000 bank on the second.
     await playWith({ answers: [], endMs: RUN_COUNTDOWN_MS + 2 * LIMIT_MS + WORD_GAP_MS + 1 });
-    expect(screen.getByRole("heading", { name: "1 of 40 words survived" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "1 of 30 words survived" })).toBeTruthy();
   });
 });

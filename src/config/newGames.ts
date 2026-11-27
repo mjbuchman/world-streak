@@ -5,9 +5,10 @@
  */
 export const NEW_GAMES = [
   {
-    name: "Ink",
+    // Code name `ink` (paths, files and engine); the owner named it Confusing Colors (T258).
+    name: "Confusing Colors",
     path: "/practice/ink",
-    tagline: "40 colour words in a row: tap the colour of the ink, not the word. Slow and wrong answers drain your time bank.",
+    tagline: "30 colour words in a row: tap the colour of the ink, not the word. Slow and wrong answers drain your time bank.",
   },
 ] as const;
 

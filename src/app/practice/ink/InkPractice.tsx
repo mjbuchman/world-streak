@@ -6,7 +6,7 @@ import { bankResult } from "@/components/practice/bankResult";
 import { PracticeShell } from "@/components/practice/PracticeShell";
 import { secureRandomSeed } from "@/lib/random";
 
-/** The how-to lives here until Ink is registered as a challenge (phase 2). */
+/** The how-to lives here until Confusing Colors is registered as a challenge (phase 2). */
 const INK_HOW_TO =
   `${HINT} Press Start for ${WORDS} colour words in a row. ` +
   `Wrong, slow and missed answers drain one ${seconds(BANK_MS)} time bank; more and more words disagree with their ink. ` +
