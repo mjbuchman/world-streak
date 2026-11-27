@@ -20,8 +20,11 @@ type Caller = Pick<SupabaseClient<Database>, "rpc" | "auth">;
 /** Each fake player takes a moment to create, so one press seeds at most this many (T117). */
 export const MAX_SEED_PLAYERS = 500;
 
-/** The pool a fresh database starts with (the migration's default, T150): every game. */
-export const DEFAULT_POOL: readonly ChallengeType[] = CHALLENGE_TYPES;
+/**
+ * The pool a fresh database starts with (the migration's default, T150): every game but Confusing
+ * Colors, which joins the pool in T241.
+ */
+export const DEFAULT_POOL: readonly ChallengeType[] = CHALLENGE_TYPES.filter((type) => type !== "ink");
 
 /** Whether the tools may run: only when the app talks to the local Supabase (as the scripts). */
 export function localToolsEnabled(url = process.env.NEXT_PUBLIC_SUPABASE_URL): boolean {

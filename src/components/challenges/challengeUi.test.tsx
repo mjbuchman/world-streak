@@ -42,6 +42,14 @@ vi.mock("@/components/echo-path/EchoPathGame", () => ({
   ),
 }));
 
+vi.mock("@/components/ink/InkGame", () => ({
+  InkGame: ({ onFinish }: { onFinish: (inputs: { answers: unknown[]; endMs: number }) => void }) => (
+    <button type="button" onClick={() => onFinish({ answers: [], endMs: 8000 })}>
+      Colours
+    </button>
+  ),
+}));
+
 import { challengeUi } from "./challengeUi";
 
 afterEach(cleanup);
@@ -74,6 +82,7 @@ describe("challengeUi", () => {
     ["inner-clock", false],
     ["flash-count", false],
     ["fair-split", false],
+    ["ink", false],
   ] as const)("shows %s's score: %s (T225)", (type, shown) => {
     expect(challengeUi(type).showScore).toBe(shown);
   });
@@ -93,6 +102,7 @@ describe("challengeUi", () => {
     ["flash-count", "Dots", { answers: [{ count: 20, atMs: 4000 }] }],
     ["echo-path", "Tiles", { taps: [{ tile: 4, atMs: 3000 }] }],
     ["fair-split", "Shapes", { cuts: [], endMs: 9000 }],
+    ["ink", "Colours", { answers: [], endMs: 8000 }],
   ] as const)("plays %s and hands on exactly the inputs its submit expects", (type, button, inputs) => {
     const onFinish = vi.fn();
     render(<>{challengeUi(type).play({ params: {}, passTarget: 1, onFinish })}</>);
@@ -111,7 +121,24 @@ describe("challengeUi", () => {
     ["echo-path", 1, 10, "You scored 1 tile. Today's target was a path of 10 tiles."],
     ["fair-split", 5.5, 5, "You got through 5 of 5 shapes. Today's target was all 5."],
     ["fair-split", 1.875, 4.2, "You got through 1 of 5 shapes. Today's target was 4 of 5 shapes and part of the bank."],
+    ["ink", 31, 30, "You got through 30 of 30 words. Today's target was all 30."],
+    ["ink", 12.4, 30, "You got through 12 of 30 words. Today's target was all 30."],
+    ["ink", 0, 25.5, "You got through 0 of 30 words. Today's target was 25 of 30 words and part of the bank."],
   ] as const)("sums up a %s result against today's target", (type, score, target, line) => {
     expect(challengeUi(type).summary(score, target)).toBe(line);
+  });
+
+  it.each([
+    [0, "0 of 30 words"],
+    [1, "1 of 30 words"],
+    [14.75, "14 of 30 words"],
+    [31, "30 of 30 words"],
+  ])("labels a Confusing Colors score of %f as whole words survived, of 30 (T239)", (score, label) => {
+    expect(challengeUi("ink").scoreLabel(score)).toBe(label);
+  });
+
+  it("states a Confusing Colors target in whole words (T239)", () => {
+    expect(challengeUi("ink").target(30)).toBe("all 30");
+    expect(challengeUi("ink").target(20)).toBe("20 of 30 words");
   });
 });

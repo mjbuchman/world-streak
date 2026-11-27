@@ -24,10 +24,9 @@ describe("/practice", () => {
     ]);
   });
 
-  it("marks the games still on trial as New, and only those (T245, T252, T257, T258)", () => {
+  it("marks no game New once Confusing Colors is registered (T239)", () => {
     render(<PracticeHub />);
-    const badges = screen.getAllByText("New");
-    expect(badges.map((badge) => badge.closest("li")?.textContent)).toEqual([expect.stringMatching(/^Confusing Colors/)]);
+    expect(screen.queryByText("New")).toBeNull();
   });
 
   it("says practice never counts, under a page title with a way back home", () => {

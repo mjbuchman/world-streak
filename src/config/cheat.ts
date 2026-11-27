@@ -47,6 +47,19 @@ export const FAIR_SPLIT_PRECISE_POINTS = 0.05;
 export const FAIR_SPLIT_MIN_CUT_MS = 1500;
 
 /**
+ * Confusing Colors (T240): a correct answer sooner than this after its word appeared is faster than a
+ * person can read and tap; one lucky anticipation is human, so it takes this many in one run.
+ */
+export const INK_MIN_REACTION_MS = 180;
+export const INK_FAST_ANSWERS = 3;
+/**
+ * With at least this many answers, reaction times this even (standard deviation, ms) look scripted.
+ * Reaction times, not gaps between taps: the run's single 3-2-1 cannot hide a script's rhythm.
+ */
+export const INK_RHYTHM_MIN_ANSWERS = 12;
+export const INK_RHYTHM_MAX_SD_MS = 12;
+
+/**
  * Loading and reading before a run starts (15 s), and the 3-2-1 before its own clock starts
  * (T138), which the server's clock includes and the game's does not.
  */

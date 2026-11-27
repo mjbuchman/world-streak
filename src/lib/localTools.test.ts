@@ -136,6 +136,15 @@ describe("set-lineup", () => {
     expect(calls).toHaveLength(8);
   });
 
+  it("accepts Confusing Colors in a lineup before it joins the pool (T239)", async () => {
+    const { db, calls } = fakeDb([ok(), OPEN_DAY, NOBODY, ok({ current: 0, best: 0 }), ok(30), ok(8), ok(5), ok(true)]);
+    expect(await runLocalTool(caller(), db, setTo("ink"), NOW, fakeData())).toEqual({
+      ok: true,
+      message: "Nov 13, 2026 is now Confusing Colors, Trail Trace, Clean Cut.",
+    });
+    expect(calls[7]).toEqual([["rpc", "save_game_day", { d: "2026-11-13", games: ["ink", "echo-path", "fair-split"], targets: [30, 8, 5], threshold: 0.65 }]]);
+  });
+
   it("refuses the same game twice before touching anything", async () => {
     const { db, calls } = fakeDb([]);
     expect(await runLocalTool(caller(), db, setTo("echo-path"), NOW, fakeData())).toEqual({
@@ -244,7 +253,7 @@ describe("reset-day", () => {
 });
 
 describe("restore-pool", () => {
-  it("puts every game back in the pool", async () => {
+  it("puts the migration's pool back: every game but Confusing Colors until T241", async () => {
     const { db, calls } = fakeDb([ok()]);
     expect(await runLocalTool(caller(), db, form({ tool: "restore-pool" }), NOW, fakeData())).toEqual({
       ok: true,

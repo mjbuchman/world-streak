@@ -38,8 +38,8 @@ Phase 1b, play-test tweaks of Nov 25 (then stop for the owner's play-test of `/p
 - M9-i. Ink as one round: single run, new score, 50% to 90% mismatches, thin outline: T254, T255, T256 (full: scoring, attempts)
 - M9-j. Remove Bank Shot: T257 (light) (done)
 - STOP (done Nov 27): owner play-test of `/practice/ink`: "pretty good", 30 words and the name Confusing Colors (T258).
-- M9-k. Confusing Colors, 30 words: T258 (full: scoring)
-- STOP: tell the owner; do not start M9-d or M9-e before the owner says to.
+- M9-k. Confusing Colors, 30 words: T258 (full: scoring) (done)
+- STOP (done Nov 27): the owner said start phase 2; outline kept as is. Phase 2 uses the name Confusing Colors, 30 words and a default target of 30 where the tasks below say Ink, 40.
 
 Phase 2, only after the owner says they like the games (apply their tweaks first):
 
@@ -222,7 +222,7 @@ Planning notes for M9:
 
 ### T239 Ink: registration, practice page and migration
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T256, T257, T109
 - Acceptance criteria:
   - [ ] `CHALLENGE_TYPES`, the registry, `challengeUi` (`showScore: false`, a words-survived summary such as "words survived, of 40" built on the bank helpers, `bankTarget`), `CHALLENGE_NAMES` ("Ink"), `CHALLENGE_TAGLINES` and `INK_HOW_TO` gain `ink` (for example "A colour word appears in a coloured ink. Tap the colour of the ink, not the word. Slow and wrong answers come out of one time bank. Survive all 40 words to pass."). Every other place that lists the games is updated (the grep in the planning notes), tests extended without being weakened.
@@ -233,7 +233,7 @@ Planning notes for M9:
 
 ### T240 Ink: cheat checks
 - Type: feature
-- Status: todo
+- Status: in-progress
 - Depends on: T254, T239
 - Acceptance criteria:
   - [ ] `src/config/cheat.ts` gains placeholder thresholds (proposal, judgment call to record): `INK_MIN_REACTION_MS` = 180 (a correct answer sooner than this after the word appeared is faster than a person can read and tap; `INK_FAST_ANSWERS` = 3 such answers in one run to flag, since one lucky anticipation is human) and `INK_RHYTHM_MIN_ANSWERS` = 12 with `INK_RHYTHM_MAX_SD_MS` = 12 (reaction times that even over 12 or more answers look scripted; reaction times, not gaps, so the single opening 3-2-1 does not hide a script, the lesson of M6's echo-path rule).
@@ -432,7 +432,7 @@ Owner play-test of 2026-11-25, all decisions final: Bank Shot was "nearly imposs
 
 ### T258 Confusing Colors: 30 words and the new name
 - Type: feature
-- Status: in-progress
+- Status: done
 - Depends on: T257
 - Owner play-test of 2026-11-27: "pretty good"; decrease the total to 30 words, keep the bank as is (3.2 s), rename the game "Confusing Colors". Code name, paths and files stay `ink`.
 - Acceptance criteria:
