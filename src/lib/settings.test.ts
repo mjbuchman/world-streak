@@ -22,7 +22,7 @@ const launchRow = {
   default_pass_targets: { stacking: 10 },
   new_account_weight: 1,
   full_weight_after_days: 0,
-  pool: ["stacking", "inner-clock", "flash-count", "echo-path", "fair-split"],
+  pool: ["stacking", "inner-clock", "flash-count", "echo-path", "fair-split", "ink"],
 };
 
 const launchSettings: GameSettings = {
@@ -35,7 +35,7 @@ const launchSettings: GameSettings = {
   defaultPassTargets: { stacking: 10 },
   newAccountWeight: 1,
   fullWeightAfterDays: 0,
-  pool: ["stacking", "inner-clock", "flash-count", "echo-path", "fair-split"],
+  pool: ["stacking", "inner-clock", "flash-count", "echo-path", "fair-split", "ink"],
 };
 
 // The same boundary rows are checked against the table's constraints in game_settings.test.sql,

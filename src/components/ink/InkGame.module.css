@@ -18,6 +18,8 @@
   width: 100%;
   aspect-ratio: 390 / 360;
   border-radius: var(--fs-radius-surface);
+  /* A quick tap that lands on the word instead of a button never zooms the page (T243). */
+  touch-action: none;
 }
 
 .pad button:focus-visible {

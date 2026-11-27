@@ -23,19 +23,20 @@ select is(
   'the other challenges keep their placeholders'
 );
 select ok(
-  (select not 'ink' = any(pool) from public.game_settings),
-  'it is not in the daily pool yet (T241)'
+  (select 'ink' = any(pool) from public.game_settings),
+  'it is in the daily pool (T241)'
 );
 
 update public.game_settings set percentile_min_sample = 2147483647, pass_target_streak_step = 0;
 select is(public.pass_target_for('ink', '2000-06-01', 0), 30::numeric, 'with too few scores, the target is the placeholder');
 
--- A day the lineup rule prepares still draws three games from the unchanged pool.
+-- With a pool of five other games, a day the lineup rule prepares never draws it.
+update public.game_settings set pool = '{stacking,inner-clock,flash-count,echo-path,fair-split}';
 select public.ensure_game_day('2000-06-10');
 select results_eq(
   $$select count(*)::int, count(*) filter (where challenge_type = 'ink')::int from public.game_day_games where game_date = '2000-06-10'$$,
   $$values (3, 0)$$,
-  'a prepared day has three games, none of them Confusing Colors'
+  'a prepared day has three games from the pool, none of them Confusing Colors'
 );
 
 -- An admin can hand-place it into an unstarted day; a target left as it was takes the default.

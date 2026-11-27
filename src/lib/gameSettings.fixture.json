@@ -30,7 +30,9 @@
   { "column": "pool", "value": ["stacking", "inner-clock"], "accepted": false },
   { "column": "pool", "value": ["stacking", "stacking", "inner-clock"], "accepted": false },
   { "column": "pool", "value": ["stacking", "inner-clock", "chess"], "accepted": false },
-  { "column": "default_pass_targets", "value": { "stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 6, "fair-split": 5 }, "accepted": true },
+  { "column": "pool", "value": ["stacking", "inner-clock", "flash-count", "echo-path", "fair-split", "ink"], "accepted": true },
+  { "column": "pool", "value": ["ink", "echo-path", "fair-split"], "accepted": true },
+  { "column": "default_pass_targets", "value": { "stacking": 10, "inner-clock": 4, "flash-count": 5, "echo-path": 6, "fair-split": 5, "ink": 30 }, "accepted": true },
   { "column": "default_pass_targets", "value": { "inner-clock": 4 }, "accepted": false },
   { "column": "default_pass_targets", "value": { "stacking": 10, "fair-split": -1 }, "accepted": false }
 ]

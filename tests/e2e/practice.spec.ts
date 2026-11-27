@@ -3,6 +3,9 @@ import { COLS, paramsFromSeed as echoPathParams, ROWS } from "../../src/challeng
 import { boardLayout } from "../../src/challenges/echo-path/render";
 import { paramsFromSeed as fairSplitParams } from "../../src/challenges/fair-split/engine";
 import { paramsFromSeed as flashCountParams } from "../../src/challenges/flash-count/engine";
+import { paramsFromSeed as inkParams, type Colour } from "../../src/challenges/ink/engine";
+import { BUTTON_ORDER } from "../../src/challenges/ink/input";
+import { INK_SWATCHES } from "../../src/challenges/ink/palette";
 import { ROUND_GAP_MS } from "../../src/challenges/inner-clock/engine";
 import { paramsFromSeed, simulate } from "../../src/challenges/stacking/engine";
 import { RUN_COUNTDOWN_MS } from "../../src/config/countdown";
@@ -404,6 +407,61 @@ test("Confusing Colors practice: one time bank, a word after a single 3-2-1, fou
   // The next word follows the 400 ms gap with no second 3-2-1 (that alone would take 3 s).
   await expect(page.getByRole("img", { name: "Word 2 of 30" })).toBeVisible({ timeout: 2_500 });
   await expect(page.getByRole("img", { name: "Get ready." })).toHaveCount(0);
+  expect(scored).toEqual([]);
+});
+
+/** How many pixels of the game's canvas are within a few levels of the CSS colour `token`. */
+function canvasPixelsOf(page: Page, token: string): Promise<number> {
+  return page.evaluate((name) => {
+    const probe = document.createElement("span");
+    probe.style.color = `var(${name})`;
+    document.body.append(probe);
+    const [r, g, b] = getComputedStyle(probe).color.match(/\d+/g)!.map(Number);
+    probe.remove();
+    const canvas = document.querySelector<HTMLCanvasElement>("canvas[data-phase]")!;
+    const data = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height).data;
+    let count = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (Math.abs(data[i] - r) <= 8 && Math.abs(data[i + 1] - g) <= 8 && Math.abs(data[i + 2] - b) <= 8) count++;
+    }
+    return count;
+  }, token);
+}
+
+test("Confusing Colors practice: keys 1 to 4 answer the ink, a wrong key drains about a second, and a bust shows words survived, no score (T242)", async ({ page }) => {
+  await pinSeed(page, 7);
+  const { words } = inkParams(7);
+  const keyFor = (colour: Colour) => String(BUTTON_ORDER.indexOf(colour) + 1);
+  const wrongFor = (colour: Colour) => keyFor(BUTTON_ORDER.find((c) => c !== colour)!);
+  const scored = attemptRequests(page);
+  await gotoReady(page, "/practice/ink");
+  await page.getByRole("button", { name: "Start" }).click();
+  const bank = page.getByRole("meter", { name: "Time bank" });
+  // Exactly one 3-2-1, and a word counter rather than round bars.
+  await expect(page.getByRole("img", { name: "Get ready." })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Word 1 of 30" })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("img", { name: /round/i })).toHaveCount(0);
+  // The word is drawn in its ink: many canvas pixels have the ink's colour, few the named one's.
+  const pixels = (colour: Colour) => canvasPixelsOf(page, INK_SWATCHES[colour].token);
+  await expect.poll(() => pixels(words[0].ink)).toBeGreaterThan(50);
+  if (words[0].word !== words[0].ink) expect(await pixels(words[0].word)).toBeLessThan((await pixels(words[0].ink)) / 10);
+  // The right key is the word's ink, not the colour it names.
+  await page.keyboard.press(keyFor(words[0].ink));
+  await expect(page.getByText("Correct", { exact: true })).toBeVisible();
+  await expect(bank).toHaveAttribute("aria-valuetext", /^3\.[0-2] s left of 3\.2 s$/);
+  await expect(page.getByRole("img", { name: "Word 2 of 30" })).toBeVisible({ timeout: 2_500 });
+  await page.keyboard.press(wrongFor(words[1].ink));
+  await expect(page.getByText(`Wrong. It was ${INK_SWATCHES[words[1].ink].label.toUpperCase()}.`)).toBeVisible();
+  // A wrong answer costs WRONG_COST_MS (1 s) plus any slowness past the allowance.
+  await expect(bank).toHaveAttribute("aria-valuetext", /^2\.[0-2] s left of 3\.2 s$/);
+  for (const n of [3, 4, 5]) {
+    await expect(page.getByRole("img", { name: `Word ${n} of 30` })).toBeVisible({ timeout: 2_500 });
+    await page.keyboard.press(wrongFor(words[n - 1].ink));
+  }
+  // Three more wrongs: 3.2 s cannot pay for four, so the run ends after four words.
+  await expect(page.getByRole("heading", { level: 2 })).toHaveText("4 of 30 words survived", { timeout: 5_000 });
+  await expect(page.getByText(/Score/)).toHaveCount(0);
+  await expect(page.locator("[data-big-score]")).toHaveCount(0);
   expect(scored).toEqual([]);
 });
 

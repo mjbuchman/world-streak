@@ -257,10 +257,10 @@ describe("restore-pool", () => {
     const { db, calls } = fakeDb([ok()]);
     expect(await runLocalTool(caller(), db, form({ tool: "restore-pool" }), NOW, fakeData())).toEqual({
       ok: true,
-      message: "The pool is back to Teetering Tower, Second Sense, Swift Sum, Trail Trace, Clean Cut.",
+      message: "The pool is back to Teetering Tower, Second Sense, Swift Sum, Trail Trace, Clean Cut, Confusing Colors.",
     });
     expect(calls[0]).toEqual([["from", "game_settings"], ["update", { pool: [...DEFAULT_POOL] }], ["eq", "id", true]]);
-    expect(DEFAULT_POOL).toEqual(["stacking", "inner-clock", "flash-count", "echo-path", "fair-split"]);
+    expect(DEFAULT_POOL).toEqual(["stacking", "inner-clock", "flash-count", "echo-path", "fair-split", "ink"]);
   });
 });
 
