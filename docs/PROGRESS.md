@@ -5,10 +5,10 @@ Agents update this file after every task, newest entries first. A fresh session 
 ## Current status
 
 - Milestone: M9, one new game. Confusing Colors (`ink`) is the only one shipped (Arrow Flip and Bank Shot dropped); the owner started phase 2 on Nov 27.
-- Active task: none. M9 is complete; stopped for the owner's M9 play-test.
+- Active task: T259, T260 (maintenance). M9 play-test passed Nov 27: Confusing Colors looks good; pool of 6, 3 games a day.
 - Blocked tasks: none
-- Waiting on the human: the Confusing Colors please-confirm and DESIGN.md update; the M5 Daily Three please-confirm; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
-- Next: the M9 play-test. A full honest Confusing Colors run takes about 45 s (worked out from the engine timings: 3-2-1, then 30 words at about 1.4 s each).
+- Waiting on the human: the Confusing Colors DESIGN.md update; the M5 Daily Three please-confirm; updating DESIGN.md for M6 to M8; T45 AdSense; T52 Turnstile keys; deployment (docs/DEPLOYMENT.md, then T128); `.env.example` lines. See docs/NEEDS_HUMAN.md.
+- Next: no eligible tasks after T259 and T260; only owner-blocked work remains.
 
 ## Log
 

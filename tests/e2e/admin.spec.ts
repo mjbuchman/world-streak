@@ -17,7 +17,9 @@ async function signInAsAdmin(page: Page) {
   await page.getByLabel("Email").fill(ADMIN.email);
   await page.getByLabel("Password").fill(ADMIN.password);
   await submitAndWait(page, page.getByRole("button", { name: "Sign in" }));
-  await expect(page).toHaveURL("/");
+  // Six workers signing in at once against the dev server can take longer than the 5 s default
+  // (the form was still busy, not refused); a wrong password still fails, on the sign-in page.
+  await expect(page).toHaveURL("/", { timeout: 15_000 });
 }
 
 test("the seeded admin sees today and the next 7 game days", async ({ page }) => {

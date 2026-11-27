@@ -142,21 +142,28 @@ test("a signed-out submission is refused", async ({ request }) => {
   expect(response.status()).toBe(401);
 });
 
-test("two simultaneous starts create exactly one attempt", async ({ page, accounts }) => {
+test("two simultaneous starts never start one game twice", async ({ page, accounts }) => {
   const email = accounts.uniqueEmail();
   await signUpViaForm(page, { email });
   await expect(page).toHaveURL("/");
 
   const responses = await Promise.all([page.request.post("/api/attempts/start"), page.request.post("/api/attempts/start")]);
-  expect(responses.map((response) => response.status()).sort()).toEqual([200, 409]);
+  const statuses = responses.map((response) => response.status()).sort();
+  // Both racing for game 1: the unique constraint lets one in and the other gets "already-started".
+  // Under load the first can commit before the second reads the day, which then starts game 2.
+  expect([
+    [200, 409],
+    [200, 200],
+  ]).toContainEqual(statuses);
+  const bodies = await Promise.all(responses.map((response) => response.json()));
+  const started = bodies.filter((_, i) => responses[i].status() === 200).map((body) => body.position).sort();
+  expect(started).toEqual(statuses[1] === 200 ? [1, 2] : [1]);
+  if (statuses[1] === 409) expect(bodies).toContainEqual({ error: "already-started" });
 
   const user = await findUserByEmail(email);
-  const { count, error } = await adminClient()
-    .from("attempts")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user!.id);
+  const { data, error } = await adminClient().from("attempts").select("position").eq("user_id", user!.id).order("position");
   if (error) throw error;
-  expect(count).toBe(1);
+  expect(data.map((row) => row.position)).toEqual(started);
 });
 
 test("a signed-in account without a profile cannot start an attempt", async ({ page, accounts }) => {

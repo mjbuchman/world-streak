@@ -45,7 +45,7 @@ Phase 2, only after the owner says they like the games (apply their tweaks first
 
 - M9-d. Ink registration, migration and cheat checks: T239, T240 (full: migration, scoring); T234 and T235 (Bank Shot) are dropped
 - M9-e. Pool (six games), admin, end-to-end and phone checks, docs: T241, T242, T243, T244 (full: migration; T244 is docs only) (done, #210)
-- STOP: M9 play-test (Confusing Colors in the Daily Three).
+- STOP (done Nov 27): M9 play-test, "confusing colors looks good"; pool of 6, 3 games a day.
 
 M8 M7 play-test tweaks (Nov 19, 2026; approved Nov 19 (2 lives, 25 dots, score hidden everywhere for bank games); runs before batch 19):
 
@@ -444,23 +444,23 @@ Owner play-test of 2026-11-25, all decisions final: Bank Shot was "nearly imposs
 
 ### T259 Fix the e2e flakes under load
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
-  - [ ] `tests/e2e/attempts.spec.ts` "two simultaneous starts" accepts [200, 409] or [200, 200] (the second request may legitimately start position 2 after the first commits, `src/lib/attempts/start.ts`), and asserts no duplicate (user, game_date, position) rows and as many attempts as 200s.
-  - [ ] The admin sign-in helpers in `tests/e2e/` wait at least 15 s for the redirect (cold dev server under parallel load), not the 5 s default. No test, rule or threshold is weakened.
-  - [ ] `npm run test:e2e:local` passes 3 times in a row with the default workers; `npm run verify` passes.
+  - [x] `tests/e2e/attempts.spec.ts` "two simultaneous starts" accepts [200, 409] or [200, 200] (the second request may legitimately start position 2 after the first commits, `src/lib/attempts/start.ts`), and asserts no duplicate (user, game_date, position) rows and as many attempts as 200s.
+  - [x] The admin sign-in helpers in `tests/e2e/` wait at least 15 s for the redirect (cold dev server under parallel load), not the 5 s default. No test, rule or threshold is weakened.
+  - [x] `npm run test:e2e:local` passes 3 times in a row with the default workers; `npm run verify` passes.
 - Notes: Maintainer, M9 end. Light review.
 
 ### T260 Remove the empty new-games list and the copied pool update
 - Type: maintenance
-- Status: todo
+- Status: in-progress
 - Depends on: none
 - Acceptance criteria:
-  - [ ] `src/config/newGames.ts` (empty since T239) and its use in `src/app/practice/page.tsx` are removed; the practice hub renders the same; the DECISIONS reference to it points at the game registry instead.
-  - [ ] `supabase/tests/lineups.test.sql` no longer keeps its own copy of the T241 pool update: the update lives in one named SQL function the migration path and the test both call (new migration if needed), or a test fails when the two diverge. All lineup assertions still pass.
-  - [ ] `npm run verify` and `npm run test:db` pass.
-- Notes: Maintainer, M9 end. Full review if a migration is added, otherwise light.
+  - [x] `src/config/newGames.ts` (empty since T239) and its use in `src/app/practice/page.tsx` are removed; the practice hub renders the same; the DECISIONS reference to it points at the game registry instead.
+  - [x] `supabase/tests/lineups.test.sql` no longer keeps its own copy of the T241 pool update: the update lives in one named SQL function the migration path and the test both call (new migration if needed), or a test fails when the two diverge. All lineup assertions still pass.
+  - [x] `npm run verify` and `npm run test:db` pass.
+- Notes: Maintainer, M9 end. Full review if a migration is added, otherwise light. Done with a drift test (`tests/poolMigration.test.ts`), no migration.
 
 ## M8 M7 play-test tweaks
 
