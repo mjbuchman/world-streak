@@ -444,7 +444,7 @@ Owner play-test of 2026-11-25, all decisions final: Bank Shot was "nearly imposs
 
 ### T259 Fix the e2e flakes under load
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [x] `tests/e2e/attempts.spec.ts` "two simultaneous starts" accepts [200, 409] or [200, 200] (the second request may legitimately start position 2 after the first commits, `src/lib/attempts/start.ts`), and asserts no duplicate (user, game_date, position) rows and as many attempts as 200s.
@@ -454,7 +454,7 @@ Owner play-test of 2026-11-25, all decisions final: Bank Shot was "nearly imposs
 
 ### T260 Remove the empty new-games list and the copied pool update
 - Type: maintenance
-- Status: in-progress
+- Status: done
 - Depends on: none
 - Acceptance criteria:
   - [x] `src/config/newGames.ts` (empty since T239) and its use in `src/app/practice/page.tsx` are removed; the practice hub renders the same; the DECISIONS reference to it points at the game registry instead.
