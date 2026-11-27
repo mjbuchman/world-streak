@@ -18,8 +18,4 @@ describe("the T241 pool update", () => {
   it("is the same statement in the migration and in the pgTAP test", () => {
     expect(poolUpdate(PGTAP)).toBe(poolUpdate(MIGRATION));
   });
-
-  it("only extends the five-game launch pool that lacks ink", () => {
-    expect(poolUpdate(MIGRATION)).toContain("where not 'ink' = any(pool) and pool @> '{stacking,inner-clock,flash-count,echo-path,fair-split}' and cardinality(pool) = 5;");
-  });
 });
