@@ -16,11 +16,11 @@ Older entries (everything up to Nov 19, 2026) are in `docs/archive/DECISIONS-to-
 - Choice: (1) Of the three M9 candidates only Confusing Colors ships: Arrow Flip was dropped before the play-test and Bank Shot after it (Nov 25, owner). (2) The five-round design became one run of 30 words against one 3 200 ms bank (DECISIONS Nov 25 and Nov 27). (3) Scored like the bank games: score 0 to 31 is `bankScore`, default pass target 30 (survive every word), recomputed by the server; the player sees words survived, never a score. (4) Cheat checks flag 3 or more answers under 180 ms, or 12 or more answers whose times have a standard deviation under 12 ms. (5) The default pool is all six games; the settings row gains `ink` only while it is still the untouched five-game launch pool, so an admin's own pool is left alone. Days already created keep their lineups.
 - Reason: owner play-tests Nov 24 to 27 and "start phase 2" (Nov 27). The thresholds are placeholders in line with the other games' checks (T164).
 - How to change it later: the pool and targets on `/admin/settings`; the `INK_*` thresholds in `src/config/cheat.ts` and the engine constants in `src/challenges/ink/engine.ts`.
-- Confirmed by human: pending (M9 play-test)
+- Confirmed by human: yes (M9 play-test, Nov 27: "confusing colors looks good", a pool of 6 games, 3 games each day)
 
 ### 2026-11-27 — Confusing Colors: 30 words, same bank (T258)
 - Choice (owner, play-test Nov 27): the game Ink is renamed "Confusing Colors" (code name, path and files stay `ink`) and the run is 30 words with the 3 200 ms bank kept. With 30 words the stretches become 10 long, ramping 5, 7, 9 mismatches (50%, 70%, 90%, the original target, now exact). Score 0 to 31, pass target 30. Simulated survival: careful 87.3%, distracted 15.1% (it was 59.6% and 1.7% at 40).
-- How to change it later: `WORDS`, `STRETCH`, `MISMATCHES_PER_STRETCH` and `BANK_MS` in `src/challenges/ink/engine.ts`; the name in `src/config/newGames.ts`.
+- How to change it later: `WORDS`, `STRETCH`, `MISMATCHES_PER_STRETCH` and `BANK_MS` in `src/challenges/ink/engine.ts`; the name in `CHALLENGE_NAMES`, `src/config/challenges.ts`.
 - Confirmed by human: yes (30 words, bank, name); the 5-7-9 ramp follows from them.
 
 ### 2026-11-25 — Ink as one run, with a thin outline (T254–T256)

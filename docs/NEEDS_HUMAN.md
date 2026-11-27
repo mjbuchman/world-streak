@@ -12,12 +12,6 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: ...
 -->
 
-### Please confirm: Confusing Colors in the Daily Three (M9; blocks nothing)
-- What is needed: confirm or change: the name Confusing Colors (no clash with an existing game); the four words and inks red, blue, yellow, black (no green, for colour-blind players), each with the same thin outline (red and black lose some contrast on the dark board); keys 1 to 4; 30 words at one steady pace; mismatches 5, 7, 9 per stretch of 10; 1 s allowance and 2 s limit per word; a wrong answer costs 1 s and a timeout 1.5 s of a 3.2 s bank (careful simulated player survives 87%); score 0 to 31 (words survived plus bank left) with default pass target 30; the cheat checks (3 answers under 180 ms, or 12 answers with a spread under 12 ms); a daily pool of all six games.
-- Where to put it: reply in chat, or change pool and targets on `/admin/settings`.
-- Why: DECISIONS.md, "Confusing Colors joins the daily pool (T239–T244)".
-- Agent's recommendation: keep as built; check at the M9 play-test.
-
 ### Please update DESIGN.md for Confusing Colors (M9; blocks nothing)
 - What is needed: add Confusing Colors to the games table and the pool (it lists five games), and note that a full honest run takes about 45 s (3-2-1, then 30 words at about 1.4 s each: answer, feedback and gap; worked out from the engine timings, not timed by a person), at the bottom of the doc's 45 to 90 s run length.
 - Where to put it: `docs/DESIGN.md` (agents never edit it).
@@ -111,6 +105,7 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 
 ## Resolved
 
+- **Confusing Colors in the Daily Three** (Nov 27, 2026, M9 play-test): "looks good"; a pool of 6 games, 3 games each day, as built.
 - **Confusing Colors next step** (Nov 27, 2026): start phase 2 (M9-d, M9-e); the thin outline stays as is.
 
 - **M8 play-test** (Nov 20, 2026): the gameplay of all five games is solid; small tweaks maybe later. The M6, M7 and M8 gameplay please-confirms are accepted as built.

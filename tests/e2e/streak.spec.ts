@@ -1,5 +1,5 @@
 import { gameDateAt } from "../../src/lib/gameDay";
-import { dayLabel } from "../../src/lib/streak/streak";
+import { challengeName, dayLabel } from "../../src/lib/streak/streak";
 import { expect, test } from "./support/fixtures";
 import { adminClient } from "./support/supabase";
 
@@ -66,7 +66,11 @@ test("the home page shows the world streak, and the history lists the closed day
   await streak.getByRole("link", { name: "Every day so far" }).click();
   await expect(page).toHaveURL("/history");
   const rows = page.getByRole("row");
-  await expect(rows.nth(1)).toContainText("Teetering Tower");
+  // Yesterday may keep the lineup an earlier local run gave it (day-close.spec saves its own), so
+  // the row names whatever the database holds, in order.
+  const yesterday = await adminClient().from("game_day_games").select("challenge_type").eq("game_date", daysAgo(1)).order("position");
+  if (yesterday.error) throw yesterday.error;
+  await expect(rows.nth(1)).toContainText(yesterday.data.map((game) => challengeName(game.challenge_type)).join(", "));
   await expect(rows.nth(1)).toContainText("60%");
   await expect(rows.nth(1)).toContainText("52%");
   await expect(rows.nth(1)).toContainText("Broke");

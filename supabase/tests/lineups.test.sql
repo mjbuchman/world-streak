@@ -8,7 +8,8 @@ select col_default_is(
 );
 select is((select pool from public.game_settings), '{stacking,inner-clock,flash-count,echo-path,fair-split,ink}'::text[],
   'the T241 migration appended Confusing Colors to the launch pool');
--- The migration's update, run again on pools it must leave alone or extend.
+-- The migration's update (20261128000000_confusing_colors_pool.sql), run again on pools it must
+-- leave alone or extend; tests/poolMigration.test.ts fails if this copy drifts from it.
 create function pg_temp.add_ink(p text[]) returns text[]
 language plpgsql as $$
 begin

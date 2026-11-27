@@ -21,19 +21,6 @@
   font-size: var(--fs-text-title);
 }
 
-/* "New": a game still on trial, not yet in the daily pool. A word, not just a colour. */
-.badge {
-  margin-left: var(--space-2);
-  padding: 2px var(--space-2);
-  border-radius: 999px;
-  background: var(--fs-color-tangerine);
-  color: var(--fs-color-text);
-  font-size: var(--fs-text-label);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 .tagline {
   margin: 0;
   color: var(--fs-color-text);
