@@ -12,6 +12,11 @@ Judgment calls on items `docs/DESIGN.md` marks as Open. Each one is also flagged
 
 Older entries (everything up to Nov 19, 2026) are in `docs/archive/DECISIONS-to-2026-11-19.md`. Search it only when you need history.
 
+### 2026-11-27 — Confusing Colors: 30 words, same bank (T258)
+- Choice (owner, play-test Nov 27): the game Ink is renamed "Confusing Colors" (code name, path and files stay `ink`) and the run is 30 words with the 3 200 ms bank kept. With 30 words the stretches become 10 long, ramping 5, 7, 9 mismatches (50%, 70%, 90%, the original target, now exact). Score 0 to 31, pass target 30. Simulated survival: careful 87.3%, distracted 15.1% (it was 59.6% and 1.7% at 40).
+- How to change it later: `WORDS`, `STRETCH`, `MISMATCHES_PER_STRETCH` and `BANK_MS` in `src/challenges/ink/engine.ts`; the name in `src/config/newGames.ts`.
+- Confirmed by human: yes (30 words, bank, name); the 5-7-9 ramp follows from them.
+
 ### 2026-11-25 — Ink as one run, with a thin outline (T254–T256)
 - Choice: one 3-2-1, then 40 words against one 3 200 ms bank; mismatched words per stretch of 8 ramp 4, 5, 6, 7, 7 (about 72% overall, 87.5% in the last two stretches, short of the 90% asked so a matching word still turns up and the rule stays tested). Allowance 1 000 ms, limit 2 000 ms, 400 ms gap. Score `bankScore(wordsSurvived, left, bank)`, 0 to 41, replacing the five-round score. All four inks get the same 1.5 CSS px outline in the text colour (no halo).
 - Reason: the owner's Nov 25 play-test asked for one run, a steady pace, more mismatches and a thin outline on every ink. Simulated pass rates: careful 59.6%, distracted 1.7% (3 000 ms gave 54.9%, 3 500 ms 75.4%). Trade-off of the outline: red and black lose some contrast on the dark board without the halo (no longer asserted), in return for one look across all four inks.

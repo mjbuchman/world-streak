@@ -5,23 +5,23 @@ import { createRng, type Rng } from "../shared/prng";
 import type { ChallengeModule } from "../shared/types";
 
 /**
- * Ink (T249, one run since T254): 40 colour words in a row at one steady pace, each drawn in an ink
- * that may differ from the word. The answer is always the ink. Slow answers (past the allowance),
- * wrong answers and missed words drain one time bank; a word whose cost does not fit what is left
- * ends the run. Score = words survived + bank left as a fraction, 0 to 41. Every number below is a
- * proposal, owner to confirm (DECISIONS, T254).
+ * Confusing Colors, code name `ink` (T249, one run since T254, 30 words since T258): colour words in
+ * a row at one steady pace, each drawn in an ink that may differ from the word. The answer is always
+ * the ink. Slow answers (past the allowance), wrong answers and missed words drain one time bank; a
+ * word whose cost does not fit what is left ends the run. Score = words survived + bank left as a
+ * fraction, 0 to 31. Numbers recorded in DECISIONS (T254, T258).
  */
 
 /** No green: red and green are the pair most colour-blind players confuse. */
 export const COLOURS = ["red", "blue", "yellow", "black"] as const;
 export type Colour = (typeof COLOURS)[number];
 
-export const WORDS = 40;
+export const WORDS = 30;
 /** The run is drawn in stretches of this many words, each with an exact number of mismatches. */
-export const STRETCH = 8;
-/** Mismatched words per stretch: 50% rising to 87.5% (90% of 8 is not whole, so 7 is the nearest). */
-export const MISMATCHES_PER_STRETCH = [4, 5, 6, 7, 7] as const;
-/** The time bank, set so 50 to 70% of simulated careful players survive all 40 (engine.sim.test.ts). */
+export const STRETCH = 10;
+/** Mismatched words per stretch: 50%, 70%, 90%. */
+export const MISMATCHES_PER_STRETCH = [5, 7, 9] as const;
+/** The time bank: the owner kept 3 200 ms at 30 words (T258; simulated rates in engine.sim.test.ts). */
 export const BANK_MS = 3200;
 /** How long a correct answer may take before the bank starts to drain. */
 export const ALLOWANCE_MS = 1000;
@@ -36,12 +36,12 @@ export const TIMEOUT_COST_MS = 1500;
 /** The one 3-2-1 before the first word. */
 export { RUN_COUNTDOWN_MS };
 
-/** The pass target the T239 migration will store: survive all 40 words. */
+/** The pass target the T239 migration will store: survive every word. */
 export const DEFAULT_PASS_TARGET = WORDS;
 
 export type InkWord = { word: Colour; ink: Colour };
 export type InkParams = { bank: number; words: InkWord[] };
-/** An answer for word `word` (0 to 39), `atMs` from the game's start. */
+/** An answer for word `word` (0 to WORDS - 1), `atMs` from the game's start. */
 export type InkAnswer = { word: number; atMs: number; colour: Colour };
 export type InkInputs = { answers: InkAnswer[]; endMs: number };
 
@@ -57,7 +57,7 @@ function shuffle<T>(rng: Rng, items: T[]): T[] {
 const other = (rng: Rng, not: Colour) => rng.pick(COLOURS.filter((c) => c !== not));
 
 /**
- * The 40 words: each stretch has exactly its share of mismatches in shuffled places, and no ink is
+ * The words: each stretch has exactly its share of mismatches in shuffled places, and no ink is
  * the same as the one before it, so repeating a tap never pays.
  */
 export function paramsFromSeed(seed: number): InkParams {

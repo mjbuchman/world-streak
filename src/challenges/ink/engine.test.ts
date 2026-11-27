@@ -23,7 +23,7 @@ import {
   type InkWord,
 } from "./engine";
 
-// Explicit params: a 6 000 ms bank and the same eight words five times over.
+// Explicit params: a 6 000 ms bank and the same eight words repeated to WORDS.
 const EIGHT: InkWord[] = [
   { word: "red", ink: "red" },
   { word: "blue", ink: "yellow" },
@@ -64,7 +64,7 @@ describe("Ink params (T254)", () => {
     expect(paramsFromSeed(42)).not.toEqual(paramsFromSeed(43));
   });
 
-  it("gives every seed 40 words, the exact mismatches per stretch of 8 and no repeated ink", () => {
+  it("gives every seed 30 words, the exact mismatches per stretch of 10 and no repeated ink (T258)", () => {
     for (const seed of seeds) {
       const { bank, words } = paramsFromSeed(seed);
       expect(bank).toBe(BANK_MS);
@@ -73,18 +73,20 @@ describe("Ink params (T254)", () => {
       MISMATCHES_PER_STRETCH.forEach((n, s) => {
         expect(words.slice(s * STRETCH, (s + 1) * STRETCH).filter((w) => w.word !== w.ink), `seed ${seed} stretch ${s}`).toHaveLength(n);
       });
-      expect(words.filter((w) => w.word !== w.ink)).toHaveLength(29);
+      expect(words.filter((w) => w.word !== w.ink)).toHaveLength(21);
       expect(words.every((w, i) => i === 0 || w.ink !== words[i - 1].ink)).toBe(true);
     }
   });
 
-  it("follows the proposed numbers: one run of 40, 50% to 87.5% mismatches, one allowance and limit, four colours and no green", () => {
-    expect([WORDS, STRETCH]).toEqual([40, 8]);
-    expect(MISMATCHES_PER_STRETCH).toEqual([4, 5, 6, 7, 7]);
-    expect(MISMATCHES_PER_STRETCH.reduce((a, b) => a + b, 0)).toBe(29);
+  it("follows the owner's numbers: one run of 30, 50% to 90% mismatches, a 3.2 s bank, one allowance and limit, four colours and no green (T258)", () => {
+    expect([WORDS, STRETCH]).toEqual([30, 10]);
+    expect(MISMATCHES_PER_STRETCH).toEqual([5, 7, 9]);
+    expect(MISMATCHES_PER_STRETCH.length * STRETCH).toBe(WORDS);
+    expect(MISMATCHES_PER_STRETCH.reduce((a, b) => a + b, 0)).toBe(21);
+    expect(BANK_MS).toBe(3200);
     expect([ALLOWANCE_MS, LIMIT_MS]).toEqual([1000, 2000]);
     expect(COLOURS).toEqual(["red", "blue", "yellow", "black"]);
-    expect(DEFAULT_PASS_TARGET).toBe(40);
+    expect(DEFAULT_PASS_TARGET).toBe(30);
   });
 
   it("puts the mismatches in different places across seeds", () => {
@@ -92,7 +94,7 @@ describe("Ink params (T254)", () => {
     expect(layouts.size).toBeGreaterThan(10);
   });
 
-  // Re-recorded for T254 (one run of 40 with the 4-5-6-7-7 ramp); the five-round goldens of T249 are superseded.
+  // Re-recorded for T258 (one run of 30 with the 5-7-9 ramp); the 40-word goldens of T254 are superseded.
   it.each([0, 1, 4_294_967_295])("golden: seed %i (changing the PRNG or the draw changes these)", (seed) => {
     const words = paramsFromSeed(seed).words.map((w) => `${w.word}/${w.ink}`);
     const stretches = Array.from({ length: WORDS / STRETCH }, (_, s) => words.slice(s * STRETCH, (s + 1) * STRETCH).join(" "));
@@ -113,18 +115,18 @@ describe("Ink score (T254)", () => {
     expect(answerCost(false, ALLOWANCE_MS + 100)).toBe(WRONG_COST_MS + 100);
   });
 
-  it("scores 40 + 1 = 41 for all 40 words right within the allowance", () => {
+  it("scores 30 + 1 = 31 for all 30 words right within the allowance", () => {
     const inputs = answer(atAllowance(WORDS));
-    expect(ink.score(params, inputs)).toBe(41);
+    expect(ink.score(params, inputs)).toBe(31);
     expect(ink.finished(params, inputs)).toBe(true);
   });
 
-  it("costs a wrong answer at the allowance exactly WRONG_COST_MS, scoring 40 + 5 000 / 6 000", () => {
+  it("costs a wrong answer at the allowance exactly WRONG_COST_MS, scoring 30 + 5 000 / 6 000", () => {
     const inputs = answer(atAllowance(WORDS), [2]);
     const state = play(params, inputs);
     expect(state.costs[2]).toBe(WRONG_COST_MS);
     expect(state.left).toBe(6000 - WRONG_COST_MS);
-    expect(ink.score(params, inputs)).toBe(40.833);
+    expect(ink.score(params, inputs)).toBe(30.833);
   });
 
   it("costs a right answer 300 ms over the allowance 300", () => {
@@ -202,7 +204,7 @@ describe("Ink score (T254)", () => {
     expect(play(small, answer([ALLOWANCE_MS + 301, 500])).costs).toEqual([301]);
   });
 
-  it("stays within 0 to 41 and gives the same score to the same inputs", () => {
+  it("stays within 0 to 31 and gives the same score to the same inputs", () => {
     for (let seed = 0; seed < 1000; seed++) {
       const seeded = paramsFromSeed(seed);
       const answers: InkAnswer[] = [];

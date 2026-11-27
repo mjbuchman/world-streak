@@ -381,7 +381,7 @@ test("the removed Bank Shot practice page is not found (T257)", async ({ page })
   expect(response?.status()).toBe(404);
 });
 
-test("Ink practice: one time bank, a word after a single 3-2-1, four buttons on a phone screen, and a tap shows feedback (T252, T256)", async ({ page }) => {
+test("Confusing Colors practice: one time bank, a word after a single 3-2-1, four buttons on a phone screen, and a tap shows feedback (T252, T256, T258)", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 664 });
   const scored = attemptRequests(page);
   await gotoReady(page, "/practice/ink");
@@ -390,7 +390,7 @@ test("Ink practice: one time bank, a word after a single 3-2-1, four buttons on 
   const board = page.locator("canvas[data-phase]");
   await expect(page.getByRole("img", { name: "Get ready." })).toBeVisible();
   await expect(board).toHaveAttribute("data-phase", "word", { timeout: 10_000 });
-  await expect(page.getByRole("img", { name: "Word 1 of 40" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Word 1 of 30" })).toBeVisible();
   // The board and all four buttons fit the phone screen without scrolling.
   for (const name of ["Red", "Blue", "Yellow", "Black"]) {
     const box = (await page.getByRole("button", { name }).boundingBox())!;
@@ -402,7 +402,7 @@ test("Ink practice: one time bank, a word after a single 3-2-1, four buttons on 
   await page.getByRole("button", { name: "Red" }).click();
   await expect(page.getByText(/^(Correct|Wrong\. It was [A-Z]+\.|Too slow\. It was [A-Z]+\.)$/)).toBeVisible();
   // The next word follows the 400 ms gap with no second 3-2-1 (that alone would take 3 s).
-  await expect(page.getByRole("img", { name: "Word 2 of 40" })).toBeVisible({ timeout: 2_500 });
+  await expect(page.getByRole("img", { name: "Word 2 of 30" })).toBeVisible({ timeout: 2_500 });
   await expect(page.getByRole("img", { name: "Get ready." })).toHaveCount(0);
   expect(scored).toEqual([]);
 });
@@ -414,7 +414,7 @@ test("the practice hub opens each challenge's practice page", async ({ page }) =
     ["Swift Sum", "/practice/flash-count", "Practice: Swift Sum"],
     ["Trail Trace", "/practice/echo-path", "Practice: Trail Trace"],
     ["Clean Cut", "/practice/fair-split", "Practice: Clean Cut"],
-    ["Ink", "/practice/ink", "Practice: Ink"],
+    ["Confusing Colors", "/practice/ink", "Practice: Confusing Colors"],
   ]) {
     await gotoReady(page, "/practice");
     await page.getByRole("list", { name: "Challenges" }).getByRole("link", { name }).click();
