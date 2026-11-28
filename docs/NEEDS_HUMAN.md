@@ -18,12 +18,6 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Why: the game is now in the daily pool.
 - Agent's recommendation: copy the first entry above into the games table.
 
-### Please confirm: Daily Three planning calls (M5; blocks nothing)
-- What is needed: say if any of these readings of DESIGN.md should change. (1) Second Sense keeps its tap, not a hold. (2) The fraction of lives or budget left is measured when the run ends. (3) A wrong Flash Ladder count retries the same level with a new layout. (4) Fair Split has concave shapes but no holes, and each side of a cut is measured by total area. (5) The pass rate counts only decided days, unlike T17, which counts started attempts. (6) The game played after the day is decided is left out of the pass-target percentile. (7) The results page shows the verdict, each game's score and target, the meter and share; it has no percentiles. (8) The lineup comes from a hash of the date and never repeats the previous day's. (9) Echo Path has no per-tap time limit. (10) A Fair Split miss or timeout brings the same shape back, and a drag that is too short or misses the board is ignored (placeholders in DECISIONS.md, 2026-11-16). (11) A day nobody has touched rebuilds its lineup from the current pool, as coming days followed the settings before (DECISIONS.md, T150). (12) A player who loses game 1 and never returns is not counted in the pass rate (DECISIONS.md, T153; confirmed by the owner 2026-11-16). (13) Before anyone starts a day whose lineup the nightly job has not made yet, /play shows only game 1, with no list (DECISIONS.md, T156). (14) Three wins make a "Perfect day" on the results page and the share text, and nothing else (DECISIONS.md, T159). (15) The placeholder cheat-check thresholds for Second Sense, Echo Path and Fair Split (DECISIONS.md, T164).
-- Where to put it: reply in chat.
-- Why: the design leaves these open or unclear. The tasks are T139–T166 in the backlog.
-- Agent's recommendation: build as listed. Check them at the M5 play-test.
-
 ### Please update DESIGN.md for the M6, M7 and M8 games (blocks nothing)
 - What is needed: update the games table and its scoring text in `docs/DESIGN.md` (agents never edit it). Second Sense: four rounds against a 2 s bank, 10 to 20 s targets, a 2 s clock and a 3-2-1 every round (was a 3.0 s budget, run until it is gone, the clock fading sooner). Swift Sum: five rounds against a 10-dot bank, a random 10 to 30 dots each round, no lives or tolerance (was 3 lives, a life per wrong count, more dots each level). Trail Trace (was Echo Path): one path per player on a 5 x 8 board, at most 12 tiles, never sharing an edge with itself except tile to next tile, a tile longer each round, a mistake replays the same length (was a new sequence after a mistake). Clean Cut (was Fair Split): five lopsided shapes against an 8-point bank, a movable line with a Cut button, 25 s a shape (was within 1 point or lose one of 3 lives). M8 then changed the Second Sense bank to 4 s, capped Swift Sum at 25 dots, gave Trail Trace 2 lives, and made Clean Cut's shapes blobs and polygons; the three bank games show no score.
 - Where to put it: `docs/DESIGN.md`, or tell the agent which wording to use.
@@ -104,6 +98,8 @@ Everything the agents cannot do on their own. Agents add items here and keep wor
 - Agent's recommendation: do it before the public launch. T52 works without the keys locally (it skips the CAPTCHA and logs a warning).
 
 ## Resolved
+
+- **Daily Three planning calls (M5)** (Nov 28, 2026): all 15 accepted as built ("The M5 choices are all good").
 
 - **Confusing Colors in the Daily Three** (Nov 27, 2026, M9 play-test): "looks good"; a pool of 6 games, 3 games each day, as built.
 - **Confusing Colors next step** (Nov 27, 2026): start phase 2 (M9-d, M9-e); the thin outline stays as is.
